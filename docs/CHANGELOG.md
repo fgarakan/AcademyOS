@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-02 — Sprint 1112 — Player Development Blueprint System V1
+
+- `supabase/migrations/078_player_development_blueprints.sql` (new): `player_development_blueprints` table. Stores assessment snapshot, 4-pathway priorities (JSONB), 30-day plan, coach brief, parent-safe summary, DONNA brief, initial mission context. Status lifecycle: active/superseded/archived. `superseded_by` FK for blueprint evolution chain. RLS: directors see all, coaches see active, players see own active. Indexed for single-player active lookup.
+- `src/lib/blueprint/priorityEngine.ts` (new): Pure TypeScript 4-pathway priority engine. 108 priority definitions across 3 stage tiers × 3 score tiers × 4 pathways × 3 priorities. Pathways: Skill (technical_score), Competition (competition + tactical average), Fitness (movement_score), Mental (behavioral_score). Stage-aware: `red_foundation / orange_development / green_performance+`. `generateBlueprintPriorities()` and `getTopPriorities()` exported. Zero DB calls, zero side effects.
+- `src/lib/blueprint/blueprintGenerator.ts` (new): Pure TypeScript blueprint assembler. Combines priorityEngine output into complete blueprint: 30-day plan (one focus per pathway + rationale), 3 initial mission definitions (~20 label templates mapping priority labels to player-friendly mission titles), coach brief (<60s), parent-safe summary (no ratings/negatives/internal terminology), DONNA brief. `generateBlueprint(input)` exported.
+- `src/app/director/placement/generateBlueprintAction.ts` (new): `'use server'` action. Fetches placement_recommendation + assessment + curriculum_level, calls `generateBlueprint()`, archives existing active blueprint, inserts `player_development_blueprints` row, creates 3 `player_mission_assignments` (status=pending_review — director review required), upserts `player_development_summary` (show_to_parent=false by default), writes audit log. Graceful schema-missing detection for pre-migration environments.
+- `src/app/director/placement/placementDraftAction.ts` (modified): `activatePlayerAction` now calls `generateBlueprintAction()` fire-and-forget after `finalize_player_placement()` RPC succeeds. Blueprint failure does not roll back placement. Return type extended to `{ error?, playerId? }`.
+- `src/lib/donna/donnaPlayerBlueprintContext.ts` (new): Blueprint-aware DONNA answer functions for 8 intents: why_placed_here, coach_first_focus, player_strengths, player_gaps, parent_summary (role-gated), player_home_practice, thirty_day_plan, mission_status. DONNA never invents answers — explicit fallback when blueprint not loaded. Parent-facing functions use only parentSummary, never coachBrief.
+- `docs/architecture/PLAYER_DEVELOPMENT_BLUEPRINT.md` (new): Full architecture reference — data model, priority engine design (108 definitions), mission generation logic, DONNA context, blueprint evolution chain, V1 limitations, success criteria.
+- `docs/qa/PLAYER_DEVELOPMENT_BLUEPRINT_QA.md` (new): QA checklist — file existence, priority engine (10 checks), blueprint generator (15 checks), server action (17 checks), placement integration (5 checks), DONNA context (9 checks), parent safety (6 checks), audit trail (3 checks).
+- TypeScript: clean.
+
 ## 2026-06-02 — Mega Sprint 1101-1110 — Atomic Loops 10 of 10 Certification V1
 
 **Phase 1 — Parent Delivery Abstraction**

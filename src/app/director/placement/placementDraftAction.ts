@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { generateBlueprintAction } from './generateBlueprintAction'
 
 async function getDirectorOrHeadCoach(supabase: Awaited<ReturnType<typeof getSupabaseServer>>, academyId: string) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -91,7 +92,7 @@ export async function approvePlacementDraftAction(
 export async function activatePlayerAction(
   recId: string,
   academyId: string,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; playerId?: string }> {
   const supabase = await getSupabaseServer()
   const user = await getDirectorOrHeadCoach(supabase, academyId)
   if (!user) return { error: 'Insufficient permissions' }
@@ -116,8 +117,13 @@ export async function activatePlayerAction(
 
   if (error) return { error: error.message ?? 'Failed to activate player' }
 
+  // Generate development blueprint immediately after activation.
+  // Fire-and-forget: blueprint failure does NOT roll back placement.
+  // Blueprint includes priorities, 30-day plan, missions (pending_review), coach brief, parent summary.
+  void generateBlueprintAction(rec.player_id, academyId)
+
   revalidatePath('/director/placement')
   revalidatePath(`/director/players/${rec.player_id}`)
   revalidatePath('/director/players')
-  return {}
+  return { playerId: rec.player_id }
 }
