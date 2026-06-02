@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, EmptyState, SectionHeader } from '@/comp
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { formatDate } from '@/lib/utils'
 import { loadWrapUpStatusMap, type WrapUpDisplayStatus } from '@/lib/coach/wrapUpStatusMap'
+import { loadAssessmentFormConfig } from '@/lib/assessment/assessmentTemplateLoader'
+import { autoSuggestView } from '@/lib/assessment/assessmentTemplateTypes'
+import { AssessmentStudioForm } from '@/app/director/players/[playerId]/_components/AssessmentStudioForm'
 
 interface PageProps {
   params: { playerId: string }
@@ -374,6 +377,30 @@ export default async function CoachPlayerProfilePage({ params }: PageProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Assessment Studio — coach submits draft for director review */}
+      {await (async () => {
+        try {
+          const suggestedView = autoSuggestView(currentStage)
+          const formConfig = await loadAssessmentFormConfig(supabase, academyId, suggestedView, 'standard')
+          return (
+            <div>
+              <SectionHeader title="SUBMIT ASSESSMENT" />
+              <AssessmentStudioForm
+                playerId={params.playerId}
+                academyId={academyId}
+                formConfig={formConfig}
+                previousAssessment={null}
+                playerStage={currentStage}
+                userRole="coach"
+                playerFirstName={playerFirstName}
+              />
+            </div>
+          )
+        } catch {
+          return null
+        }
+      })()}
 
     </div>
   )

@@ -25,8 +25,9 @@ const ACADEMY_ITEMS = [
 // DONNA is the persistent floating button — not a sidebar nav item (Sprint 1060)
 // Signals, Today's Academy, Command Center removed from primary nav (Sprint 1060)
 const SYSTEM_ITEMS = [
-  { label: 'Settings',   href: '/director/settings',   icon: Settings },
-  { label: 'Onboarding', href: '/director/onboarding', icon: Rocket },
+  { label: 'Assessment Template', href: '/director/assessment-template', icon: ClipboardList },
+  { label: 'Settings',            href: '/director/settings',            icon: Settings },
+  { label: 'Onboarding',          href: '/director/onboarding',          icon: Rocket },
 ]
 
 interface SidebarNavProps {

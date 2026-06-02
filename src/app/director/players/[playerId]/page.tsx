@@ -1772,7 +1772,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         sessionHistory={sessionHistorySlot}
         development={<DevelopmentCenterTab playerId={params.playerId} academyId={academyId} />}
         missions={<MissionsTab playerId={params.playerId} academyId={academyId} />}
-        assessments={<AssessmentsTab playerId={params.playerId} academyId={academyId} />}
+        assessments={<AssessmentsTab playerId={params.playerId} academyId={academyId} playerStage={curriculumSummary?.stage ?? null} />}
       />
     </div>
   )

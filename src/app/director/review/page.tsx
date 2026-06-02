@@ -45,6 +45,8 @@ import { loadWrapUpReviewSurface } from '@/lib/donna/wrapUpReviewSurfaceLoader'
 import { WrapUpCoveragePanel } from './WrapUpCoveragePanel'
 import { DonnaReviewBriefPanel } from './DonnaReviewBriefPanel'
 import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
+import { AssessmentStudioDraftCard } from './AssessmentStudioDraftCard'
+import type { EnrichedAssessmentStudioDraftItem, AssessmentStudioDraftPayload } from './AssessmentStudioDraftCard'
 import { DonnaReviewTabGuide } from './DonnaReviewTabGuide'
 
 const VALID_TAB_PARAMS: Record<string, string> = {
@@ -1128,6 +1130,46 @@ export default async function DirectorReviewQueuePage({
     }
   })
 
+  // ─── Coach assessment studio drafts ──────────────────────────
+  const { data: assessmentStudioDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, created_at, target_object_id, proposed_payload')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'assessment_studio_draft')
+    .in('status', ['pending_review'])
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  // Resolve player names + proposer names for assessment drafts
+  const assessmentDraftPlayerIds = Array.from(new Set(
+    ((assessmentStudioDraftRows ?? []) as any[]).map((r: any) => r.target_object_id).filter(Boolean)
+  ))
+  const assessmentDraftPlayerMap = new Map<string, string>()
+  if (assessmentDraftPlayerIds.length > 0) {
+    const { data: playerRows } = await rawDb.from('players').select('id, full_name, first_name, last_name').in('id', assessmentDraftPlayerIds)
+    for (const p of (playerRows ?? []) as any[]) {
+      assessmentDraftPlayerMap.set(p.id, p.full_name ?? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim())
+    }
+  }
+  const assessmentDraftProposerIds = Array.from(new Set(
+    ((assessmentStudioDraftRows ?? []) as any[]).map((r: any) => r.proposed_payload?.submitted_by).filter(Boolean)
+  ))
+  const assessmentDraftProposerMap = new Map<string, string>()
+  if (assessmentDraftProposerIds.length > 0) {
+    const { data: profRows } = await supabase.from('profiles').select('id, display_name').in('id', assessmentDraftProposerIds)
+    for (const p of (profRows ?? [])) { if (p.display_name) assessmentDraftProposerMap.set(p.id, p.display_name) }
+  }
+
+  const assessmentStudioDrafts: EnrichedAssessmentStudioDraftItem[] = ((assessmentStudioDraftRows ?? []) as any[]).map((r: any) => ({
+    id:           r.id,
+    status:       r.status,
+    createdAt:    r.created_at,
+    playerId:     r.target_object_id ?? null,
+    playerName:   r.target_object_id ? (assessmentDraftPlayerMap.get(r.target_object_id) ?? null) : null,
+    proposerName: r.proposed_payload?.submitted_by ? (assessmentDraftProposerMap.get(r.proposed_payload.submitted_by) ?? null) : null,
+    payload:      r.proposed_payload as AssessmentStudioDraftPayload,
+  }))
+
   // ─── Section counts for the 4 director-facing tabs ────────────
 
   // Needs Approval: items waiting for director action (pending or approved-but-not-applied)
@@ -1141,7 +1183,8 @@ export default async function DirectorReviewQueuePage({
     pendingVoiceIntakeDrafts.length +
     generalCaptures.length +
     parentCommDrafts.length +
-    levelReviewDrafts.length
+    levelReviewDrafts.length +
+    assessmentStudioDrafts.length
 
   const needsApprovalReady =
     approvedWrapUpDrafts.length +
@@ -1494,6 +1537,27 @@ export default async function DirectorReviewQueuePage({
                   </div>
                 </section>
               )}
+            </div>
+          )}
+
+          {/* Coach Assessment Drafts */}
+          {assessmentStudioDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Coach Assessment Drafts</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {assessmentStudioDrafts.length} to review
+                </span>
+              </div>
+              <p className="text-xs text-text-muted">
+                Assessment observations submitted by coaches. Approving creates an official assessment record.
+                No automatic level movement, blueprint change, or parent notification.
+              </p>
+              <div className="space-y-4">
+                {assessmentStudioDrafts.map(draft => (
+                  <AssessmentStudioDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
             </div>
           )}
 

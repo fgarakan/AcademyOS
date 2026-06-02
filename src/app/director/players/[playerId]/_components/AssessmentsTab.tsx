@@ -1,50 +1,55 @@
-// Sprint 1113-1120 — Assessments Tab
-// Server Component — shows assessment history and start new assessment CTA.
-// Reads from assessment_events (migration 079) with fallback to assessments table.
+// Sprint 1196-1210 — Assessments Tab
+// Template-driven. Loads academy assessment template, renders AssessmentStudioForm.
+// Supports reassessment mode (preloads previous assessment + comparison).
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
-import { ClipboardList, Plus, TrendingUp, TrendingDown, Minus, CheckCircle2 } from 'lucide-react'
+import { ClipboardList, TrendingUp, TrendingDown, Minus, CheckCircle2 } from 'lucide-react'
+import { loadAssessmentFormConfig, } from '@/lib/assessment/assessmentTemplateLoader'
+import { autoSuggestView } from '@/lib/assessment/assessmentTemplateTypes'
+import type { PreviousAssessmentData, ScoresDetail } from '@/lib/assessment/assessmentTemplateTypes'
+import { AssessmentStudioForm } from './AssessmentStudioForm'
 
 interface AssessmentsTabProps {
-  playerId: string
-  academyId: string
+  playerId:    string
+  academyId:   string
+  playerStage: string | null
 }
 
 interface AssessmentRow {
-  id: string
-  assessed_date: string
-  type: string
-  is_baseline: boolean
-  technical_score: number | null
-  tactical_score: number | null
-  movement_score: number | null
+  id:                string
+  assessed_date:     string
+  type:              string
+  is_baseline:       boolean
+  technical_score:   number | null
+  tactical_score:    number | null
+  movement_score:    number | null
   competition_score: number | null
-  behavioral_score: number | null
-  overall_score: number | null
-  strengths: string[] | null
-  weaknesses: string[] | null
-  notes: string | null
+  behavioral_score:  number | null
+  overall_score:     number | null
+  strengths:         string[] | null
+  notes:             string | null
+  scores_detail:     unknown | null
 }
 
 interface AssessmentEventRow {
-  id: string
-  assessment_type: string
-  assessment_mode: string
-  status: string
-  scheduled_for: string | null
-  completed_at: string | null
+  id:                     string
+  assessment_type:        string
+  assessment_mode:        string
+  status:                 string
+  scheduled_for:          string | null
+  completed_at:           string | null
   blueprint_recommendation: string | null
-  assessment_id: string | null
-  created_at: string
+  assessment_id:          string | null
+  created_at:             string
 }
 
 const SCORE_DOMAINS = [
-  { key: 'technical_score',   label: 'Technical' },
-  { key: 'tactical_score',    label: 'Tactical' },
-  { key: 'movement_score',    label: 'Movement' },
+  { key: 'technical_score',   label: 'Technical'   },
+  { key: 'tactical_score',    label: 'Tactical'    },
+  { key: 'movement_score',    label: 'Movement'    },
   { key: 'competition_score', label: 'Competition' },
-  { key: 'behavioral_score',  label: 'Mental' },
+  { key: 'behavioral_score',  label: 'Mental'      },
 ] as const
 
 function ScoreBar({ score }: { score: number | null }) {
@@ -63,12 +68,16 @@ function ScoreBar({ score }: { score: number | null }) {
 
 function ScoreChangeIcon({ delta }: { delta: number | null }) {
   if (delta === null) return <Minus className="w-3 h-3 text-text-muted" />
-  if (delta > 0.5) return <TrendingUp className="w-3 h-3 text-status-green" />
-  if (delta < -0.5) return <TrendingDown className="w-3 h-3 text-status-red" />
+  if (delta > 0.4) return <TrendingUp className="w-3 h-3 text-status-green" />
+  if (delta < -0.4) return <TrendingDown className="w-3 h-3 text-status-red" />
   return <Minus className="w-3 h-3 text-text-muted" />
 }
 
 function AssessmentCard({ assessment, prevAssessment }: { assessment: AssessmentRow; prevAssessment?: AssessmentRow }) {
+  const detail = assessment.scores_detail as any
+  const label: string | null = detail?.assessment_label ?? null
+  const view: string | null = detail?.assessment_view ?? null
+
   return (
     <Card>
       <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 bg-surface-raised rounded-t-xl">
@@ -77,7 +86,9 @@ function AssessmentCard({ assessment, prevAssessment }: { assessment: Assessment
             {new Date(assessment.assessed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
           <p className="text-[10px] text-text-muted capitalize mt-0.5">
-            {assessment.type.replace(/_/g, ' ')} {assessment.is_baseline && '• Baseline'}
+            {label ? label.replace(/_/g, ' ') : assessment.type.replace(/_/g, ' ')}
+            {view && <span className="ml-1">· {view.replace(/_/g, ' ')}</span>}
+            {assessment.is_baseline && ' · Baseline'}
           </p>
         </div>
         {assessment.overall_score !== null && (
@@ -89,37 +100,31 @@ function AssessmentCard({ assessment, prevAssessment }: { assessment: Assessment
       </div>
       <CardContent className="py-4">
         <div className="space-y-2">
-          {SCORE_DOMAINS.map(({ key, label }) => {
+          {SCORE_DOMAINS.map(({ key, label: domLabel }) => {
             const score = assessment[key as keyof AssessmentRow] as number | null
             const prevScore = prevAssessment ? (prevAssessment[key as keyof AssessmentRow] as number | null) : null
             const delta = score !== null && prevScore !== null ? score - prevScore : null
             return (
               <div key={key} className="flex items-center gap-3">
-                <p className="text-[10px] text-text-muted w-20 shrink-0">{label}</p>
-                <div className="flex-1 min-w-0">
-                  <ScoreBar score={score} />
-                </div>
+                <p className="text-[10px] text-text-muted w-20 shrink-0">{domLabel}</p>
+                <div className="flex-1 min-w-0"><ScoreBar score={score} /></div>
                 {prevAssessment && <ScoreChangeIcon delta={delta} />}
               </div>
             )
           })}
         </div>
 
-        {/* Strengths */}
         {assessment.strengths && assessment.strengths.length > 0 && (
           <div className="mt-3 pt-3 border-t border-border">
             <p className="label-xs text-text-muted mb-1.5">Strengths</p>
             <div className="flex flex-wrap gap-1">
               {assessment.strengths.slice(0, 4).map((s, i) => (
-                <span key={i} className="text-[10px] text-status-green bg-status-green/8 border border-status-green/20 rounded px-2 py-0.5">
-                  {s}
-                </span>
+                <span key={i} className="text-[10px] text-status-green bg-status-green/8 border border-status-green/20 rounded px-2 py-0.5">{s}</span>
               ))}
             </div>
           </div>
         )}
 
-        {/* Notes */}
         {assessment.notes && (
           <p className="mt-3 pt-3 border-t border-border text-[11px] text-text-muted leading-relaxed">
             {assessment.notes}
@@ -130,30 +135,62 @@ function AssessmentCard({ assessment, prevAssessment }: { assessment: Assessment
   )
 }
 
-export async function AssessmentsTab({ playerId, academyId }: AssessmentsTabProps) {
+export async function AssessmentsTab({ playerId, academyId, playerStage }: AssessmentsTabProps) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return <p className="text-xs text-text-muted">Not authenticated.</p>
 
   const rawDb = supabase as any
 
-  // Fetch assessments (existing table — always available)
+  // ── Auth: get user role ──────────────────────────────────────────────────
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .maybeSingle()
+  const userRole: string = membership?.role ?? 'coach'
+
+  // ── Fetch user display name for the form ─────────────────────────────────
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  // ── Assessment history (last 10) ──────────────────────────────────────────
   const { data: assessmentsData } = await supabase
     .from('assessments')
     .select([
       'id', 'assessed_date', 'type', 'is_baseline',
       'technical_score', 'tactical_score', 'movement_score', 'competition_score', 'behavioral_score',
-      'overall_score', 'strengths', 'weaknesses', 'notes',
+      'overall_score', 'strengths', 'notes', 'scores_detail',
     ].join(', '))
     .eq('player_id', playerId)
     .eq('academy_id', academyId)
     .order('assessed_date', { ascending: false })
+    .limit(10)
 
   const assessments = (assessmentsData ?? []) as unknown as AssessmentRow[]
 
-  // Fetch assessment events (migration 079 — graceful fallback)
+  // ── Most recent assessment for reassessment mode ──────────────────────────
+  const previousAssessment: PreviousAssessmentData | null = assessments.length > 0
+    ? {
+        id:                assessments[0].id,
+        assessed_date:     assessments[0].assessed_date,
+        overall_score:     assessments[0].overall_score,
+        technical_score:   assessments[0].technical_score,
+        tactical_score:    assessments[0].tactical_score,
+        movement_score:    assessments[0].movement_score,
+        competition_score: assessments[0].competition_score,
+        behavioral_score:  assessments[0].behavioral_score,
+        scores_detail:     assessments[0].scores_detail as ScoresDetail | null,
+      }
+    : null
+
+  // ── Assessment events (migration 079) ────────────────────────────────────
   let events: AssessmentEventRow[] = []
-  let hasEventsTable = false
   try {
     const { data: eventsData, error } = await rawDb
       .from('assessment_events')
@@ -161,34 +198,74 @@ export async function AssessmentsTab({ playerId, academyId }: AssessmentsTabProp
       .eq('player_id', playerId)
       .eq('academy_id', academyId)
       .order('created_at', { ascending: false })
-      .limit(10)
-
+      .limit(5)
     if (!error?.message?.includes('does not exist') && !error?.code?.includes('42P01')) {
       events = eventsData ?? []
-      hasEventsTable = true
     }
   } catch { /* migration not applied */ }
+
+  // ── Load assessment form config (template-driven) ─────────────────────────
+  const suggestedView = autoSuggestView(playerStage)
+  let formConfig = null
+  try {
+    formConfig = await loadAssessmentFormConfig(supabase, academyId, suggestedView, 'standard')
+  } catch (e) {
+    // Template tables not yet applied — graceful fallback
+  }
+
+  // ── Pending coach assessment drafts ──────────────────────────────────────
+  const { data: pendingDrafts } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'assessment_studio_draft')
+    .eq('target_object_id', playerId)
+    .in('status', ['pending_review'])
+    .order('created_at', { ascending: false })
+    .limit(3)
+  const draftCount = (pendingDrafts ?? []).length
 
   return (
     <div className="space-y-5">
 
-      {/* Header + CTA */}
+      {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="label-xs text-text-muted mb-0.5">Assessment History</p>
+          <p className="label-xs text-text-muted mb-0.5">Assessment Studio</p>
           <p className="text-xs text-text-secondary">
             {assessments.length} assessment{assessments.length !== 1 ? 's' : ''} recorded
+            {draftCount > 0 && <span className="ml-2 text-status-orange">· {draftCount} coach draft{draftCount > 1 ? 's' : ''} pending</span>}
           </p>
         </div>
-        {hasEventsTable && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-raised border border-border text-[11px] font-medium text-text-muted">
-            <Plus className="w-3 h-3" />
-            Start Reassessment
-          </div>
+        {formConfig && (
+          <p className="text-[10px] text-text-muted">
+            Template: {formConfig.templateName}
+          </p>
         )}
       </div>
 
-      {/* Pending/scheduled events */}
+      {/* Assessment Studio Form */}
+      {formConfig ? (
+        <AssessmentStudioForm
+          playerId={playerId}
+          academyId={academyId}
+          formConfig={formConfig}
+          previousAssessment={previousAssessment}
+          playerStage={playerStage}
+          userRole={userRole}
+          playerFirstName={null}
+        />
+      ) : (
+        <div className="px-4 py-6 rounded-xl bg-surface border border-border text-center space-y-2">
+          <ClipboardList className="w-8 h-8 text-text-muted mx-auto" />
+          <p className="text-xs font-semibold text-text-primary">Assessment template not yet loaded</p>
+          <p className="text-[11px] text-text-muted">
+            Apply migrations 081–082 to enable the Assessment Studio.
+          </p>
+        </div>
+      )}
+
+      {/* Pending events */}
       {events.filter(e => ['draft', 'scheduled', 'in_progress'].includes(e.status)).length > 0 && (
         <div>
           <p className="label-xs text-text-muted mb-2">Scheduled</p>
@@ -200,7 +277,9 @@ export async function AssessmentsTab({ playerId, academyId }: AssessmentsTabProp
                     {event.assessment_type.replace(/_/g, ' ')}
                   </p>
                   <p className="text-[10px] text-text-muted capitalize">
-                    {event.assessment_mode} · {event.scheduled_for ? `Scheduled ${new Date(event.scheduled_for).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Not yet scheduled'}
+                    {event.assessment_mode} · {event.scheduled_for
+                      ? `Scheduled ${new Date(event.scheduled_for).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                      : 'Not yet scheduled'}
                   </p>
                 </div>
                 <span className="text-[9px] font-bold uppercase tracking-wide text-status-orange bg-status-orange/8 border border-status-orange/20 rounded px-1.5 py-0.5">
@@ -221,12 +300,13 @@ export async function AssessmentsTab({ playerId, academyId }: AssessmentsTabProp
           <div>
             <p className="text-sm font-semibold text-text-primary mb-1">No assessments yet</p>
             <p className="text-xs text-text-muted leading-relaxed max-w-xs">
-              Assessment scores are recorded during onboarding placement and can be updated at any reassessment event.
+              Use the form above to run the first assessment.
             </p>
           </div>
         </div>
       ) : (
         <div className="space-y-4">
+          <p className="label-xs text-text-muted">Assessment History</p>
           {assessments.map((assessment, index) => (
             <AssessmentCard
               key={assessment.id}
@@ -237,7 +317,7 @@ export async function AssessmentsTab({ playerId, academyId }: AssessmentsTabProp
         </div>
       )}
 
-      {/* Completed event summary */}
+      {/* Completed event blueprint recommendations */}
       {events.filter(e => e.status === 'completed' && e.blueprint_recommendation).length > 0 && (
         <div>
           <p className="label-xs text-text-muted mb-2">Blueprint Recommendations</p>

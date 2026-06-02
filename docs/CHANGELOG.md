@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1196-1210 — Assessment Studio Completion and Template Editor V1
+
+**Migrations (new — apply in order):**
+- `supabase/migrations/081_assessment_templates.sql` (new): 5 new tables with RLS — `assessment_templates`, `assessment_template_sections`, `assessment_template_skills`, `assessment_template_versions`, `academy_assessment_templates`. All have `academy_id` scoping. No existing tables modified.
+- `supabase/migrations/082_assessment_templates_seed.sql` (new): Seeds global Core Assessment Template with 7 sections and 55 skills. `level_applicability` set per skill for all 6 assessment views (general, red_ball, orange_ball, green_dot, yellow_ball, high_performance).
+
+**Library (new):**
+- `src/lib/assessment/assessmentTemplateTypes.ts` (new): All types — `AssessmentView` (6 views), `AssessmentMode`, `AssessmentLabel` (8 UX types + DB enum mapping), `TemplateSectionRow`, `TemplateSkillRow`, `FormSection`, `FormSkill`, `AssessmentFormConfig`, `ScoresDetail`, comparison types, `BlueprintRecommendation`, `PreviousAssessmentData`. `autoSuggestView(stage)` helper.
+- `src/lib/assessment/assessmentComparisonEngine.ts` (new): Pure TS. `compareAssessments()` — domain + skill deltas, top improvements/declines, `BlueprintRecommendation[]`. `deriveDomainScores()` — derives 5 domain scores + overall from `ScoresDetail`.
+- `src/lib/assessment/assessmentTemplateLoader.ts` (new): Server-side. `loadAssessmentFormConfig()` — finds/creates academy template, filters sections+skills by view+mode, auto-clones global template on first use. `cloneGlobalTemplate()` — deep copies sections+skills.
+
+**Server actions (new):**
+- `src/app/director/players/[playerId]/assessmentStudioAction.ts` (new): `submitAssessmentStudioAction` — role-aware: director/head_coach inserts directly into `assessments` with `version_id` + `scores_detail`; coach creates `proposed_action` with `target_module: assessment_studio_draft`. Both write `audit_logs`. `approveAssessmentDraftAction` — director approves coach draft, inserts official assessment, marks proposed_action executed.
+
+**UI components (new):**
+- `src/app/director/players/[playerId]/_components/AssessmentStudioForm.tsx` (new): Client component. Template-driven form. View selector (6 views, auto-suggested), mode selector (Quick/Standard/Deep), assessment type dropdown (8 options), section cards (collapsible in Standard, expanded in Quick/Deep), 1–10 score picker + "N/A" per skill, reassessment delta badges, global notes, role-aware submit CTA (director = direct submit, coach = draft).
+- `src/app/director/players/[playerId]/_components/AssessmentComparisonCard.tsx` (new): Post-submit. Domain deltas with bars + delta icons, top improvements, top declines, recommendation chips with safety guardrail note.
+- `src/app/director/assessment-template/page.tsx` (new): Director template editor. Stats strip (sections, visible skills, version count). Info note about global template protection. Section list.
+- `src/app/director/assessment-template/_components/TemplateSectionEditor.tsx` (new): Client. Section + skill editor. Inline rename (Enter/Escape), hide/show toggle, up/down reorder. All changes snapshot a new template version.
+- `src/app/director/assessment-template/_actions/templateActions.ts` (new): Server actions — `renameSectionAction`, `toggleSectionVisibilityAction`, `reorderSectionsAction`, `renameSkillAction`, `toggleSkillVisibilityAction`, `reorderSkillsAction`. Every action snapshots a version via `snapshotVersion()`.
+- `src/app/director/review/AssessmentStudioDraftCard.tsx` (new): Review queue card for coach-submitted assessment drafts. Domain score bars, coach notes, approve (→ official record) + reject controls. Safety guardrail note.
+
+**Modified:**
+- `src/app/director/players/[playerId]/_components/AssessmentsTab.tsx` (modified): Now template-driven. Loads academy template via `loadAssessmentFormConfig`, passes `previousAssessment` for reassessment mode, renders `AssessmentStudioForm`. Graceful fallback if migrations not applied.
+- `src/app/director/players/[playerId]/page.tsx` (modified): Passes `playerStage` to `AssessmentsTab`.
+- `src/app/coach/players/[playerId]/page.tsx` (modified): Added `AssessmentStudioForm` section at bottom (coach role = draft submission path).
+- `src/app/director/review/page.tsx` (modified): Added `assessment_studio_draft` query + player/proposer name resolution + `AssessmentStudioDraftCard` render section + count added to `needsApprovalPending`.
+- `src/components/nav/SidebarNav.tsx` (modified): Added "Assessment Template" link under system items.
+
+**Docs (new):**
+- `docs/architecture/ASSESSMENT_TEMPLATE_SYSTEM.md` — full data model, lifecycle, file index
+- `docs/architecture/ASSESSMENT_STUDIO_FORM.md` — form rendering model, reassessment mode, role routing, comparison engine
+- `docs/qa/ASSESSMENT_STUDIO_QA.md` — QA checklist (migrations, form, reassessment, role safety, review queue)
+- `docs/qa/ASSESSMENT_TEMPLATE_EDITOR_QA.md` — QA checklist (editor features, version history, role guardrails)
+
+**TypeScript:** clean.
+**Migrations needed:** Apply 081 then 082 to live DB.
+
 ## 2026-06-02 — Post-Migration Verification and Pilot Smoke Test V1
 
 - `src/app/director/_actions/postMigrationVerifyAction.ts` (new): Two server actions. `postMigrationVerifyAction()` — checks table existence for migrations 076–080 via rawDb queries, returns structured result with applied/missing/error per table + overall readiness. `runMigrationSmokeTest()` — non-destructive insert+delete on each new table to verify RLS and schema; director-only. Both return honest structured results.
