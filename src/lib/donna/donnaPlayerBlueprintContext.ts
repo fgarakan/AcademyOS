@@ -500,3 +500,109 @@ export function donnaBlueprintAnswer(
       return `Blueprint question not recognised. Available topics: placement rationale, coach focus, strengths, development areas, parent summary, home practice, 30-day plan, mission status, reassessment readiness, level review readiness, improvement since last assessment, mission recommendations, level movement blockers, placement recommendation.`
   }
 }
+
+// ── Role-aware player summary engine (Phase 6) ────────────────────────────────
+
+export type PlayerSummaryRole = 'academy_director' | 'head_coach' | 'coach' | 'parent' | 'player'
+
+export interface DonnaPlayerSummaryContext {
+  playerFirstName: string
+  playerLastName: string
+  currentLevelName: string | null
+  nextLevelName: string | null
+  advancementEligible: boolean
+  topStrengths: string[]
+  topGaps: string[]
+  topPriorityTitle: string | null
+  activeMissionCount: number
+  pendingMissionCount: number
+  activeMissionLabels: string[]
+  coachFocusAreas: string[]
+  daysSinceLastAssessment: number | null
+  gatesMet: number
+  gatesTotal: number
+  parentSummary: string | null
+  parentDevelopmentFocus: string | null
+  studentFriendlySummary: string | null
+  comparisonSummary: string | null
+  placementRationale: string | null
+}
+
+/**
+ * Generate a role-appropriate DONNA summary for a player.
+ * Returns a short, actionable summary tailored to the requesting role.
+ * Never invents facts. Returns honest fallback when data is missing.
+ * Pure function — no DB calls, no side effects.
+ */
+export function generateDonnaPlayerSummary(
+  role: PlayerSummaryRole,
+  ctx: DonnaPlayerSummaryContext,
+): string {
+  const name = ctx.playerFirstName
+  const level = ctx.currentLevelName ?? 'an unassigned level'
+
+  switch (role) {
+    case 'academy_director':
+    case 'head_coach': {
+      const parts: string[] = [`${name} is at ${level}.`]
+      if (ctx.topPriorityTitle) parts.push(`Top development priority: ${ctx.topPriorityTitle}.`)
+      if (ctx.advancementEligible && ctx.nextLevelName) {
+        parts.push(`${name} may be ready to advance to ${ctx.nextLevelName} — a level review is recommended.`)
+      } else if (ctx.nextLevelName && ctx.gatesTotal > 0) {
+        const pct = Math.round((ctx.gatesMet / ctx.gatesTotal) * 100)
+        parts.push(`${ctx.gatesMet}/${ctx.gatesTotal} gates met for ${ctx.nextLevelName} (${pct}%).`)
+      }
+      if (ctx.pendingMissionCount > 0) parts.push(`${ctx.pendingMissionCount} mission${ctx.pendingMissionCount > 1 ? 's' : ''} pending your review.`)
+      else if (ctx.activeMissionCount > 0) parts.push(`${ctx.activeMissionCount} active mission${ctx.activeMissionCount > 1 ? 's' : ''}.`)
+      if (ctx.daysSinceLastAssessment !== null && ctx.daysSinceLastAssessment > 60) {
+        parts.push(`Last assessment was ${ctx.daysSinceLastAssessment} days ago — consider scheduling a reassessment.`)
+      }
+      if (ctx.topGaps.length > 0) parts.push(`Key development areas: ${ctx.topGaps.slice(0, 2).join(', ')}.`)
+      return parts.join(' ')
+    }
+
+    case 'coach': {
+      const parts: string[] = []
+      if (ctx.coachFocusAreas.length > 0) {
+        parts.push(`Today's focus for ${name}: ${ctx.coachFocusAreas[0]}.`)
+      } else if (ctx.topPriorityTitle) {
+        parts.push(`Focus for ${name}: ${ctx.topPriorityTitle}.`)
+      }
+      if (ctx.activeMissionLabels.length > 0) {
+        parts.push(`Active missions: ${ctx.activeMissionLabels.slice(0, 2).join(', ')}.`)
+      }
+      if (ctx.topGaps.length > 0) {
+        parts.push(`Watch for: ${ctx.topGaps.slice(0, 2).join(', ')}.`)
+      }
+      if (ctx.topStrengths.length > 0) {
+        parts.push(`Build on: ${ctx.topStrengths[0]}.`)
+      }
+      return parts.length > 0
+        ? parts.join(' ')
+        : `${name} is at ${level}. Follow the active development plan.`
+    }
+
+    case 'parent': {
+      // Parent-safe only — never expose internal coaching language or raw scores
+      if (ctx.parentSummary) return ctx.parentSummary
+      if (ctx.parentDevelopmentFocus) {
+        return `${name} is currently working on ${ctx.parentDevelopmentFocus}. ` +
+          (ctx.nextLevelName ? `The next milestone is ${ctx.nextLevelName}.` : 'Keep supporting practice at home.')
+      }
+      return `${name}'s development plan is being prepared by the coaching team. Check back after the next session.`
+    }
+
+    case 'player': {
+      // Player-safe — encouraging, simple, mission-focused
+      if (ctx.studentFriendlySummary) return ctx.studentFriendlySummary
+      if (ctx.activeMissionLabels.length > 0) {
+        return `Your mission this week: ${ctx.activeMissionLabels[0]}. ` +
+          `You're at ${level}. Keep going — every practice counts!`
+      }
+      return `You're at ${level}. Your coach is setting up your next mission. Keep showing up and giving your best!`
+    }
+
+    default:
+      return `${name} is at ${level}.`
+  }
+}

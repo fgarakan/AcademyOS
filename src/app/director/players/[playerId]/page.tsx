@@ -73,6 +73,11 @@ import { MissionsTab } from './_components/MissionsTab'
 import { AssessmentsTab } from './_components/AssessmentsTab'
 // Sprint 1124-1130: Constitution hero — 5 key signals above all tabs
 import { PlayerProfileConstitutionHero } from './_components/PlayerProfileConstitutionHero'
+// Sprint 1131-1140: Development OS completion
+import { ReadinessEvidencePanel } from './_components/ReadinessEvidencePanel'
+import { DevelopmentTimeline } from './_components/DevelopmentTimeline'
+import { PriorityMissionEvidenceCard } from './_components/PriorityMissionEvidenceCard'
+import { CollapsedDetailSection } from '@/components/donna/CollapsedDetailSection'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
@@ -916,10 +921,42 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         advancementEligible={curriculumSummary?.advancement_eligible ?? null}
       />
 
-      {/* KPI signals — Sprint 434 — moved below action summary so command+action are above-fold together */}
-      <PlayerKpiDrilldownCard playerId={params.playerId} academyId={academyId} />
+      {/* Sprint 1131 — Priority → Mission → Evidence cards (top 2 priorities) */}
+      {enrichedActivePriorities.slice(0, 2).map(p => (
+        <PriorityMissionEvidenceCard
+          key={p.id}
+          playerId={params.playerId}
+          academyId={academyId}
+          priorityTitle={p.title}
+          priorityDescription={p.description ?? null}
+          priorityCategory={p.category ?? null}
+        />
+      ))}
 
-      {/* Three operational blocks — responsive grid */}
+      {/* Sprint 1131 — Readiness Evidence Panel */}
+      {hasCurriculum && (
+        <ReadinessEvidencePanel
+          playerId={params.playerId}
+          academyId={academyId}
+          currentLevelId={(curriculumSummary as any)?.current_level_id ?? null}
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          nextLevelName={nextCurriculumLevel?.display_name ?? null}
+          advancementEligible={curriculumSummary?.advancement_eligible ?? false}
+        />
+      )}
+
+      {/* Sprint 1131 — Development Timeline */}
+      <CollapsedDetailSection label="Development Timeline" count={0}>
+        <DevelopmentTimeline playerId={params.playerId} academyId={academyId} />
+      </CollapsedDetailSection>
+
+      {/* KPI signals — Sprint 434 — collapsed by default (Phase 7 constitution pass) */}
+      <CollapsedDetailSection label="Development KPIs">
+        <PlayerKpiDrilldownCard playerId={params.playerId} academyId={academyId} />
+      </CollapsedDetailSection>
+
+      {/* Three operational blocks — collapsed (Phase 7) */}
+      <CollapsedDetailSection label="Development Blocks">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <PlayerCurriculumConnectionBlock
           currentLevelName={curriculumSummary?.current_level_name ?? null}
@@ -943,6 +980,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           currentFocus={qaCoachLanguage[0]?.current_focus ?? developmentSummary?.development_focus ?? null}
         />
       </div>
+      </CollapsedDetailSection>
 
       {/* Two-column layout: development data left, admin/curriculum right */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">

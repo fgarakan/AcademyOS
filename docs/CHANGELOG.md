@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1131-1140 — Player Development Operating System Completion Pass V1
+
+**Phase 1 — Priority → Mission → Evidence Connection**
+- `src/app/director/players/[playerId]/_components/PriorityMissionEvidenceCard.tsx` (new): Server Component. Shows Priority→Mission→Evidence chain for each top priority. Fetches linked mission (fuzzy title match on `player_mission_assignments`), assessment score for the priority category domain (rawDb for TS safety), and coach observation snippet. 1-3 evidence points default. Director-only component.
+
+**Phase 2 — Readiness Evidence Panel**
+- `src/app/director/players/[playerId]/_components/ReadinessEvidencePanel.tsx` (new): Server Component. Answers "Is this player ready for the next level?" Fetches curriculum gates, player gate status (try/catch for migration state), active missions. Shows progress bar, ✓ met / □ unmet gates, DONNA deterministic summary, safety note ("no automatic advancement"). Graceful fallback when migrations not applied.
+
+**Phase 3 — Development Timeline**
+- `src/app/director/players/[playerId]/_components/DevelopmentTimeline.tsx` (new): Server Component. Aggregates last 5 development events from assessments + blueprints (migration 078) + missions (migration 076) + DONNA placement recommendations (migration 080). All with graceful try/catch. Older events in `CollapsedDetailSection`. Default: 5 most recent events.
+
+**Phase 4 — Parent Translation Layer**
+- `src/app/parent/_components/ParentDevelopmentPlanCard.tsx` (modified): V2. Added "Why This Matters" section using `student_friendly_summary`. Added "What Helps At Home" using `buildHomeSupport()` — keyword-matched home practice guidance. Added "Next Check-In" section. Sections: Current Focus (lime highlight) → Why It Matters → From Coaching Team → What We're Working On → What Helps At Home → Next Check-In.
+
+**Phase 5 — Player Mission Experience**
+- `src/app/player/_components/PlayerAssignedMissionsSection.tsx` (modified): V2. Primary mission gets full card: headline + "Why it matters" (generated) + "Today's action" (specific, doable, keyword-matched) + encouraging footer. Secondary missions as compact list. Language is motivating, specific, kid-friendly.
+
+**Phase 6 — DONNA Player Summary Engine**
+- `src/lib/donna/donnaPlayerBlueprintContext.ts` (modified): Added `generateDonnaPlayerSummary(role, ctx)`. Role-aware summaries: director/head_coach (level + priority + readiness + blocker + missions + assessment age), coach (focus + watch-fors + missions + strengths), parent (parentSummary first → graceful fallback, never coachBrief), player (studentFriendlySummary → mission → encouragement). `DonnaPlayerSummaryContext` interface exported.
+
+**Phase 7 — Profile Simplification Final Pass**
+- `src/app/director/players/[playerId]/page.tsx` (modified): Added imports for ReadinessEvidencePanel, DevelopmentTimeline, PriorityMissionEvidenceCard, CollapsedDetailSection. Overview slot now: Constitution hero → Priority→Mission→Evidence (top 2) → ReadinessEvidencePanel → DevelopmentTimeline (collapsed) → Development KPIs (collapsed) → Development Blocks 3-col grid (collapsed) → existing detail below.
+
+**Phase 8 — Coach Player Brief**
+- `src/app/coach/_components/CoachPlayerBriefCard.tsx` (new): `CoachPlayerBriefCard` component (current focus + watch-fors + after-session capture prompts). `buildCoachPlayerBrief(params)` builder generates watch-fors and capture prompts from priority keyword (6 keyword branches: rhythm/serve, spacing, rally, confidence, movement, generic).
+
+**Phase 9 — Docs**
+- `docs/architecture/PLAYER_DEVELOPMENT_OS_COMPLETION.md` (new): Full architecture reference — all 8 phases, component locations, role safety table, level movement safety.
+- `docs/qa/PLAYER_DEVELOPMENT_OS_COMPLETION_QA.md` (new): QA checklist — all phases verified.
+
+**TypeScript:** clean.
+
 ## 2026-06-02 — Mega Sprint 1124-1130 — Player Profile Review Queue Coach Home Constitution Pass V1
 
 **Phase 7 — Shared Constitution Components**
