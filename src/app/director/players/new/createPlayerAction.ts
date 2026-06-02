@@ -96,5 +96,5 @@ export async function createPlayerAction(formData: FormData): Promise<CreatePlay
     sourceType: 'ui',
   })
 
-  redirect(`/director/players/${inserted.id}`)
+  redirect(`/director/players/${inserted.id}/onboard`)
 }

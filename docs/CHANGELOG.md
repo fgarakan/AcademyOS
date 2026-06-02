@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint — Player Onboarding Stepper V1
+
+**Created:**
+- `src/app/director/players/[playerId]/onboard/page.tsx` — Server component: loads player, guardian count, latest assessment, approved placement rec, groups; computes initial step for resume
+- `src/app/director/players/[playerId]/onboard/OnboardingStepperClient.tsx` — Client stepper: 6-step progress bar, DONNA commentary, step navigation, state management
+- `src/app/director/players/[playerId]/onboard/StepAssessment.tsx` — Step 3: 5-domain 1–4 rating form with done state; calls quickAssessmentAction
+- `src/app/director/players/[playerId]/onboard/StepDonnaRecommendation.tsx` — Step 4: client-side DONNA engine recommendation from assessment scores; shows explanation + top reasons
+- `src/app/director/players/[playerId]/onboard/StepDirectorReview.tsx` — Step 5: group picker (DONNA pre-filled); calls onboardingPlacementAction to create + approve placement
+- `src/app/director/players/[playerId]/onboard/StepActivatePlayer.tsx` — Step 6: placement summary + activate button; calls activatePlayerAction
+- `src/app/director/players/[playerId]/onboard/onboardingPlacementAction.ts` — Server action: server-resolves academyId, verifies group, creates + approves placement_recommendations in one call
+
+**Modified:**
+- `src/app/director/players/new/createPlayerAction.ts` — Redirect to `/director/players/${id}/onboard` instead of player profile
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-02 — Mega Sprint 1231-1245 — Curriculum Builder Cognitive Load Reduction V1
 
 **Audit findings:** 6 issues (builder landing), 7 issues (level builder), 2 issues (DONNA panel). Full report in `docs/qa/CURRICULUM_BUILDER_COGNITIVE_LOAD_AUDIT.md`.
