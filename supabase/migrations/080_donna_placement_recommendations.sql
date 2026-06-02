@@ -152,6 +152,9 @@ CREATE INDEX IF NOT EXISTS idx_dpr_assessment
   ON donna_placement_recommendations(assessment_id)
   WHERE assessment_id IS NOT NULL;
 
+DROP TRIGGER IF EXISTS tr_donna_placement_recommendations_updated_at
+  ON donna_placement_recommendations;
+
 CREATE TRIGGER tr_donna_placement_recommendations_updated_at
   BEFORE UPDATE ON donna_placement_recommendations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
