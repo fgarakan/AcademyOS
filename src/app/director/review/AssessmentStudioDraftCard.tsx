@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { ClipboardList, TrendingUp, TrendingDown, Minus, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { approveAssessmentDraftAction } from '@/app/director/players/[playerId]/assessmentStudioAction'
+import { rejectDraftAction } from './rejectAssessmentDraftAction'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,23 +43,6 @@ export interface EnrichedAssessmentStudioDraftItem {
   playerName:   string | null
   proposerName: string | null
   payload:      AssessmentStudioDraftPayload
-}
-
-// ─── Reject action ────────────────────────────────────────────────────────────
-
-async function rejectDraftAction(id: string): Promise<{ ok: boolean; error: string | null }> {
-  'use server'
-  const { getSupabaseServer } = await import('@/lib/supabase/server')
-  const { revalidatePath } = await import('next/cache')
-  const supabase = await getSupabaseServer()
-  const rawDb = supabase as any
-  const { error } = await rawDb
-    .from('proposed_actions')
-    .update({ status: 'rejected' })
-    .eq('id', id)
-  if (error) return { ok: false, error: error.message }
-  revalidatePath('/director/review')
-  return { ok: true, error: null }
 }
 
 // ─── Domain bar (mini) ────────────────────────────────────────────────────────
