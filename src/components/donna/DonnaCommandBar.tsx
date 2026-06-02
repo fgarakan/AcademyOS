@@ -12,7 +12,7 @@
 //   Input → donnaGlobalCommandAction (server) → DonnaCommandResult → renders
 //   DonnaResultCard + evidence points + action buttons + follow-up chips
 
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useEffect } from 'react'
 import { Sparkles, Send, Loader2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { donnaGlobalCommandAction, type DonnaCommandResult } from '@/app/director/_actions/donnaGlobalCommandAction'
@@ -28,6 +28,10 @@ interface DonnaCommandBarProps {
   placeholder?: string
   /** Optional: show inline (compact) vs full (expanded) mode */
   mode?: 'compact' | 'full'
+  /** Sprint 1156: external question trigger from suggested question chips */
+  triggerQuestion?: string | null
+  /** Sprint 1156: called after the triggered question is consumed */
+  onTriggered?: () => void
 }
 
 // ── Action button ─────────────────────────────────────────────────────────────
@@ -72,12 +76,24 @@ export function DonnaCommandBar({
   sessionId,
   placeholder = 'Ask DONNA anything… "Who needs attention today?" "Why isn\'t Jamie ready for Orange 2?"',
   mode = 'full',
+  triggerQuestion,
+  onTriggered,
 }: DonnaCommandBarProps) {
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState<DonnaCommandResult | null>(null)
   const [showEvidence, setShowEvidence] = useState(false)
   const [isPending, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Sprint 1156: auto-submit when an external question trigger arrives
+  useEffect(() => {
+    if (triggerQuestion) {
+      setQuestion(triggerQuestion)
+      handleSubmit(triggerQuestion)
+      onTriggered?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerQuestion])
 
   function handleSubmit(q: string) {
     if (!q.trim()) return

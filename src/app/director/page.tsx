@@ -22,6 +22,9 @@ import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection
 import { DirectorPrimaryActionHero } from './_components/DirectorPrimaryActionHero'
 // DONNA UI Constitution — DonnaScreenBriefStatic
 import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
+// Sprint 1156: DONNA adoption layer
+import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
+import { DonnaFirstGreeting } from '@/components/donna/DonnaFirstGreeting'
 import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
@@ -492,6 +495,18 @@ export default async function DirectorDashboard() {
         />
       </div>
 
+      {/* ── Sprint 1156: DONNA First Daily Greeting ──────────────────── */}
+      <DonnaFirstGreeting
+        directorFirstName={directorDisplayName.split(' ')[0]}
+        greeting={timeGreeting}
+        pendingWrapUps={pendingWrapUpsCount}
+        pendingPlacements={pendingCount}
+        attentionCount={attentionCount}
+        parentUpdatesPending={0}
+        advancementReadyCount={advancementReadyCount}
+        activePlayers={activePlayers}
+      />
+
       {/* ── DONNA UI Constitution Brief — one sentence, what matters right now ── */}
       {/* Constitution: every screen has 1 DONNA brief before data. Sprint 1123.       */}
       <DonnaScreenBriefStatic
@@ -500,6 +515,9 @@ export default async function DirectorDashboard() {
         primaryActionHref={constitutionActionHref}
         emphasis={constitutionUrgency}
       />
+
+      {/* ── Sprint 1156: DONNA Command Section ──────────────────────── */}
+      <DonnaCommandSection pagePath="/director" />
 
       {/* ── Sprint 1034: Primary Action Hero — one clear action at the top ── */}
       {/* Replaces DonnaDashboardOpenCard (804) + DirectorTodayCommandCenter (767).    */}

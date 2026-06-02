@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1156-1165 — DONNA Adoption Layer and Command Bar Wiring V1
+
+- `src/components/donna/DonnaSuggestedQuestions.tsx` (new): Page-specific question chips. 7 routes configured with 3-5 questions each. `getQuestionsForRoute()` resolves by exact/prefix match. Clicking chip calls `onSelect(question)`.
+- `src/components/donna/DonnaCommandSection.tsx` (new): Wraps DonnaSuggestedQuestions + DonnaCommandBar with shared trigger state. Chip click auto-submits question to command bar.
+- `src/components/donna/DonnaFirstGreeting.tsx` (new): Today page greeting. Lists real attention items (pending wrap-ups, placements, attention players, advancement-ready, parent updates). Falls back to "Academy looks calm" when nothing urgent. Never invents data.
+- `src/components/donna/DonnaCommandBar.tsx` (modified): Added `triggerQuestion` + `onTriggered` props. `useEffect` auto-submits when triggerQuestion changes; calls onTriggered() to clear it.
+- `src/app/director/page.tsx` (modified): Added DonnaFirstGreeting (top of page) + DonnaCommandSection.
+- `src/app/director/players/page.tsx` (modified): Added DonnaCommandSection after constitution brief.
+- `src/app/director/players/[playerId]/page.tsx` (modified): Added DonnaCommandSection with playerId + player-scoped question overrides.
+- `src/app/director/review/page.tsx` (modified): Added DonnaCommandSection after DonnaReviewBriefPanel.
+- `src/app/director/donna-analytics/page.tsx` (new): Internal DONNA usage analytics. Reads from donna_events. Shows: intent frequency, top pages, unrecognised questions. Director/head_coach only. Graceful fallback when table absent.
+- `docs/architecture/DONNA_ADOPTION_LAYER.md` (new): Architecture reference.
+- `docs/qa/DONNA_ADOPTION_LAYER_QA.md` (new): QA checklist.
+- TypeScript: clean.
+
 ## 2026-06-02 — Mega Sprint 1141-1155 — DONNA Global Command Layer V1
 
 - `src/lib/donna/donnaGlobalIntentRouter.ts` (new): `classifyDonnaIntent()` — 30+ intents, 8 categories, regex+keyword scoring, player name extraction, page context disambiguation. Pure TS.
