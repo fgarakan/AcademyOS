@@ -2,6 +2,15 @@
 -- Creates the platform-owned global template with 7 sections and 55 skills.
 -- level_applicability is set per skill based on age/stage relevance.
 -- This template is read-only (is_global=true). Directors customize their academy clone.
+--
+-- IDEMPOTENCY: This entire block is guarded by an existence check on is_global = true.
+-- Re-running will SKIP all inserts if the global template already exists.
+-- A partial unique index also prevents more than one global template from ever existing.
+
+-- Prevent duplicate global templates at the DB level (safe to apply if index already exists)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_at_single_global
+  ON assessment_templates(is_global)
+  WHERE is_global = true;
 
 DO $$
 DECLARE
@@ -26,6 +35,15 @@ DECLARE
   general_red   text[] := ARRAY['general','red_ball','orange_ball','green_dot','yellow_ball','high_performance'];
 
 BEGIN
+
+  -- ── Idempotency guard ─────────────────────────────────────────────────────
+  -- If the global template already exists, skip all inserts entirely.
+  -- This makes the migration safe to re-run on environments where it was
+  -- already applied (fully or partially).
+  IF EXISTS (SELECT 1 FROM assessment_templates WHERE is_global = true LIMIT 1) THEN
+    RAISE NOTICE 'migration 082: global assessment template already exists — skipping seed (idempotent no-op)';
+    RETURN;
+  END IF;
 
   -- ── Global template ────────────────────────────────────────────────────────
   INSERT INTO assessment_templates (name, is_global, platform_version, description)

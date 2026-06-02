@@ -51,7 +51,8 @@ export type ConsentStatus =
 export interface EvidenceRecord {
   id: string
   academy_id: string
-  player_id: string
+  // Nullable: set to null when player exits and record is anonymized (ON DELETE SET NULL)
+  player_id: string | null
 
   source_type: EvidenceSourceType
   source_id: string | null
@@ -65,8 +66,12 @@ export interface EvidenceRecord {
   priority_label: string | null
 
   pathway: EvidencePathway | null
+  // Orthogonal to pathway/source_type — e.g. 'assessment' | 'observation' | 'milestone'
+  evidence_category: string | null
   confidence: number
   evidence_strength: EvidenceStrength
+  // Relative weight for rollup calculations (default 1.0)
+  evidence_weight: number
   evidence_summary: string
 
   visible_to_director: boolean
@@ -79,8 +84,14 @@ export interface EvidenceRecord {
   consent_status: ConsentStatus
   consent_version: string | null
 
+  // Player Passport / anonymization fields
+  anonymized_player_key: string | null
+  former_player_stage: string | null
+  former_player_age_band: string | null
+
   anonymized_at: string | null
   transferred_at: string | null
+  expires_at: string | null
 
   created_by: string | null
   created_at: string
