@@ -162,6 +162,9 @@ CREATE TRIGGER tr_donna_placement_recommendations_updated_at
 ALTER TABLE donna_placement_recommendations ENABLE ROW LEVEL SECURITY;
 
 -- Directors and head coaches see all recommendations in their academy
+DROP POLICY IF EXISTS "Directors see all DONNA placement recommendations"
+  ON donna_placement_recommendations;
+
 CREATE POLICY "Directors see all DONNA placement recommendations"
   ON donna_placement_recommendations FOR SELECT
   USING (
@@ -170,6 +173,9 @@ CREATE POLICY "Directors see all DONNA placement recommendations"
   );
 
 -- Directors and head coaches can create recommendations
+DROP POLICY IF EXISTS "Directors create DONNA placement recommendations"
+  ON donna_placement_recommendations;
+
 CREATE POLICY "Directors create DONNA placement recommendations"
   ON donna_placement_recommendations FOR INSERT
   WITH CHECK (
@@ -178,6 +184,9 @@ CREATE POLICY "Directors create DONNA placement recommendations"
   );
 
 -- Directors and head coaches can update (decision, outcome)
+DROP POLICY IF EXISTS "Directors update DONNA placement recommendations"
+  ON donna_placement_recommendations;
+
 CREATE POLICY "Directors update DONNA placement recommendations"
   ON donna_placement_recommendations FOR UPDATE
   USING (
