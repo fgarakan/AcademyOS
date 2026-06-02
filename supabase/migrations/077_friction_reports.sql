@@ -56,6 +56,9 @@ CREATE INDEX IF NOT EXISTS idx_friction_severity
   ON friction_reports(severity, created_at DESC)
   WHERE status = 'open';
 
+DROP TRIGGER IF EXISTS tr_friction_reports_updated_at
+  ON friction_reports;
+
 CREATE TRIGGER tr_friction_reports_updated_at
   BEFORE UPDATE ON friction_reports
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -63,6 +66,9 @@ CREATE TRIGGER tr_friction_reports_updated_at
 ALTER TABLE friction_reports ENABLE ROW LEVEL SECURITY;
 
 -- Any active academy member can insert their own report
+DROP POLICY IF EXISTS "Staff insert own friction reports"
+  ON friction_reports;
+
 CREATE POLICY "Staff insert own friction reports"
   ON friction_reports FOR INSERT
   WITH CHECK (
@@ -72,6 +78,9 @@ CREATE POLICY "Staff insert own friction reports"
   );
 
 -- Directors and head coaches see all reports for their academy
+DROP POLICY IF EXISTS "Directors see all friction reports"
+  ON friction_reports;
+
 CREATE POLICY "Directors see all friction reports"
   ON friction_reports FOR SELECT
   USING (
@@ -80,11 +89,17 @@ CREATE POLICY "Directors see all friction reports"
   );
 
 -- Users can see their own reports
+DROP POLICY IF EXISTS "Users see own friction reports"
+  ON friction_reports;
+
 CREATE POLICY "Users see own friction reports"
   ON friction_reports FOR SELECT
   USING (reporter_id = auth.uid());
 
 -- Directors and head coaches can update (resolve) reports
+DROP POLICY IF EXISTS "Directors manage friction reports"
+  ON friction_reports;
+
 CREATE POLICY "Directors manage friction reports"
   ON friction_reports FOR UPDATE
   USING (

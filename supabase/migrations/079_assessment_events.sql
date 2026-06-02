@@ -90,6 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_ae_scheduled
   ON assessment_events(academy_id, scheduled_for)
   WHERE status = 'scheduled' AND scheduled_for IS NOT NULL;
 
+DROP TRIGGER IF EXISTS tr_assessment_events_updated_at
+  ON assessment_events;
+
 CREATE TRIGGER tr_assessment_events_updated_at
   BEFORE UPDATE ON assessment_events
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -97,6 +100,9 @@ CREATE TRIGGER tr_assessment_events_updated_at
 ALTER TABLE assessment_events ENABLE ROW LEVEL SECURITY;
 
 -- Directors and head coaches see all assessment events in their academy
+DROP POLICY IF EXISTS "Directors see all assessment events"
+  ON assessment_events;
+
 CREATE POLICY "Directors see all assessment events"
   ON assessment_events FOR SELECT
   USING (
@@ -105,6 +111,9 @@ CREATE POLICY "Directors see all assessment events"
   );
 
 -- Coaches see events they are the assessor for
+DROP POLICY IF EXISTS "Coaches see own assessment events"
+  ON assessment_events;
+
 CREATE POLICY "Coaches see own assessment events"
   ON assessment_events FOR SELECT
   USING (
@@ -114,6 +123,9 @@ CREATE POLICY "Coaches see own assessment events"
   );
 
 -- Directors and head coaches can create assessment events
+DROP POLICY IF EXISTS "Directors create assessment events"
+  ON assessment_events;
+
 CREATE POLICY "Directors create assessment events"
   ON assessment_events FOR INSERT
   WITH CHECK (
@@ -122,6 +134,9 @@ CREATE POLICY "Directors create assessment events"
   );
 
 -- Directors and head coaches can update assessment events
+DROP POLICY IF EXISTS "Directors update assessment events"
+  ON assessment_events;
+
 CREATE POLICY "Directors update assessment events"
   ON assessment_events FOR UPDATE
   USING (
@@ -134,6 +149,9 @@ CREATE POLICY "Directors update assessment events"
   );
 
 -- Coaches can update events they are the assessor for (in_progress → completed)
+DROP POLICY IF EXISTS "Coaches update own assessment events"
+  ON assessment_events;
+
 CREATE POLICY "Coaches update own assessment events"
   ON assessment_events FOR UPDATE
   USING (

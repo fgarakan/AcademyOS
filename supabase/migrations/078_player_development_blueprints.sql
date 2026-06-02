@@ -101,6 +101,9 @@ CREATE INDEX IF NOT EXISTS idx_pdb_assessment
   WHERE assessment_id IS NOT NULL;
 
 -- updated_at trigger
+DROP TRIGGER IF EXISTS tr_player_development_blueprints_updated_at
+  ON player_development_blueprints;
+
 CREATE TRIGGER tr_player_development_blueprints_updated_at
   BEFORE UPDATE ON player_development_blueprints
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -108,6 +111,9 @@ CREATE TRIGGER tr_player_development_blueprints_updated_at
 ALTER TABLE player_development_blueprints ENABLE ROW LEVEL SECURITY;
 
 -- Directors and head coaches see all blueprints in their academy
+DROP POLICY IF EXISTS "Directors see all blueprints"
+  ON player_development_blueprints;
+
 CREATE POLICY "Directors see all blueprints"
   ON player_development_blueprints FOR SELECT
   USING (
@@ -116,6 +122,9 @@ CREATE POLICY "Directors see all blueprints"
   );
 
 -- Coaches see active blueprints (for players they work with — scoped at app layer)
+DROP POLICY IF EXISTS "Coaches see active blueprints"
+  ON player_development_blueprints;
+
 CREATE POLICY "Coaches see active blueprints"
   ON player_development_blueprints FOR SELECT
   USING (
@@ -125,6 +134,9 @@ CREATE POLICY "Coaches see active blueprints"
   );
 
 -- Players see their own active blueprint
+DROP POLICY IF EXISTS "Players see own active blueprint"
+  ON player_development_blueprints;
+
 CREATE POLICY "Players see own active blueprint"
   ON player_development_blueprints FOR SELECT
   USING (
@@ -139,6 +151,9 @@ CREATE POLICY "Players see own active blueprint"
   );
 
 -- Directors can create blueprints
+DROP POLICY IF EXISTS "Directors create blueprints"
+  ON player_development_blueprints;
+
 CREATE POLICY "Directors create blueprints"
   ON player_development_blueprints FOR INSERT
   WITH CHECK (
@@ -147,6 +162,9 @@ CREATE POLICY "Directors create blueprints"
   );
 
 -- Directors can update blueprints (archive, supersede)
+DROP POLICY IF EXISTS "Directors update blueprints"
+  ON player_development_blueprints;
+
 CREATE POLICY "Directors update blueprints"
   ON player_development_blueprints FOR UPDATE
   USING (

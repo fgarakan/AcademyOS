@@ -71,6 +71,9 @@ CREATE INDEX IF NOT EXISTS idx_pma_proposed_action
   ON player_mission_assignments(proposed_action_id)
   WHERE proposed_action_id IS NOT NULL;
 
+DROP TRIGGER IF EXISTS tr_player_mission_assignments_updated_at
+  ON player_mission_assignments;
+
 CREATE TRIGGER tr_player_mission_assignments_updated_at
   BEFORE UPDATE ON player_mission_assignments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -78,6 +81,9 @@ CREATE TRIGGER tr_player_mission_assignments_updated_at
 ALTER TABLE player_mission_assignments ENABLE ROW LEVEL SECURITY;
 
 -- Directors and head coaches see all missions in their academy
+DROP POLICY IF EXISTS "Directors see all mission assignments"
+  ON player_mission_assignments;
+
 CREATE POLICY "Directors see all mission assignments"
   ON player_mission_assignments FOR SELECT
   USING (
@@ -86,6 +92,9 @@ CREATE POLICY "Directors see all mission assignments"
   );
 
 -- Coaches see active, completed, skipped, archived missions
+DROP POLICY IF EXISTS "Coaches see active missions"
+  ON player_mission_assignments;
+
 CREATE POLICY "Coaches see active missions"
   ON player_mission_assignments FOR SELECT
   USING (
@@ -95,6 +104,9 @@ CREATE POLICY "Coaches see active missions"
   );
 
 -- Players see only their own active missions
+DROP POLICY IF EXISTS "Players see own active missions"
+  ON player_mission_assignments;
+
 CREATE POLICY "Players see own active missions"
   ON player_mission_assignments FOR SELECT
   USING (
@@ -109,6 +121,9 @@ CREATE POLICY "Players see own active missions"
   );
 
 -- Directors can insert with any status
+DROP POLICY IF EXISTS "Directors insert mission assignments"
+  ON player_mission_assignments;
+
 CREATE POLICY "Directors insert mission assignments"
   ON player_mission_assignments FOR INSERT
   WITH CHECK (
@@ -117,6 +132,9 @@ CREATE POLICY "Directors insert mission assignments"
   );
 
 -- Coaches can only insert draft or pending_review
+DROP POLICY IF EXISTS "Coaches insert mission drafts"
+  ON player_mission_assignments;
+
 CREATE POLICY "Coaches insert mission drafts"
   ON player_mission_assignments FOR INSERT
   WITH CHECK (
@@ -126,6 +144,9 @@ CREATE POLICY "Coaches insert mission drafts"
   );
 
 -- Directors can update any mission
+DROP POLICY IF EXISTS "Directors update mission assignments"
+  ON player_mission_assignments;
+
 CREATE POLICY "Directors update mission assignments"
   ON player_mission_assignments FOR UPDATE
   USING (
@@ -138,6 +159,9 @@ CREATE POLICY "Directors update mission assignments"
   );
 
 -- Coaches can update own drafts and mark active as completed
+DROP POLICY IF EXISTS "Coaches update own drafts and complete active"
+  ON player_mission_assignments;
+
 CREATE POLICY "Coaches update own drafts and complete active"
   ON player_mission_assignments FOR UPDATE
   USING (
@@ -150,6 +174,9 @@ CREATE POLICY "Coaches update own drafts and complete active"
   );
 
 -- Only directors can delete
+DROP POLICY IF EXISTS "Directors delete mission assignments"
+  ON player_mission_assignments;
+
 CREATE POLICY "Directors delete mission assignments"
   ON player_mission_assignments FOR DELETE
   USING (
