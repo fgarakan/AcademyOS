@@ -30,6 +30,10 @@ import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdo
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
 import { DirectorTodayKpiSection } from './_components/DirectorTodayKpiSection'
+// Sprint 1701 — DONNA COO Surface Layer
+import { buildDashboardAttentionContext } from '@/lib/donna/proactive/dashboardAttentionContext'
+import { buildAcademyAttentionReport } from '@/lib/donna/proactive/academyAttentionEngine'
+import { DonnaAcademyCOOBriefCard } from '@/components/donna/DonnaAcademyCOOBriefCard'
 // Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
 // Sprint 804: DonnaDashboardOpenCard removed in Sprint 1034 — replaced by DirectorPrimaryActionHero + persistent DONNA button
 
@@ -441,6 +445,25 @@ export default async function DirectorDashboard() {
   // Academy live state — all 4 setup steps complete
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
+  // Sprint 1701 — Build COO attention report from dashboard-available data.
+  // No new DB queries — re-uses values already computed above.
+  // Total pending reviews: wrap-ups + assessments + placement reviews.
+  const totalPendingReviews = pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews
+  const cooAttentionCtx = buildDashboardAttentionContext({
+    missingWrapUps:           coachRecapsMissing,
+    highRiskPlayerCount:      attentionCount,
+    pendingReviews:           totalPendingReviews,
+    attendanceExceptions:     pendingWrapUpsCount,
+    advancementEligibleCount: advancementReadyCount,
+    playerProgressStallCount: stalledPlayerCount,
+    curriculumGapCount:       curricGapCount,
+    curriculumDraftCount:     pendingSuggestionsCount,
+    reassessmentDueCount:     reassessmentDue,
+    sessionsThisWeek,
+    isLive:                   isAcademyLive,
+  })
+  const cooAttentionReport = buildAcademyAttentionReport(cooAttentionCtx)
+
   // DONNA UI Constitution — compute screen brief (1–2 sentences from real data)
   const constitutionTotal =
     attentionCount + pendingCount + assessmentsNeedingReview +
@@ -560,6 +583,16 @@ export default async function DirectorDashboard() {
         primaryActionLabel={constitutionActionLabel}
         primaryActionHref={constitutionActionHref}
         emphasis={constitutionUrgency}
+      />
+
+      {/* ── Sprint 1701: DONNA COO Brief Card ────────────────────────── */}
+      {/* Expanded by default — director sees today's highest-leverage action  */}
+      {/* immediately without clicking. Empty state is honest ("academy clear"). */}
+      {/* Positioned here so DONNA leads the intelligence section.              */}
+      <DonnaAcademyCOOBriefCard
+        report={cooAttentionReport}
+        expanded
+        data-donna-focus-id="academy-coo-brief"
       />
 
       {/* ── Sprint 1156: DONNA Command Section ──────────────────────── */}

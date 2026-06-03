@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1701–1710 — DONNA COO Surface Layer V1
+
+- Created `src/lib/donna/proactive/dashboardAttentionContext.ts` — `buildDashboardAttentionContext()`: maps dashboard-computed values into a minimal `DirectorDonnaContext` for the attention engine; no new DB queries; conservative zero defaults prevent false positives
+- Modified `src/app/director/page.tsx` — imported `buildDashboardAttentionContext`, `buildAcademyAttentionReport`, `DonnaAcademyCOOBriefCard`; builds COO report from existing data; mounts card expanded by default between `DonnaScreenBriefStatic` and `DonnaCommandSection`
+- Created `docs/qa/DONNA_COO_SURFACE_LAYER_V1.md` — placement, data source table, destination links, 5-second acceptance criterion, safety invariants, manual checklist
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1691–1700 — DONNA Proactive Academy COO V1
 
 - Created `src/lib/donna/proactive/academyAttentionEngine.ts` — `buildAcademyAttentionReport(ctx)`: groups `DonnaAttentionPriority[]` by category; adds `AcademyHealthSignal` (clear/attention_needed/critical); covers all 8 attention categories; `buildProactiveNoticeText()` for COO surfaces
