@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1421–1450 — Assessment Routing Engine V1
+
+**Created:**
+- `src/lib/assessment/assessmentTemplateResolver.ts` — Pure TS resolver: maps player stage + purpose → template name, mode, view, DONNA explanation, confidence. No DB calls.
+- `src/app/director/players/[playerId]/_actions/loadTemplateForPurposeAction.ts` — Server action: validates academy membership, calls resolver + `loadAssessmentFormConfigByName`, returns serialisable form config for client-side purpose override
+- `src/app/director/players/[playerId]/_components/AssessmentPurposePicker.tsx` — Client component: DONNA explanation chip, confidence badge, 4-purpose override picker, fallback warning, wraps `AssessmentStudioForm`; server action round-trip on purpose change
+- `docs/qa/ASSESSMENT_ROUTING_ENGINE_V1.md` — 50-item QA checklist
+
+**Modified:**
+- `src/lib/assessment/assessmentTemplateLoader.ts` — Added `loadAssessmentFormConfigByName()` + `AssessmentFormConfigWithRouting` type (additive only); looks up global template by name, falls back to Core Template with `fallbackUsed/fallbackReason`
+- `src/app/director/players/[playerId]/_components/AssessmentsTab.tsx` — Replaced `loadAssessmentFormConfig` with resolver + `loadAssessmentFormConfigByName`; replaced `AssessmentStudioForm` direct render with `AssessmentPurposePicker`; added `playerStatus` + `playerFirstName` optional props
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Mega Sprint 1406–1435 — Assessment Experience V2 + Assessment Template System Activation
 
 **Created:**

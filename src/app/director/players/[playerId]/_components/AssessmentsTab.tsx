@@ -1,19 +1,21 @@
-// Sprint 1196-1210 — Assessments Tab
-// Template-driven. Loads academy assessment template, renders AssessmentStudioForm.
-// Supports reassessment mode (preloads previous assessment + comparison).
+// Sprint 1196-1210 — Assessments Tab (updated Sprint 1421-1450: routing engine)
+// Template-driven. Resolves the correct ball-level template based on player stage and purpose.
+// Falls back to Core Assessment Template when no ball-level template exists.
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 import { ClipboardList, TrendingUp, TrendingDown, Minus, CheckCircle2 } from 'lucide-react'
-import { loadAssessmentFormConfig, } from '@/lib/assessment/assessmentTemplateLoader'
-import { autoSuggestView } from '@/lib/assessment/assessmentTemplateTypes'
+import { loadAssessmentFormConfigByName } from '@/lib/assessment/assessmentTemplateLoader'
+import { resolveAssessmentTemplate } from '@/lib/assessment/assessmentTemplateResolver'
 import type { PreviousAssessmentData, ScoresDetail } from '@/lib/assessment/assessmentTemplateTypes'
-import { AssessmentStudioForm } from './AssessmentStudioForm'
+import { AssessmentPurposePicker } from './AssessmentPurposePicker'
 
 interface AssessmentsTabProps {
-  playerId:    string
-  academyId:   string
-  playerStage: string | null
+  playerId:        string
+  academyId:       string
+  playerStage:     string | null
+  playerStatus?:   string | null
+  playerFirstName?: string | null
 }
 
 interface AssessmentRow {
@@ -135,7 +137,13 @@ function AssessmentCard({ assessment, prevAssessment }: { assessment: Assessment
   )
 }
 
-export async function AssessmentsTab({ playerId, academyId, playerStage }: AssessmentsTabProps) {
+export async function AssessmentsTab({
+  playerId,
+  academyId,
+  playerStage,
+  playerStatus = null,
+  playerFirstName = null,
+}: AssessmentsTabProps) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return <p className="text-xs text-text-muted">Not authenticated.</p>
@@ -204,12 +212,24 @@ export async function AssessmentsTab({ playerId, academyId, playerStage }: Asses
     }
   } catch { /* migration not applied */ }
 
-  // ── Load assessment form config (template-driven) ─────────────────────────
-  const suggestedView = autoSuggestView(playerStage)
-  let formConfig = null
+  // ── Resolve which template to use based on player stage + purpose ────────
+  const resolution = resolveAssessmentTemplate({
+    playerStage,
+    playerStatus,
+    playerFirstName,
+    existingAssessmentCount: assessments.length,
+    requestedPurpose: null, // default — DONNA picks
+  })
+
+  let formConfig: (import('@/lib/assessment/assessmentTemplateTypes').AssessmentFormConfig & { fallbackUsed: boolean; fallbackReason: string | null }) | null = null
   try {
-    formConfig = await loadAssessmentFormConfig(supabase, academyId, suggestedView, 'standard')
-  } catch (e) {
+    formConfig = await loadAssessmentFormConfigByName(
+      supabase,
+      academyId,
+      resolution.templateName,
+      resolution.mode,
+    )
+  } catch {
     // Template tables not yet applied — graceful fallback
   }
 
@@ -237,23 +257,26 @@ export async function AssessmentsTab({ playerId, academyId, playerStage }: Asses
             {draftCount > 0 && <span className="ml-2 text-status-orange">· {draftCount} coach draft{draftCount > 1 ? 's' : ''} pending</span>}
           </p>
         </div>
-        {formConfig && (
-          <p className="text-[10px] text-text-muted">
-            Template: {formConfig.templateName}
-          </p>
-        )}
       </div>
 
-      {/* Assessment Studio Form */}
+      {/* Purpose Picker + Assessment Studio Form */}
       {formConfig ? (
-        <AssessmentStudioForm
+        <AssessmentPurposePicker
           playerId={playerId}
           academyId={academyId}
+          playerStage={playerStage}
+          playerStatus={playerStatus}
+          playerFirstName={playerFirstName}
+          existingAssessmentCount={assessments.length}
+          userRole={userRole}
+          resolvedPurpose={resolution.purpose}
+          resolvedTemplateName={resolution.templateName}
+          donnaExplanation={resolution.donnaExplanation}
+          confidence={resolution.confidence}
+          fallbackUsed={formConfig.fallbackUsed}
+          fallbackReason={formConfig.fallbackReason}
           formConfig={formConfig}
           previousAssessment={previousAssessment}
-          playerStage={playerStage}
-          userRole={userRole}
-          playerFirstName={null}
         />
       ) : (
         <div className="px-4 py-6 rounded-xl bg-surface border border-border text-center space-y-2">

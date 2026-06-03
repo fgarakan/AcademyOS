@@ -238,6 +238,121 @@ async function cloneGlobalTemplate(rawDb: any, academyId: string): Promise<strin
   return cloneId
 }
 
+// ─── Routing-aware loader ─────────────────────────────────────────────────────
+
+export interface AssessmentFormConfigWithRouting extends AssessmentFormConfig {
+  fallbackUsed: boolean
+  fallbackReason: string | null
+}
+
+// Looks up a global template by name.
+// Falls back to the academy's Core Template if not found.
+// Does not modify academy_assessment_templates — ball-level global templates are
+// used directly without cloning (read-only access for V1).
+export async function loadAssessmentFormConfigByName(
+  supabase: SupabaseClient,
+  academyId: string,
+  preferredTemplateName: string,
+  mode: AssessmentMode,
+): Promise<AssessmentFormConfigWithRouting> {
+  const rawDb = supabase as any
+
+  // 1. Try to find a global template with this exact name
+  const { data: globalTemplate } = await rawDb
+    .from('assessment_templates')
+    .select('id, name, platform_version')
+    .eq('name', preferredTemplateName)
+    .eq('is_global', true)
+    .maybeSingle()
+
+  if (!globalTemplate?.id) {
+    // No ball-level template found — fall back to Core Template
+    const fallbackReason = `Using Core Assessment Template because no "${preferredTemplateName}" template was found. Seed ball-level templates from the Assessment Template page.`
+    const base = await loadAssessmentFormConfig(supabase, academyId, 'general', mode)
+    return { ...base, fallbackUsed: true, fallbackReason }
+  }
+
+  const templateId: string = globalTemplate.id
+  const templateName: string = globalTemplate.name
+
+  // 2. Load sections for this global template
+  const { data: sectionsData } = await rawDb
+    .from('assessment_template_sections')
+    .select([
+      'id', 'template_id', 'section_key', 'display_name', 'sort_order',
+      'is_visible', 'is_custom', 'pathway_category', 'level_applicability',
+      'coach_guidance', 'parent_safe_label', 'player_safe_label',
+    ].join(', '))
+    .eq('template_id', templateId)
+    .eq('is_visible', true)
+    .order('sort_order', { ascending: true })
+
+  const sections: TemplateSectionRow[] = sectionsData ?? []
+
+  // 3. Load all skills for this global template
+  const { data: skillsData } = await rawDb
+    .from('assessment_template_skills')
+    .select([
+      'id', 'section_id', 'template_id', 'skill_key', 'display_name', 'sort_order',
+      'is_visible', 'is_custom', 'is_required',
+      'appears_in_quick', 'appears_in_standard', 'appears_in_deep',
+      'scoring_scale', 'level_applicability',
+      'pathway_category', 'coach_guidance', 'parent_safe_label', 'player_safe_label',
+    ].join(', '))
+    .eq('template_id', templateId)
+    .eq('is_visible', true)
+    .order('sort_order', { ascending: true })
+
+  const allSkills: TemplateSkillRow[] = skillsData ?? []
+
+  // 4. Group skills by section, applying mode filter
+  // Ball-level templates don't use level_applicability filtering — all sections apply
+  const skillsBySectionId = new Map<string, FormSkill[]>()
+  for (const skill of allSkills) {
+    if (!matchesMode(skill, mode)) continue
+    if (!skillsBySectionId.has(skill.section_id)) {
+      skillsBySectionId.set(skill.section_id, [])
+    }
+    skillsBySectionId.get(skill.section_id)!.push({
+      id:            skill.id,
+      skill_key:     skill.skill_key,
+      display_name:  skill.display_name,
+      sort_order:    skill.sort_order,
+      is_required:   skill.is_required,
+      scoring_scale: skill.scoring_scale,
+      coach_guidance: skill.coach_guidance,
+    })
+  }
+
+  // 5. Build form sections
+  const formSections: FormSection[] = []
+  for (const section of sections) {
+    const sectionSkills = skillsBySectionId.get(section.id) ?? []
+    if (mode === 'quick' && sectionSkills.length === 0) continue
+    formSections.push({
+      id:               section.id,
+      section_key:      section.section_key,
+      display_name:     section.display_name,
+      sort_order:       section.sort_order,
+      pathway_category: section.pathway_category,
+      coach_guidance:   section.coach_guidance,
+      skills:           sectionSkills,
+    })
+  }
+
+  return {
+    templateId,
+    templateVersionId: null,
+    templateName,
+    view: 'general',
+    mode,
+    sections: formSections,
+    isAcademyTemplate: false,
+    fallbackUsed: false,
+    fallbackReason: null,
+  }
+}
+
 // ─── Filter helpers ───────────────────────────────────────────────────────────
 
 function matchesView(levelApplicability: string[], view: AssessmentView): boolean {
