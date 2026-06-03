@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1741–1760 — DONNA Academy Intelligence COO V2
+
+- Created `src/lib/donna/intelligence/academyIntelligenceEngine.ts` — `AcademyObservation` type (id, category, severity, title, summary, evidence, affectedPlayers, affectedLevels, affectedCoaches, recommendedAction, destination, confidence, limitations); `AcademyIntelligenceReport` type; `buildAcademyIntelligenceReport(ctx)` orchestrator; `formatIntelligenceReportAsMessage()`; pure TypeScript
+- Created `src/lib/donna/intelligence/progressionIntelligence.ts` — `buildProgressionObservations(ctx)` (advancement-ready, stall, assessment-overdue observations); `buildProgressionAnswer(ctx)`, `buildWhoIsReadyAnswer(ctx)`, `buildWhoIsStalledAnswer(ctx)` — all use Observation/Confidence/Evidence/Limitations/Recommendation format
+- Created `src/lib/donna/intelligence/curriculumBottleneckIntelligence.ts` — composite bottleneck score per level (stalls + template coverage + structural gaps + assessment gaps); `buildCurriculumBottleneckObservations(ctx)`; `buildCurriculumBottleneckAnswer(ctx)` — top 3 levels with per-signal breakdown
+- Created `src/lib/donna/intelligence/coachImpactIntelligence.ts` — wrap-up coverage rate + assessment cadence signals; academy-level only (no per-coach attribution — names not in ctx); supportive framing, no blame language; `buildCoachImpactObservations(ctx)`; `buildCoachImpactAnswer(ctx)`
+- Created `src/lib/donna/intelligence/retentionIntelligence.ts` — proxy-only retention signals (stalls, attendance exceptions, level clustering); explicit limitation: no departure records in ctx; `buildRetentionObservations(ctx)`; `buildRetentionAnswer(ctx)`
+- Created `src/lib/donna/intelligence/whatChangedIntelligence.ts` — recent decision activity, assessment trend, curriculum draft signal, review queue age; explicit limitation: no historical snapshots; `buildWhatChangedAnswer(ctx, period)`
+- Created `src/lib/donna/intelligence/academyHealthBrief.ts` — strategic synthesis across all domains: 6 section cards (progression, assessment, coach, curriculum, review queue, retention); `mainOpportunity` + `recommendedFirstAction` + route; `buildAcademyHealthBrief(ctx)`; `buildAcademyHealthBriefAnswer(ctx)`
+- Created `src/lib/donna/intelligence/academyIntelligenceDonnaAnswer.ts` — 10-intent pattern detector (`detectIntelligenceQuestion()`); `buildIntelligenceAnswer(text, ctx)` dispatcher for all intelligence intents; returns `DonnaSafeReadAnswer`
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Sprint 1741 import block; intelligence intercept fires BEFORE existing brief handler; routes all 10 intent patterns through `buildIntelligenceAnswer()` with nav offer
+- Created `docs/qa/DONNA_ACADEMY_INTELLIGENCE_COO_V2.md` — master QA doc: response format standard, module table, command routing table, data sources, known limitations, safety invariants
+- Created `docs/qa/DONNA_PROGRESSION_INTELLIGENCE_V1.md` — 4 scenarios, safety invariants
+- Created `docs/qa/DONNA_CURRICULUM_BOTTLENECK_INTELLIGENCE_V1.md` — bottleneck score formula, 3 scenarios, example output
+- Created `docs/qa/DONNA_COACH_IMPACT_INTELLIGENCE_V1.md` — data limitation, framing standard, 4 scenarios, safety invariants
+- Created `docs/qa/DONNA_RETENTION_INTELLIGENCE_V1.md` — proxy signals table, 3 scenarios, framing standard, safety invariants
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1731–1740 — DONNA Universal Academy Search V1
 
 - Created `src/lib/donna/search/universalSearchResolver.ts` — pure TypeScript in-memory resolver using already-loaded `directorCtx` data: `resolvePlayerFromFullRoster()` (full roster from `playerCurriculumStateSummaries`, cap 30), `resolveTemplateByName()` (partial name match on `templateSummaries`), `resolveSessionRoute()` (today's sessions / sessions list), `resolveAssessmentForPlayer()` (latest assessment cross-referenced with player name), `resolveCoachByName()` (honest fallback — names not in ctx), `resolveParentUpdateRoute()`, `buildWhyStuckAnswer()` (stall reason from `playerProgressStalls`), `resolveUniversalFallback()` (ordered pipeline)

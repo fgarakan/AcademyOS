@@ -95,6 +95,11 @@ import {
   buildWhyStuckAnswer,
   resolveAssessmentForPlayer,
 } from '@/lib/donna/search/universalSearchResolver'
+// Sprint 1741 — Academy Intelligence COO V2
+import {
+  detectIntelligenceQuestion,
+  buildIntelligenceAnswer,
+} from '@/lib/donna/intelligence/academyIntelligenceDonnaAnswer'
 // Sprint 1691 — Proactive Academy COO
 import {
   detectFocusTodayQuestion,
@@ -1274,6 +1279,42 @@ export function DonnaVoiceReadyShell({
         }
       }, 500)
       return
+    }
+
+    // ── Sprint 1741: Academy Intelligence COO V2 intercept ──────────────────
+    // Fires BEFORE the existing brief handler for strategic intelligence questions:
+    // "What is the academy learning?", "Who is stalled?", "Which levels are bottlenecks?",
+    // "Which coaches are progressing players fastest?", "Why are players leaving?",
+    // "What changed this month?", "What should we improve next?", "Academy health brief"
+    if (plainRole === 'director' && directorCtx && detectIntelligenceQuestion(trimmed)) {
+      const intelligenceAnswer = buildIntelligenceAnswer(trimmed, directorCtx)
+      if (intelligenceAnswer) {
+        const intelligenceMsg: ChatMessage = {
+          id:         `donna-intelligence-${Date.now()}`,
+          role:       'donna',
+          kind:       'text',
+          text:       intelligenceAnswer.text,
+          timestamp:  new Date().toISOString(),
+          confidence: intelligenceAnswer.confidence as any,
+          sourceNote: intelligenceAnswer.sourceNote,
+          followUp:   intelligenceAnswer.followUp ?? undefined,
+          followUpHref: intelligenceAnswer.href ?? undefined,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, intelligenceMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, intelligenceAnswer.text, {
+            actionId:   intelligenceAnswer.actionId,
+            domain:     'general',
+            confidence: intelligenceAnswer.confidence as any,
+            sourceNote: intelligenceAnswer.sourceNote ?? undefined,
+          })
+          if (intelligenceAnswer.href) {
+            setPendingNavOffer({ href: intelligenceAnswer.href, label: intelligenceAnswer.followUp ?? 'Take me there', questionContext: trimmed })
+          }
+        }, 600)
+        return
+      }
     }
 
     // ── Sprint 945: Director Intelligence Brief intercept ────────────────────
