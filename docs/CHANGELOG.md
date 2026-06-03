@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1711–1720 — DONNA Guided Decision Workflows V1
+
+- Created `src/lib/donna/workflows/decisionWorkflowEngine.ts` — 5 workflow definitions (promotion/placement/parent_update/curriculum_review/assessment); each step has title/description/route/focusId/actionLabel/requiresApproval/donnaWillNotDo; `detectGuidedReviewIntent()` classifier; `buildWorkflowForType()`; `buildStepMessage()`; pure TS
+- Created `src/components/donna/DonnaDecisionGuidePanel.tsx` — reusable guided workflow panel; step X of Y progress dots; current step detail + action button; approval badge; prev/next navigation; safety footer; dismissible
+- Modified `src/lib/donna/workflow/workflowMemory.ts` — added `'promotion'` to `WorkflowType`; added `currentStep?` + `totalSteps?` to `WorkflowEntry`; resume messages now reference step number; `getWorkflowStatusLabel()` includes step suffix
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — added `setActiveWorkflow` + engine imports; `GUIDED_REVIEW_PATTERN` intercept before roster attention; builds workflow, sends step 1 message, sets focus target, saves to workflow memory
+- Created `docs/qa/DONNA_GUIDED_DECISION_WORKFLOWS_V1.md` — 6 scenarios certified, engine coverage, safety invariants
+- Created `docs/qa/DONNA_PROMOTION_REVIEW_GUIDE_V1.md` — 5-step promotion workflow QA
+- Created `docs/qa/DONNA_PLACEMENT_REVIEW_GUIDE_V1.md` — 4-step placement workflow QA
+- Created `docs/qa/DONNA_PARENT_UPDATE_REVIEW_GUIDE_V1.md` — 3-step parent update workflow QA
+- Created `docs/qa/DONNA_CURRICULUM_REVIEW_GUIDE_V1.md` — 6-step curriculum review workflow QA
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1701–1710 — DONNA COO Surface Layer V1
 
 - Created `src/lib/donna/proactive/dashboardAttentionContext.ts` — `buildDashboardAttentionContext()`: maps dashboard-computed values into a minimal `DirectorDonnaContext` for the attention engine; no new DB queries; conservative zero defaults prevent false positives

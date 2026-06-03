@@ -24,6 +24,7 @@ export type WorkflowType =
   | 'parent_update'
   | 'curriculum_review'
   | 'draft'
+  | 'promotion'            // Sprint 1711 — promotion review workflow
 
 export interface WorkflowEntry {
   type:      WorkflowType
@@ -33,6 +34,10 @@ export interface WorkflowEntry {
   storedAt:  number          // Date.now() at time of set
   /** Optional extra context (safe string only) */
   context?:  string
+  /** Sprint 1711 — current step in a multi-step guided workflow (1-based) */
+  currentStep?: number
+  /** Sprint 1711 — total steps in the workflow */
+  totalSteps?:  number
 }
 
 export interface WorkflowResume {
@@ -93,19 +98,21 @@ function clearStorage(): void {
 
 // ─── DONNA message builders per workflow type ──────────────────────────────────
 
-const WORKFLOW_RESUME_MESSAGES: Record<WorkflowType, (label: string, context?: string) => string> = {
+const WORKFLOW_RESUME_MESSAGES: Record<WorkflowType, (label: string, context?: string, step?: number, total?: number) => string> = {
   onboarding: (label) =>
     `Your academy onboarding is still in progress${label ? ` for ${label}` : ''}. I'll take you back to where you left off.`,
-  placement: (label) =>
-    `The placement review for ${label || 'a player'} is still open. I'll take you to the placement queue.`,
-  assessment: (label) =>
-    `Your assessment of ${label || 'a player'} is in progress. I'll take you back to continue.`,
+  placement: (label, _ctx, step, total) =>
+    `The placement review for ${label || 'a player'} is still open${step && total ? ` — you were on step ${step} of ${total}` : ''}. I'll take you to the placement queue.`,
+  assessment: (label, _ctx, step, total) =>
+    `Your assessment of ${label || 'a player'} is in progress${step && total ? ` (step ${step} of ${total})` : ''}. I'll take you back to continue.`,
   parent_update: (label) =>
     `A parent update for ${label || 'a player'} is waiting for your review. I'll take you to the draft.`,
-  curriculum_review: (label) =>
-    `Your curriculum review${label ? ` for ${label}` : ''} is in progress. I'll take you back to the curriculum page.`,
+  curriculum_review: (label, _ctx, step, total) =>
+    `Your curriculum review${label ? ` for ${label}` : ''} is in progress${step && total ? ` — you were on step ${step} of ${total}` : ''}. I'll take you back to the curriculum page.`,
   draft: (label, context) =>
     `${label ? `"${label}"` : 'A draft'} is waiting in your Review Center${context ? ` — ${context}` : ''}. I'll take you there.`,
+  promotion: (label, _ctx, step, total) =>
+    `Your promotion review for ${label || 'a player'} is in progress${step && total ? ` — you were on step ${step} of ${total}` : ''}. I'll take you back to continue.`,
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────────
@@ -148,7 +155,7 @@ export function continueWorkflow(): WorkflowResume {
     }
   }
   const msgBuilder = WORKFLOW_RESUME_MESSAGES[entry.type]
-  const message = msgBuilder(entry.label, entry.context)
+  const message = msgBuilder(entry.label, entry.context, entry.currentStep, entry.totalSteps)
   return {
     found:    true,
     workflow: entry,
@@ -172,7 +179,12 @@ export function getWorkflowStatusLabel(): string | null {
     parent_update:    'Parent update pending',
     curriculum_review: 'Curriculum review open',
     draft:            'Draft awaiting review',
+    promotion:        'Promotion review in progress',
   }
   const base = typeLabels[entry.type] ?? 'Workflow in progress'
-  return entry.label ? `${base} — ${entry.label}` : base
+  const stepSuffix = entry.currentStep && entry.totalSteps
+    ? ` (step ${entry.currentStep}/${entry.totalSteps})`
+    : ''
+  const labelPart = entry.label ? ` — ${entry.label}` : ''
+  return `${base}${labelPart}${stepSuffix}`
 }

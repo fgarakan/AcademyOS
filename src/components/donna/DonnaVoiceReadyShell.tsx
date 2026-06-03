@@ -78,7 +78,13 @@ import { buildCurriculumImproveStep } from '@/lib/donna/operator/actionDispatche
 // Sprint 1661 — COO Mode
 import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { buildDonnaLiveContext } from '@/lib/donna/context/donnaContextEngine'
-import { continueWorkflow } from '@/lib/donna/workflow/workflowMemory'
+import { continueWorkflow, setActiveWorkflow } from '@/lib/donna/workflow/workflowMemory'
+// Sprint 1711 — Guided Decision Workflows
+import {
+  detectGuidedReviewIntent,
+  buildWorkflowForType,
+  buildStepMessage,
+} from '@/lib/donna/workflows/decisionWorkflowEngine'
 // Sprint 1691 — Proactive Academy COO
 import {
   detectFocusTodayQuestion,
@@ -1778,6 +1784,69 @@ export function DonnaVoiceReadyShell({
         if (dqNavOffer) setPendingNavOffer(dqNavOffer)
       }, 600)
       return
+    }
+
+    // ── Sprint 1711: Guided review workflow intercept ───────────────────────
+    // Fires BEFORE the roster attention intercept.
+    // Matches "review Jamie", "review placement", "guide me through curriculum review", etc.
+    // Builds a multi-step guided workflow, returns step 1 message, sets focus target,
+    // and saves workflow to memory for "continue where we left off".
+    if (plainRole === 'director') {
+      const reviewIntent = detectGuidedReviewIntent(trimmed)
+      if (reviewIntent) {
+        const workflow = buildWorkflowForType(reviewIntent.type, reviewIntent.subjectHint ?? undefined)
+        const step1 = workflow.steps[0]
+        const workflowMsg = [workflow.openingMessage, '', buildStepMessage(workflow, 1)].join('\n')
+
+        // Save to workflow memory so "continue where we left off" can resume
+        setActiveWorkflow({
+          type:         reviewIntent.type === 'promotion' ? 'promotion'
+                      : reviewIntent.type === 'placement' ? 'placement'
+                      : reviewIntent.type === 'assessment' ? 'assessment'
+                      : reviewIntent.type === 'parent_update' ? 'parent_update'
+                      : 'curriculum_review',
+          label:        reviewIntent.subjectHint ?? workflow.subjectLabel,
+          route:        step1.route,
+          focusId:      step1.focusId,
+          context:      `Step 1: ${step1.title}`,
+          currentStep:  1,
+          totalSteps:   workflow.totalSteps,
+        })
+
+        // Set highlight target
+        setDonnaFocusTarget({
+          route:          step1.route,
+          targetId:       step1.focusId,
+          label:          step1.title,
+          reason:         step1.description,
+          sourceCommand:  trimmed,
+          highlightStyle: 'teal-glow',
+        })
+
+        const guidedMsg: ChatMessage = {
+          id:         `donna-guided-${Date.now()}`,
+          role:       'donna',
+          kind:       'text',
+          text:       workflowMsg,
+          timestamp:  new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: `Guided workflow: ${workflow.title}`,
+          followUp:   step1.actionLabel,
+          followUpHref: step1.actionHref,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, guidedMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, workflowMsg, {
+            actionId:   `guided_review_${reviewIntent.type}`,
+            domain:     'general',
+            confidence: 'high',
+            sourceNote: `Workflow: ${workflow.title}`,
+          })
+          setPendingNavOffer({ href: step1.actionHref, label: step1.actionLabel, questionContext: trimmed })
+        }, 400)
+        return
+      }
     }
 
     // Roster attention intercept — "Who needs attention?" style questions
