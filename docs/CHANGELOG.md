@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1761–1770 — DONNA Learning Foundations V1
+
+- Created `src/lib/donna/learning/decisionTracking.ts` — `buildDecisionTrackingSignals(ctx)`: module-frequency signal + repeated-rejection signal from `recentDecisions`; no causal claims; all outputs use hedged language ("early signal", "pattern should be monitored")
+- Created `src/lib/donna/learning/recommendationLearning.ts` — `buildRecommendationLearningSignals(ctx)`: overall acceptance rate signal + modification-pattern signal; minimum 3-decision threshold; no outcome inference
+- Created `src/lib/donna/learning/repeatedPatternDetector.ts` — `buildRepeatedPatternSignals(ctx)`: curriculum gap cluster, high-risk player attention cluster, advancement eligibility cluster, progress stall cluster, assessment coverage gap cluster; every signal includes explicit limitation that no causal link is inferred
+- Created `src/lib/donna/learning/academyPlaybook.ts` — `PlaybookEntry`, `AcademyPlaybook` types; `buildAcademyPlaybook(ctx, report)`: decision rate, review queue load, curriculum gaps, advancement eligibility entries + top-2 signals from learning report; `formatPlaybookForDonna()` uses 5-part structure
+- Created `src/lib/donna/learning/learningCommandRouter.ts` — `LearningIntent` union (7 types); `classifyLearningIntent()` + `isLearningPhrase()`; `buildLearningAnswer(input, ctx)` dispatcher; every branch outputs Observation / Confidence / Evidence / Limitations / Recommended Next Action; no causal claims in any branch
+- Modified `src/lib/donna/donnaCommandRouter.ts` — added `academy_learning` to `DonnaCommandCategory`; added `learning_answer` to `DonnaCommandDestination`; added route entry (read-only, no director approval required)
+- Modified `src/lib/donna/donnaIntentClassifier.ts` — added `academy_learning` signal set (18 phrases); added `academy_learning` to `formatCategoryLabel` map
+- Modified `src/components/donna/DONNACommandConfirmation.tsx` — added `academy_learning` to `CATEGORY_ACTION_LABELS`
+- Modified `src/components/donna/DONNACommandPreviewCard.tsx` — added `academy_learning` to `CATEGORY_LABELS`; added `learning_answer` to `DESTINATION_LABELS`
+- Safety invariants enforced throughout: no claims that curriculum changes improved progression, coach actions caused retention, parent updates improved retention, or assessment completion caused advancement; all signals use "appears associated", "early signal", "pattern observed", "needs more history"
+
 ## 2026-06-03 — Mega Sprint 1741–1760 — DONNA Academy Intelligence COO V2
 
 - Created `src/lib/donna/intelligence/academyIntelligenceEngine.ts` — `AcademyObservation` type (id, category, severity, title, summary, evidence, affectedPlayers, affectedLevels, affectedCoaches, recommendedAction, destination, confidence, limitations); `AcademyIntelligenceReport` type; `buildAcademyIntelligenceReport(ctx)` orchestrator; `formatIntelligenceReportAsMessage()`; pure TypeScript

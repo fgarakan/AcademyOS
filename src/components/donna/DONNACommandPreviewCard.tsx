@@ -35,6 +35,7 @@ const DESTINATION_LABELS: Record<DonnaCommandDestination, string> = {
   review_queue_surface: 'Review queue (read-only)',
   academy_health_answer: 'Academy health answer (read-only)',
   wrap_up_flow: 'Coach wrap-up flow',
+  learning_answer: 'Academy learning answer (read-only)',
   clarification_required: 'Needs clarification',
 }
 
@@ -50,6 +51,7 @@ const CATEGORY_LABELS: Record<DonnaCommandCategory, string> = {
   review_queue: 'Review queue',
   academy_health: 'Academy health',
   wrap_up: 'Session wrap-up',
+  academy_learning: 'Academy learning',
   unknown: 'Unknown',
 }
 

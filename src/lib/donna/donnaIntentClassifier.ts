@@ -89,6 +89,16 @@ const SIGNAL_MAP: Array<{ category: DonnaCommandCategory; signals: string[] }> =
       'close out', 'done with session', 'session debrief', 'post-session', 'post session',
     ],
   },
+  {
+    category: 'academy_learning',
+    signals: [
+      'playbook', 'academy playbook', 'what patterns', 'what repeats', 'recurring issues',
+      'decision history', 'recent decisions', 'what was approved', 'what was rejected',
+      'acceptance rate', 'recommendation history', 'what have you learned',
+      'learning summary', 'academy intelligence', 'advancement patterns',
+      'curriculum patterns', 'pattern observed', 'early signal', 'what signals',
+    ],
+  },
 ]
 
 // ── Classifier ────────────────────────────────────────────────────────────────
@@ -157,6 +167,7 @@ export function formatCategoryLabel(category: DonnaCommandCategory): string {
     review_queue: 'the review queue',
     academy_health: 'an academy health check',
     wrap_up: 'a session wrap-up',
+    academy_learning: 'an academy learning or pattern query',
     unknown: 'something I need clarification on',
   }
   return labels[category]

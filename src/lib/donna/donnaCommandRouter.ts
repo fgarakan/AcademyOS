@@ -15,6 +15,7 @@ export type DonnaCommandCategory =
   | 'review_queue'        // surface or navigate review queue
   | 'academy_health'      // COO health query (read-only answer)
   | 'wrap_up'             // guide coach wrap-up flow
+  | 'academy_learning'    // pattern observation, decision history, academy playbook (read-only)
   | 'unknown'             // unclassified — route to clarification
 
 // ── Dispatch destinations ─────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ export type DonnaCommandDestination =
   | 'review_queue_surface'
   | 'academy_health_answer'
   | 'wrap_up_flow'
+  | 'learning_answer'
   | 'clarification_required'
 
 // ── Route result ──────────────────────────────────────────────────────────────
@@ -116,6 +118,14 @@ const ROUTE_MAP: Record<DonnaCommandCategory, DonnaRouteResult> = {
     isReadOnly: false,
     canAutoRoute: true,
     routingNote: 'Coach wrap-up flow — DonnaConversationalPanel → DonnaVoiceWrapUpShell → draft adapter',
+  },
+  academy_learning: {
+    category: 'academy_learning',
+    destination: 'learning_answer',
+    requiresDirectorApproval: false,
+    isReadOnly: true,
+    canAutoRoute: true,
+    routingNote: 'Learning query — learningCommandRouter.ts builds structured answer from DirectorDonnaContext. No writes. No mutations. No outcome claims.',
   },
   unknown: {
     category: 'unknown',

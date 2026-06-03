@@ -42,6 +42,7 @@ const CATEGORY_ACTION_LABELS: Record<DonnaCommandCategory, string> = {
   review_queue: 'Open review queue',
   academy_health: 'Get academy health answer',
   wrap_up: 'Start wrap-up flow',
+  academy_learning: 'Get learning answer (read-only)',
   unknown: 'Confirm',
 }
 
