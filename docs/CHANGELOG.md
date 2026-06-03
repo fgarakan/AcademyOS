@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1661–1680 — DONNA Persistent COO Mode V1
+
+- Created `src/lib/donna/context/donnaContextEngine.ts` — `DonnaLiveContext` unified snapshot type + `buildDonnaLiveContext()`; consolidates page, player, curriculum, session, role into one typed object with context-first `greeting()` builder
+- Created `src/lib/donna/workflow/workflowMemory.ts` — sessionStorage-backed workflow tracker; `setActiveWorkflow`, `getActiveWorkflow`, `clearActiveWorkflow`, `continueWorkflow()`, `getWorkflowStatusLabel()`; 6 workflow types; 4-hour TTL
+- Created `src/lib/donna/briefing/dailyBriefingEngine.ts` — `buildDailyCOOBriefing(ctx, directorName?)` COO morning brief; 6 categories; each item has issue + evidence + why + suggested action; personalized greeting
+- Created `src/components/donna/DonnaCOOStatusPanel.tsx` — compact live status panel; shows pending work indicators, active workflow, entity context; dismissible; collapsed by default
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — added `useDonnaSessionContext` hook; `HEY_DONNA_PATTERN` context-aware greeting intercept; `CONTINUE_WORKFLOW_PATTERN` workflow resume intercept; `CONTEXTUAL_PLAYER_PATTERN` entity shorthand
+- Created `docs/qa/DONNA_CONTEXT_ENGINE_CERTIFICATION_V1.md` — context engine type coverage, entity detection, greeting builder, null safety
+- Created `docs/qa/DONNA_WORKFLOW_MEMORY_CERTIFICATION_V1.md` — storage, workflow types, API functions, resume scenarios, safety
+- Created `docs/qa/DONNA_DAILY_BRIEFING_CERTIFICATION_V1.md` — opening line, item builders, category coverage, urgency ranking, asText format
+- Created `docs/qa/DONNA_HEY_DONNA_CERTIFICATION_V1.md` — activation phrases, context scenarios, pipeline position, no-generic rule
+- Created `docs/qa/DONNA_PERSISTENT_COO_CERTIFICATION_V1.md` — all 6 director scenarios certified; COO status panel; safety verification
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1641–1660 — DONNA Experience Certification V1
 
 - Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Wired "help me improve [level]" to `CURRICULUM_IMPROVE_PATTERN` intercept; imports `extractLevelFromText` + `buildCurriculumImproveStep`; navigates to `/director/curriculum?improve=[levelKey]` with teal-glow highlight on `donna-curriculum-context`

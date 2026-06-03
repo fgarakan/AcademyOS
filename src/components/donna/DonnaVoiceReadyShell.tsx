@@ -75,6 +75,10 @@ import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswe
 import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDonnaAnswer'
 import { extractLevelFromText } from '@/lib/donna/curriculumBuilderOperator'
 import { buildCurriculumImproveStep } from '@/lib/donna/operator/actionDispatcher'
+// Sprint 1661 — COO Mode
+import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
+import { buildDonnaLiveContext } from '@/lib/donna/context/donnaContextEngine'
+import { continueWorkflow } from '@/lib/donna/workflow/workflowMemory'
 import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactDonnaAnswer'
 import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmentDonnaAnswer'
 import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
@@ -187,6 +191,8 @@ export function DonnaVoiceReadyShell({
   const pendingVoiceRef = useRef<string | null>(null)
   const router = useRouter()
   const pathname = usePathname()
+  // Sprint 1661 — COO Mode: read live session context for entity-aware greetings
+  const { session: donnaSession } = useDonnaSessionContext()
 
   // Sprint 912.3 — DONNA Conversation Mode state
   const conv = useDonnaConversationMode()
@@ -1114,6 +1120,104 @@ export function DonnaVoiceReadyShell({
       setMessages(prev => [...prev, boundaryMsg])
       setIsTyping(false)
       recordTurn(trimmed, boundaryMsg.text, { confidence: boundary.confidenceKind })
+      return
+    }
+
+    // ── Sprint 1661: "Hey Donna" activation — context-aware greeting ────────
+    // Fires BEFORE all domain interceptors. "hey donna" / "hi donna" / standalone
+    // "donna" produces a greeting that references current page + entity context.
+    // Never generic. Never "How can I help?".
+    const HEY_DONNA_PATTERN = /^(hey donna|hi donna|hello donna|donna[,.]?\s*$|donna\s+here)/i
+    if (plainRole === 'director' && HEY_DONNA_PATTERN.test(trimmed)) {
+      const liveCtx = buildDonnaLiveContext({
+        pathname:          pathname ?? '/director',
+        role:              'director',
+        directorCtx,
+        playerProfileCtx:  donnaSession.playerProfileContext,
+        moduleLabel:       donnaSession.lastModule,
+        objectLabel:       donnaSession.lastObjectLabel,
+      })
+      const greetingText = liveCtx.greeting()
+      const greetMsg: ChatMessage = {
+        id:         `donna-hey-${Date.now()}`,
+        role:       'donna',
+        kind:       'text',
+        text:       greetingText,
+        timestamp:  new Date().toISOString(),
+        confidence: 'high',
+        sourceNote: `Page: ${liveCtx.pageLabel}`,
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, greetMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, greetingText, { domain: 'general', confidence: 'high', sourceNote: `hey_donna:${liveCtx.pageLabel}` })
+      }, 300)
+      return
+    }
+
+    // ── Sprint 1661: "Continue where we left off" — workflow memory resume ──
+    const CONTINUE_WORKFLOW_PATTERN = /\b(continue (where we left off|what we were doing|the workflow)|pick up where|resume (the |my |our )?(workflow|review|session|assessment|placement|onboarding|draft))\b/i
+    if (plainRole === 'director' && CONTINUE_WORKFLOW_PATTERN.test(trimmed)) {
+      const resume = continueWorkflow()
+      const resumeMsg: ChatMessage = {
+        id:         `donna-resume-${Date.now()}`,
+        role:       'donna',
+        kind:       'text',
+        text:       resume.message,
+        timestamp:  new Date().toISOString(),
+        confidence: resume.found ? 'high' : 'partial',
+        sourceNote: resume.found ? `Workflow: ${resume.workflow?.type}` : null,
+        followUp:   resume.found && resume.route ? 'Take me there' : undefined,
+        followUpHref: resume.found && resume.route ? resume.route : undefined,
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, resumeMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, resume.message, { domain: 'general', confidence: resume.found ? 'high' : 'partial' })
+        if (resume.found && resume.route) {
+          setPendingNavOffer({ href: resume.route, label: 'Resume workflow', questionContext: trimmed })
+        }
+      }, 400)
+      return
+    }
+
+    // ── Sprint 1661: Contextual shorthand — entity-aware commands ───────────
+    // When director is on a player profile page (playerProfileContext loaded),
+    // resolve pronouns ("this player", "they", "them") and contextual questions
+    // ("how are they doing?", "what should we work on here?") to the current player.
+    // Fires BEFORE roster attention to provide richer context-aware answers.
+    const CONTEXTUAL_PLAYER_PATTERN = /\b(how (is|are) (this player|they|them|[A-Z][a-z]+ ?(doing|progressing))|what (should|can) (they|this player|we|i) (work on|do|focus on)|this player'?s? (priorities|evidence|readiness|status)|how (does|is) (this|the) (player|profile) look)\b/i
+    if (
+      plainRole === 'director' &&
+      donnaSession.playerProfileContext &&
+      CONTEXTUAL_PLAYER_PATTERN.test(trimmed)
+    ) {
+      const pCtx = donnaSession.playerProfileContext
+      const entityName = donnaSession.lastObjectLabel ?? 'this player'
+      let contextualText: string
+      if (pCtx.activePriorityCount > 0 && pCtx.topPriorityTitle) {
+        contextualText = [
+          `${entityName} currently has ${pCtx.activePriorityCount} active development ${pCtx.activePriorityCount === 1 ? 'priority' : 'priorities'}.`,
+          `Top priority: ${pCtx.topPriorityTitle}${pCtx.topPriorityLevel ? ` at ${pCtx.topPriorityLevel} level` : ''}.`,
+          `Ask me "Why isn't ${entityName} ready?" or "Show me the evidence" for more detail.`,
+        ].join(' ')
+      } else {
+        contextualText = `${entityName} has no active development priorities recorded yet. Complete an assessment to generate evidence-backed priorities.`
+      }
+      const contextMsg: ChatMessage = {
+        id:         `donna-ctx-player-${Date.now()}`,
+        role:       'donna',
+        kind:       'text',
+        text:       contextualText,
+        timestamp:  new Date().toISOString(),
+        confidence: 'high',
+        sourceNote: `Player context: ${entityName}`,
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, contextMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, contextualText, { domain: 'players', confidence: 'high', sourceNote: `contextual:${entityName}` })
+      }, 400)
       return
     }
 
