@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1541–1550 — DONNA Operator Capability Audit V1
+
+**Created:**
+- `docs/qa/DONNA_OPERATOR_CAPABILITY_AUDIT_V1.md` — Full DONNA COO+ audit: capability matrix (12 categories), COO+ score (5/10 overall), Top 20 gaps ranked by impact, infrastructure inventory, site-wide operator readiness by page, and Mega Sprint 1551–1580 recommendation
+
+**Modified:** None — discovery sprint only. No code changes.
+
+**TypeScript:** clean (no files touched)
+
+---
+
 ## 2026-06-03 — Mega Sprint 1511–1540 — Evidence → Development Priorities Engine V1
 
 **Created:**
