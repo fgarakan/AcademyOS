@@ -29,6 +29,7 @@ import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/at
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
+import { DirectorTodayKpiSection } from './_components/DirectorTodayKpiSection'
 // Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
 // Sprint 804: DonnaDashboardOpenCard removed in Sprint 1034 — replaced by DirectorPrimaryActionHero + persistent DONNA button
 
@@ -203,6 +204,33 @@ export default async function DirectorDashboard() {
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
 
+  // KPI wiring — assessment items in review queue
+  const { count: assessmentsInReviewCount } = await rawDb
+    .from('proposed_actions')
+    .select('*', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .in('target_module', ['assessment_studio_draft', 'placement_assessment_draft'])
+  const assessmentsNeedingReview = assessmentsInReviewCount ?? 0
+
+  // KPI wiring — parent updates pending director approval
+  const { count: parentUpdatesCount } = await rawDb
+    .from('proposed_actions')
+    .select('*', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .eq('target_module', 'parent_communication')
+  const parentUpdatesPendingApproval = parentUpdatesCount ?? 0
+
+  // KPI wiring — active placement and level review items
+  const { count: placementReviewCount } = await rawDb
+    .from('proposed_actions')
+    .select('*', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .in('target_module', ['placement_review', 'placement_recommendation_draft', 'level_review'])
+  const activePlacementReviews = placementReviewCount ?? 0
+
   // Sprint 762 — Recap completion KPI (KPI 4) via coachExecutionKpiEngine.
   // Query 1: completed sessions in last 30 days, academy scoped.
   // Query 2: voice_notes linked to those sessions, academy scoped.
@@ -220,7 +248,10 @@ export default async function DirectorDashboard() {
 
   const completedSessionIds = (completedSessionsData ?? []).map((s: { id: string }) => s.id)
 
+  // sessionsWithNote hoisted so recapsMissingCount can be derived below
+  let sessionsWithNote = new Set<string>()
   let recapCompletionPct: number | null = null
+
   if (completedSessionIds.length > 0) {
     const { data: voiceNoteSessionData } = await supabase
       .from('voice_notes')
@@ -228,10 +259,10 @@ export default async function DirectorDashboard() {
       .eq('academy_id', academyId)
       .in('session_id', completedSessionIds)
 
-    const sessionsWithNote = new Set(
+    sessionsWithNote = new Set(
       (voiceNoteSessionData ?? [])
         .map((v: { session_id: string | null }) => v.session_id)
-        .filter(Boolean),
+        .filter(Boolean) as string[],
     )
 
     const recapChecks: RecapCheckRow[] = completedSessionIds.map(id => ({
@@ -242,6 +273,9 @@ export default async function DirectorDashboard() {
     const recapResult = computeRecapCompletionRate(recapChecks, 30)
     recapCompletionPct = recapResult.value
   }
+
+  // Coach recaps missing = completed sessions (last 30 days) with no voice_note
+  const coachRecapsMissing = completedSessionIds.filter(id => !sessionsWithNote.has(id)).length
 
   // Checklist
   const { data: templateCheckData } = await rawDb
@@ -408,7 +442,9 @@ export default async function DirectorDashboard() {
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
   // DONNA UI Constitution — compute screen brief (1–2 sentences from real data)
-  const constitutionTotal = pendingWrapUpsCount + pendingCount + attentionCount
+  const constitutionTotal =
+    attentionCount + pendingCount + assessmentsNeedingReview +
+    reassessmentDue + parentUpdatesPendingApproval + coachRecapsMissing + activePlacementReviews
   let constitutionBrief: string
   let constitutionUrgency: 'normal' | 'urgent' = 'normal'
   let constitutionActionLabel: string | undefined
@@ -422,13 +458,23 @@ export default async function DirectorDashboard() {
     constitutionBrief = `${activePlayers} active player${activePlayers !== 1 ? 's' : ''}. No urgent items today — academy is running smoothly.`
   } else {
     const parts: string[] = []
-    if (pendingWrapUpsCount > 0) parts.push(`${pendingWrapUpsCount} wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} waiting for review`)
-    if (pendingCount > 0) parts.push(`${pendingCount} player${pendingCount !== 1 ? 's' : ''} need${pendingCount !== 1 ? '' : 's'} placement`)
     if (attentionCount > 0) parts.push(`${attentionCount} player${attentionCount !== 1 ? 's' : ''} need${attentionCount !== 1 ? '' : 's'} attention`)
-    constitutionBrief = parts.join(', ') + '.'
-    if (constitutionTotal > 3) constitutionUrgency = 'urgent'
-    constitutionActionLabel = pendingWrapUpsCount > 0 ? 'Review Queue' : 'Players'
-    constitutionActionHref = pendingWrapUpsCount > 0 ? '/director/review' : '/director/players'
+    if (pendingCount > 0) parts.push(`${pendingCount} pending onboarding`)
+    if (assessmentsNeedingReview > 0) parts.push(`${assessmentsNeedingReview} assessment${assessmentsNeedingReview !== 1 ? 's' : ''} to review`)
+    if (reassessmentDue > 0) parts.push(`${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} due for reassessment`)
+    if (parentUpdatesPendingApproval > 0) parts.push(`${parentUpdatesPendingApproval} parent update${parentUpdatesPendingApproval !== 1 ? 's' : ''} pending`)
+    if (coachRecapsMissing > 0) parts.push(`${coachRecapsMissing} coach recap${coachRecapsMissing !== 1 ? 's' : ''} missing`)
+    if (activePlacementReviews > 0) parts.push(`${activePlacementReviews} placement review${activePlacementReviews !== 1 ? 's' : ''} active`)
+    constitutionBrief = parts.slice(0, 3).join(', ') + (parts.length > 3 ? `, and ${parts.length - 3} more item${parts.length - 3 !== 1 ? 's' : ''}.` : '.')
+    if (constitutionTotal > 5) constitutionUrgency = 'urgent'
+    // Primary action: highest-urgency first
+    if (attentionCount > 0 || assessmentsNeedingReview > 0 || activePlacementReviews > 0) {
+      constitutionActionLabel = 'Review Queue'
+      constitutionActionHref = '/director/review'
+    } else {
+      constitutionActionLabel = 'Players'
+      constitutionActionHref = '/director/players'
+    }
   }
 
   // Sprint 763: priorityAction banner removed — subsumed by DirectorAttentionQueueHero above.
@@ -502,7 +548,7 @@ export default async function DirectorDashboard() {
         pendingWrapUps={pendingWrapUpsCount}
         pendingPlacements={pendingCount}
         attentionCount={attentionCount}
-        parentUpdatesPending={0}
+        parentUpdatesPending={parentUpdatesPendingApproval}
         advancementReadyCount={advancementReadyCount}
         activePlayers={activePlayers}
       />
@@ -531,45 +577,16 @@ export default async function DirectorDashboard() {
         />
       </div>
 
-      {/* ── Sprint 813: Today's Pulse — compact signal strip ──────────────────────── */}
-      {/* Three at-a-glance tiles: review queue, player attention, sessions this week. */}
-      {/* Each is a Link — tap to go directly to the relevant section.                */}
-      {/* Sprint 818: data-donna-focus-id attributes added for DONNA teal highlighting */}
-      <div className="grid grid-cols-3 gap-3" data-donna-focus-id="todays-pulse">
-        <Link href="/director/review" className="block">
-          <div
-            data-donna-focus-id="review-queue-card"
-            className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30"
-          >
-            <p className={`font-mono font-bold text-2xl leading-none ${(pendingWrapUpsCount + newRequests) > 0 ? 'text-status-orange' : 'text-text-secondary'}`}>
-              {pendingWrapUpsCount + newRequests}
-            </p>
-            <p className="text-[11px] text-text-muted mt-1.5 leading-snug">Review queue</p>
-          </div>
-        </Link>
-        <Link href="/director/players" className="block">
-          <div
-            data-donna-focus-id="player-attention-card"
-            className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30"
-          >
-            <p className={`font-mono font-bold text-2xl leading-none ${attentionCount > 0 ? 'text-status-orange' : 'text-text-secondary'}`}>
-              {attentionCount}
-            </p>
-            <p className="text-[11px] text-text-muted mt-1.5 leading-snug">Players — attention</p>
-          </div>
-        </Link>
-        <Link href="/director/sessions" className="block">
-          <div
-            data-donna-focus-id="sessions-this-week-card"
-            className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-lime/30"
-          >
-            <p className="font-mono font-bold text-2xl leading-none text-lime">
-              {sessionsThisWeek}
-            </p>
-            <p className="text-[11px] text-text-muted mt-1.5 leading-snug">Sessions this week</p>
-          </div>
-        </Link>
-      </div>
+      {/* ── KPI Wiring V1 — 7 real-data KPI tiles replacing the 3-tile pulse strip ── */}
+      <DirectorTodayKpiSection
+        playersNeedingAttention={attentionCount}
+        pendingOnboarding={pendingCount}
+        assessmentsNeedingReview={assessmentsNeedingReview}
+        playersReadyForReassessment={reassessmentDue}
+        parentUpdatesPendingApproval={parentUpdatesPendingApproval}
+        coachRecapsMissing={coachRecapsMissing}
+        activePlacementReviews={activePlacementReviews}
+      />
 
       {/* ── Sprint 813: Collapsed sections — all closed by default ─────────────────── */}
       {/* Director landing is a Daily Command screen, not a scrolling dashboard.       */}

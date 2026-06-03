@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-03 — Director Dashboard KPI Wiring V1
+
+**Created:**
+- `src/app/director/_components/DirectorTodayKpiSection.tsx` — 7-KPI card grid; each tile is a Link with real count, color-coded urgency, and calm zero-label
+- `docs/qa/DIRECTOR_DASHBOARD_KPI_WIRING.md` — QA checklist: data source, route, empty-state, role safety, and known limitations for all 7 KPIs
+
+**Modified:**
+- `src/app/director/page.tsx` — Added 3 count queries (`assessment_studio_draft`+`placement_assessment_draft`, `parent_communication`, `placement_review`+`placement_recommendation_draft`+`level_review` proposed_actions); hoisted `sessionsWithNote` Set to derive `coachRecapsMissing`; replaced 3-tile pulse grid with `DirectorTodayKpiSection`; fixed `DonnaFirstGreeting.parentUpdatesPending` from hardcoded `0` to real count; updated `DonnaScreenBriefStatic` brief to cover all 7 KPIs
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-02 — Mega Sprint 1301–1325 — Player Onboarding Experience 10/10
 
 **Created:**
