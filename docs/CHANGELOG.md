@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1691–1700 — DONNA Proactive Academy COO V1
+
+- Created `src/lib/donna/proactive/academyAttentionEngine.ts` — `buildAcademyAttentionReport(ctx)`: groups `DonnaAttentionPriority[]` by category; adds `AcademyHealthSignal` (clear/attention_needed/critical); covers all 8 attention categories; `buildProactiveNoticeText()` for COO surfaces
+- Created `src/lib/donna/proactive/focusTodayAnswerEngine.ts` — `detectFocusTodayQuestion()` + `buildFocusTodayAnswer(ctx)` (5-field: action/reason/evidence/destination/approval) + `buildProactiveNoticeAnswer()` for "What are you noticing?"
+- Created `src/components/donna/DonnaAcademyCOOBriefCard.tsx` — COO brief card; health signal badge; top action lime highlight with 5-field expand; supporting items; approval badges; empty state; dismissible
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — added `FOCUS_TODAY_PATTERN` + `PROACTIVE_NOTICE_PATTERN` intercepts before existing dashboard priority handler; routes to `focusTodayAnswerEngine`
+- Created `docs/qa/DONNA_PROACTIVE_ACADEMY_COO_V1.md` — coverage matrix, 5-field format spec, safety invariants, manual checklist
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1681–1690 — DONNA Presence Completion V1
 
 - Created `src/components/donna/DonnaCOOStatusWrapper.tsx` — client wrapper; accepts `pendingCount` + `directorName` from server layout; uses `useDonnaSessionContext` + `buildDonnaLiveContext` + `getWorkflowStatusLabel`; compact dismissible top-of-content status bar with pending badge and workflow indicator

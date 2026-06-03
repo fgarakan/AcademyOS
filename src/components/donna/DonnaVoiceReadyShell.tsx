@@ -79,6 +79,12 @@ import { buildCurriculumImproveStep } from '@/lib/donna/operator/actionDispatche
 import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { buildDonnaLiveContext } from '@/lib/donna/context/donnaContextEngine'
 import { continueWorkflow } from '@/lib/donna/workflow/workflowMemory'
+// Sprint 1691 — Proactive Academy COO
+import {
+  detectFocusTodayQuestion,
+  buildFocusTodayAnswer,
+  buildProactiveNoticeAnswer,
+} from '@/lib/donna/proactive/focusTodayAnswerEngine'
 import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactDonnaAnswer'
 import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmentDonnaAnswer'
 import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
@@ -1573,6 +1579,42 @@ export function DonnaVoiceReadyShell({
         }, 600)
         return
       }
+    }
+
+    // ── Sprint 1691: "What should I focus on today?" — proactive COO 5-field answer ──
+    // Fires BEFORE the general dashboard priority handler.
+    // Matches "focus today" and "what are you noticing?" / "what's new?" patterns.
+    // Returns the structured 5-field response: action, reason, evidence, destination, approval.
+    const PROACTIVE_NOTICE_PATTERN = /\b(what (are you|have you been) noticing|what('?s| is) new( today| this morning)?|any( new)? signals( today)?|what should i know( today| right now| about)?)\b/i
+    if (plainRole === 'director' && directorCtx && (detectFocusTodayQuestion(trimmed) || PROACTIVE_NOTICE_PATTERN.test(trimmed))) {
+      const proactiveAnswer = PROACTIVE_NOTICE_PATTERN.test(trimmed) && !detectFocusTodayQuestion(trimmed)
+        ? buildProactiveNoticeAnswer(directorCtx)
+        : buildFocusTodayAnswer(directorCtx)
+      const proactiveMsg = buildChatMessageFromAnswer(proactiveAnswer)
+      const sIdProactive = sessionIdRef.current
+      if (sIdProactive) {
+        logDonnaRecommendation({
+          sessionId:          sIdProactive,
+          sourceSignal:       proactiveAnswer.actionId,
+          recommendationType: 'operating_priority',
+          recommendationText: proactiveAnswer.followUp ?? proactiveAnswer.text.slice(0, 200),
+          confidence:         (proactiveAnswer.confidence as any) ?? null,
+        }).catch(() => {})
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, proactiveMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, proactiveAnswer.text, {
+          actionId:    proactiveAnswer.actionId,
+          domain:      'general',
+          confidence:  proactiveAnswer.confidence,
+          sourceNote:  proactiveAnswer.sourceNote,
+        })
+        if (proactiveAnswer.href) {
+          setPendingNavOffer({ href: proactiveAnswer.href, label: proactiveAnswer.followUp ?? 'Take me there', questionContext: trimmed })
+        }
+      }, 500)
+      return
     }
 
     // Dashboard priority intercept — answer "what should I do first?" style questions

@@ -1,0 +1,152 @@
+// Sprint 1691 — DONNA "What should I focus on today?" Answer Engine V1
+// Produces the exact 5-field response the sprint specifies:
+//   1. Highest leverage action
+//   2. Reason (why it matters)
+//   3. Evidence (what data says so)
+//   4. Destination (where to go)
+//   5. Approval requirement (what director must decide)
+// Plus 2–3 supporting items in a scannable list.
+// Honest all-clear state when no signals are active.
+//
+// Pure TypeScript — no DB calls, no LLM, no mutations, no side effects.
+// Returns DonnaSafeReadAnswer for shell routing compatibility.
+
+import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+import type { DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
+import { buildAcademyAttentionReport } from '@/lib/donna/proactive/academyAttentionEngine'
+
+// ─── Detection ─────────────────────────────────────────────────────────────────
+// Specific to "focus today" intent — tighter than detectDashboardPriorityQuestion.
+// Fires BEFORE the general dashboard priority handler in the shell.
+
+export function detectFocusTodayQuestion(text: string): boolean {
+  const t = text.toLowerCase().trim()
+  return (
+    /what should i focus on today/.test(t) ||
+    /what('?s| is) (my |the )?focus (today|for today|this morning|this afternoon)/.test(t) ||
+    /where should i (start|focus) today/.test(t) ||
+    /what('?s| is) (the )?highest (leverage|priority|impact) (action|thing|item) (today|right now)/.test(t) ||
+    /what (are you|have you been) noticing/.test(t) ||
+    /what should i know (about |today|right now)?/.test(t) ||
+    /what('?s| is) new (today|this morning|in the academy)?/.test(t) ||
+    /any (new )?signals (today|this morning)?/.test(t) ||
+    /what('?s| is) (most |the most )?urgent (today|right now)?/.test(t)
+  )
+}
+
+// ─── 5-field response builder ──────────────────────────────────────────────────
+
+export function buildFocusTodayAnswer(ctx: DirectorDonnaContext): DonnaSafeReadAnswer {
+  const report = buildAcademyAttentionReport(ctx)
+  const prefix = ctx.isLive ? '' : '[Demo] '
+
+  // ── All-clear state ────────────────────────────────────────────────────────
+  if (report.isEmpty) {
+    const sessionNote = ctx.todaySessions > 0
+      ? ` You have ${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} today.`
+      : ''
+    const opportunityNote = (ctx.curriculumGaps?.length ?? 0) > 0
+      ? ' Curriculum gaps are available to review — a good use of clear time.'
+      : ' Good time to review curriculum coverage or check in on player progress.'
+
+    return {
+      actionId:    'focus_today_clear',
+      text:        `${prefix}No urgent signals right now — academy is operating normally.${sessionNote}${opportunityNote}`,
+      confidence:  ctx.confidence,
+      sourceNote:  report.sourceNote,
+      followUp:    'Ask me to review curriculum or check player progress',
+      href:        '/director/donna',
+      isAnswerable: true,
+    }
+  }
+
+  const top = report.topAction!
+
+  // ── Build the 5-field structured response ─────────────────────────────────
+  const lines: string[] = [
+    `${prefix}Here's what I'd focus on today:`,
+    '',
+    `**1. Highest leverage action:**`,
+    `${top.label}`,
+    '',
+    `**2. Why it matters:**`,
+    `${top.whyItMatters}`,
+    '',
+    `**3. Evidence:**`,
+    `${top.evidence}`,
+    '',
+    `**4. Where to go:**`,
+    top.href ? `${top.bestNextAction} → ${top.href}` : top.bestNextAction,
+    '',
+    `**5. Your role:**`,
+    top.requiresApproval
+      ? `Director approval required — ${top.donnaWillNotDo}`
+      : `No approval needed for viewing. ${top.donnaWillNotDo}`,
+  ]
+
+  // ── Supporting items (max 3, excluding top) ────────────────────────────────
+  const supporting = report.allItems.slice(1, 4)
+  if (supporting.length > 0) {
+    lines.push('')
+    lines.push('**Also worth noting:**')
+    supporting.forEach((item, i) => {
+      lines.push(`${i + 2}. ${item.label}`)
+    })
+    if (report.totalCount > 4) {
+      lines.push(`…and ${report.totalCount - 4} more item${report.totalCount - 4 !== 1 ? 's' : ''} in your attention queue.`)
+    }
+  }
+
+  return {
+    actionId:    `focus_today_${top.id}`,
+    text:        lines.join('\n'),
+    confidence:  ctx.confidence,
+    sourceNote:  report.sourceNote,
+    followUp:    top.href ? `Take me to: ${top.bestNextAction.split('.')[0]}` : 'Ask me for more detail',
+    href:        top.href ?? null,
+    isAnswerable: true,
+  }
+}
+
+// ─── Proactive notice answer (for "What are you noticing?" / "What's new?") ───
+
+export function buildProactiveNoticeAnswer(ctx: DirectorDonnaContext): DonnaSafeReadAnswer {
+  const report = buildAcademyAttentionReport(ctx)
+  const prefix = ctx.isLive ? '' : '[Demo] '
+
+  if (report.isEmpty) {
+    return {
+      actionId:    'proactive_notice_clear',
+      text:        `${prefix}Nothing new to flag — academy looks healthy right now. No unusual signals in the last review cycle.`,
+      confidence:  ctx.confidence,
+      sourceNote:  report.sourceNote,
+      followUp:    'Ask me what to focus on or review curriculum coverage',
+      href:        '/director/donna',
+      isAnswerable: true,
+    }
+  }
+
+  const itemLines = report.allItems.slice(0, 5).map(
+    (item, i) => `${i + 1}. **${item.label}** — ${item.whyItMatters.split('.')[0]}.`
+  )
+
+  const text = [
+    `${prefix}Here's what I'm noticing across your academy:`,
+    '',
+    itemLines.join('\n'),
+    '',
+    report.hasApprovalItems
+      ? 'Some of these require your approval before anything changes.'
+      : 'None of these require your approval yet — you can review at your own pace.',
+  ].join('\n')
+
+  return {
+    actionId:    'proactive_notice',
+    text,
+    confidence:  ctx.confidence,
+    sourceNote:  report.sourceNote,
+    followUp:    report.topAction?.href ? `Take me to the top item` : 'Ask me about any item',
+    href:        report.topAction?.href ?? null,
+    isAnswerable: true,
+  }
+}
