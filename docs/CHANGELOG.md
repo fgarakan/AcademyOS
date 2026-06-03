@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1451–1480 — Assessment → Evidence Engine V1
+
+**Created:**
+- `src/lib/evidence/assessmentEvidenceMapper.ts` — Pure TS: maps ScoresDetail + purpose → summary + section EvidenceWriteInputs; section→pathway/category mapping; expiry by purpose (30/45/60/90 days); `isEvidenceStale`, `evidenceAgeLabel` helpers; quick assessment mapper
+- `src/lib/evidence/assessmentEvidenceWriter.ts` — Writes full assessment evidence (summary + section records) via `writeFullAssessmentEvidence`; quick assessment writer via `writeQuickAssessmentEvidence`
+- `docs/qa/ASSESSMENT_TO_EVIDENCE_ENGINE_V1.md` — 51-item QA checklist
+
+**Modified:**
+- `src/lib/evidence/playerEvidenceTypes.ts` — Added optional `evidenceCategory`, `evidenceWeight`, `expiresAt` to `EvidenceWriteInput` (additive — all existing callers unchanged)
+- `src/lib/evidence/playerEvidenceWriter.ts` — Passes `evidence_category`, `evidence_weight`, `expires_at` through to DB insert
+- `src/app/director/players/[playerId]/assessmentStudioAction.ts` — Replaced `writeAssessmentEvidence`/`writeReassessmentEvidence` with `writeFullAssessmentEvidence`; added `labelToPurpose` helper
+- `src/app/director/players/[playerId]/quickAssessmentAction.ts` — Added `writeQuickAssessmentEvidence` call after successful insert; evidence write is non-blocking
+- `src/lib/evidence/donnaEvidenceAnswers.ts` — Added three builders: `buildAssessmentEvidenceMissingAnswer`, `buildWhyNotReadyToAdvanceAnswer`, `buildCoachFocusAnswer`
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Mega Sprint 1421–1450 — Assessment Routing Engine V1
 
 **Created:**

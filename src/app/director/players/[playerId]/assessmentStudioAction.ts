@@ -6,7 +6,15 @@ import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import type { AssessmentLabel, AssessmentMode, AssessmentView, ScoresDetail } from '@/lib/assessment/assessmentTemplateTypes'
 import { LABEL_TO_DB_TYPE } from '@/lib/assessment/assessmentTemplateTypes'
 import { deriveDomainScores } from '@/lib/assessment/assessmentComparisonEngine'
-import { writeAssessmentEvidence, writeReassessmentEvidence } from '@/lib/evidence/playerEvidenceWriter'
+import { writeFullAssessmentEvidence } from '@/lib/evidence/assessmentEvidenceWriter'
+import type { AssessmentPurpose } from '@/lib/assessment/assessmentTemplateResolver'
+
+function labelToPurpose(label: AssessmentLabel): AssessmentPurpose {
+  if (label === 'onboarding_placement') return 'quick_placement_snapshot'
+  if (label === 'level_readiness_review') return 'level_readiness_assessment'
+  if (label === 'competition_readiness_review') return 'evaluation_assessment'
+  return 'development_assessment'
+}
 
 export interface AssessmentStudioInput {
   playerId:          string
@@ -132,31 +140,20 @@ export async function submitAssessmentStudioAction(
 
     // Write to player_evidence_records (non-blocking)
     try {
-      if (input.isReassessment) {
-        await writeReassessmentEvidence(supabase, {
-          academyId:          profile.academy_id,
-          playerId:           input.playerId,
-          assessmentId:       inserted?.id ?? input.playerId,
-          overallDelta:       null,
-          improvedCount:      0,
-          declinedCount:      0,
-          curriculumLevelId:  null,
-          curriculumLevelName: input.assessmentView.replace(/_/g, ' '),
-          createdBy:          user.id,
-        })
-      } else {
-        await writeAssessmentEvidence(supabase, {
-          academyId:          profile.academy_id,
-          playerId:           input.playerId,
-          assessmentId:       inserted?.id ?? input.playerId,
-          overallScore:       derived.overall_score,
-          assessmentLabel:    input.assessmentLabel,
-          assessmentView:     input.assessmentView,
-          curriculumLevelId:  null,
-          curriculumLevelName: null,
-          createdBy:          user.id,
-        })
-      }
+      await writeFullAssessmentEvidence(supabase, {
+        academyId:           profile.academy_id,
+        playerId:            input.playerId,
+        assessmentId:        inserted?.id ?? input.playerId,
+        scoresDetail:        input.scoresDetail,
+        assessmentPurpose:   labelToPurpose(input.assessmentLabel),
+        assessmentLabel:     input.assessmentLabel,
+        assessmentView:      input.assessmentView,
+        overallScore:        derived.overall_score,
+        curriculumLevelId:   null,
+        curriculumLevelName: null,
+        createdBy:           user.id,
+        isReassessment:      input.isReassessment,
+      })
     } catch { /* evidence write failure is non-blocking */ }
 
     revalidatePath(`/director/players/${input.playerId}`)
@@ -331,31 +328,21 @@ export async function approveAssessmentDraftAction(
   // Write to player_evidence_records (non-blocking)
   try {
     const isReassessment = (payload.is_reassessment as boolean | undefined) ?? false
-    if (isReassessment) {
-      await writeReassessmentEvidence(supabase, {
-        academyId:          profile.academy_id,
-        playerId:           action.target_object_id as string,
-        assessmentId:       inserted?.id ?? input.proposedActionId,
-        overallDelta:       null,
-        improvedCount:      0,
-        declinedCount:      0,
-        curriculumLevelId:  null,
-        curriculumLevelName: (payload.assessment_view as string | undefined)?.replace(/_/g, ' ') ?? null,
-        createdBy:          user.id,
-      })
-    } else {
-      await writeAssessmentEvidence(supabase, {
-        academyId:          profile.academy_id,
-        playerId:           action.target_object_id as string,
-        assessmentId:       inserted?.id ?? input.proposedActionId,
-        overallScore:       derived.overall_score,
-        assessmentLabel:    (payload.assessment_label as string | undefined) ?? 'coach_requested',
-        assessmentView:     (payload.assessment_view as string | undefined) ?? 'general',
-        curriculumLevelId:  null,
-        curriculumLevelName: null,
-        createdBy:          user.id,
-      })
-    }
+    const draftLabel = ((payload.assessment_label as string | undefined) ?? 'coach_requested') as AssessmentLabel
+    await writeFullAssessmentEvidence(supabase, {
+      academyId:           profile.academy_id,
+      playerId:            action.target_object_id as string,
+      assessmentId:        inserted?.id ?? input.proposedActionId,
+      scoresDetail:        finalDetail,
+      assessmentPurpose:   labelToPurpose(draftLabel),
+      assessmentLabel:     draftLabel,
+      assessmentView:      (payload.assessment_view as string | undefined) ?? 'general',
+      overallScore:        derived.overall_score,
+      curriculumLevelId:   null,
+      curriculumLevelName: null,
+      createdBy:           user.id,
+      isReassessment,
+    })
   } catch { /* evidence write failure is non-blocking */ }
 
   revalidatePath(`/director/players/${action.target_object_id}`)

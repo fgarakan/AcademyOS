@@ -2,6 +2,7 @@
 // Builds deterministic, citation-only answers for evidence-based DONNA intents.
 // If evidence is empty: answer says exactly that — never invents.
 // Answers are always role-gated before display.
+// Sprint 1451-1480: added buildAssessmentEvidenceMissingAnswer, buildWhyNotReadyToAdvanceAnswer, buildCoachFocusAnswer
 
 import type { EvidenceRecord, ProgressRollup, EvidenceAnswer, EvidencePathway } from './playerEvidenceTypes'
 
@@ -317,3 +318,177 @@ export function buildCoachWatchNextAnswer(
     safeForPlayer:       false,
   }
 }
+
+// ─── 7. What assessment evidence is missing? ──────────────────────────────────
+
+export function buildAssessmentEvidenceMissingAnswer(
+  playerFirstName: string | null,
+  records: EvidenceRecord[],
+  rollup: ProgressRollup,
+): EvidenceAnswer {
+  const name = playerFirstName ?? 'This player'
+  const intent = 'assessment_evidence_missing'
+
+  const assessmentRecords = records.filter(r =>
+    r.source_type === 'assessment_score' || r.source_type === 'reassessment_change'
+  )
+
+  const missingList: string[] = [...rollup.missingEvidence]
+
+  if (assessmentRecords.length === 0) {
+    missingList.unshift('Initial assessment record')
+  }
+
+  const now = Date.now()
+  const staleRecords = assessmentRecords.filter(r => {
+    const expires = (r as EvidenceRecord & { expires_at?: string | null }).expires_at
+    return expires && new Date(expires).getTime() < now
+  })
+  if (staleRecords.length > 0) {
+    missingList.push(`${staleRecords.length} expired assessment record${staleRecords.length !== 1 ? 's' : ''} — reassessment due`)
+  }
+
+  if (missingList.length === 0 && assessmentRecords.length > 0) {
+    return {
+      intent,
+      answer:              `${name} has ${assessmentRecords.length} assessment record${assessmentRecords.length !== 1 ? 's' : ''} on file. No critical evidence gaps detected.`,
+      citedEvidenceIds:    cite(assessmentRecords),
+      missingEvidenceNote: null,
+      confidence:          80,
+      isSafe:              true,
+      safeForParent:       false,
+      safeForPlayer:       false,
+    }
+  }
+
+  const missingClause = missingList.length > 0
+    ? `Missing: ${missingList.slice(0, 4).join(', ')}.`
+    : 'No specific gaps detected.'
+
+  const baseClause = assessmentRecords.length > 0
+    ? `${name} has ${assessmentRecords.length} assessment record${assessmentRecords.length !== 1 ? 's' : ''} on file. `
+    : `${name} has no assessment records on file. `
+
+  return {
+    intent,
+    answer:              `${baseClause}${missingClause}`,
+    citedEvidenceIds:    cite(assessmentRecords),
+    missingEvidenceNote: missingList.slice(0, 3).join(', '),
+    confidence:          assessmentRecords.length > 0 ? 70 : 40,
+    isSafe:              true,
+    safeForParent:       false,
+    safeForPlayer:       false,
+  }
+}
+
+// ─── 8. Why is this player not ready to advance? ─────────────────────────────
+
+export function buildWhyNotReadyToAdvanceAnswer(
+  playerFirstName: string | null,
+  records: EvidenceRecord[],
+  rollup: ProgressRollup,
+  currentLevelName: string | null,
+  nextLevelName: string | null,
+): EvidenceAnswer {
+  const name = playerFirstName ?? 'This player'
+  const intent = 'why_not_ready_to_advance'
+
+  const weakRecords = records.filter(r => r.evidence_strength === 'weak')
+  const highBlockers = rollup.readinessBlockers.filter(b => b.severity === 'high')
+  const allBlockers  = rollup.readinessBlockers
+
+  const targetLevel = nextLevelName ?? 'the next level'
+  const currentLevel = currentLevelName ? ` at ${currentLevelName}` : ''
+
+  if (records.length === 0) {
+    return noEvidence(intent, 'assessment or observation records — run a development assessment first')
+  }
+
+  if (allBlockers.length === 0 && weakRecords.length === 0) {
+    return {
+      intent,
+      answer:              `No specific blockers identified for ${name}${currentLevel}. Consider running a Level Readiness Assessment to confirm readiness for ${targetLevel}.`,
+      citedEvidenceIds:    [],
+      missingEvidenceNote: 'Level readiness assessment',
+      confidence:          50,
+      isSafe:              true,
+      safeForParent:       false,
+      safeForPlayer:       false,
+    }
+  }
+
+  const blockerLines = highBlockers.length > 0
+    ? highBlockers.slice(0, 3).map(b => b.description)
+    : allBlockers.slice(0, 3).map(b => b.description)
+
+  const weakLines = weakRecords.slice(0, 2).map(r => r.evidence_summary.slice(0, 100))
+  const allReasons = [...blockerLines, ...weakLines].slice(0, 4)
+
+  const answer = `${name}${currentLevel} is not yet ready for ${targetLevel}. Reasons: ${allReasons.join(' · ')}.`
+
+  return {
+    intent,
+    answer,
+    citedEvidenceIds:    cite(weakRecords),
+    missingEvidenceNote: rollup.missingEvidence.length > 0 ? rollup.missingEvidence.slice(0, 2).join(', ') : null,
+    confidence:          highBlockers.length > 0 ? 85 : 65,
+    isSafe:              true,
+    safeForParent:       false,
+    safeForPlayer:       false,
+  }
+}
+
+// ─── 9. What should the coach focus on? ──────────────────────────────────────
+
+export function buildCoachFocusAnswer(
+  playerFirstName: string | null,
+  records: EvidenceRecord[],
+  rollup: ProgressRollup,
+): EvidenceAnswer {
+  const name = playerFirstName ?? 'This player'
+  const intent = 'coach_focus'
+
+  if (records.length === 0) {
+    return noEvidence(intent, 'assessment or observation records')
+  }
+
+  const weakAssessmentRecords = records.filter(
+    r => r.source_type === 'assessment_score' && r.evidence_strength === 'weak'
+  )
+  const highBlockers = rollup.readinessBlockers.filter(b => b.severity === 'high')
+  const moderateBlockers = rollup.readinessBlockers.filter(b => b.severity === 'medium')
+
+  const focusItems: string[] = []
+
+  weakAssessmentRecords.slice(0, 2).forEach(r => {
+    focusItems.push(r.evidence_summary.slice(0, 100))
+  })
+
+  highBlockers.slice(0, 2).forEach(b => {
+    if (!focusItems.some(f => f.includes(b.description.slice(0, 40)))) {
+      focusItems.push(b.description.slice(0, 100))
+    }
+  })
+
+  moderateBlockers.slice(0, 1).forEach(b => {
+    if (focusItems.length < 3) focusItems.push(b.description.slice(0, 100))
+  })
+
+  if (focusItems.length === 0) {
+    focusItems.push(rollup.recommendedNextAction)
+  }
+
+  const answer = `Coach focus for ${name}: ${focusItems.slice(0, 3).join(' · ')}.`
+
+  return {
+    intent,
+    answer,
+    citedEvidenceIds:    cite(weakAssessmentRecords),
+    missingEvidenceNote: rollup.missingEvidence.length > 0 ? rollup.missingEvidence[0] : null,
+    confidence:          weakAssessmentRecords.length > 0 ? 80 : 60,
+    isSafe:              true,
+    safeForParent:       false,
+    safeForPlayer:       false,
+  }
+}
+

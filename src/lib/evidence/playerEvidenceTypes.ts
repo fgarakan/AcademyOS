@@ -119,6 +119,10 @@ export interface EvidenceWriteInput {
   visibleToParent?: boolean
   visibleToPlayer?: boolean
   createdBy?: string | null
+  // Sprint 1451-1480: evidence category, weight, expiry
+  evidenceCategory?: string | null
+  evidenceWeight?: number | null
+  expiresAt?: string | null
 }
 
 // ─── Ownership defaults per source type ──────────────────────────────────────

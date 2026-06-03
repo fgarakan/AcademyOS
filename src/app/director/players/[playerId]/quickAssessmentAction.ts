@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { writeQuickAssessmentEvidence } from '@/lib/evidence/assessmentEvidenceWriter'
 
 export interface QuickAssessmentInput {
   playerId: string
@@ -102,6 +103,22 @@ export async function quickAssessmentAction(
     .single()
 
   if (error) return { ok: false, assessmentId: null, error: error.message }
+
+  // Write to player_evidence_records (non-blocking)
+  try {
+    await writeQuickAssessmentEvidence(supabase, {
+      academyId:        profile.academy_id,
+      playerId:         input.playerId,
+      assessmentId:     inserted?.id ?? input.playerId,
+      overallScore:     null,
+      technicalScore:   toScore(input.technical),
+      tacticalScore:    toScore(input.tactical),
+      movementScore:    toScore(input.movement),
+      competitionScore: toScore(input.competition),
+      behavioralScore:  toScore(input.behavioral),
+      createdBy:        user.id,
+    })
+  } catch { /* evidence write failure is non-blocking */ }
 
   revalidatePath(`/director/players/${input.playerId}`)
   return { ok: true, assessmentId: inserted?.id ?? null, error: null }
