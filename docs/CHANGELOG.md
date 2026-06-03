@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1351–1375 — Director Attention Queue V1
+
+**Created:**
+- `src/app/director/attention/buildAttentionItems.ts` — Pure TS builder: maps DB rows into scored `AttentionItem[]` across 8 categories; scoring High/Medium/Low; deterministic DONNA explanations; filter membership per item
+- `src/app/director/attention/AttentionQueueClient.tsx` — Client component: expandable inline drawer per row; filter chips with reactive counts; priority/category badges; empty state with DONNA copy
+- `src/app/director/attention/page.tsx` — Server RSC: loads `v_player_summary`, `v_reassessment_pipeline`, `proposed_actions` (placement, parent, wrap-up); applies `?filter` search param; renders DONNA brief + queue
+- `docs/qa/DIRECTOR_ATTENTION_QUEUE_V1.md` — QA checklist: categories, scoring, filter chips, drawer, DONNA integration, KPI links, safety, empty state, known limitations
+
+**Modified:**
+- `src/app/director/_components/DirectorTodayKpiSection.tsx` — Updated 5 KPI tile hrefs to deep-link into `/director/attention?filter=xxx`
+- `src/lib/donna/donnaActionProposalEngine.ts` — Added `go_to_attention_queue` action; wired to 8 intents (`academy_attention_today`, `players_needing_attention`, `stalled_players`, `overdue_assessments`, `due_assessments`, `pending_placements`, `placement_overrides`, `resume_onboarding`)
+- `src/app/director/_actions/donnaGlobalCommandAction.ts` — Updated `academy_attention_today` answer to mention the Attention Queue
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Director Dashboard KPI Wiring V1
 
 **Created:**

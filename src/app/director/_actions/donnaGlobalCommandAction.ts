@@ -503,7 +503,7 @@ export async function donnaGlobalCommandAction(
       } else {
         const names = (attentionPlayers ?? []).map(p => p.first_name ?? p.full_name ?? 'Unknown').join(', ')
         answer = `${count} player${count > 1 ? 's' : ''} need${count === 1 ? 's' : ''} attention: ${names}. ` +
-          `Check the Players directory for details.`
+          `Open the Attention Queue for the full prioritised list with recommended actions.`
       }
 
       // Count pending approvals
@@ -514,7 +514,7 @@ export async function donnaGlobalCommandAction(
         .eq('status', 'pending_review')
       const pending = (pendingCount as number | null) ?? 0
       if (pending > 0) {
-        answer += ` You also have ${pending} approval${pending > 1 ? 's' : ''} waiting in the queue.`
+        answer += ` You also have ${pending} approval${pending > 1 ? 's' : ''} waiting in the Review Queue.`
       }
 
       evidenceSummary = {
