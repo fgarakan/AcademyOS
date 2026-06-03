@@ -200,10 +200,13 @@ export function buildAttentionItems(input: BuildAttentionItemsInput): AttentionI
   }
 
   // ── 4. Level Readiness Review ───────────────────────────────────────────────
+  // 4a. promotion_ready flag — existing signal
+  const alreadyReadyIds = new Set<string>()
   for (const row of input.players) {
     if (!row.player_id) continue
     if (row.promotion_ready !== true) continue
     if (row.player_status !== 'active') continue
+    alreadyReadyIds.add(row.player_id)
     items.push({
       id: `level_ready_${row.player_id}`,
       category: 'level_readiness_review',
@@ -219,6 +222,36 @@ export function buildAttentionItems(input: BuildAttentionItemsInput): AttentionI
       href: playerHref(row.player_id),
       filters: ['all', 'players', 'placements'],
       daysSinceEvent: null,
+    })
+  }
+
+  // 4b. Evidence-based "close to ready" signal — overall_score >= 7.0
+  // Players whose assessment score suggests readiness but promotion_ready flag is not set.
+  // These are candidates for a Level Readiness Assessment, not automatic promotion.
+  for (const row of input.players) {
+    if (!row.player_id) continue
+    if (row.player_status !== 'active') continue
+    if (alreadyReadyIds.has(row.player_id)) continue  // already handled above
+    if (row.overall_score === null) continue
+    if ((row.overall_score as number) < 7.0) continue
+    if (row.assessment_status === 'overdue') continue // stale — reassessment needed instead
+    const score = (row.overall_score as number).toFixed(1)
+    const daysSince_ = row.last_assessed_at ? daysSince(row.last_assessed_at) : null
+    items.push({
+      id: `level_close_${row.player_id}`,
+      category: 'level_readiness_review',
+      priority: 'low',
+      playerId: row.player_id,
+      playerName: row.full_name,
+      currentLevel: row.level_label,
+      groupName: row.group_name,
+      coachName: row.coach_name,
+      reason: `Assessment score ${score}/10 — may be approaching level readiness`,
+      recommendedAction: 'Open player profile and review evidence before running a Level Readiness Assessment.',
+      donnaExplanation: `${row.full_name ?? 'This player'} has an assessment score of ${score}/10 at ${row.level_label ?? 'current level'}. This doesn't confirm readiness, but it's worth reviewing their evidence before the next session.`,
+      href: playerHref(row.player_id),
+      filters: ['all', 'players'],
+      daysSinceEvent: daysSince_,
     })
   }
 

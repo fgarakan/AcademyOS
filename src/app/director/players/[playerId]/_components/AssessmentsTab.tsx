@@ -9,13 +9,16 @@ import { loadAssessmentFormConfigByName } from '@/lib/assessment/assessmentTempl
 import { resolveAssessmentTemplate } from '@/lib/assessment/assessmentTemplateResolver'
 import type { PreviousAssessmentData, ScoresDetail } from '@/lib/assessment/assessmentTemplateTypes'
 import { AssessmentPurposePicker } from './AssessmentPurposePicker'
+import { LevelReadinessCard } from './LevelReadinessCard'
 
 interface AssessmentsTabProps {
-  playerId:        string
-  academyId:       string
-  playerStage:     string | null
-  playerStatus?:   string | null
+  playerId:         string
+  academyId:        string
+  playerStage:      string | null
+  playerStatus?:    string | null
   playerFirstName?: string | null
+  currentLevelName?: string | null
+  nextLevelName?:   string | null
 }
 
 interface AssessmentRow {
@@ -143,6 +146,8 @@ export async function AssessmentsTab({
   playerStage,
   playerStatus = null,
   playerFirstName = null,
+  currentLevelName = null,
+  nextLevelName = null,
 }: AssessmentsTabProps) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -247,6 +252,15 @@ export async function AssessmentsTab({
 
   return (
     <div className="space-y-5">
+
+      {/* Level Readiness Card — evidence-based signal above the assessment form */}
+      <LevelReadinessCard
+        playerId={playerId}
+        academyId={academyId}
+        playerFirstName={playerFirstName}
+        currentLevelName={currentLevelName}
+        nextLevelName={nextLevelName}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3">

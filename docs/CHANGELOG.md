@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1481–1510 — Evidence → Level Readiness Engine V1
+
+**Created:**
+- `src/lib/evidence/levelReadinessEngine.ts` — Pure TS: `calculateLevelReadiness` → `LevelReadinessResult` with 4-state status (ready/close/not_ready/insufficient_evidence), readiness score 0–100, confidence, categorised supporting/blocking/stale evidence arrays, DONNA explanation, recommended action; includes `buildIsReadyToMoveUpAnswer` DONNA builder
+- `src/app/director/players/[playerId]/_components/LevelReadinessCard.tsx` — Server RSC: loads evidence via aggregator, runs readiness engine, renders compact status card with DONNA explanation, stale evidence warning, missing categories, recommended action, confidence metadata
+- `docs/qa/EVIDENCE_TO_LEVEL_READINESS_ENGINE_V1.md` — 44-item QA checklist
+
+**Modified:**
+- `src/app/director/players/[playerId]/_components/AssessmentsTab.tsx` — Added `LevelReadinessCard` at top of tab; added `currentLevelName` and `nextLevelName` optional props
+- `src/app/director/attention/buildAttentionItems.ts` — Enhanced section 4 (Level Readiness Review): preserves `promotion_ready` items; adds evidence-based "close to ready" signal for active players with `overall_score >= 7.0` (low priority, deduped from promotion_ready set)
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Mega Sprint 1451–1480 — Assessment → Evidence Engine V1
 
 **Created:**
