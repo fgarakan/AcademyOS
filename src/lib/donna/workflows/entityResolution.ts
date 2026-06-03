@@ -1,26 +1,27 @@
 // Sprint 1721 — DONNA Entity Resolution V1
+// Sprint 1731 — Extended to full-roster player lookup, templates, sessions,
+//               assessments, coaches via universalSearchResolver fallback.
 // Resolves natural-language entity references to concrete routes.
 // "Review Jamie" → /director/players/{uuid}
 // "Open Orange Ball 2" → /director/curriculum?improve=orange_ball_2
 // "Review parent updates" → /director/review
-// "Review placement" → /director/review
+// "Open Coach Alex" → honest fallback (names not in ctx)
+// "Show today's sessions" → /director/sessions
 //
 // Design rules:
 //   - Pure TypeScript. No DB calls. No mutations.
-//   - Uses DirectorAttentionItem[] for player name lookup (names already loaded in context).
 //   - Conservative: if ambiguous, returns multiple matches for clarification.
 //   - If no match, returns honest "no match" — never invents a route.
 //   - Case-insensitive matching. Partial first-name match supported.
-//
-// V1 limitation: only resolves players with active attention flags (in DirectorAttentionItem[]).
-// Full roster search requires a separate query — future sprint.
 
 import type { DirectorAttentionItem } from '@/lib/donna/directorDonnaContext'
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+import { resolveUniversalFallback } from '@/lib/donna/search/universalSearchResolver'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-export type EntityKind = 'player' | 'curriculum_level' | 'review_queue' | 'unknown'
+// Sprint 1731: extended with template, session, assessment, coach kinds
+export type EntityKind = 'player' | 'curriculum_level' | 'review_queue' | 'template' | 'session' | 'assessment' | 'coach' | 'unknown'
 
 export interface ResolvedEntity {
   kind:         EntityKind
@@ -193,14 +194,15 @@ export function resolveReviewQueue(text: string): ResolvedEntity | null {
 
 /**
  * Resolves any entity reference from natural language text.
- * Tries player → curriculum level → review queue in order.
- * Uses DirectorDonnaContext for player lookup when available.
+ * Sprint 1721: player → curriculum level → review queue
+ * Sprint 1731: + full roster player fallback → universal resolver (templates, sessions,
+ *              assessments, coaches) via resolveUniversalFallback().
  */
 export function resolveEntityFromText(
   text: string,
   ctx: DirectorDonnaContext | null,
 ): ResolutionResult {
-  // 1. Try player name resolution (requires attentionItems)
+  // 1. Try player name resolution from attention items (fast path — already flagged)
   if (ctx?.attentionItems && ctx.attentionItems.length > 0) {
     const playerResult = resolvePlayerFromText(text, ctx.attentionItems)
     if (playerResult.resolved || playerResult.ambiguous) {
@@ -220,10 +222,20 @@ export function resolveEntityFromText(
     return { resolved: true, entity: reviewEntity, ambiguous: false, candidates: [reviewEntity], fallback: '' }
   }
 
+  // 4. Sprint 1731: universal fallback — full roster, templates, sessions, assessments, coaches
+  if (ctx) {
+    const universalResult = resolveUniversalFallback(text, ctx)
+    if (universalResult.resolved || universalResult.ambiguous) {
+      return universalResult
+    }
+    // Return the universal fallback message (more informative than a generic one)
+    if (universalResult.fallback) return universalResult
+  }
+
   // Not resolved
   return {
     resolved: false, entity: null, ambiguous: false, candidates: [],
-    fallback: `I couldn't identify what you'd like to open. Try: "Review [player name]", "Open Orange Ball 2", or "Review parent updates".`,
+    fallback: `I couldn't identify what you'd like to open. Try: "Open [player name]", "Show Orange Ball 2", "Show today's sessions", or "Open parent updates".`,
   }
 }
 

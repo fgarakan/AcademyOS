@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1731–1740 — DONNA Universal Academy Search V1
+
+- Created `src/lib/donna/search/universalSearchResolver.ts` — pure TypeScript in-memory resolver using already-loaded `directorCtx` data: `resolvePlayerFromFullRoster()` (full roster from `playerCurriculumStateSummaries`, cap 30), `resolveTemplateByName()` (partial name match on `templateSummaries`), `resolveSessionRoute()` (today's sessions / sessions list), `resolveAssessmentForPlayer()` (latest assessment cross-referenced with player name), `resolveCoachByName()` (honest fallback — names not in ctx), `resolveParentUpdateRoute()`, `buildWhyStuckAnswer()` (stall reason from `playerProgressStalls`), `resolveUniversalFallback()` (ordered pipeline)
+- Modified `src/lib/donna/workflows/entityResolution.ts` — expanded `EntityKind` to include `'template' | 'session' | 'assessment' | 'coach'`; updated `resolveEntityFromText()` to call `resolveUniversalFallback()` as final step after attention-items, level, and review-queue resolution all fail; updated header comment and fallback message
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — added `WHY_STUCK_PATTERN` intercept ("Why is Jamie stuck?", "Why isn't Jamie advancing?") calling `buildWhyStuckAnswer()` with nav offer to player profile; added `FIND_ASSESSMENT_PATTERN` intercept ("Find latest assessment for Jamie") calling `resolveAssessmentForPlayer()`; added Sprint 1731 import block for `buildWhyStuckAnswer` + `resolveAssessmentForPlayer`
+- Created `docs/qa/DONNA_UNIVERSAL_SEARCH_V1.md` — 10-scenario QA certification, safety invariants table, manual test checklist
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1721–1730 — DONNA Embedded Decision Experience V1
 
 - Created `src/lib/donna/workflows/entityResolution.ts` — `resolvePlayerFromText()` (attentionItems lookup), `resolveCurriculumLevel()`, `resolveReviewQueue()`, `resolveEntityFromText()` unified; `isDeepLinkCommand()` universal deep link detector; pure TS

@@ -90,6 +90,11 @@ import {
   resolveEntityFromText,
   isDeepLinkCommand,
 } from '@/lib/donna/workflows/entityResolution'
+// Sprint 1731 — Universal Search
+import {
+  buildWhyStuckAnswer,
+  resolveAssessmentForPlayer,
+} from '@/lib/donna/search/universalSearchResolver'
 // Sprint 1691 — Proactive Academy COO
 import {
   detectFocusTodayQuestion,
@@ -1890,7 +1895,77 @@ export function DonnaVoiceReadyShell({
         return
       }
 
+      // ── Sprint 1731: "Why is X stuck?" — player stall reasoning ──────────────
+      // "Why is Jamie stuck?", "Why isn't Jamie advancing?", "Why hasn't Jamie moved up?"
+      // Fires BEFORE the generic deep-link handler so it gets a data-driven stall answer,
+      // not just a navigation offer.
+      const WHY_STUCK_PATTERN = /\b(why (is|isn'?t|hasn'?t|hasn'?t)\s+[A-Z][a-z]+\s*(stuck|advancing|moving up|progressing|promoted|stalled|not (advanced|progressing|moving))|why (is|isn'?t)\s+[A-Z][a-z]+\s*(not|still) (advancing|stuck|progressing))\b/i
+      if (directorCtx && WHY_STUCK_PATTERN.test(trimmed)) {
+        const stuckAnswer = buildWhyStuckAnswer(trimmed, directorCtx)
+        const stuckMsg: ChatMessage = {
+          id:         `donna-stuck-${Date.now()}`,
+          role:       'donna',
+          kind:       'text',
+          text:       stuckAnswer.message,
+          timestamp:  new Date().toISOString(),
+          confidence: stuckAnswer.found ? 'high' : 'partial',
+          sourceNote: stuckAnswer.found ? 'Player curriculum state + stall data' : null,
+          followUp:   stuckAnswer.route ? `Open ${stuckAnswer.playerName ?? 'Player'}'s profile` : undefined,
+          followUpHref: stuckAnswer.route ?? undefined,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, stuckMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, stuckAnswer.message, { domain: 'players', confidence: stuckAnswer.found ? 'high' : 'partial', sourceNote: 'why_stuck' })
+          if (stuckAnswer.route) {
+            setPendingNavOffer({ href: stuckAnswer.route, label: `${stuckAnswer.playerName ?? 'Player'}'s profile`, questionContext: trimmed })
+          }
+        }, 400)
+        return
+      }
+
+      // ── Sprint 1731: "Find latest assessment for X" ───────────────────────────
+      // "Find latest assessment for Jamie", "Show Jamie's assessment",
+      // "What's Jamie's last assessment?"
+      const FIND_ASSESSMENT_PATTERN = /\b(find|show|what'?s?|get)\s+(latest|last|most recent)?\s*assessment\s+(for|of)\s+[A-Z][a-z]+|([A-Z][a-z]+'?s?\s+(latest|last|most recent)?\s*assessment)\b/i
+      if (directorCtx && FIND_ASSESSMENT_PATTERN.test(trimmed)) {
+        const assessResult = resolveAssessmentForPlayer(trimmed, directorCtx)
+        if (assessResult.resolved && assessResult.entity) {
+          const ent = assessResult.entity
+          setDonnaFocusTarget({ route: ent.route, targetId: ent.focusId, label: ent.label, sourceCommand: trimmed, highlightStyle: 'teal-glow' })
+          const assessMsg: ChatMessage = {
+            id: `donna-assess-${Date.now()}`, role: 'donna', kind: 'text',
+            text: ent.message, timestamp: new Date().toISOString(),
+            confidence: 'high', sourceNote: 'Assessment data from loaded context',
+            followUp: `Open ${ent.label}'s profile`, followUpHref: ent.route,
+          }
+          setTimeout(() => {
+            setMessages(prev => [...prev, assessMsg])
+            setIsTyping(false)
+            recordTurn(trimmed, ent.message, { domain: 'players', confidence: 'high', sourceNote: 'assessment_lookup' })
+            setPendingNavOffer({ href: ent.route, label: `${ent.label}'s profile`, questionContext: trimmed })
+          }, 400)
+          return
+        }
+        if (assessResult.ambiguous || (!assessResult.resolved && assessResult.fallback)) {
+          const msg = assessResult.fallback
+          const fallbackMsg: ChatMessage = {
+            id: `donna-assess-fallback-${Date.now()}`, role: 'donna', kind: 'text',
+            text: msg, timestamp: new Date().toISOString(),
+            confidence: 'partial', sourceNote: null,
+          }
+          setTimeout(() => {
+            setMessages(prev => [...prev, fallbackMsg])
+            setIsTyping(false)
+            recordTurn(trimmed, msg, { domain: 'players', confidence: 'partial' })
+          }, 400)
+          return
+        }
+      }
+
       // Sprint 1721: Universal deep link — "Open Jamie", "Show Orange Ball 2", etc.
+      // Sprint 1731: Extended via resolveEntityFromText → resolveUniversalFallback to
+      // cover full roster, templates, sessions, coaches.
       // Fires when not a guided workflow command but is a deep link command.
       if (isDeepLinkCommand(trimmed)) {
         const deepResult = resolveEntityFromText(trimmed, directorCtx)
