@@ -73,6 +73,8 @@ import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaS
 import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAnswer'
 import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswer'
 import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDonnaAnswer'
+import { extractLevelFromText } from '@/lib/donna/curriculumBuilderOperator'
+import { buildCurriculumImproveStep } from '@/lib/donna/operator/actionDispatcher'
 import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactDonnaAnswer'
 import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmentDonnaAnswer'
 import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
@@ -2013,6 +2015,50 @@ export function DonnaVoiceReadyShell({
           })
           if (impactNavOffer) setPendingNavOffer(impactNavOffer)
         }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 1641: Curriculum improve operator intercept ───────────────────
+    // Fires BEFORE curriculum level explanation so "help me improve Orange Ball 2"
+    // triggers the dedicated curriculum operator workflow (navigate + highlight)
+    // rather than the static level-explanation text answer.
+    // Pattern mirrors donnaUIActionDispatcher OPERATOR_PATTERNS for curriculum_operator.
+    const CURRICULUM_IMPROVE_PATTERN = /help me (improve|edit|fix|update|work on).{0,40}(ball|level|stage|curriculum|orange|red|green|yellow)/i
+    if (plainRole === 'director' && CURRICULUM_IMPROVE_PATTERN.test(trimmed)) {
+      const extractedLevel = extractLevelFromText(trimmed)
+      if (extractedLevel) {
+        const step = buildCurriculumImproveStep(extractedLevel.key, extractedLevel.label)
+        setDonnaFocusTarget({
+          route:          step.route,
+          targetId:       step.focusId,
+          label:          step.label,
+          reason:         step.reason,
+          sourceCommand:  trimmed,
+          highlightStyle: 'teal-glow',
+        })
+        const improveMsg: ChatMessage = {
+          id:         `donna-curriculum-improve-${Date.now()}`,
+          role:       'donna',
+          kind:       'text',
+          text:       step.message,
+          timestamp:  new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: `Curriculum operator: ${extractedLevel.label}`,
+          followUp:   `Open ${extractedLevel.label} curriculum`,
+          followUpHref: step.route,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, improveMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, step.message, {
+            actionId:    'curriculum_improve_operator',
+            domain:      'curriculum',
+            confidence:  'high',
+            sourceNote:  `Level: ${extractedLevel.label}`,
+          })
+          setPendingNavOffer({ href: step.route, label: `${extractedLevel.label} curriculum`, questionContext: trimmed })
+        }, 400)
         return
       }
     }

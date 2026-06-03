@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1641–1660 — DONNA Experience Certification V1
+
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Wired "help me improve [level]" to `CURRICULUM_IMPROVE_PATTERN` intercept; imports `extractLevelFromText` + `buildCurriculumImproveStep`; navigates to `/director/curriculum?improve=[levelKey]` with teal-glow highlight on `donna-curriculum-context`
+- Created `docs/qa/DONNA_OPERATOR_CERTIFICATION_V1.md` — Certifies all 13 operator action types: result, graceful failure, UI wire status
+- Created `docs/qa/DONNA_VOICE_ROUTING_CERTIFICATION_V1.md` — Certifies all 10 critical voice commands with routing path, result, and status
+- Created `docs/qa/DONNA_DIRECTOR_DAILY_LOOP_CERTIFICATION_V1.md` — Certifies the full director start-of-day operating loop step by step
+- Created `docs/qa/DONNA_CURRICULUM_WORKFLOW_CERTIFICATION_V1.md` — Certifies the "Help me improve Orange Ball 2" workflow end-to-end
+- Created `docs/qa/DONNA_EXPERIENCE_CERTIFICATION_REPORT_V1.md` — Master certification report: all 8 phases, overall readiness score, known gaps, demo certification
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1551–1640 — DONNA Operator + Guided Curriculum Builder + Curriculum Improvement Engine V1
 
 **Created:**
