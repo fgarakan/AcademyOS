@@ -1,11 +1,9 @@
 'use client'
 
 // Sprint 854 — Player Priority Context Injection V1
+// Sprint 1721 — Also renders DonnaActiveWorkflowBanner when a guided workflow is active.
 // Thin client component. Registers player-profile priority context into DonnaSessionContext
 // on mount, updates it when props change, and clears it to null on unmount.
-//
-// Renders null — no visual output. Placed inside the player profile server component
-// return tree so it mounts when the player profile loads and unmounts on navigation away.
 //
 // No DB reads. Data comes from the server component's existing activePriorities query.
 // No player data stored in localStorage or sessionStorage — in-memory React context only.
@@ -14,6 +12,7 @@
 import { useEffect } from 'react'
 import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import type { DonnaPlayerProfileContext } from '@/lib/donna/donnaSessionContext'
+import { DonnaActiveWorkflowBanner } from '@/components/donna/DonnaActiveWorkflowBanner'
 
 interface Props {
   activePriorityCount: number
@@ -43,5 +42,7 @@ export function PlayerProfileDonnaRegistrar({
     }
   }, [activePriorityCount, topPriorityTitle, topPriorityLevel, updatePlayerProfileContext])
 
-  return null
+  // Sprint 1721: render workflow banner alongside the (invisible) context registrar.
+  // Banner only appears when a guided workflow is active and this route matches.
+  return <DonnaActiveWorkflowBanner className="mb-4" />
 }

@@ -85,6 +85,11 @@ import {
   buildWorkflowForType,
   buildStepMessage,
 } from '@/lib/donna/workflows/decisionWorkflowEngine'
+// Sprint 1721 — Entity Resolution + Deep Links
+import {
+  resolveEntityFromText,
+  isDeepLinkCommand,
+} from '@/lib/donna/workflows/entityResolution'
 // Sprint 1691 — Proactive Academy COO
 import {
   detectFocusTodayQuestion,
@@ -1794,8 +1799,42 @@ export function DonnaVoiceReadyShell({
     if (plainRole === 'director') {
       const reviewIntent = detectGuidedReviewIntent(trimmed)
       if (reviewIntent) {
-        const workflow = buildWorkflowForType(reviewIntent.type, reviewIntent.subjectHint ?? undefined)
+        // Sprint 1721: resolve entity to get specific route (player profile UUID, level key, etc.)
+        const entityResult = resolveEntityFromText(trimmed, directorCtx)
+        const resolvedSubjectId = entityResult.resolved ? entityResult.entity?.entityId ?? null : null
+        const resolvedRoute = entityResult.resolved ? entityResult.entity?.route : null
+        const resolvedLabel = entityResult.resolved
+          ? entityResult.entity?.label
+          : reviewIntent.subjectHint ?? undefined
+
+        // If ambiguous (multiple players match), ask clarifying question first
+        if (entityResult.ambiguous && entityResult.candidates.length > 1) {
+          const names = entityResult.candidates.map(c => `"${c.label}"`).join(' or ')
+          const clarifyMsg: ChatMessage = {
+            id:         `donna-clarify-${Date.now()}`,
+            role:       'donna',
+            kind:       'text',
+            text:       `I found multiple matches: ${names}. Which player did you mean?`,
+            timestamp:  new Date().toISOString(),
+            confidence: 'high',
+            sourceNote: 'Entity resolution — multiple matches',
+          }
+          setTimeout(() => {
+            setMessages(prev => [...prev, clarifyMsg])
+            setIsTyping(false)
+            recordTurn(trimmed, clarifyMsg.text, { domain: 'players', confidence: 'high' })
+          }, 400)
+          return
+        }
+
+        const workflow = buildWorkflowForType(
+          reviewIntent.type,
+          resolvedLabel,
+          resolvedSubjectId ?? undefined,
+        )
         const step1 = workflow.steps[0]
+        // Use resolved route when available (specific player profile), else step1 default
+        const effectiveRoute = resolvedRoute ?? step1.route
         const workflowMsg = [workflow.openingMessage, '', buildStepMessage(workflow, 1)].join('\n')
 
         // Save to workflow memory so "continue where we left off" can resume
@@ -1805,17 +1844,19 @@ export function DonnaVoiceReadyShell({
                       : reviewIntent.type === 'assessment' ? 'assessment'
                       : reviewIntent.type === 'parent_update' ? 'parent_update'
                       : 'curriculum_review',
-          label:        reviewIntent.subjectHint ?? workflow.subjectLabel,
-          route:        step1.route,
+          label:        resolvedLabel ?? workflow.subjectLabel,
+          route:        effectiveRoute,
           focusId:      step1.focusId,
           context:      `Step 1: ${step1.title}`,
           currentStep:  1,
           totalSteps:   workflow.totalSteps,
+          subjectId:    resolvedSubjectId ?? undefined,
+          decisionStatus: 'pending',
         })
 
-        // Set highlight target
+        // Set highlight target — use resolved route when available
         setDonnaFocusTarget({
-          route:          step1.route,
+          route:          effectiveRoute,
           targetId:       step1.focusId,
           label:          step1.title,
           reason:         step1.description,
@@ -1823,6 +1864,7 @@ export function DonnaVoiceReadyShell({
           highlightStyle: 'teal-glow',
         })
 
+        const effectiveHref = resolvedRoute ?? step1.actionHref
         const guidedMsg: ChatMessage = {
           id:         `donna-guided-${Date.now()}`,
           role:       'donna',
@@ -1832,7 +1874,7 @@ export function DonnaVoiceReadyShell({
           confidence: 'high',
           sourceNote: `Guided workflow: ${workflow.title}`,
           followUp:   step1.actionLabel,
-          followUpHref: step1.actionHref,
+          followUpHref: effectiveHref,
         }
         setTimeout(() => {
           setMessages(prev => [...prev, guidedMsg])
@@ -1843,9 +1885,49 @@ export function DonnaVoiceReadyShell({
             confidence: 'high',
             sourceNote: `Workflow: ${workflow.title}`,
           })
-          setPendingNavOffer({ href: step1.actionHref, label: step1.actionLabel, questionContext: trimmed })
+          setPendingNavOffer({ href: effectiveHref, label: step1.actionLabel, questionContext: trimmed })
         }, 400)
         return
+      }
+
+      // Sprint 1721: Universal deep link — "Open Jamie", "Show Orange Ball 2", etc.
+      // Fires when not a guided workflow command but is a deep link command.
+      if (isDeepLinkCommand(trimmed)) {
+        const deepResult = resolveEntityFromText(trimmed, directorCtx)
+        if (deepResult.resolved && deepResult.entity) {
+          const ent = deepResult.entity
+          setDonnaFocusTarget({
+            route: ent.route, targetId: ent.focusId,
+            label: ent.label, sourceCommand: trimmed, highlightStyle: 'teal-glow',
+          })
+          const deepMsg: ChatMessage = {
+            id: `donna-deeplink-${Date.now()}`, role: 'donna', kind: 'text',
+            text: ent.message, timestamp: new Date().toISOString(),
+            confidence: 'high', sourceNote: `Entity: ${ent.kind}`,
+            followUp: `Open ${ent.label}`, followUpHref: ent.route,
+          }
+          setTimeout(() => {
+            setMessages(prev => [...prev, deepMsg])
+            setIsTyping(false)
+            recordTurn(trimmed, ent.message, { domain: 'general', confidence: 'high' })
+            setPendingNavOffer({ href: ent.route, label: ent.label, questionContext: trimmed })
+          }, 400)
+          return
+        }
+        if (deepResult.ambiguous) {
+          const ambigMsg: ChatMessage = {
+            id: `donna-ambig-${Date.now()}`, role: 'donna', kind: 'text',
+            text: deepResult.fallback, timestamp: new Date().toISOString(),
+            confidence: 'high', sourceNote: null,
+          }
+          setTimeout(() => {
+            setMessages(prev => [...prev, ambigMsg])
+            setIsTyping(false)
+            recordTurn(trimmed, deepResult.fallback, { domain: 'players', confidence: 'high' })
+          }, 400)
+          return
+        }
+        // No match — let fall through to roster/other handlers (don't block them)
       }
     }
 

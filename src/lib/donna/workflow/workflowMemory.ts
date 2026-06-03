@@ -38,6 +38,12 @@ export interface WorkflowEntry {
   currentStep?: number
   /** Sprint 1711 — total steps in the workflow */
   totalSteps?:  number
+  /** Sprint 1721 — resolved entity ID (playerId, levelKey, etc.) */
+  subjectId?:   string
+  /** Sprint 1721 — decision status for this workflow */
+  decisionStatus?: 'pending' | 'decided'
+  /** Sprint 1721 — last updated timestamp (Date.now()) */
+  lastUpdated?: number
 }
 
 export interface WorkflowResume {
@@ -122,7 +128,26 @@ const WORKFLOW_RESUME_MESSAGES: Record<WorkflowType, (label: string, context?: s
  * Overwrites any previously stored workflow.
  */
 export function setActiveWorkflow(entry: Omit<WorkflowEntry, 'storedAt'>): void {
-  writeToStorage({ ...entry, storedAt: Date.now() })
+  writeToStorage({ ...entry, storedAt: Date.now(), lastUpdated: Date.now() })
+}
+
+/**
+ * Sprint 1721 — Update the current step of the active workflow without replacing it.
+ * No-op if no workflow is stored.
+ */
+export function updateWorkflowStep(step: number): void {
+  const existing = readFromStorage()
+  if (!existing) return
+  writeToStorage({ ...existing, currentStep: step, lastUpdated: Date.now() })
+}
+
+/**
+ * Sprint 1721 — Mark the active workflow as decided (approval given or rejected).
+ */
+export function markWorkflowDecided(): void {
+  const existing = readFromStorage()
+  if (!existing) return
+  writeToStorage({ ...existing, decisionStatus: 'decided', lastUpdated: Date.now() })
 }
 
 /**

@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1721–1730 — DONNA Embedded Decision Experience V1
+
+- Created `src/lib/donna/workflows/entityResolution.ts` — `resolvePlayerFromText()` (attentionItems lookup), `resolveCurriculumLevel()`, `resolveReviewQueue()`, `resolveEntityFromText()` unified; `isDeepLinkCommand()` universal deep link detector; pure TS
+- Created `src/components/donna/DonnaActiveWorkflowBanner.tsx` — client banner; reads `getActiveWorkflow()` on mount; renders `DonnaDecisionGuidePanel` when workflow active and route matches; dismissible per session (sessionStorage)
+- Modified `src/lib/donna/workflow/workflowMemory.ts` — added `subjectId?`, `decisionStatus?`, `lastUpdated?` to `WorkflowEntry`; added `updateWorkflowStep()` and `markWorkflowDecided()` helpers; `setActiveWorkflow` auto-sets `lastUpdated`
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — guided review handler now calls `resolveEntityFromText` to get player UUID + profile route; ambiguous entity triggers clarification question; added universal deep link handler with `isDeepLinkCommand`
+- Modified `src/app/director/players/[playerId]/_components/PlayerProfileDonnaRegistrar.tsx` — renders `<DonnaActiveWorkflowBanner className="mb-4" />` instead of null; workflow panel appears when review is active
+- Modified `src/app/director/review/DonnaReviewTabGuide.tsx` — converted to client component; added "Start guided review" button per tab; calls `setActiveWorkflow` for placement/assessment/curriculum_review workflows
+- Created `docs/qa/DONNA_EMBEDDED_DECISION_EXPERIENCE_V1.md` — 7 director scenarios, panel mounting, review integration, safety
+- Created `docs/qa/DONNA_ENTITY_RESOLUTION_V1.md` — resolution functions, player lookup, level/review routing, universal deep links, natural language table
+- Created `docs/qa/DONNA_DECISION_MOMENT_V1.md` — decision step per workflow, safety invariants, workflow persistence V2 field reference
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1711–1720 — DONNA Guided Decision Workflows V1
 
 - Created `src/lib/donna/workflows/decisionWorkflowEngine.ts` — 5 workflow definitions (promotion/placement/parent_update/curriculum_review/assessment); each step has title/description/route/focusId/actionLabel/requiresApproval/donnaWillNotDo; `detectGuidedReviewIntent()` classifier; `buildWorkflowForType()`; `buildStepMessage()`; pure TS
