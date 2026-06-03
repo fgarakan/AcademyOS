@@ -21,21 +21,21 @@ const RATING_LABELS: Record<Rating, string> = {
   4: 'Strong',
 }
 
-const RATING_TO_SCORE: Record<Rating, number> = { 1: 25, 2: 50, 3: 75, 4: 100 }
+const RATING_TO_SCORE: Record<Rating, number> = { 1: 2.5, 2: 5.0, 3: 7.5, 4: 10.0 }
 
 function scoreLabel(score: number | null): string {
   if (score === null) return '—'
-  if (score <= 25) return 'Needs support'
-  if (score <= 50) return 'Developing'
-  if (score <= 75) return 'Solid'
+  if (score <= 2.5) return 'Needs support'
+  if (score <= 5.0) return 'Developing'
+  if (score <= 7.5) return 'Solid'
   return 'Strong'
 }
 
 function scoreColor(score: number | null): string {
   if (score === null) return 'bg-surface-raised'
-  if (score <= 25) return 'bg-status-red'
-  if (score <= 50) return 'bg-status-orange'
-  if (score <= 75) return 'bg-lime'
+  if (score <= 2.5) return 'bg-status-red'
+  if (score <= 5.0) return 'bg-status-orange'
+  if (score <= 7.5) return 'bg-lime'
   return 'bg-status-green'
 }
 
@@ -99,7 +99,7 @@ function AssessmentDonePanel({
         onClick={onContinue}
         className="btn-lime px-5 py-2 text-sm"
       >
-        Continue to DONNA Recommendation →
+        See DONNA's Recommendation →
       </button>
     </div>
   )
@@ -203,7 +203,7 @@ export function StepAssessment({ playerId, existingAssessment, onDone }: Props) 
           className="btn-lime flex items-center gap-2 px-5 py-2 text-sm disabled:opacity-50"
         >
           {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          {isPending ? 'Saving…' : 'Save Assessment'}
+          {isPending ? 'Saving…' : 'Save Snapshot'}
         </button>
         <button
           type="button"

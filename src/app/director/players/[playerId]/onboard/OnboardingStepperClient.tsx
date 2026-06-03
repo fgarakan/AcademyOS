@@ -60,7 +60,7 @@ type StepDef = {
 const STEPS: StepDef[] = [
   { number: 1, label: 'Player Profile',       shortLabel: 'Profile',    Icon: User },
   { number: 2, label: 'Parent / Contact',     shortLabel: 'Parent',     Icon: Users },
-  { number: 3, label: 'Starting Assessment',  shortLabel: 'Assessment', Icon: ClipboardList },
+  { number: 3, label: 'Quick Placement Snapshot', shortLabel: 'Snapshot', Icon: ClipboardList },
   { number: 4, label: 'DONNA Recommendation', shortLabel: 'DONNA',      Icon: Sparkles },
   { number: 5, label: 'Placement Review',     shortLabel: 'Placement',  Icon: ClipboardCheck },
   { number: 6, label: 'Activate Player',      shortLabel: 'Activate',   Icon: Zap },
@@ -69,7 +69,7 @@ const STEPS: StepDef[] = [
 const DONNA_COMMENTARY: Record<number, string> = {
   1: 'Good start. Confirm the player details look right before moving on. You can always edit them from the full player profile.',
   2: 'Linking a parent or guardian now means they can receive updates once the player is activated. This is optional — add contacts later from the player profile.',
-  3: 'A quick assessment gives me the context to suggest the right group. Rate each domain 1–4. Skipping is fine, but more data means a better recommendation.',
+  3: 'This quick snapshot helps me recommend the best starting group and level. Rate each domain — it takes under 60 seconds. Skipping is fine, but more data means a stronger recommendation.',
   4: 'Based on the assessment, here is my suggested placement. I have matched the scores against your available groups. You have full authority over the final decision.',
   5: 'Confirm where this player will train. My suggestion is pre-filled — change it if you prefer. This creates an official placement record.',
   6: 'When you activate, this player becomes fully part of your academy system. No automatic messages or portal access are created until you set them up from the player profile.',

@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1406–1435 — Assessment Experience V2 + Assessment Template System Activation
+
+**Created:**
+- `src/lib/assessment/ballLevelTemplateSeeds.ts` — TypeScript data definitions for Red Ball, Orange Ball, Green Dot, and Yellow Ball assessment templates (sections + skills); used by the seed action
+- `src/app/director/assessment-template/_actions/seedBallLevelTemplatesAction.ts` — Server action that idempotently seeds 4 ball-level global templates into `assessment_templates`, `assessment_template_sections`, `assessment_template_skills`
+- `src/app/director/assessment-template/_components/SeedBallLevelTemplatesButton.tsx` — Client button component that triggers the seed action; shows seeded names on success
+- `docs/qa/ASSESSMENT_EXPERIENCE_V2.md` — 53-item QA checklist covering all 12 sprint parts
+
+**Modified:**
+- `src/app/director/players/[playerId]/quickAssessmentAction.ts` — Fixed `RATING_TO_SCORE` from `{1:25,2:50,3:75,4:100}` to `{1:2.5,2:5.0,3:7.5,4:10.0}` — resolves `assessments_behavioral_score_check` constraint violation
+- `src/app/director/players/[playerId]/onboard/StepAssessment.tsx` — Updated display `RATING_TO_SCORE`, `scoreLabel`, and `scoreColor` thresholds to 0–10 scale; renamed button to "Save Snapshot"
+- `src/app/director/players/[playerId]/onboard/OnboardingStepperClient.tsx` — Renamed step 3 from "Starting Assessment" to "Quick Placement Snapshot"; updated DONNA commentary for step 3
+- `src/app/director/players/[playerId]/onboard/StepDonnaRecommendation.tsx` — Upgraded placement rationale: numeric confidence %, stage label, Reasons (✓) + Needs Improvement (•) two-column layout, risk note strip; updated fallback text
+- `src/app/director/assessment-template/page.tsx` — Added global template registry panel (lists all `is_global=true` templates with section/skill counts); added seed button for ball-level templates; retained Core Template editor below
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Mega Sprint 1351–1375 — Director Attention Queue V1
 
 **Created:**

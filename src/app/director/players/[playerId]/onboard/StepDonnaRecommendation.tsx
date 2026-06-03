@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Sparkles, CheckCircle2 } from 'lucide-react'
+import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-react'
 import {
   generatePlacementRecommendation,
   type AssessmentScoreInput,
@@ -21,6 +21,12 @@ interface Props {
   groups: GroupOption[]
   playerAgeYears: number | null
   onDone: (recommendedGroupId: string | null) => void
+}
+
+function confidenceColor(tier: string) {
+  if (tier === 'high') return 'bg-status-green/10 text-status-green border-status-green/30'
+  if (tier === 'medium') return 'bg-lime/10 text-lime border-lime/30'
+  return 'bg-status-orange/10 text-status-orange border-status-orange/30'
 }
 
 export function StepDonnaRecommendation({ assessment, groups, playerAgeYears, onDone }: Props) {
@@ -54,9 +60,9 @@ export function StepDonnaRecommendation({ assessment, groups, playerAgeYears, on
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
-          <p className="text-sm text-text-secondary">No assessment yet.</p>
+          <p className="text-sm text-text-secondary">No snapshot yet.</p>
           <p className="text-xs text-text-muted mt-1">
-            Complete the Starting Assessment first so DONNA can suggest a placement.
+            Complete the Quick Placement Snapshot first so DONNA can suggest a placement.
           </p>
         </div>
         <button
@@ -80,7 +86,7 @@ export function StepDonnaRecommendation({ assessment, groups, playerAgeYears, on
               <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-lime mb-1.5">
-                  DONNA's Analysis
+                  DONNA's Recommendation
                 </p>
                 <p className="text-sm text-text-primary leading-relaxed">
                   {recommendation.donnaExplanation}
@@ -89,20 +95,17 @@ export function StepDonnaRecommendation({ assessment, groups, playerAgeYears, on
             </div>
           </div>
 
-          {/* Confidence */}
-          <div className="flex items-center gap-2">
-            <div className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
-              recommendation.confidenceTier === 'high'
-                ? 'bg-status-green/10 text-status-green border-status-green/30'
-                : recommendation.confidenceTier === 'medium'
-                ? 'bg-lime/10 text-lime border-lime/30'
-                : 'bg-status-orange/10 text-status-orange border-status-orange/30'
-            }`}>
-              {recommendation.confidenceTier.charAt(0).toUpperCase() + recommendation.confidenceTier.slice(1)} confidence
+          {/* Confidence + stage */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${confidenceColor(recommendation.confidenceTier)}`}>
+              {recommendation.confidenceScore}% confidence
             </div>
+            <span className="text-[10px] text-text-muted">
+              {recommendation.recommendedStage.replace(/_/g, ' ')}
+            </span>
             {recommendation.computedOverallAvg !== null && (
-              <span className="text-xs text-text-muted">
-                Overall avg: <span className="font-mono text-text-secondary">{recommendation.computedOverallAvg.toFixed(0)}</span>
+              <span className="text-[10px] text-text-muted ml-auto">
+                avg <span className="font-mono">{recommendation.computedOverallAvg.toFixed(1)}</span>/10
               </span>
             )}
           </div>
@@ -128,16 +131,45 @@ export function StepDonnaRecommendation({ assessment, groups, playerAgeYears, on
             </div>
           )}
 
-          {/* Top reasons */}
-          {recommendation.topReasons.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted">Why this recommendation</p>
-              {recommendation.topReasons.slice(0, 3).map((reason, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="text-lime text-xs mt-0.5 shrink-0">·</span>
-                  <p className="text-xs text-text-secondary">{reason}</p>
+          {/* Strengths and Needs Improvement side by side */}
+          {(recommendation.topReasons.length > 0 || recommendation.limitingFactors.length > 0) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {recommendation.topReasons.length > 0 && (
+                <div className="px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/15">
+                  <p className="label-xs text-status-green mb-2">Reasons</p>
+                  <div className="space-y-1.5">
+                    {recommendation.topReasons.slice(0, 3).map((reason, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <span className="text-status-green text-xs mt-0.5 shrink-0">✓</span>
+                        <p className="text-xs text-text-secondary leading-snug">{reason}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              )}
+              {recommendation.limitingFactors.length > 0 && (
+                <div className="px-4 py-3 rounded-xl bg-status-orange/5 border border-status-orange/15">
+                  <p className="label-xs text-status-orange mb-2">Needs Improvement</p>
+                  <div className="space-y-1.5">
+                    {recommendation.limitingFactors.slice(0, 3).map((factor, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <span className="text-status-orange text-xs mt-0.5 shrink-0">•</span>
+                        <p className="text-xs text-text-secondary leading-snug">{factor}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Risk notes */}
+          {recommendation.riskNotes.length > 0 && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-surface border border-border">
+              <AlertCircle className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
+              <p className="text-xs text-text-muted leading-relaxed">
+                {recommendation.riskNotes[0]}
+              </p>
             </div>
           )}
         </>

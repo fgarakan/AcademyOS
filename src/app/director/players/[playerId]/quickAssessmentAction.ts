@@ -20,7 +20,7 @@ export interface QuickAssessmentResult {
   error: string | null
 }
 
-const RATING_TO_SCORE: Record<number, number> = { 1: 25, 2: 50, 3: 75, 4: 100 }
+const RATING_TO_SCORE: Record<number, number> = { 1: 2.5, 2: 5.0, 3: 7.5, 4: 10.0 }
 
 function toScore(rating: number | null): number | null {
   if (rating === null) return null
