@@ -11,6 +11,7 @@ import { CurriculumLevelTree } from './_components/CurriculumLevelTree'
 // Sprint 1095B — Curriculum Director Insight View
 import { CurriculumStageInsightCard, type StageInsightData } from './_components/CurriculumStageInsightCard'
 import { getLevelInsight } from '@/lib/curriculum/levelInsightMap'
+import { DonnaCurriculumContextPanel } from './_components/DonnaCurriculumContextPanel'
 
 // ─── Stage display config (colors + fallback purpose) ─────────────────────────
 // stage_goal comes from DB; these provide color tokens and a fallback.
@@ -88,7 +89,11 @@ const CONNECTIONS = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function DirectorCurriculumPage() {
+interface CurriculumPageProps {
+  searchParams: { improve?: string }
+}
+
+export default async function DirectorCurriculumPage({ searchParams }: CurriculumPageProps) {
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -384,7 +389,15 @@ export default async function DirectorCurriculumPage() {
         </p>
       </div>
 
-      {/* ── 1b. DONNA Welcome ─────────────────────────────────────────────── */}
+      {/* ── 1b. DONNA Curriculum Context Panel — shown when ?improve=[levelKey] ── */}
+      {searchParams.improve && academyId && (
+        <DonnaCurriculumContextPanel
+          levelKey={searchParams.improve}
+          academyId={academyId}
+        />
+      )}
+
+      {/* ── 1c. DONNA Welcome ─────────────────────────────────────────────── */}
       <CurriculumBuilderWelcome hasActiveVersion={!!versionData} />
 
       {/* ── 2. Curriculum Status hero card ── Sprint 962: data-donna-focus-id added */}

@@ -47,7 +47,8 @@ export async function LevelReadinessCard({
   const statusLabel      = READINESS_STATUS_LABELS[result.readinessStatus]
 
   return (
-    <Card>
+    <div data-donna-focus-id="player-readiness-card">
+      <Card>
       <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <TrendingUp className="w-3.5 h-3.5 text-text-muted shrink-0" />
@@ -120,6 +121,7 @@ export async function LevelReadinessCard({
           </span>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   )
 }

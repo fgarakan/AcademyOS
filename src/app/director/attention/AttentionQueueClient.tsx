@@ -245,12 +245,14 @@ export function AttentionQueueClient({ items, initialFilter }: AttentionQueueCli
 
   return (
     <div className="space-y-4">
-      {/* Filter chips */}
-      <FilterChips
-        activeFilter={activeFilter}
-        items={items}
-        onFilter={f => { setActiveFilter(f); setOpenItemId(null) }}
-      />
+      {/* Filter chips — Sprint 1551: data-donna-focus-id for DONNA filter highlight */}
+      <div data-donna-focus-id="attention-filter-bar">
+        <FilterChips
+          activeFilter={activeFilter}
+          items={items}
+          onFilter={f => { setActiveFilter(f); setOpenItemId(null) }}
+        />
+      </div>
 
       {/* Summary line */}
       {visibleItems.length > 0 && (
@@ -268,18 +270,19 @@ export function AttentionQueueClient({ items, initialFilter }: AttentionQueueCli
         </p>
       )}
 
-      {/* Queue list */}
+      {/* Queue list — Sprint 1551: data-donna-focus-id for DONNA list + item highlight */}
       {visibleItems.length === 0 ? (
         <EmptyAttentionState filter={activeFilter} />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2" data-donna-focus-id="attention-items-list">
           {visibleItems.map(item => (
-            <AttentionRow
-              key={item.id}
-              item={item}
-              isOpen={openItemId === item.id}
-              onToggle={() => toggleItem(item.id)}
-            />
+            <div key={item.id} data-donna-focus-id={`attention-item-${item.id}`}>
+              <AttentionRow
+                item={item}
+                isOpen={openItemId === item.id}
+                onToggle={() => toggleItem(item.id)}
+              />
+            </div>
           ))}
         </div>
       )}

@@ -104,6 +104,12 @@ const NAV_PATTERNS: Array<{
   { pattern: /player placement|place (a |new )?player/i, route: '/director/placement', label: 'Player Placement' },
   { pattern: /level.?up|advancement/i, route: '/director/level-up', label: 'Level Up' },
   { pattern: /signals?|attention signals?/i, route: '/director/signals', label: 'Signals' },
+  // Sprint 1551: Attention queue — general + filter variants
+  { pattern: /who needs attention|attention queue|show (me )?(the )?attention|what needs (my )?attention|take me (to )?(the )?attention/i, route: '/director/attention', label: 'Attention Queue', focusTargetId: 'attention-items-list' },
+  { pattern: /show (me )?(the )?reassessment|players? (needing|due for) reassess|overdue reassess/i, route: '/director/attention?filter=reassessment', label: 'Reassessment Due', focusTargetId: 'attention-items-list' },
+  { pattern: /show (me )?(the |pending )?placements?|placement (reviews?|pending)|players? (needing|waiting for) placement/i, route: '/director/attention?filter=placements', label: 'Placement Reviews', focusTargetId: 'attention-items-list' },
+  { pattern: /show (me )?(the )?level.?readiness|readiness (review|candidates?|queue)|who.{0,20}(ready|close) (to|for) (move|advance)/i, route: '/director/attention?filter=players', label: 'Level Readiness', focusTargetId: 'attention-items-list' },
+  { pattern: /show (me )?(the )?parent (updates?|comms?)|pending parent (updates?|messages?)/i, route: '/director/attention?filter=parent-updates', label: 'Parent Updates', focusTargetId: 'attention-items-list' },
   // Sprint 820: more specific player patterns BEFORE generic players$ pattern
   // Commands about missing/needing levels → highlight players-missing-level section
   { pattern: /players? without (levels?|curriculum)|missing (levels?|curriculum)|no (levels?|curriculum level)|players? need(ing)? (level|placement|curriculum)/i, route: '/director/players', label: 'Players Without Levels', focusTargetId: 'players-missing-level' },
@@ -201,7 +207,8 @@ const OPERATOR_PATTERNS: Array<{ pattern: RegExp; operatorId: string }> = [
   },
   {
     // Sprint 759: Added "open the curriculum builder" as operator trigger
-    pattern: /walk me through curriculum|help me with curriculum|curriculum gaps|guide me through curriculum|open the curriculum builder|start curriculum/i,
+    // Sprint 1551: Added "help me improve [level]" as curriculum improve trigger
+    pattern: /walk me through curriculum|help me with curriculum|curriculum gaps|guide me through curriculum|open the curriculum builder|start curriculum|help me (improve|edit|fix|update|work on).{0,40}(ball|level|stage|curriculum|orange|red|green|yellow)/i,
     operatorId: 'curriculum_operator',
   },
   {

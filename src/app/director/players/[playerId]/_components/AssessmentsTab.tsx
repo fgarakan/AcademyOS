@@ -252,7 +252,7 @@ export async function AssessmentsTab({
   const draftCount = (pendingDrafts ?? []).length
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-donna-focus-id="player-assessments-section">
 
       {/* Development Priorities — evidence-based priorities above the form */}
       <DevelopmentPrioritiesCard

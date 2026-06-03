@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1551–1640 — DONNA Operator + Guided Curriculum Builder + Curriculum Improvement Engine V1
+
+**Created:**
+- `src/lib/donna/pageContextRegistry.ts` — Authoritative page context registry: PageId union + PageContextEntry for 11 pages; focus_targets, safe_actions, approval_actions, suggestedPrompts per page
+- `src/lib/donna/operator/actionDispatcher.ts` — Clean V1 operator dispatcher: 13 action types; attention queue filter mapping; convenience builders for navigate+highlight, readiness workflow, priorities workflow, curriculum improve workflow
+- `src/lib/donna/curriculumImprovementEngine.ts` — Evidence → curriculum recommendations: signal aggregation from evidence/readiness/priorities; confidence scoring (LOW/MEDIUM/HIGH); ranked suggestions with evidenceCount, affectedPlayers, supportingSignals, reasoning, draftStarter, impactLines
+- `src/lib/donna/curriculumBuilderOperator.ts` — "Help me improve [level]" conversation layer: level extraction, context-first summary builder, response builder for each DONNA intent (why recommend this / draft / show impact)
+- `src/app/director/curriculum/_components/DonnaCurriculumContextPanel.tsx` — Server RSC: evidence-backed curriculum analysis for a given level; renders DONNA context-first panel with current state + suggestions + confidence engine; shown when ?improve=[levelKey] in URL
+- `src/app/director/curriculum/_components/DonnaCurriculumImproveDraftButton.tsx` — Client button: creates curriculum improvement draft via server action; success/error states
+- `src/app/director/_actions/donnaLevelReadinessDraftAction.ts` — Creates proposed_action for level readiness review; academy-scoped; audit log; director approval required
+- `src/app/director/_actions/donnaCurriculumImprovementDraftAction.ts` — Creates proposed_action for curriculum improvement; academy-scoped; audit log; director approval required; explicit wontHappen safety payload
+- `docs/qa/SITE_WIDE_DONNA_UI_OPERATOR_V1.md` — 35-item QA checklist: coverage matrix, focus targets, action dispatcher, navigation, draft action
+- `docs/qa/DONNA_GUIDED_CURRICULUM_BUILDER_V1.md` — 39-item QA checklist: workflow, context-first rule, suggestions, draft creation, level extraction, safety
+- `docs/qa/CURRICULUM_GAP_TO_IMPROVEMENT_ENGINE_V1.md` — 40-item QA checklist + Director Demo Certification table
+
+**Modified:**
+- `src/app/director/attention/AttentionQueueClient.tsx` — Added data-donna-focus-id to filter bar (attention-filter-bar), items list (attention-items-list), each item row (attention-item-{id})
+- `src/app/director/players/[playerId]/_components/LevelReadinessCard.tsx` — Wrapped with data-donna-focus-id="player-readiness-card"
+- `src/app/director/players/[playerId]/_components/DevelopmentPrioritiesCard.tsx` — Wrapped with data-donna-focus-id="player-priorities-card"
+- `src/app/director/players/[playerId]/_components/AssessmentsTab.tsx` — Added data-donna-focus-id="player-assessments-section" to top-level wrapper
+- `src/lib/donna/donnaUIActionDispatcher.ts` — Added attention queue NAV_PATTERNS with filter variants (reassessment, placements, level readiness, onboarding, parent-updates); added "help me improve [level]" to curriculum_operator OPERATOR_PATTERNS
+- `src/app/director/curriculum/page.tsx` — Added searchParams + DonnaCurriculumContextPanel rendering when ?improve=[levelKey]
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Mega Sprint 1541–1550 — DONNA Operator Capability Audit V1
 
 **Created:**

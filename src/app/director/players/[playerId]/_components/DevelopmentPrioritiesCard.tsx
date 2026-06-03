@@ -66,7 +66,8 @@ export async function DevelopmentPrioritiesCard({
   const hasData = result.topPriorities.length > 0 || result.strengths.length > 0
 
   return (
-    <Card>
+    <div data-donna-focus-id="player-priorities-card">
+      <Card>
       <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Target className="w-3.5 h-3.5 text-text-muted shrink-0" />
@@ -172,6 +173,7 @@ export async function DevelopmentPrioritiesCard({
           </>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   )
 }
