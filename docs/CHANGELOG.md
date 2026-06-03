@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1681–1690 — DONNA Presence Completion V1
+
+- Created `src/components/donna/DonnaCOOStatusWrapper.tsx` — client wrapper; accepts `pendingCount` + `directorName` from server layout; uses `useDonnaSessionContext` + `buildDonnaLiveContext` + `getWorkflowStatusLabel`; compact dismissible top-of-content status bar with pending badge and workflow indicator
+- Created `src/app/director/curriculum/_components/CurriculumDonnaRegistrar.tsx` — thin client registrar; mirrors `PlayerProfileDonnaRegistrar` pattern; calls `updateObjectContext(levelLabel)` + `updateModule('Curriculum: ' + levelLabel)` on mount; clears on unmount
+- Created `src/components/donna/DonnaDailyCOOBriefSurface.tsx` — once-per-day dismissible brief surface; localStorage date gate; honest empty-state; top-3 priorities with urgency coloring; links to `/director/donna` for full brief
+- Modified `src/app/director/layout.tsx` — mounted `DonnaCOOStatusWrapper` and `DonnaDailyCOOBriefSurface` after `DemoModeBanner` in `<main>`; passes `pendingCount` and `userDisplayName`
+- Modified `src/app/director/curriculum/page.tsx` — added `<CurriculumDonnaRegistrar>` alongside `DonnaCurriculumContextPanel` when `?improve=` param is set
+- Created `docs/qa/DONNA_PRESENCE_COMPLETION_V1.md` — 6-scenario certification + mounted components table + manual test checklist + known limitations
+- Created `docs/qa/DONNA_CONTEXT_REGISTRATION_CERTIFICATION_V1.md` — context registration matrix by page + Hey Donna awareness matrix + CurriculumDonnaRegistrar behavior + level label derivation
+- Created `docs/qa/DONNA_DAILY_BRIEFING_SURFACE_V1.md` — show-once logic + content + urgency colors + interaction + safety invariants + manual test steps
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1661–1680 — DONNA Persistent COO Mode V1
 
 - Created `src/lib/donna/context/donnaContextEngine.ts` — `DonnaLiveContext` unified snapshot type + `buildDonnaLiveContext()`; consolidates page, player, curriculum, session, role into one typed object with context-first `greeting()` builder

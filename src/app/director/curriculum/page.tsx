@@ -12,6 +12,7 @@ import { CurriculumLevelTree } from './_components/CurriculumLevelTree'
 import { CurriculumStageInsightCard, type StageInsightData } from './_components/CurriculumStageInsightCard'
 import { getLevelInsight } from '@/lib/curriculum/levelInsightMap'
 import { DonnaCurriculumContextPanel } from './_components/DonnaCurriculumContextPanel'
+import { CurriculumDonnaRegistrar } from './_components/CurriculumDonnaRegistrar'
 
 // ─── Stage display config (colors + fallback purpose) ─────────────────────────
 // stage_goal comes from DB; these provide color tokens and a fallback.
@@ -391,10 +392,18 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
 
       {/* ── 1b. DONNA Curriculum Context Panel — shown when ?improve=[levelKey] ── */}
       {searchParams.improve && academyId && (
-        <DonnaCurriculumContextPanel
-          levelKey={searchParams.improve}
-          academyId={academyId}
-        />
+        <>
+          {/* Sprint 1681 — Register curriculum level into DonnaSessionContext so
+              "Hey Donna" can reference "Orange Ball 2" by name */}
+          <CurriculumDonnaRegistrar
+            levelKey={searchParams.improve}
+            levelLabel={searchParams.improve.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+          />
+          <DonnaCurriculumContextPanel
+            levelKey={searchParams.improve}
+            academyId={academyId}
+          />
+        </>
       )}
 
       {/* ── 1c. DONNA Welcome ─────────────────────────────────────────────── */}

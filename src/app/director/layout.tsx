@@ -8,6 +8,8 @@ import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 import { DonnaSessionContextProvider } from '@/components/donna/DonnaSessionContextProvider'
 import { DonnaHighlightBanner } from '@/components/donna/DonnaHighlightBanner'
+import { DonnaCOOStatusWrapper } from '@/components/donna/DonnaCOOStatusWrapper'
+import { DonnaDailyCOOBriefSurface } from '@/components/donna/DonnaDailyCOOBriefSurface'
 
 export default async function DirectorLayout({
   children,
@@ -95,6 +97,19 @@ export default async function DirectorLayout({
           <Suspense>
             <DemoModeBanner />
           </Suspense>
+          {/* Sprint 1681 — DONNA COO Status Bar (site-wide, dismissible) */}
+          {academyId && (
+            <DonnaCOOStatusWrapper
+              pendingCount={pendingCount}
+              directorName={userDisplayName || null}
+            />
+          )}
+          {/* Sprint 1681 — DONNA Daily COO Brief Surface (once per day, dismissible) */}
+          {academyId && (
+            <DonnaDailyCOOBriefSurface
+              directorName={userDisplayName || null}
+            />
+          )}
           <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="director">
             {children}
           </FirstRunDeckGate>
