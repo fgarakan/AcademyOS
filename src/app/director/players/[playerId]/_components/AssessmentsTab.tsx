@@ -10,6 +10,7 @@ import { resolveAssessmentTemplate } from '@/lib/assessment/assessmentTemplateRe
 import type { PreviousAssessmentData, ScoresDetail } from '@/lib/assessment/assessmentTemplateTypes'
 import { AssessmentPurposePicker } from './AssessmentPurposePicker'
 import { LevelReadinessCard } from './LevelReadinessCard'
+import { DevelopmentPrioritiesCard } from './DevelopmentPrioritiesCard'
 
 interface AssessmentsTabProps {
   playerId:         string
@@ -252,6 +253,14 @@ export async function AssessmentsTab({
 
   return (
     <div className="space-y-5">
+
+      {/* Development Priorities — evidence-based priorities above the form */}
+      <DevelopmentPrioritiesCard
+        playerId={playerId}
+        academyId={academyId}
+        playerFirstName={playerFirstName}
+        currentLevelName={currentLevelName}
+      />
 
       {/* Level Readiness Card — evidence-based signal above the assessment form */}
       <LevelReadinessCard

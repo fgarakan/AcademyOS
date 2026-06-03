@@ -21,6 +21,7 @@ export type AttentionCategory =
   | 'parent_update_pending'
   | 'coach_followup_needed'
   | 'missing_evidence'
+  | 'development_priority_gap'
 
 export type AttentionPriority = 'high' | 'medium' | 'low'
 
@@ -354,6 +355,37 @@ export function buildAttentionItems(input: BuildAttentionItemsInput): AttentionI
     })
   }
 
+  // ── 9. Development Priority Gap ────────────────────────────────────────────
+  // Active players who have an overall score but no focus areas set — data exists
+  // but hasn't been translated into priorities. Different from missing_evidence
+  // (which flags no group + no focus + has data). This flags: has data, has group, no priorities.
+  for (const row of input.players) {
+    if (!row.player_id) continue
+    if (row.player_status !== 'active') continue
+    if (row.overall_score === null) continue      // no data yet
+    if (row.group_name === null) continue          // already caught by missing_evidence
+    if (row.last_assessed_at === null) continue    // already caught by missing_assessment
+    if (row.focus_areas && row.focus_areas.length > 0) continue  // has priorities
+    if (row.assessment_status === 'overdue') continue  // reassessment due takes precedence
+    const score = (row.overall_score as number).toFixed(1)
+    items.push({
+      id: `priority_gap_${row.player_id}`,
+      category: 'development_priority_gap',
+      priority: 'low',
+      playerId: row.player_id,
+      playerName: row.full_name,
+      currentLevel: row.level_label,
+      groupName: row.group_name,
+      coachName: row.coach_name,
+      reason: `Assessment data (${score}/10) with no development priorities set`,
+      recommendedAction: 'Open player profile → Assessments tab to review evidence-based priorities.',
+      donnaExplanation: `${row.full_name ?? 'This player'} has assessment data (score ${score}/10) but no focus areas or development priorities are recorded. Their evidence hasn't been translated into a coaching direction yet.`,
+      href: playerHref(row.player_id),
+      filters: ['all', 'players'],
+      daysSinceEvent: row.last_assessed_at ? daysSince(row.last_assessed_at) : null,
+    })
+  }
+
   // ── Sort: High → Medium → Low, then alphabetically by playerName ────────────
   return items.sort((a, b) => {
     const pDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
@@ -383,6 +415,7 @@ export const CATEGORY_LABELS: Record<AttentionCategory, string> = {
   parent_update_pending:   'Parent Update',
   coach_followup_needed:   'Coach Follow-Up',
   missing_evidence:        'Missing Evidence',
+  development_priority_gap: 'Priority Gap',
 }
 
 export const FILTER_LABELS: Record<AttentionFilter, string> = {

@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-03 — Mega Sprint 1511–1540 — Evidence → Development Priorities Engine V1
+
+**Created:**
+- `src/lib/evidence/developmentPrioritiesEngine.ts` — Pure TS: `calculateDevelopmentPriorities` → `DevelopmentPrioritiesResult` with ranked top priorities (1–3), strengths, risks, coach focus areas, recommended next assessment, confidence, DONNA explanation; evidence→priority category classifier; exports `buildTopPrioritiesAnswer` and `buildPlayerStrengthsAnswer` DONNA builders
+- `src/app/director/players/[playerId]/_components/DevelopmentPrioritiesCard.tsx` — Server RSC: loads evidence, derives readiness result, runs priorities engine, renders numbered priorities list with urgency badges, strengths chips, coach focus lines, recommended next assessment
+- `docs/qa/EVIDENCE_TO_DEVELOPMENT_PRIORITIES_ENGINE_V1.md` — 54-item QA checklist
+
+**Modified:**
+- `src/lib/evidence/donnaEvidenceAnswers.ts` — Added `buildNextWorkOnAnswer` and `buildWhatAreStrengthsAnswer` builders (delegate to priorities engine via lazy require)
+- `src/app/director/players/[playerId]/_components/AssessmentsTab.tsx` — Added `DevelopmentPrioritiesCard` above `LevelReadinessCard` in the tab
+- `src/app/director/attention/buildAttentionItems.ts` — Added `'development_priority_gap'` to `AttentionCategory`, `CATEGORY_LABELS`; added section 9 surfacing active players with assessment data but no priorities set (low priority)
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-03 — Mega Sprint 1481–1510 — Evidence → Level Readiness Engine V1
 
 **Created:**

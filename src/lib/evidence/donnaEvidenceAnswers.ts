@@ -3,6 +3,7 @@
 // If evidence is empty: answer says exactly that — never invents.
 // Answers are always role-gated before display.
 // Sprint 1451-1480: added buildAssessmentEvidenceMissingAnswer, buildWhyNotReadyToAdvanceAnswer, buildCoachFocusAnswer
+// Sprint 1511-1540: added buildNextWorkOnAnswer, buildWhatAreStrengthsAnswer (delegate to developmentPrioritiesEngine)
 
 import type { EvidenceRecord, ProgressRollup, EvidenceAnswer, EvidencePathway } from './playerEvidenceTypes'
 
@@ -490,5 +491,28 @@ export function buildCoachFocusAnswer(
     safeForParent:       false,
     safeForPlayer:       false,
   }
+}
+
+// ─── 10. What should Jamie work on next? (delegates to priorities engine) ─────
+
+export function buildNextWorkOnAnswer(
+  playerFirstName: string | null,
+  records: EvidenceRecord[],
+  rollup: ProgressRollup,
+): EvidenceAnswer {
+  // Lazy import to avoid circular dependency at module level
+  const { buildTopPrioritiesAnswer } = require('./developmentPrioritiesEngine') as typeof import('./developmentPrioritiesEngine')
+  return buildTopPrioritiesAnswer(playerFirstName, records, null)
+}
+
+// ─── 11. What are Jamie's strengths? (delegates to priorities engine) ─────────
+
+export function buildWhatAreStrengthsAnswer(
+  playerFirstName: string | null,
+  records: EvidenceRecord[],
+  rollup: ProgressRollup,
+): EvidenceAnswer {
+  const { buildPlayerStrengthsAnswer } = require('./developmentPrioritiesEngine') as typeof import('./developmentPrioritiesEngine')
+  return buildPlayerStrengthsAnswer(playerFirstName, records, null)
 }
 
