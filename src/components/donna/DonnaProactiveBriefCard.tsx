@@ -14,13 +14,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { Sparkles, X, ArrowRight } from 'lucide-react'
+import { Sparkles, X, ArrowRight, RotateCcw } from 'lucide-react'
 import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import {
   generateProactivePageBrief,
   canonicalizeBriefRoute,
   type ProactivePageBrief,
 } from '@/lib/donna/proactive/proactivePageBriefEngine'
+// Sprint 1831 — Goal-aware proactive guidance
+import {
+  getCurrentGoalState,
+  type DonnaGoalMemoryState,
+} from '@/lib/donna/memory/donnaGoalMemory'
+import { GOAL_LABELS } from '@/lib/donna/goals/donnaGoalEngine'
 
 // ── Session cooldown ──────────────────────────────────────────────────────────
 
@@ -179,6 +185,66 @@ export interface DonnaProactiveBriefCardProps {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+// ── Goal continuity banner ────────────────────────────────────────────────────
+// Sprint 1831 — shown above the page brief when an active/interrupted goal exists.
+
+function GoalContinuityBanner({
+  goalState,
+  onContinue,
+  onDismiss,
+}: {
+  goalState: DonnaGoalMemoryState
+  onContinue: () => void
+  onDismiss: () => void
+}) {
+  const goal = goalState.activeGoal ?? goalState.interruptedGoal
+  if (!goal) return null
+
+  const label = GOAL_LABELS[goal] ?? goal
+  const subject = (goalState.activeGoal ? goalState.activeGoalSubject : goalState.interruptedGoalSubject) ?? null
+  const subjectPart = subject ? ` — ${subject}` : ''
+  const wasInterrupted = !goalState.activeGoal && !!goalState.interruptedGoal
+
+  return (
+    <div
+      className="rounded-xl px-3.5 py-2.5 mb-2"
+      style={{
+        background: 'rgba(200,255,0,0.06)',
+        border: '1px solid rgba(200,255,0,0.20)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1 min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-lime">
+            {wasInterrupted ? 'Interrupted workflow' : 'In progress'}
+          </p>
+          <p className="text-[11px] text-text-secondary leading-snug truncate">
+            {label}{subjectPart}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="shrink-0 p-0.5 text-text-muted hover:text-text-secondary"
+          aria-label="Dismiss"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onContinue}
+        className="mt-2 flex items-center gap-1 text-[11px] font-medium text-lime hover:underline"
+      >
+        <RotateCcw className="w-3 h-3 shrink-0" aria-hidden />
+        Continue where you left off
+      </button>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export function DonnaProactiveBriefCard({
   pendingCount,
   missingWrapUps,
@@ -188,9 +254,18 @@ export function DonnaProactiveBriefCard({
   const { session } = useDonnaSessionContext()
   const [brief, setBrief] = useState<ProactivePageBrief | null>(null)
   const [visible, setVisible] = useState(false)
+  // Sprint 1831 — goal continuity
+  const [goalState, setGoalState] = useState<DonnaGoalMemoryState | null>(null)
+  const [goalBannerDismissed, setGoalBannerDismissed] = useState(false)
 
-  // Evaluate brief on route change
+  // Evaluate brief + goal state on route change
   useEffect(() => {
+    // Sprint 1831: load goal memory (client-side only)
+    const gs = getCurrentGoalState()
+    const hasGoal = gs && (gs.activeGoal || gs.interruptedGoal)
+    setGoalState(hasGoal ? gs : null)
+    setGoalBannerDismissed(false)
+
     const routeKey = canonicalizeBriefRoute(pathname)
     if (!routeKey) {
       setVisible(false)
@@ -227,12 +302,33 @@ export function DonnaProactiveBriefCard({
     setVisible(false)
   }, [pathname])
 
-  if (!visible || !brief) return null
+  const handleGoalContinue = useCallback(() => {
+    const gs = getCurrentGoalState()
+    const goal = gs?.activeGoal ?? gs?.interruptedGoal
+    const prompt = goal ? `let's continue` : 'what were we doing'
+    askDonna(prompt)
+    setGoalBannerDismissed(true)
+  }, [])
+
+  // Show if: page brief is visible OR goal banner is visible
+  const showGoalBanner = goalState !== null && !goalBannerDismissed
+  if (!visible && !showGoalBanner) return null
 
   return (
-    // Desktop-only, fixed above the DONNA assistant button (bottom-6 right-6, button is w-12 h-12)
-    <div className="fixed bottom-24 right-6 z-40 hidden lg:block">
-      <BriefCard brief={brief} onDismiss={dismiss} />
+    // Desktop-only, fixed above the DONNA assistant button
+    <div className="fixed bottom-24 right-6 z-40 hidden lg:block w-72">
+      {/* Goal continuity banner — Sprint 1831 */}
+      {showGoalBanner && goalState && (
+        <GoalContinuityBanner
+          goalState={goalState}
+          onContinue={handleGoalContinue}
+          onDismiss={() => setGoalBannerDismissed(true)}
+        />
+      )}
+      {/* Page brief */}
+      {visible && brief && (
+        <BriefCard brief={brief} onDismiss={dismiss} />
+      )}
     </div>
   )
 }

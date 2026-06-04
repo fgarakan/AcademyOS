@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-04 — DONNA Intent, Goal & Continuity Engine V1 (Mega Sprint 1831–1860)
+
+- Created `src/lib/donna/intent/confidenceScoring.ts` — shared scoring foundation used by all four engines; thresholds (ACT=0.72, LIKELY=0.50, LOW=0.35), signal weight constants (strong/medium/weak/boost), matchWeightedSignals(), rankCandidates(), blendConfidence(), buildReasoning()
+- Created `src/lib/donna/intent/donnaIntentEngine.ts` — NL intent engine; 11 intent categories; weighted signal maps per intent; entity extraction (ball levels, player names via capitalized word heuristic); page-aware context boost (+0.10 on matching route); classifyIntent() returns IntentResult with confidence 0–1, possibleIntents, clarificationQuestion, extractedEntity; complements existing donnaIntentClassifier without replacing it
+- Created `src/lib/donna/entities/donnaEntityResolver.ts` — entity resolution layer; 7 entity types (player/coach/parent/curriculum_level/assessment/session/template); ball level regex, session signal matching, template signal matching, heuristic name extraction; resolveEntities() returns primary + all candidates sorted by confidence; needsResolution flag ensures DB lookup is user-confirmed; approval-safe
+- Created `src/lib/donna/goals/donnaGoalEngine.ts` — goal engine; 13 DirectorGoal types; intent→goal candidate maps with weights; resolveIntentToGoal() blends intent + entity confidence; resolveTextToGoal() convenience wrapper; links goals to GuidedWorkflowId candidates; buildGoalInferenceMessage() generates DONNA opening line; goal definitions include recommended routes
+- Created `src/lib/donna/memory/donnaGoalMemory.ts` — sessionStorage-backed goal memory; TTL 2h; tracks activeGoal/interruptedGoal/previousGoal/completedGoals/lastRelevantEntity; setActiveGoal/interruptGoal/completeGoal/resumeInterruptedGoal; buildContinuityResponse() handles "let's continue"/"go back"/"what were we doing?"/"finish it"/"take me there"; isContinuityPhrase() for detection
+- Created `src/lib/donna/intent/donnaClarificationEngine.ts` — clarification engine; page-aware option sets (curriculum/player-profile/review/session/setup); entity-aware question prefix ("I see you're asking about Sarah"); buildClarificationQuestion() → ClarificationQuestion with ≤4 options; formatClarificationMessage(); parseOptionSelection() for numeric/keyword selection
+- Modified `src/components/donna/DonnaProactiveBriefCard.tsx` — Phase 6 goal-aware proactive guidance; imports getCurrentGoalState + GOAL_LABELS; GoalContinuityBanner component (lime border, "In progress"/"Interrupted workflow" label, subject, "Continue where you left off" button dispatching donna:open); banner appears above page brief when active/interrupted goal exists in memory
+- Created `docs/qa/DONNA_INTENT_GOAL_CONTINUITY_ENGINE_V1.md` — 10 QA scenarios + confidence threshold table + guardrail checklist
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Guided Completion Experience V1 (Mega Sprint 1821–1830)
 
 - Created `src/components/donna/DonnaGuidedWorkflowCard.tsx` — progress card rendered inside DONNA panel; shows workflow label, step N/M, % progress bar, current question, subject label; when complete: "All N steps done — type 'show summary'"; cancel button; reads `GuidedCompletionSessionState` as prop from DonnaAssistantButton
