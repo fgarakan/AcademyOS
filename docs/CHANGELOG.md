@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-04 — AcademyOS UX Cognitive Load Audit V1 (Mega Sprint 1961–1970)
+
+- Created `docs/audit/ACADEMYOS_SITE_MAP_UX_AUDIT_V1.md` — full site map: all routes, roles, cognitive load ratings, DONNA presence, and keep/merge/simplify/redesign recommendations
+- Created `docs/audit/DIRECTOR_UX_COGNITIVE_LOAD_AUDIT_V1.md` — per-page director audit: what matters, why, what happens next, what should DONNA summarize, what creates confusion
+- Created `docs/audit/ACADEMYOS_SCROLL_AUDIT_V1.md` — scroll depth scoring (0–5) for every major page, above-the-fold analysis, unnecessary stacking, DONNA absorption candidates
+- Created `docs/audit/DONNA_UI_RESPONSIBILITY_AUDIT_V1.md` — UI shows / DONNA explains / DONNA decides / DONNA guides / Director approves split for every major screen
+- Created `docs/audit/ACADEMYOS_ROLE_EXPERIENCE_AUDIT_V1.md` — role-by-role experience audit: 10-second test, workflow friction, DONNA integration, score per role
+- Created `docs/audit/ACADEMY_HEALTH_INTELLIGENCE_READINESS_AUDIT_V1.md` — enrollment, progression, retention, coach impact, curriculum health, optimization, value report readiness matrix
+- Created `docs/audit/ACADEMYOS_UX_REDESIGN_READINESS_REPORT_V1.md` — top 20 UX problems, top 20 cognitive load issues, top 10 scroll issues, pages to merge/simplify/absorb/redesign, implementation sequence
+- No code changes. No migrations. Audit only.
+
+---
+
 ## 2026-06-04 — DONNA Unified Brain + Reasoning Optimization V1 (Mega Sprint 1911–1960)
 
 - Created `src/lib/donna/brain/processDonnaMessage.ts` — primary DONNA decision layer; 16-step orchestration order (guided workflow → COO control → continuity → today-guidance → brief → review → attention → ambiguity → intent → entity → goal → context → workflow → respond → clarify → fallback)
