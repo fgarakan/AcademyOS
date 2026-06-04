@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-04 — DONNA Proactive Pilot Guide V1 (Mega Sprint 1801–1810)
+
+- Created `src/lib/donna/proactive/proactivePageBriefEngine.ts` — pure TypeScript brief engine for 9 director routes; each brief answers: what is this page, look first, do next, ask DONNA; uses live `pendingCount` / `missingWrapUps` / `todaySessions` / `playerProfileContext` when provided; honest template fallback when unknown; evidence-safe (no fabricated counts); approval-safe (never instructs bypassing review pipeline)
+- Created `src/components/donna/DonnaProactiveBriefCard.tsx` — client component; fixed `bottom-24 right-6 z-40` (above DONNA button); session-level cooldown via sessionStorage (`donna_pilot_routes_seen_v1`); one brief per canonical route pattern per session; dismiss button; "Ask DONNA" + question chip dispatch `donna:open` with `autoSubmit: true`; desktop-only (`hidden lg:block`)
+- Modified `src/app/director/layout.tsx` — mounts `<DonnaProactiveBriefCard pendingCount={pendingCount} />` alongside DonnaWakeWordLayer and DonnaAssistantButton
+- Created `docs/qa/DONNA_PROACTIVE_PILOT_GUIDE_V1.md` — 10 QA scenarios covering brief appearance, live count display, cooldown, Ask DONNA routing, CTA, session reset, unsupported routes
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Persistent Conversation Mode V1 (Mega Sprint 1791–1800)
 
 - Modified `src/lib/donna/useDonnaWakeWord.ts` — extended state machine with `paused` and `stopped` states; `isSessionActiveRef` tracks persistent session (true after first wake, false after stop); after processing a command in active session, returns to `active` (not `listening`) — core persistent loop; stop phrase detection in active state ("stop listening", "donna stop", "that's all", "go to sleep"); `pauseSession` / `resumeSession` public API; `stopped` state auto-transitions to `dormant` after 2s; `isSessionActive`, `pauseSession`, `resumeSession` added to return type
