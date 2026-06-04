@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-04 — DONNA Persistent Conversation Mode V1 (Mega Sprint 1791–1800)
+
+- Modified `src/lib/donna/useDonnaWakeWord.ts` — extended state machine with `paused` and `stopped` states; `isSessionActiveRef` tracks persistent session (true after first wake, false after stop); after processing a command in active session, returns to `active` (not `listening`) — core persistent loop; stop phrase detection in active state ("stop listening", "donna stop", "that's all", "go to sleep"); `pauseSession` / `resumeSession` public API; `stopped` state auto-transitions to `dormant` after 2s; `isSessionActive`, `pauseSession`, `resumeSession` added to return type
+- Modified `src/components/donna/DonnaWakeWordLayer.tsx` — updated all state labels per sprint spec; SESSION ACTIVE badge with lime pulse when session is live; lime glow pill during active session; Pause + Stop buttons shown during active session; Resume + Stop during paused; unsupported browsers now show "Start Donna" fallback button (dispatches donna:open) instead of rendering null
+- Created `docs/qa/DONNA_PERSISTENT_CONVERSATION_MODE_V1.md` — 10 QA scenarios covering wake, inline command, follow-up routing, stop phrase, stop button, pause/resume, text input, browser fallback, approval guardrails
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Wake Word V1 (Mega Sprint 1791–1800)
 
 - Created `src/lib/donna/useDonnaWakeWord.ts` — wake word state machine hook: states dormant / listening / wakeDetected / active / processing / timedOut; persistent SpeechRecognition in continuous mode with auto-restart on silence; 60s inactivity timeout; dispatches `donna:open` event with command when wake phrase detected; `startListening` / `stopListening` controls; Chrome/Edge only, graceful fallback when unsupported
