@@ -284,6 +284,30 @@ import {
   buildBrianAlphaSandboxBlockedMessage,
 } from '@/lib/donna/donnaBrianAlphaSandbox'
 
+// Sprint 1821 — Guided Completion Experience V1
+import {
+  detectGuidedCompletionIntent,
+  requiredStepCount,
+} from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
+import type { GuidedCompletionWorkflow, GuidedWorkflowId } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
+import {
+  startGuidedCompletion,
+  recordAnswer as recordGuidedAnswer,
+  getCurrentGuidedCompletion,
+  clearGuidedCompletion,
+  updateSubjectLabel as updateGuidedSubjectLabel,
+} from '@/lib/donna/guidedCompletion/guidedCompletionSessionMemory'
+import type { GuidedCompletionSessionState } from '@/lib/donna/guidedCompletion/guidedCompletionSessionMemory'
+import {
+  buildStepMessage as buildGuidedStepMessage,
+  buildAcknowledgement as buildGuidedAck,
+  buildCompletionSummary as buildGuidedSummary,
+  buildResumeMessage as buildGuidedResumeMessage,
+  getNextStep as getGuidedNextStep,
+  isWorkflowComplete as isGuidedWorkflowComplete,
+} from '@/lib/donna/guidedCompletion/guidedCompletionStepRunner'
+import { DonnaGuidedWorkflowCard } from '@/components/donna/DonnaGuidedWorkflowCard'
+
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
 // Only these show "Approve and Save"; all others show "Save not yet available".
@@ -909,6 +933,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Multi-step plan state — Sprint 286
   const [multiStepPlan, setMultiStepPlan] = useState<DonnaMultiStepPlan | null>(null)
   const [multiStepIndex, setMultiStepIndex] = useState(0)
+  // Sprint 1821 — Guided Completion active session state
+  const [activeGuidedCompletion, setActiveGuidedCompletion] = useState<GuidedCompletionSessionState | null>(null)
 
   // Voice UI state — Sprint 289
   const [isVoiceListening, setIsVoiceListening] = useState(false)
@@ -974,6 +1000,97 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       ? getAvailableTasksForPage(pathname).slice(0, 4)
       : []
 
+  // ── Sprint 1821: Guided Completion helpers ────────────────────────────────────
+
+  function handleStartGuidedCompletion(workflow: GuidedCompletionWorkflow, triggerText: string) {
+    const session = startGuidedCompletion(workflow.id)
+    setActiveGuidedCompletion(session)
+    const firstStep = workflow.requiredSteps[0]
+    const stepPart = firstStep
+      ? `\n\n${firstStep.question}${firstStep.hint ? `\n\n_${firstStep.hint}_` : ''}`
+      : ''
+    const openMsg = `${workflow.openingMessage}${stepPart}`
+    setCooThread(prev => [...prev.slice(-4), { user: triggerText, donna: openMsg, type: 'info' as const }])
+    setCommandResponse({ message: openMsg, type: 'info', label: workflow.label })
+    if (firstStep) speakDonna(firstStep.question)
+    recordPrompt(triggerText)
+    recordTurn(triggerText, openMsg, { domain: 'general' })
+  }
+
+  function handleGuidedCompletionAnswer(text: string, workflowId: GuidedWorkflowId): boolean {
+    const current = getCurrentGuidedCompletion()
+    if (!current || current.workflowId !== workflowId) return false
+
+    const lc = text.toLowerCase().trim()
+
+    // Cancel commands
+    if (lc === 'cancel' || lc === 'cancel workflow' || lc === 'stop workflow' || lc === 'exit workflow') {
+      clearGuidedCompletion()
+      setActiveGuidedCompletion(null)
+      const msg = "Workflow cancelled. Start a new one whenever you're ready."
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+      speakDonna(msg)
+      return true
+    }
+
+    // Summary command (when complete)
+    if (lc === 'show summary' || lc === 'summary') {
+      if (isGuidedWorkflowComplete(workflowId, current.answers)) {
+        const summary = buildGuidedSummary(workflowId, current.answers, current.subjectLabel)
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: summary.formatted, type: 'info' as const }])
+        speakDonna(summary.headline)
+        return true
+      }
+    }
+
+    // Find next unanswered required step and record the answer
+    const nextStep = getGuidedNextStep(workflowId, current.answers)
+    if (!nextStep) {
+      // All required steps answered — show completion summary
+      const summary = buildGuidedSummary(workflowId, current.answers, current.subjectLabel)
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: summary.formatted, type: 'info' as const }])
+      speakDonna(summary.headline)
+      return true
+    }
+
+    const updated = recordGuidedAnswer(nextStep.fieldId, text)
+    if (!updated) return false
+
+    // Update subject label from the first answer (typically a name or level)
+    let finalState = updated
+    if (nextStep.order === 1 && text.trim()) {
+      updateGuidedSubjectLabel(text.trim())
+      finalState = { ...updated, subjectLabel: text.trim() }
+    }
+
+    setActiveGuidedCompletion(finalState)
+
+    if (isGuidedWorkflowComplete(workflowId, finalState.answers)) {
+      const summary = buildGuidedSummary(workflowId, finalState.answers, finalState.subjectLabel)
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: summary.formatted, type: 'info' as const }])
+      speakDonna(summary.headline)
+      setCommandResponse({ message: summary.formatted, type: 'info', label: 'Workflow complete' })
+    } else {
+      const afterStep = getGuidedNextStep(workflowId, finalState.answers)
+      const ack = buildGuidedAck(workflowId, nextStep, text, afterStep, finalState.subjectLabel)
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: ack.formatted, type: 'info' as const }])
+      if (afterStep) speakDonna(afterStep.question)
+      setCommandResponse({
+        message: ack.formatted,
+        type: 'info',
+        label: afterStep
+          ? `Step ${afterStep.order} of ${requiredStepCount(workflowId)}`
+          : 'Workflow complete',
+      })
+    }
+
+    recordPrompt(text)
+    recordTurn(text, 'Guided completion step answered', { domain: 'general' })
+    return true
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const closePanel = useCallback(() => {
     // Sprint 784 — persist current page context to localStorage before clearing state
     const mem = getSessionMemory()
@@ -1003,6 +1120,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setIsLoadingReviewQueue(false)
     setMultiStepPlan(null)
     setMultiStepIndex(0)
+    setActiveGuidedCompletion(null)
+    // Sprint 1821 — do NOT clear guidedCompletion from sessionStorage on panel close;
+    // the workflow persists so DONNA can offer to resume when the panel re-opens.
     setPendingVoiceAnswer(null)
     setInterimVoiceTranscript(null)
     setIsVoiceListening(false)
@@ -1132,6 +1252,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     resetIdleTimer()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typedText, panelOpen])
+
+  // Sprint 1821 — Restore saved guided completion when panel opens (resume support).
+  // Only fires on panel open. Does not clear existing conversation thread.
+  useEffect(() => {
+    if (!panelOpen) return
+    if (activeGuidedCompletion !== null) return  // already active in this session
+    const saved = getCurrentGuidedCompletion()
+    if (!saved) return
+    setActiveGuidedCompletion(saved)
+    const resumeMsg = buildGuidedResumeMessage(saved.workflowId, saved.answers, saved.subjectLabel)
+    setCooThread(prev => {
+      if (prev.length > 0) return prev  // don't displace active conversation
+      return [{ user: '', donna: resumeMsg, type: 'info' as const }]
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panelOpen])
 
   // Sprint 702 — Initialize chat session memory on mount (or role change)
   useEffect(() => {
@@ -3442,6 +3578,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
+    // Sprint 1821 — Guided Completion: route answers when active, or detect new workflow trigger.
+    // Runs before multi-step so guided completion takes precedence.
+    if (!templateDraft && !genericDraft && !multiStepPlan) {
+      if (activeGuidedCompletion !== null) {
+        const handled = handleGuidedCompletionAnswer(text, activeGuidedCompletion.workflowId)
+        if (handled) { setTypedText(''); focusDonnaInput(); return }
+      }
+      const workflow = detectGuidedCompletionIntent(text)
+      if (workflow) {
+        handleStartGuidedCompletion(workflow, text)
+        setTypedText('')
+        focusDonnaInput()
+        return
+      }
+    }
+
     // Multi-step intent — Sprint 286
     if (!templateDraft && !genericDraft && !multiStepPlan) {
       const plan = detectMultiStepIntent(text)
@@ -4610,6 +4762,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 </button>
               )}
             </div>
+          )}
+
+          {/* ── Sprint 1821: Guided Completion progress card ── */}
+          {activeGuidedCompletion !== null && (
+            <DonnaGuidedWorkflowCard
+              session={activeGuidedCompletion}
+              onCancel={() => {
+                clearGuidedCompletion()
+                setActiveGuidedCompletion(null)
+              }}
+            />
           )}
 
           {/* ── Guided task mode — wired tasks save via server action; unwired show honest notice ── */}

@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-04 — DONNA Guided Completion Experience V1 (Mega Sprint 1821–1830)
+
+- Created `src/components/donna/DonnaGuidedWorkflowCard.tsx` — progress card rendered inside DONNA panel; shows workflow label, step N/M, % progress bar, current question, subject label; when complete: "All N steps done — type 'show summary'"; cancel button; reads `GuidedCompletionSessionState` as prop from DonnaAssistantButton
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — 7 surgical inserts: (1) imports for guided completion registry/memory/step-runner + DonnaGuidedWorkflowCard; (2) `activeGuidedCompletion` state; (3) `handleStartGuidedCompletion()` helper — starts session, posts opening message + first question to cooThread; (4) `handleGuidedCompletionAnswer()` helper — routes answer to recordGuidedAnswer, advances step, posts ack + next question, generates summary when complete; (5) detection block in `handleCommandSubmit` before multi-step (runs detectGuidedCompletionIntent then routes answer if active); (6) clearance in closePanel; (7) resume useEffect — restores saved workflow on panel open; (8) JSX DonnaGuidedWorkflowCard mount
+- Created `docs/qa/DONNA_GUIDED_COMPLETION_EXPERIENCE_V1.md` — 10 QA scenarios + acceptance checklist
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Guided Completion Engine V1 (Mega Sprint 1811–1820)
 
 - Created `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — 6 workflow definitions (curriculum_builder, academy_setup, player_onboarding, assessment, parent_update, template_builder); each has: id, label, end goal, trigger phrases, page routes, required/optional steps with questions/hints, completion criteria, safe actions, approval-gated actions, opening message; `detectGuidedCompletionIntent()` phrase matcher; `getWorkflow()` / `getAllWorkflows()` lookups
