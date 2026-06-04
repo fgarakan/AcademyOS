@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-06-04 — AcademyOS Curriculum Operating System Audit V1 (Mega Sprint 1971–1980)
+
+- Created `docs/audit/CURRICULUM_SYSTEM_MAP_AUDIT_V1.md` — full map of all curriculum routes, lib modules, DB tables, templates, evidence, IDP, missions, badges, DONNA intelligence, and critical pending migrations
+- Created `docs/audit/CURRICULUM_CREATION_WORKFLOW_AUDIT_V1.md` — per-object creation workflow audit: levels, skills, drills, assessments, missions, badges, parent guidance; friction and gap analysis at each step
+- Created `docs/audit/CURRICULUM_IMPROVEMENT_WORKFLOW_AUDIT_V1.md` — 9-step improvement workflow scored 4.1/10; documents execution gap between approval and application for coach suggestions
+- Created `docs/audit/CURRICULUM_TO_SESSION_WORKFLOW_AUDIT_V1.md` — curriculum → template → session → delivery → recap → evidence chain; 4 critical breaks identified
+- Created `docs/audit/CURRICULUM_ROLE_CONSUMPTION_AUDIT_V1.md` — per-role curriculum consumption audit: director 3.5/10, coach 4.5/10, parent 5.0/10, player 5.0/10
+- Created `docs/audit/CURRICULUM_HEALTH_INTELLIGENCE_AUDIT_V1.md` — 9 intelligence questions scored; 7 of 9 blocked or not built; root cause: pending migrations 041-044, 045, 056, 061, 062, 083
+- Created `docs/audit/DONNA_CURRICULUM_OPERATING_ROLE_AUDIT_V1.md` — full DONNA capability inventory for build/explain/monitor/guide; 3 critical gaps: improvement not discoverable, bottleneck blocked, no coach pre-session brief
+- Created `docs/audit/CURRICULUM_OS_READINESS_REPORT_V1.md` — overall Curriculum OS score 3.9/10; top 20 workflow gaps, top 20 UX gaps, top 10 data-flow gaps, top 10 DONNA gaps; recommended next sprint: apply pending migrations
+- No code changes. No migrations. Audit only.
+
+---
+
 ## 2026-06-04 — AcademyOS UX Cognitive Load Audit V1 (Mega Sprint 1961–1970)
 
 - Created `docs/audit/ACADEMYOS_SITE_MAP_UX_AUDIT_V1.md` — full site map: all routes, roles, cognitive load ratings, DONNA presence, and keep/merge/simplify/redesign recommendations
