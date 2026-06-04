@@ -4,6 +4,7 @@
 
 ## 2026-06-03 — Mega Sprint 1761–1770 — DONNA Learning Foundations V1
 
+- Created `src/lib/donna/learning/academyLearningEngine.ts` — core type foundation: `LearningCategory`, `LearningConfidence`, `LearningSignal`, `AcademyLearningReport`; `buildAcademyLearningReport(ctx)` orchestrator (aggregates all three signal modules); `formatLearningReportAsMessage()`; V2 scaffold types `OutcomeTrackingRecord`, `LearningSignalWithOutcome`, `OutcomeLearningReadiness`, `buildOutcomeLearningReadiness()` (forward-declared, not populated in V1); pure TypeScript, no DB calls, no mutations
 - Created `src/lib/donna/learning/decisionTracking.ts` — `buildDecisionTrackingSignals(ctx)`: module-frequency signal + repeated-rejection signal from `recentDecisions`; no causal claims; all outputs use hedged language ("early signal", "pattern should be monitored")
 - Created `src/lib/donna/learning/recommendationLearning.ts` — `buildRecommendationLearningSignals(ctx)`: overall acceptance rate signal + modification-pattern signal; minimum 3-decision threshold; no outcome inference
 - Created `src/lib/donna/learning/repeatedPatternDetector.ts` — `buildRepeatedPatternSignals(ctx)`: curriculum gap cluster, high-risk player attention cluster, advancement eligibility cluster, progress stall cluster, assessment coverage gap cluster; every signal includes explicit limitation that no causal link is inferred
