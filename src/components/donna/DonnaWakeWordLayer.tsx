@@ -1,26 +1,52 @@
 'use client'
 
 // Sprint 1791–1800 — DONNA Persistent Conversation Mode V1
+// Sprint 1861–1880 — Auto-start: "Hey Donna" works without pressing the DONNA button.
+//
 // Floating wake-word / conversation session indicator for the director portal.
 // Renders a bottom-left pill showing session state.
-// After "Hey Donna" starts a session, all commands route without re-waking.
+//
+// Auto-start behavior (Sprint 1861–1880):
+//   - On mount, reads localStorage key 'donna_wake_autostart'.
+//   - If 'true', calls startListening() automatically — no button press required.
+//   - If mic permission was previously granted by the browser, this works silently.
+//   - If mic permission has not been granted yet, the browser may prompt once.
+//   - If mic is denied, the permission error card appears with a clear explanation.
+//   - First-time users (no localStorage key): shown "Enable Hey Donna" card — one tap enables.
+//   - Preference persists: enabling/disabling is remembered across page loads.
+//
 // No DB calls. No mutations. Never approves, promotes, publishes, or changes records.
 
-import { Mic, MicOff, Square, Pause, Play } from 'lucide-react'
+import { useEffect, useCallback } from 'react'
+import { Mic, MicOff, Square, Pause, Play, Sparkles } from 'lucide-react'
 import { useDonnaWakeWord, type WakeWordState } from '@/lib/donna/useDonnaWakeWord'
+
+// ── localStorage key ──────────────────────────────────────────────────────────
+
+const WAKE_AUTOSTART_KEY = 'donna_wake_autostart'
+
+function readAutoStartPreference(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.localStorage.getItem(WAKE_AUTOSTART_KEY) === 'true'
+}
+
+function saveAutoStartPreference(enabled: boolean): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(WAKE_AUTOSTART_KEY, enabled ? 'true' : 'false')
+}
 
 // ── State message labels ──────────────────────────────────────────────────────
 
 function getStateLabel(state: WakeWordState): string {
   switch (state) {
-    case 'dormant':      return 'Say "Hey Donna" to start.'
-    case 'listening':    return 'Listening for Hey Donna…'
-    case 'wakeDetected': return "I'm here. What do you need?"
+    case 'dormant':      return 'Hey Donna'
+    case 'listening':    return 'Listening…'
+    case 'wakeDetected': return "I'm here."
     case 'active':       return 'DONNA is listening.'
     case 'processing':   return 'Working on it…'
     case 'timedOut':     return 'Say "Hey Donna" to continue.'
     case 'paused':       return 'DONNA paused.'
-    case 'stopped':      return 'Say "Hey Donna" to start again.'
+    case 'stopped':      return 'Stopped.'
   }
 }
 
@@ -62,6 +88,54 @@ function DonnaFallbackButton() {
   )
 }
 
+// ── Enable Hey Donna card — first-time users ──────────────────────────────────
+
+interface EnableHeyDonnaCardProps {
+  onEnable: () => void
+}
+
+function EnableHeyDonnaCard({ onEnable }: EnableHeyDonnaCardProps) {
+  return (
+    <div
+      className="fixed bottom-20 left-4 z-40 hidden lg:flex flex-col items-start gap-1.5"
+      aria-label="Enable Hey Donna"
+    >
+      <button
+        type="button"
+        onClick={onEnable}
+        className="flex items-center gap-2.5 rounded-xl px-4 py-2.5 select-none transition-all duration-200 hover:border-lime/40 group"
+        style={{
+          background: 'rgba(17,17,17,0.95)',
+          border: '1px solid rgba(34,34,34,0.9)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        }}
+        aria-label="Enable Hey Donna wake word"
+        title="Enable Hey Donna"
+      >
+        <Sparkles
+          className="w-3.5 h-3.5 shrink-0 transition-colors group-hover:text-lime"
+          style={{ color: '#555555' }}
+        />
+        <div className="flex flex-col items-start gap-0.5">
+          <span
+            className="text-[11px] font-semibold leading-none transition-colors group-hover:text-white"
+            style={{ color: '#AAAAAA' }}
+          >
+            Enable Hey Donna
+          </span>
+          <span className="text-[10px] leading-none" style={{ color: '#444444' }}>
+            Say "Hey Donna" from anywhere
+          </span>
+        </div>
+      </button>
+      <p className="text-[10px] px-1 leading-snug" style={{ color: '#333333' }}>
+        Requires mic permission · Chrome / Edge
+      </p>
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DonnaWakeWordLayer() {
@@ -74,6 +148,33 @@ export function DonnaWakeWordLayer() {
     pauseSession,
     resumeSession,
   } = useDonnaWakeWord()
+
+  // ── Auto-start: read localStorage on mount ────────────────────────────────
+  // If the director previously enabled Hey Donna, restart it automatically.
+  // No button press required — "Hey Donna" works from the moment the page loads.
+
+  useEffect(() => {
+    if (!isSupported) return
+    if (readAutoStartPreference()) {
+      startListening()
+    }
+  // startListening is stable (useCallback with no deps) — safe to include
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSupported])
+
+  // ── Enable: persist preference + start ───────────────────────────────────
+
+  const handleEnable = useCallback(() => {
+    saveAutoStartPreference(true)
+    startListening()
+  }, [startListening])
+
+  // ── Disable: persist preference + stop ───────────────────────────────────
+
+  const handleStop = useCallback(() => {
+    saveAutoStartPreference(false)
+    stopListening()
+  }, [stopListening])
 
   // Unsupported browser — show manual fallback instead of hiding
   if (!isSupported) return <DonnaFallbackButton />
@@ -91,6 +192,18 @@ export function DonnaWakeWordLayer() {
   const isProcessing = wakeState === 'processing'
   const isPaused = wakeState === 'paused'
   const isStopped = wakeState === 'stopped'
+
+  // ── First-time enable card ────────────────────────────────────────────────
+  // Show the "Enable Hey Donna" card when dormant AND no permission error AND
+  // the user has not previously enabled (i.e. auto-start preference is not set).
+  // Once enabled or after an error, switch to the standard pill.
+
+  const showEnableCard =
+    isDormant && !permissionError && !readAutoStartPreference()
+
+  if (showEnableCard) {
+    return <EnableHeyDonnaCard onEnable={handleEnable} />
+  }
 
   const stateLabel = getStateLabel(wakeState)
 
@@ -118,7 +231,7 @@ export function DonnaWakeWordLayer() {
       className="fixed bottom-20 left-4 z-40 hidden lg:flex flex-col items-start gap-1.5"
       aria-label="DONNA conversation session indicator"
     >
-      {/* Permission error */}
+      {/* Permission error — shown with re-enable option */}
       {permissionError && (
         <div
           className="rounded-lg px-3 py-2 text-[11px] max-w-xs leading-snug"
@@ -193,10 +306,10 @@ export function DonnaWakeWordLayer() {
 
         {/* Controls */}
         {isDormant || isStopped ? (
-          // Dormant / Stopped — show start button
+          // Dormant / Stopped — show re-enable button (preference was previously set)
           <button
             type="button"
-            onClick={startListening}
+            onClick={handleEnable}
             aria-label="Enable Hey Donna wake word"
             className="ml-1 shrink-0 rounded-full p-1 transition-colors hover:bg-white/10"
             title="Enable Hey Donna"
@@ -217,7 +330,7 @@ export function DonnaWakeWordLayer() {
             </button>
             <button
               type="button"
-              onClick={stopListening}
+              onClick={handleStop}
               aria-label="Stop DONNA session"
               className="shrink-0 rounded-full p-1 transition-colors hover:bg-white/10"
               title="Stop DONNA"
@@ -239,7 +352,7 @@ export function DonnaWakeWordLayer() {
             </button>
             <button
               type="button"
-              onClick={stopListening}
+              onClick={handleStop}
               aria-label="Stop DONNA session"
               className="shrink-0 rounded-full p-1 transition-colors hover:bg-white/10"
               title="Stop DONNA"
@@ -251,7 +364,7 @@ export function DonnaWakeWordLayer() {
           // Pre-session listening or processing — stop button only
           <button
             type="button"
-            onClick={stopListening}
+            onClick={handleStop}
             aria-label="Stop Hey Donna listening"
             className="ml-1 shrink-0 rounded-full p-1 transition-colors hover:bg-white/10"
             title="Stop listening"
@@ -261,13 +374,13 @@ export function DonnaWakeWordLayer() {
         )}
       </div>
 
-      {/* Browser hint — dormant only */}
-      {isDormant && !permissionError && (
+      {/* Mic active indicator — shown when not in a session */}
+      {(wakeState === 'listening' || wakeState === 'timedOut') && !isSessionActive && (
         <p
           className="text-[10px] px-2 leading-snug"
           style={{ color: '#333333' }}
         >
-          Chrome / Edge recommended
+          Mic is active · Say "Hey Donna"
         </p>
       )}
     </div>

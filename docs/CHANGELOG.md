@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-04 — DONNA Premium Voice + Autonomous Guidance Loop V1 (Mega Sprint 1861–1880)
+
+- Created `src/lib/donna/voice/donnaPremiumVoiceRuntime.ts` — Unified `speakDonna()` voice runtime; single canonical entry point for director DONNA voice; server TTS (OpenAI marin) → browser fallback chain; `stopDonna()` for cancellation; `getDonnaSpeakModeLabel()` for UI display; clearly identifies premium vs. browser_fallback mode
+- Created `src/lib/donna/guidance/donnaTodayGuidanceLoop.ts` — Today guidance loop engine; `buildTodayGuidanceLoop(ctx)` returns `DonnaTodayGuidanceOutput` with ranked priorities (max 3), highestImpactItem, recommendedFirstAction, followUpQuestion, workflowCandidate, destination, isAllClear; `detectTodayGuidanceQuestion()` intent detector; `toSpokenSummary()` for TTS-safe output
+- Created `src/lib/donna/guidance/donnaAutonomousGuidanceEngine.ts` — Autonomous guidance engine; `detectDirectorControl()` handles stop/pause/skip/show_options/accept; `buildAutonomousFollowUp()` generates context-aware follow-up questions after strategic answers; `buildAlternateOptions()` for show-options flow; `DonnaGuidancePhase` enum with UI labels; approval gates preserved
+- Modified `src/components/donna/DonnaWakeWordLayer.tsx` — Auto-start on mount (reads localStorage `donna_wake_autostart`); `EnableHeyDonnaCard` for first-time users (one-tap permission flow); `handleEnable/handleStop` persist preference to localStorage; mic active status indicator added; removed dormant browser hint replaced with active mic label
+- Created `docs/qa/DONNA_PREMIUM_VOICE_AUTONOMOUS_GUIDANCE_V1.md` — 10 QA scenarios + 17-item acceptance criteria table + known limitations
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Intent, Goal & Continuity Engine V1 (Mega Sprint 1831–1860)
 
 - Created `src/lib/donna/intent/confidenceScoring.ts` — shared scoring foundation used by all four engines; thresholds (ACT=0.72, LIKELY=0.50, LOW=0.35), signal weight constants (strong/medium/weak/boost), matchWeightedSignals(), rankCandidates(), blendConfidence(), buildReasoning()
