@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-04 — DONNA Guided Completion Engine V1 (Mega Sprint 1811–1820)
+
+- Created `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — 6 workflow definitions (curriculum_builder, academy_setup, player_onboarding, assessment, parent_update, template_builder); each has: id, label, end goal, trigger phrases, page routes, required/optional steps with questions/hints, completion criteria, safe actions, approval-gated actions, opening message; `detectGuidedCompletionIntent()` phrase matcher; `getWorkflow()` / `getAllWorkflows()` lookups
+- Created `src/lib/donna/guidedCompletion/pageQuestionExtractor.ts` — per-workflow per-route question slices; `getPageQuestions(workflowId, pathname)` returns the relevant question subset for the director's current page; `getNextPageQuestion()` returns next unanswered question for current page; static maps — no DOM access
+- Created `src/lib/donna/guidedCompletion/guidedCompletionSessionMemory.ts` — sessionStorage-backed state tracker; tracks: workflowId, subjectLabel, currentStepIndex, answers (fieldId→string), completionPct, lastQuestion, nextQuestion, blockedReason; TTL: 4 hours; functions: startGuidedCompletion, recordAnswer, getCurrentGuidedCompletion, isGuidedCompletionDone, setBlockedReason, clearBlockedReason, clearGuidedCompletion, updateSubjectLabel
+- Created `src/lib/donna/guidedCompletion/guidedCompletionStepRunner.ts` — pure message builder; buildStepMessage() formats "Step N of M" DONNA question; buildAcknowledgement() confirms answer + presents next step; buildCompletionSummary() produces full draft with all answers, approval note, and action list (Review/Edit/Save/Submit — gated actions marked requiresApproval: true); buildResumeMessage() resumes in-progress workflow; getNextStep() / isWorkflowComplete() / countAnsweredSteps() utilities
+- Created `docs/qa/DONNA_GUIDED_COMPLETION_ENGINE_V1.md` — 10 QA scenarios covering trigger detection, step flow, guardrails, page context, resume, completion summary, and deferred integration items
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Proactive Pilot Guide V1 (Mega Sprint 1801–1810)
 
 - Created `src/lib/donna/proactive/proactivePageBriefEngine.ts` — pure TypeScript brief engine for 9 director routes; each brief answers: what is this page, look first, do next, ask DONNA; uses live `pendingCount` / `missingWrapUps` / `todaySessions` / `playerProfileContext` when provided; honest template fallback when unknown; evidence-safe (no fabricated counts); approval-safe (never instructs bypassing review pipeline)
