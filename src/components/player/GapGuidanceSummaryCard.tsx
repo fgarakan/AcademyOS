@@ -121,6 +121,9 @@ export function GapGuidanceSummaryCard({ guidance }: Props) {
                 <GuidanceItemRow key={i} item={item} />
               ))}
             </ul>
+            <p className="text-[10px] text-text-muted leading-relaxed border-t border-border pt-3">
+              To act on a gap: go to the <span className="font-semibold text-text-secondary">Notes tab</span> → <span className="font-semibold text-text-secondary">Priority Recommendation</span> to create a director-reviewed priority draft from this player&apos;s observations.
+            </p>
           </div>
         )}
       </CardContent>

@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-06-04 — Mega Sprint 1771–1790 — AcademyOS Atomic Loop Clarity + Test Certification V1
+
+- Created `docs/qa/ACADEMYOS_ATOMIC_LOOP_CERTIFICATION_V1.md` — full audit of 6 core atomic loops (add player → placement, assessment → readiness, coach recap → director review, DONNA workflow → decision, curriculum gap → recommendation, parent update → parent portal); per-loop: current path, expected path, what works, what breaks, required fixes, acceptance test; summary gap table with severity + sprint 1771 status
+- Created `src/app/director/players/[playerId]/initiateParentUpdateAction.ts` — server action: auth → academy scope → director/head_coach gate → player verify → fetch curriculum level + coach language + development focus → build parent-safe draft sections via `sanitizeParentFacingText` → voice_commands relay row → `proposed_actions` (target_module: parent_communication, status: pending_review); no parent communication sent; no raw coach notes or scores in payload; audit pipeline identical to `createPriorityRecommendationDraftAction`
+- Created `src/app/director/players/[playerId]/InitiateParentUpdateButton.tsx` — client button component; calls `initiateParentUpdateAction`; success state shows "draft in review queue" message with "Create another" option; error state shows inline message; follows existing button component pattern
+- Modified `src/app/director/players/[playerId]/page.tsx` — imports `InitiateParentUpdateButton`; adds "Initiate Parent Update" Card in Notes tab adjacent to `ParentGuidancePreviewPanel`; guardrail note explains that nothing is sent until review + apply
+- Modified `src/components/player/GapGuidanceSummaryCard.tsx` — adds cross-link footer note at bottom of gap items list: "Go to Notes tab → Priority Recommendation to act on this gap" (Loop 5 fix — gap guidance and recommendation draft button were on different tabs with no cross-reference)
+- Loop 6 fix status: Critical gap resolved — director now has an explicit initiation point for parent updates from the player profile; full pipeline: initiate → review queue → approve → apply → parent_updates row → player_development_summary.show_to_parent = true
+- TypeScript: clean
+
 ## 2026-06-03 — Mega Sprint 1761–1770 — DONNA Learning Foundations V1
 
 - Created `src/lib/donna/learning/academyLearningEngine.ts` — core type foundation: `LearningCategory`, `LearningConfidence`, `LearningSignal`, `AcademyLearningReport`; `buildAcademyLearningReport(ctx)` orchestrator (aggregates all three signal modules); `formatLearningReportAsMessage()`; V2 scaffold types `OutcomeTrackingRecord`, `LearningSignalWithOutcome`, `OutcomeLearningReadiness`, `buildOutcomeLearningReadiness()` (forward-declared, not populated in V1); pure TypeScript, no DB calls, no mutations

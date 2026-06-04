@@ -98,6 +98,8 @@ import { PlayerProfileDonnaRegistrar } from './_components/PlayerProfileDonnaReg
 import { PlayerSkillPathCurriculumPreview } from '@/components/player/PlayerSkillPathCurriculumPreview'
 import { PlayerCompetitionPathCurriculumPreview, type CompetitionPathPreviewData } from '@/components/player/PlayerCompetitionPathCurriculumPreview'
 import { CoachWrapUpObservationsPanel } from './CoachWrapUpObservationsPanel'
+// Sprint 1771 — Atomic Loop Clarity: Loop 6 parent update initiation
+import { InitiateParentUpdateButton } from './InitiateParentUpdateButton'
 
 interface PageProps {
   params: { playerId: string }
@@ -1738,6 +1740,20 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         currentFocus={qaCoachLanguage[0]?.current_focus ?? null}
         parentSupportTip={null}
       />
+
+      {/* Sprint 1771 — Initiate parent update draft. Creates a proposed_action in the review
+          queue. Nothing reaches the parent until the director approves and applies the draft. */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Initiate Parent Update</p>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          <p className="text-[11px] text-text-muted leading-relaxed">
+            Creates a parent-safe development update draft for director review. Draft goes to the review queue — nothing is sent until you approve and apply it there.
+          </p>
+          <InitiateParentUpdateButton playerId={params.playerId} />
+        </CardContent>
+      </Card>
 
       {/* Parent-Safe Summary Preview — Sprint 1062: director sees what parents/players would see */}
       <PlayerParentSafeSummaryPreview
