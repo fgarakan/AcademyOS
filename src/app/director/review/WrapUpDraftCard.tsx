@@ -140,6 +140,22 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
           )}
         </div>
 
+        {/* Step 2 of 2 callout — shown at top when approved so director doesn't miss Apply */}
+        {draft.status === 'approved' && (
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/30">
+            <CheckCircle2 className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[11px] font-semibold text-lime">Step 2 of 2 required — Apply to execute</p>
+              <p className="text-[10px] text-text-muted mt-0.5 leading-relaxed">
+                Approval was step 1. Scroll to the bottom of this card and click{' '}
+                <span className="font-semibold text-text-secondary">Apply Session Actual</span>{' '}
+                to write the session record and mark the session completed.
+                Approval alone makes no changes.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Block completion summary strip */}
         <div className="flex flex-wrap gap-3">
           <span className="flex items-center gap-1.5 text-xs text-status-green">

@@ -15,7 +15,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { getActiveWorkflow } from '@/lib/donna/workflow/workflowMemory'
+import { getActiveWorkflow, updateWorkflowStep } from '@/lib/donna/workflow/workflowMemory'
 import type { WorkflowEntry } from '@/lib/donna/workflow/workflowMemory'
 import {
   buildWorkflowForType,
@@ -98,6 +98,7 @@ export function DonnaActiveWorkflowBanner({ forceShow, className = '' }: DonnaAc
         currentStep={entry.currentStep ?? 1}
         showAllSteps
         onDismiss={handleDismiss}
+        onStepChange={(step) => updateWorkflowStep(step)}
       />
     </div>
   )

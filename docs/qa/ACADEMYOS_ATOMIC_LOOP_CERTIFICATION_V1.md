@@ -350,14 +350,15 @@ The `ParentGuidancePreviewPanel` showed what a parent update *could* say, but th
 
 ## Summary: Highest-Impact Gaps Across All Loops
 
-| Loop | Gap | Severity | Sprint 1771 Status |
+| Loop | Gap | Severity | Status |
 |---|---|---|---|
-| 1 | No post-activation confirmation or next steps | High | Open |
+| 1 | No post-activation confirmation or next steps | High | **Audit correction** — `StepActivatePlayer` already shows success state with next steps links |
 | 2 | Assessment doesn't prompt re-evaluation | Medium | Open |
-| 3 | Approve vs. Apply distinction is unclear | High | Open |
-| 4 | Workflow step progress resets on navigation | High | Open |
-| 5 | Gap-to-recommendation requires tab change | High | Partially fixed (cross-link note added) |
-| 6 | No way to initiate a parent update draft | Critical | **Fixed** — `InitiateParentUpdateButton` added |
+| 3 | Approve vs. Apply distinction is unclear | High | **Fixed in Sprint 1790** — "Step 2 of 2 required" callout added to top of approved `WrapUpDraftCard` |
+| 4 | Workflow step progress resets on navigation | High | **Fixed in Sprint 1790** — `onStepChange` wired in `DonnaActiveWorkflowBanner` to call `updateWorkflowStep()` |
+| 5 | Gap-to-recommendation requires tab change | High | Partially fixed in Sprint 1771 (cross-link note added) |
+| 6 | No way to initiate a parent update draft | Critical | **Fixed in Sprint 1771** — `InitiateParentUpdateButton` added |
+| 6 | Parent portal doesn't show approved update | High | **Audit correction** — `/parent/updates` page exists and shows `player_development_summary.parent_summary` where `show_to_parent = true`; parent home page links to it |
 
 ---
 
@@ -370,19 +371,32 @@ The `ParentGuidancePreviewPanel` showed what a parent update *could* say, but th
 | `src/app/director/players/[playerId]/page.tsx` | Wires `InitiateParentUpdateButton` into Notes tab adjacent to `ParentGuidancePreviewPanel`. |
 | `src/components/player/GapGuidanceSummaryCard.tsx` | Adds cross-link footer note: "Go to Notes tab → Priority Recommendation to act on this gap." |
 
+## Fixes Implemented in Sprint 1790
+
+| File | Change |
+|---|---|
+| `src/app/director/review/WrapUpDraftCard.tsx` | Adds "Step 2 of 2 required — Apply to execute" callout at top of card body when `draft.status === 'approved'`. Callout names the "Apply Session Actual" button so directors know what to look for. Approval-alone-makes-no-changes is stated explicitly. (Loop 3 fix) |
+| `src/components/donna/DonnaActiveWorkflowBanner.tsx` | Imports `updateWorkflowStep` and passes `onStepChange={(step) => updateWorkflowStep(step)}` to `DonnaDecisionGuidePanel`. Step progress now persists to sessionStorage on every prev/next tap and survives page navigation within the same session. (Loop 4 fix) |
+
+## Audit Corrections (Sprint 1790)
+
+These items were listed as gaps in the original audit but are already implemented:
+
+| Loop | Correction |
+|---|---|
+| 1 | `StepActivatePlayer.tsx` (lines 29–73) already shows: "Player is now active" banner, assigned group, "DONNA development blueprint generating" notice, "View full player profile" + "View development plan" next-step links. No fix needed. |
+| 6 | `/parent/updates/page.tsx` exists (Sprint 1082) and shows `player_development_summary.parent_summary` where `show_to_parent = true`. `applyParentCommunicationAction` sets this field on apply. Parent home page links to `/parent/updates` with "Coach Updates" CTA. Loop 6 end-to-end is testable. Guardian-to-profile linkage in DB is still required for the parent account to see their child's data (known limitation). |
+
 ---
 
-## Deferred Fixes (not in Sprint 1771)
+## Remaining Open Items (not fixed in Sprint 1771–1790)
 
-The following fixes were identified but deferred:
-
-| Fix | Reason deferred |
-|---|---|
-| Post-activation next steps in `OnboardingStepperClient` | Requires reading onboarding flow in detail — out of scope for initial certification sprint |
-| Persistent workflow step progress in `DonnaActiveWorkflowBanner` | Requires client state refactor — medium effort, needs its own sprint |
-| Approve vs. Apply distinction in `WrapUpDraftCard` | UX polish sprint |
-| "Latest parent update" section in `/parent` page | Medium build — needs guardian-to-profile linkage verified first |
-| Assessment → re-evaluate prompt | Tiny fix, can be added in any parent sprint |
+| Fix | Severity | Notes |
+|---|---|---|
+| Assessment → re-evaluate prompt | Medium | After `quickAssessmentAction` success, add inline note: "Run Evaluate Advancement to refresh eligibility." Tiny change to `QuickAssessmentPanel`. |
+| Loop 5: direct "Draft recommendation" button on gap card | High | Gap guidance card on Skill Path tab shows a cross-link note (Sprint 1771) but still requires tab navigation. Requires making `GapGuidanceSummaryCard` a client component or passing a server action callback. |
+| Loop 4: Workflow completion state | Medium | When director reaches last step of a workflow, show "Workflow complete" state instead of repeating steps. Currently "Complete" text appears but there's no visual distinction from an active workflow. |
+| Loop 6: Parent update badge on home page | Low | When a new approved update exists, the "Coach Updates" CTA on `/parent` home doesn't show a badge or indicator. Update is only visible after tapping through to `/parent/updates`. |
 
 ---
 

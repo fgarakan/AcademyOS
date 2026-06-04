@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-04 — Mega Sprint 1771–1790 — AcademyOS Atomic Loop Deferred Fixes V1
+
+- Modified `src/app/director/review/WrapUpDraftCard.tsx` — Loop 3 fix: adds "Step 2 of 2 required — Apply to execute" callout at the top of the card body when `draft.status === 'approved'`; callout names the "Apply Session Actual" button explicitly; states "Approval alone makes no changes"; prevents directors from missing the second required step after approval
+- Modified `src/components/donna/DonnaActiveWorkflowBanner.tsx` — Loop 4 fix: imports `updateWorkflowStep` from `workflowMemory`; passes `onStepChange={(step) => updateWorkflowStep(step)}` to `DonnaDecisionGuidePanel`; workflow step number now persists to sessionStorage on every prev/next navigation and survives page changes within the same browser session
+- Updated `docs/qa/ACADEMYOS_ATOMIC_LOOP_CERTIFICATION_V1.md` — audit corrections: Loop 1 (`StepActivatePlayer` already has complete success state) and Loop 6 (`/parent/updates` page already shows approved updates); summary table updated to reflect Sprint 1790 fixes; remaining open items catalogued with severity
+- TypeScript: clean
+
 ## 2026-06-04 — Mega Sprint 1771–1790 — AcademyOS Atomic Loop Clarity + Test Certification V1
 
 - Created `docs/qa/ACADEMYOS_ATOMIC_LOOP_CERTIFICATION_V1.md` — full audit of 6 core atomic loops (add player → placement, assessment → readiness, coach recap → director review, DONNA workflow → decision, curriculum gap → recommendation, parent update → parent portal); per-loop: current path, expected path, what works, what breaks, required fixes, acceptance test; summary gap table with severity + sprint 1771 status
