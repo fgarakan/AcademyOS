@@ -69,7 +69,9 @@ import { buildWhatNextAnswer } from '@/lib/donna/donnaWhatNextEngine'
 import { buildDirectorBrief, formatBriefAsMessage, type DirectorBriefInput } from '@/lib/donna/donnaDirectorBrief'
 import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
 import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
-import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
+// Sprint 1911 — Phase 4: use unified premium voice runtime (replaces direct speakWithServerTts/stopServerTts)
+import { speakDonna as speakDonnaPremium, stopDonna } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
+import type { SpeakDonnaResult } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
 import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAnswer'
 import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswer'
 import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDonnaAnswer'
@@ -462,14 +464,16 @@ export function DonnaVoiceReadyShell({
     if (!shouldSpeak) return
     lastSpokenIdRef.current = lastMsg.id
     setIsSpeaking(true)
-    void speakWithServerTts(stripMarkdownForTts(lastMsg.text), (status) => {
-      if (status === 'done' || status === 'error') {
-        setIsSpeaking(false)
-        // Sprint 912.4: after speaking, restart mic if conversation mode on
-        if (status === 'done') {
-          scheduleAutoListen()
+    // Sprint 1911 — unified premium voice runtime
+    void speakDonnaPremium(stripMarkdownForTts(lastMsg.text), {
+      onStatus: (status) => {
+        if (status === 'done' || status === 'error') {
+          setIsSpeaking(false)
+          if (status === 'done') {
+            scheduleAutoListen()
+          }
         }
-      }
+      },
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
@@ -2695,7 +2699,7 @@ export function DonnaVoiceReadyShell({
     } else {
       // Sprint 912.5: Interrupt DONNA while speaking — stop TTS, start mic immediately
       if (isSpeaking) {
-        stopServerTts()
+        stopDonna()
         setIsSpeaking(false)
         // Cancel any pending auto-listen timer so we don't double-restart
         if (autoListenTimerRef.current) {
@@ -2704,7 +2708,7 @@ export function DonnaVoiceReadyShell({
         }
         conv.endAutoListen()
       } else {
-        stopServerTts()
+        stopDonna()
         setIsSpeaking(false)
       }
       voice.reset()
@@ -2718,7 +2722,7 @@ export function DonnaVoiceReadyShell({
   // if conversation mode is on and not paused, schedule auto-listen after stopping.
 
   function handleStopSpeaking() {
-    stopServerTts()
+    stopDonna()
     setIsSpeaking(false)
     if (autoListenTimerRef.current) {
       clearTimeout(autoListenTimerRef.current)
@@ -2783,7 +2787,7 @@ export function DonnaVoiceReadyShell({
                     conv.resumeConversation()
                   } else {
                     voice.stop()
-                    stopServerTts()
+                    stopDonna()
                     setIsSpeaking(false)
                     conv.pauseConversation()
                   }
@@ -2805,7 +2809,7 @@ export function DonnaVoiceReadyShell({
               onClick={() => {
                 if (conv.conversationMode) {
                   voice.stop()
-                  stopServerTts()
+                  stopDonna()
                   setIsSpeaking(false)
                   conv.disableConversationMode()
                 } else {

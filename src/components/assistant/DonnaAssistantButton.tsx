@@ -311,6 +311,12 @@ import { DonnaGuidedWorkflowCard } from '@/components/donna/DonnaGuidedWorkflowC
 // Sprint 1821 — need getWorkflow for COO accept path
 import { getWorkflow } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
 
+// Sprint 1911 — Unified DONNA Brain: primary decision layer for general conversational input
+import { processDonnaMessage } from '@/lib/donna/brain/processDonnaMessage'
+import type { DonnaResponseRole } from '@/lib/donna/brain/donnaRoleResponsePolicy'
+import { recordConversationTurn } from '@/lib/donna/brain/donnaConversationState'
+import { getCurrentGoalState } from '@/lib/donna/memory/donnaGoalMemory'
+
 // Sprint 1881 — COO Today Guidance + Orchestration
 import { detectTodayGuidanceQuestion } from '@/lib/donna/guidance/donnaTodayGuidanceLoop'
 import {
@@ -3910,65 +3916,156 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setIsProcessingCommand(true)
     processingClearTimerRef.current = setTimeout(() => setIsProcessingCommand(false), 600)
 
-    // Sprint 697 — COO conversational router: runs before legacy detectAndHandleCommand
-    const cooHandled = handleDonnaCooPrompt(text)
-    if (!cooHandled) {
-      const handled = detectAndHandleCommand(text)
-      if (!handled) {
-        // Sprint 1090 — Brian Alpha Sandbox gate: intercept sandbox trigger phrases.
-        // Runs before the Sprint 1086 Deep Mode gate so sandbox requests get the
-        // disclosure flow rather than the generic deep-mode response.
-        // Access is gated by NEXT_PUBLIC_DONNA_ALPHA_SANDBOX_ACADEMY_IDS env var.
-        // Neither path calls handleGodModeQuery — confirmation is required first.
-        if (isBrianAlphaSandboxRequest(text)) {
-          const sandboxMsg = isBrianAlphaSandboxAllowed({ academyId })
-            ? buildBrianAlphaSandboxDisclosure()
-            : buildBrianAlphaSandboxBlockedMessage()
-          const sandboxLabel = isBrianAlphaSandboxAllowed({ academyId })
-            ? 'Sandbox / Alpha Analysis'
-            : 'Not authorized'
-          setCommandResponse({ message: sandboxMsg, type: 'info', label: sandboxLabel })
-          setCooThread(prev => [...prev.slice(-4), { user: text, donna: sandboxMsg, type: 'info' as const }])
-          speakDonna(sandboxMsg)
-          recordPrompt(text)
-          recordSummary(sandboxMsg)
-          recordTurn(text, sandboxMsg, { domain: 'general' })
-          setTypedText('')
-          focusDonnaInput()
-          return
-        }
+    // Sprint 1911 — DONNA Unified Brain: primary decision layer for all general conversational input.
+    // Runs after active-state matchers (guided completion, COO control, multi-step, template, attendance).
+    // Brain decides the routing action; this execution layer calls the appropriate React handler.
+    // handleDonnaCooPrompt and detectAndHandleCommand remain available as tools called by the brain.
+    const brainResult = processDonnaMessage({
+      userMessage: text,
+      role: uiActionRole as DonnaResponseRole,
+      route: pathname,
+      activeGuidedWorkflowId: activeGuidedCompletion?.workflowId ?? null,
+      cooState: getCOOState(),
+      goalMemory: getCurrentGoalState(),
+      firstName: firstName ?? null,
+      pendingReviews: reviewQueuePendingCount,
+      conversationHistory: godModeHistory.slice(-5).map(t => ({
+        role: (t.role === 'user' ? 'user' : 'donna') as 'user' | 'donna',
+        content: t.content,
+      })),
+    })
 
-        // Sprint 1086 — Deep Mode gate: intercept broad/expensive requests before God Mode.
-        // Runs after ALL deterministic handlers (context-pack, action-registry, routeDonnaPrompt,
-        // detectAndHandleCommand) have had their chance. Only triggers for clearly broad/all-scope
-        // requests. Normal questions pass through to God Mode unchanged.
-        if (isDeepModeRequest(text)) {
-          const gateResult = buildDeepModeFirstPassResponse(text, pathname)
-          if (gateResult.firstPassResponse) {
-            setCommandResponse({ message: gateResult.firstPassResponse, type: 'info', label: 'DONNA' })
-            setCooThread(prev => [...prev.slice(-4), { user: text, donna: gateResult.firstPassResponse!, type: 'info' as const }])
-            speakDonna(gateResult.firstPassResponse)
-            recordPrompt(text)
-            recordSummary(gateResult.firstPassResponse)
-            recordTurn(text, gateResult.firstPassResponse, { domain: 'general' })
-            setTypedText('')
-            focusDonnaInput()
-            return
-          }
+    switch (brainResult.action) {
+
+      case 'route_guided_answer': {
+        // Active guided workflow — route to existing handler
+        if (activeGuidedCompletion !== null) {
+          const handled = handleGuidedCompletionAnswer(text, activeGuidedCompletion.workflowId)
+          if (handled) break
         }
-        // Sprint 1011 — God Mode: LLM orchestrator as final fallback.
-        // Cancel the 600ms processingClear timer — handleGodModeQuery manages
-        // isProcessingCommand in its own finally block after the async response.
+        // Fall through: route to COO prompt if guided answer didn't claim it
+        const cooH = handleDonnaCooPrompt(text)
+        if (!cooH) { const h2 = detectAndHandleCommand(text); if (!h2) { recordSignal('command_unrecognized'); if (processingClearTimerRef.current) { clearTimeout(processingClearTimerRef.current); processingClearTimerRef.current = null } void handleGodModeQuery(text) } else recordSignal('command_issued') } else recordSignal('command_issued')
+        break
+      }
+
+      case 'route_coo_control': {
+        // COO orchestration control — route to existing handler
+        const cooState = getCOOState()
+        if (cooState !== null && brainResult.cooControl) {
+          handleCOOControlCommand(brainResult.cooControl, cooState, text)
+        }
+        break
+      }
+
+      case 'start_workflow': {
+        // Brain identified a guided workflow — start it
+        const wid = brainResult.startWorkflowId
+        const workflow = wid ? getWorkflow(wid) : null
+        if (workflow) {
+          handleStartGuidedCompletion(workflow, text)
+        } else {
+          const cooH = handleDonnaCooPrompt(text)
+          if (!cooH) { recordSignal('command_unrecognized'); if (processingClearTimerRef.current) { clearTimeout(processingClearTimerRef.current); processingClearTimerRef.current = null } void handleGodModeQuery(text) } else recordSignal('command_issued')
+        }
+        break
+      }
+
+      case 'fetch_attention':
+        void handleFetchAttention()
+        recordSignal('command_issued')
+        break
+
+      case 'fetch_brief':
+        void handleFetchDailyBrief()
+        recordSignal('command_issued')
+        break
+
+      case 'open_review':
+        void handleOpenReviewQueue()
+        recordSignal('command_issued')
+        break
+
+      case 'navigate':
+        if (brainResult.navigateTo) router.push(brainResult.navigateTo)
+        recordSignal('command_issued')
+        break
+
+      case 'route_coo_prompt': {
+        // Brain defers to the full COO prompt chain (handles today-guidance, KPI, intelligence, etc.)
+        const cooHandled = handleDonnaCooPrompt(text)
+        if (!cooHandled) {
+          const handled = detectAndHandleCommand(text)
+          if (!handled) {
+            // Sprint 1090 — Brian Alpha Sandbox gate
+            if (isBrianAlphaSandboxRequest(text)) {
+              const sandboxMsg = isBrianAlphaSandboxAllowed({ academyId })
+                ? buildBrianAlphaSandboxDisclosure()
+                : buildBrianAlphaSandboxBlockedMessage()
+              const sandboxLabel = isBrianAlphaSandboxAllowed({ academyId })
+                ? 'Sandbox / Alpha Analysis'
+                : 'Not authorized'
+              setCommandResponse({ message: sandboxMsg, type: 'info', label: sandboxLabel })
+              setCooThread(prev => [...prev.slice(-4), { user: text, donna: sandboxMsg, type: 'info' as const }])
+              speakDonna(sandboxMsg)
+              recordPrompt(text)
+              recordSummary(sandboxMsg)
+              recordTurn(text, sandboxMsg, { domain: 'general' })
+              break
+            }
+            // Sprint 1086 — Deep Mode gate
+            if (isDeepModeRequest(text)) {
+              const gateResult = buildDeepModeFirstPassResponse(text, pathname)
+              if (gateResult.firstPassResponse) {
+                setCommandResponse({ message: gateResult.firstPassResponse, type: 'info', label: 'DONNA' })
+                setCooThread(prev => [...prev.slice(-4), { user: text, donna: gateResult.firstPassResponse!, type: 'info' as const }])
+                speakDonna(gateResult.firstPassResponse)
+                recordPrompt(text)
+                recordSummary(gateResult.firstPassResponse)
+                recordTurn(text, gateResult.firstPassResponse, { domain: 'general' })
+                break
+              }
+            }
+            // God Mode — final fallback
+            recordSignal('command_unrecognized')
+            if (processingClearTimerRef.current) clearTimeout(processingClearTimerRef.current)
+            processingClearTimerRef.current = null
+            void handleGodModeQuery(text)
+          } else { recordSignal('command_issued') }
+        } else { recordSignal('command_issued') }
+        break
+      }
+
+      case 'god_mode':
         recordSignal('command_unrecognized')
         if (processingClearTimerRef.current) clearTimeout(processingClearTimerRef.current)
         processingClearTimerRef.current = null
         void handleGodModeQuery(text)
-      } else {
+        break
+
+      case 'respond':
+      default: {
+        // Brain has a direct response — display and optionally speak
+        setCommandResponse({ message: brainResult.response, type: 'info', label: 'DONNA' })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: brainResult.response, type: 'info' as const }])
+        if (brainResult.shouldSpeak) speakDonna(brainResult.spokenResponse || brainResult.response)
+        recordPrompt(text)
+        recordSummary(brainResult.response)
+        recordTurn(text, brainResult.response, { domain: 'general' })
         recordSignal('command_issued')
+        // Sprint 1911 — record in unified conversation state for cross-turn continuity
+        recordConversationTurn({
+          userMessage: text,
+          donnaResponse: brainResult.response,
+          intentDetected: brainResult.intent,
+          entityLabel: brainResult.entity?.primary?.normalizedLabel ?? null,
+          goalLabel: brainResult.goal?.goal ?? null,
+          followUpQuestion: brainResult.followUpQuestion,
+        })
+        break
       }
-    } else {
-      recordSignal('command_issued')
     }
+
     setTypedText('')
     focusDonnaInput() // Sprint 826 — conversational reply; ready for follow-up
   }

@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-04 — DONNA Unified Brain + Reasoning Optimization V1 (Mega Sprint 1911–1960)
+
+- Created `src/lib/donna/brain/processDonnaMessage.ts` — primary DONNA decision layer; 16-step orchestration order (guided workflow → COO control → continuity → today-guidance → brief → review → attention → ambiguity → intent → entity → goal → context → workflow → respond → clarify → fallback)
+- Created `src/lib/donna/brain/donnaConversationState.ts` — sessionStorage-backed cross-turn state (30-min TTL); tracks intent, entity, goal, confidence, ambiguityResolved, turnCount per session
+- Created `src/lib/donna/brain/donnaRoleResponsePolicy.ts` — per-role content policy enforcing parent/player safety gates; ChatGPT-style response formatter (Answer → Reason → Next → Follow-up)
+- Created `src/lib/donna/brain/donnaKnowledgeContextAdapter.ts` — typed Knowledge Builder adapter; returns typed stubs until KB DB is live; interface ready for `retrieveApprovedKnowledge()` wiring
+- Created `src/lib/donna/brain/donnaBrainDebugLog.ts` — dev-only routing trace; emits brain decision path to browser console in development mode
+- Created `src/lib/donna/reasoning/donnaReasoningEngine.ts` — why/why-now/why-first reasoning block builder per goal type; feeds reasoning into structured responses
+- Created `src/lib/donna/memory/donnaAcademyMemory.ts` — sessionStorage-backed academy pattern memory; detects recurring issues across turns (e.g. same player flagged 3x)
+- Created `src/lib/donna/reasoning/donnaPriorityRankingEngine.ts` — composite priority scorer across urgency + impact + dependency + risk + visibility dimensions
+- Created `src/lib/donna/reasoning/donnaAmbiguityResolutionEngine.ts` — resolves informal references ("Sarah", "that one", "Orange 2", "let's continue") before intent classification
+- Created `src/lib/donna/reasoning/donnaConversationQualityEngine.ts` — removes robotic fillers, improves follow-up naturalness, validates response completeness
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — voice consolidation phase 4: uses `speakDonnaPremium` + `stopDonna` from premium runtime; all director-facing speech paths now unified
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — wired `processDonnaMessage` as fallback handler in `handleCommandSubmit`; brain fires after all active-state matchers (guided completion, COO control, attendance, multi-step)
+- Created `docs/qa/DONNA_UNIFIED_BRAIN_REASONING_OPTIMIZATION_V1.md` — 10 QA scenarios + 17-item acceptance criteria + known limitations
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Voice Consolidation + COO Orchestration V1 (Mega Sprint 1881–1890)
 
 - Created `src/lib/donna/guidance/donnaCOOOrchestrationMemory.ts` — sessionStorage-backed COO guidance state; tracks priorities (max 3), currentIndex, skippedIndices, completedIndices, isPaused, lastFollowUpQuestion; 30-min TTL; exports getCOOState, setCOOPriorities, getCurrentCOOPriority, getNextCOOPriority, skipCOOPriority, completeCOOPriority, pauseCOO, resumeCOO, clearCOO
