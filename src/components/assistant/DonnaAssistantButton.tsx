@@ -157,8 +157,8 @@ import {
 import type { DonnaPreferences } from '@/components/assistant/donnaPreferenceMemory'
 // Sprint 361 — Audit trail (getAuditTrail used in DonnaDeveloperTools)
 import { appendAuditEvent } from '@/components/assistant/donnaAuditTrail'
-// Sprint 350 — Server TTS client + voice policy
-import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
+// Sprint 1881 — Unified premium voice runtime (replaces direct speakWithServerTts + stopServerTts)
+import { speakDonna as speakDonnaPremium, stopDonna } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
 // Sprint 788 — Central voice config for speakAssistantText (greeting/onboarding path)
 import {
   fallbackBrowserRate,
@@ -307,6 +307,28 @@ import {
   isWorkflowComplete as isGuidedWorkflowComplete,
 } from '@/lib/donna/guidedCompletion/guidedCompletionStepRunner'
 import { DonnaGuidedWorkflowCard } from '@/components/donna/DonnaGuidedWorkflowCard'
+
+// Sprint 1821 — need getWorkflow for COO accept path
+import { getWorkflow } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
+
+// Sprint 1881 — COO Today Guidance + Orchestration
+import { detectTodayGuidanceQuestion } from '@/lib/donna/guidance/donnaTodayGuidanceLoop'
+import {
+  detectDirectorControl,
+  DIRECTOR_CONTROL_RESPONSES,
+} from '@/lib/donna/guidance/donnaAutonomousGuidanceEngine'
+import type { DirectorControlIntent } from '@/lib/donna/guidance/donnaAutonomousGuidanceEngine'
+import {
+  getCOOState,
+  setCOOPriorities,
+  getCurrentCOOPriority,
+  getNextCOOPriority,
+  skipCOOPriority,
+  completeCOOPriority,
+  pauseCOO,
+  clearCOO,
+} from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
+import type { COOOrchestrationState, COOPriorityItem } from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -738,15 +760,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         ttsText = clauseEnd > 70 ? candidate.slice(0, clauseEnd + 1) : candidate.slice(0, 147) + '…'
       }
     }
-    void speakWithServerTts(ttsText, (status) => {
-      if (status === 'speaking') setIsSpeaking(true)
-      else if (status === 'done' || status === 'error') setIsSpeaking(false)
+    // Sprint 1881 — unified premium voice runtime (server TTS → browser fallback)
+    void speakDonnaPremium(ttsText, {
+      onStatus: (status) => {
+        if (status === 'speaking') setIsSpeaking(true)
+        else if (status === 'done' || status === 'error') setIsSpeaking(false)
+      },
     }).then((result) => {
       const source: DonnaVoiceOutputMode =
-        result.source === 'server' ? 'contract_tts'
-        : result.source === 'browser' ? 'browser_tts'
+        result.mode === 'premium' ? 'contract_tts'
+        : result.mode === 'browser_fallback' ? 'browser_tts'
         : 'silent'
-      // Sprint 720 — include voice name for quality status display
       setLastServerTtsInfo({ source, text: text.slice(0, 80), voice: result.voice })
     })
   }
@@ -762,9 +786,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     lastSpokenTextRef.current = null
     lastSpokenAtRef.current = 0
     lastSpokenKeyRef.current = null
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
-    }
+    stopDonna() // Sprint 1881 — unified stop (server audio + browser TTS)
     setVoiceGreetingStatus('idle')
     setIsSpeaking(false)
   }
@@ -1070,6 +1092,16 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setCooThread(prev => [...prev.slice(-4), { user: text, donna: summary.formatted, type: 'info' as const }])
       speakDonna(summary.headline)
       setCommandResponse({ message: summary.formatted, type: 'info', label: 'Workflow complete' })
+      // Sprint 1881 — after-completion next-priority loop: suggest next COO priority if active
+      const nextCOOPriority = getNextCOOPriority()
+      if (nextCOOPriority) {
+        completeCOOPriority()
+        const nextMsg = `Next I recommend: **${nextCOOPriority.label}**.\n\n${nextCOOPriority.description}\n\nWould you like to continue?`
+        setTimeout(() => {
+          setCooThread(prev => [...prev.slice(-4), { user: '', donna: nextMsg, type: 'info' as const }])
+          speakDonna(`Next I recommend: ${nextCOOPriority.label}. Would you like to continue?`)
+        }, 1500)
+      }
     } else {
       const afterStep = getGuidedNextStep(workflowId, finalState.answers)
       const ack = buildGuidedAck(workflowId, nextStep, text, afterStep, finalState.subjectLabel)
@@ -1161,10 +1193,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
     setIsDonnaIdle(false)
     realtimeDisconnect()
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
-    }
-    stopServerTts()
+    stopDonna() // Sprint 1881 — unified stop (server audio + browser TTS)
     // Sprint 828 — clear processing indicator and cancel safety-net timer on panel close
     if (processingClearTimerRef.current) {
       clearTimeout(processingClearTimerRef.current)
@@ -1455,10 +1484,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     // DONNA should stay active across director navigation. Explicit close/stop still resets these.
     // Sprint 693: cancel any active TTS utterance on navigation — content from the previous page
     // should not continue speaking after the director moves to a new route.
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
-    }
-    stopServerTts()
+    // Sprint 1881 — unified stop covers both server audio and browser TTS.
+    stopDonna()
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
@@ -3193,9 +3220,160 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Returns false to fall through to legacy detectAndHandleCommand.
   // Falls through only for answer_directly (unknown intent) so all existing legacy routes are preserved.
   // Sprint 702 — records each turn to donnaChatSessionMemory; injects follow-up prefix when topic was previously discussed.
+  // Sprint 1881 — COO helper: build today guidance response from simple AttentionItem array.
+  // Uses attentionReport state (simple AttentionReport type, no DirectorDonnaContext needed).
+  function buildCOOTodayGuidanceResponse(
+    items: import('@/components/assistant/donnaAttentionEngine').AttentionItem[],
+  ): { response: string; spokenSummary: string } {
+    if (items.length === 0) {
+      const r = "No urgent signals right now — your academy looks clear. Good time to review curriculum or check player progress."
+      return { response: r, spokenSummary: r }
+    }
+    const top3 = items.slice(0, 3)
+    const lines: string[] = [
+      `Today, I recommend starting with these ${top3.length} item${top3.length !== 1 ? 's' : ''}:`,
+      '',
+    ]
+    top3.forEach((item, i) => {
+      lines.push(`${i + 1}. **${item.title}**`)
+      lines.push(`   ${item.description}`)
+    })
+    const top = top3[0]
+    if (top) {
+      lines.push('')
+      lines.push(`The highest-impact item is **${top.title}**. Would you like me to walk you through it?`)
+    }
+    const response = lines.join('\n')
+    const spokenSummary = top
+      ? `Today I recommend starting with ${top.title}. ${top.description} Would you like me to walk you through it?`
+      : response
+    return { response, spokenSummary }
+  }
+
+  // Sprint 1881 — COO helper: map simple AttentionCategory to guided workflow id.
+  function mapAttentionCategoryToWorkflow(
+    category: import('@/components/assistant/donnaAttentionEngine').AttentionCategory,
+  ): COOPriorityItem['workflowId'] {
+    if (category === 'curriculum')     return 'curriculum_builder_completion'
+    if (category === 'placement')      return 'assessment_completion'
+    if (category === 'communication')  return 'parent_update_completion'
+    return null
+  }
+
+  // Sprint 1881 — COO orchestration: handle yes/skip/pause/stop/show_options.
+  // Called from handleCommandSubmit when COO state is active.
+  function handleCOOControlCommand(
+    control: DirectorControlIntent,
+    cooState: COOOrchestrationState,
+    text: string,
+  ) {
+    if (control === 'accept') {
+      const current = getCurrentCOOPriority()
+      if (current?.workflowId) {
+        const workflow = getWorkflow(current.workflowId)
+        if (workflow) {
+          handleStartGuidedCompletion(workflow, text)
+          return
+        }
+      }
+      if (current?.link) {
+        router.push(current.link)
+        const msg = `Taking you to ${current.label}.`
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+        speakDonna(msg)
+        return
+      }
+      const msg = "I don't have a guided workflow for this item yet. Let me know how I can help."
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+      speakDonna(msg)
+      return
+    }
+
+    if (control === 'skip') {
+      const nextState = skipCOOPriority()
+      if (!nextState) {
+        const msg = "That's all the priorities I have for today. Everything else looks clear."
+        setCommandResponse({ message: msg, type: 'info', label: 'DONNA' })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+        speakDonna(msg)
+        clearCOO()
+        return
+      }
+      const next = getCurrentCOOPriority()
+      if (next) {
+        const msg = `Understood. Next I recommend: **${next.label}**.\n\n${next.description}\n\nWould you like me to walk you through it?`
+        setCommandResponse({ message: msg, type: 'info', label: 'DONNA — Next Priority' })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+        speakDonna(`Understood. Next I recommend: ${next.label}. Would you like me to walk you through it?`)
+      }
+      return
+    }
+
+    if (control === 'pause' || control === 'stop') {
+      pauseCOO()
+      const msg = DIRECTOR_CONTROL_RESPONSES[control]
+      setCommandResponse({ message: msg, type: 'info', label: 'DONNA' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+      speakDonna(msg)
+      return
+    }
+
+    if (control === 'show_options') {
+      const remaining = cooState.priorities.filter((_, i) => i !== cooState.currentIndex)
+      if (remaining.length === 0) {
+        const msg = "Those are all the items I have for today."
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+        speakDonna(msg)
+        return
+      }
+      const listText = remaining.map((p, i) => `${i + 1}. **${p.label}**`).join('\n')
+      const msg = `Here are the other items worth your attention today:\n\n${listText}\n\nWhich would you like to start with?`
+      setCommandResponse({ message: msg, type: 'info', label: 'DONNA — Options' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+      speakDonna(`Here are the other items: ${remaining.map(p => p.label).join(', ')}. Which would you like?`)
+      return
+    }
+  }
+
   // Sprint 703 — role-aware: coach gets director-referral response for director-only intents.
   // Sprint 1073 — context pack lookup runs before routeDonnaPrompt; replaces Sprint 1071 narrow KPI intercept.
   function handleDonnaCooPrompt(text: string): boolean {
+    // Sprint 1881 — COO Today Guidance: fires BEFORE context-pack for director today questions.
+    // Uses attentionReport state (simple type — no DirectorDonnaContext required).
+    // Stores up to 3 ranked priorities in COO orchestration memory for follow-up handling.
+    if (detectTodayGuidanceQuestion(text)) {
+      const items = attentionReport?.items ?? []
+      const todayGuidance = buildCOOTodayGuidanceResponse(items)
+      setCommandResponse({ message: todayGuidance.response, type: 'info', label: 'DONNA — Today' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: todayGuidance.response, type: 'info' as const }])
+      speakDonna(todayGuidance.spokenSummary)
+      recordPrompt(text)
+      recordSummary(todayGuidance.response)
+      recordTurn(text, todayGuidance.response, { domain: 'general' })
+      setSessionIntentContext({
+        lastIntentFamily: 'attention',
+        lastResultItemCount: items.length,
+        lastResultSectionCount: null,
+        lastResultHighPriorityCount: items.filter(i => i.urgency === 'critical' || i.urgency === 'high').length,
+        lastSuggestedNavigationHref: items[0]?.link ?? null,
+        lastSuggestedNavigationLabel: items[0]?.title ?? null,
+        lastTopicLabel: "today's priorities",
+        setAt: Date.now(),
+      })
+      if (items.length > 0) {
+        setCOOPriorities(
+          items.slice(0, 3).map((item, i) => ({
+            rank: i + 1,
+            label: item.title,
+            description: item.description,
+            link: item.link ?? null,
+            workflowId: mapAttentionCategoryToWorkflow(item.category),
+          }))
+        )
+      }
+      return true
+    }
+
     // Sprint 1073 — context pack lookup: check page's exampleAnswers before routeDonnaPrompt.
     // Covers all 8 context-pack pages (Today, Approvals, Academy Health, Fitness Builder,
     // Class Builder, Players, Sessions, Parent Updates) with a single generalized path.
@@ -3591,6 +3769,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         setTypedText('')
         focusDonnaInput()
         return
+      }
+    }
+
+    // Sprint 1881 — COO orchestration: handle yes/skip/pause/stop/show_options when active.
+    // Runs AFTER guided completion (guided workflows take precedence) but BEFORE multi-step.
+    // Only active when COO state has priorities and is not paused.
+    if (!templateDraft && !genericDraft && !multiStepPlan && activeGuidedCompletion === null) {
+      const cooState = getCOOState()
+      if (cooState !== null && !cooState.isPaused) {
+        const control = detectDirectorControl(text)
+        if (control !== 'none') {
+          handleCOOControlCommand(control, cooState, text)
+          setTypedText('')
+          focusDonnaInput()
+          return
+        }
       }
     }
 

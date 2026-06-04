@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-04 — DONNA Voice Consolidation + COO Orchestration V1 (Mega Sprint 1881–1890)
+
+- Created `src/lib/donna/guidance/donnaCOOOrchestrationMemory.ts` — sessionStorage-backed COO guidance state; tracks priorities (max 3), currentIndex, skippedIndices, completedIndices, isPaused, lastFollowUpQuestion; 30-min TTL; exports getCOOState, setCOOPriorities, getCurrentCOOPriority, getNextCOOPriority, skipCOOPriority, completeCOOPriority, pauseCOO, resumeCOO, clearCOO
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — 7 surgical changes: (1) import `speakDonnaPremium/stopDonna` from premium runtime, replacing `speakWithServerTts/stopServerTts`; (2) `speakDonna()` now calls `speakDonnaPremium` with `{ onStatus }` option, remaps result `.mode` instead of `.source`; (3) `resetVoice()` uses `stopDonna()`; (4) `closePanel()` uses `stopDonna()`; (5) route-change handler uses `stopDonna()`; (6) `handleDonnaCooPrompt` detects today-guidance questions via `detectTodayGuidanceQuestion`, builds response from `attentionReport`, stores priorities in COO memory; (7) `handleCommandSubmit` checks COO state and calls `handleCOOControlCommand` (yes/skip/pause/stop/show_options) before multi-step; (8) `handleGuidedCompletionAnswer` triggers after-completion next-priority suggestion via `getNextCOOPriority` + `completeCOOPriority`
+- Created `docs/qa/DONNA_VOICE_PATH_AUDIT_V1.md` — Full audit of every director-facing and coach voice output path with status, voice chain, and risk
+- Created `docs/qa/DONNA_VOICE_CONSOLIDATION_COO_ORCHESTRATION_V1.md` — 10 QA scenarios + 15-item acceptance criteria
+- TypeScript: clean
+
 ## 2026-06-04 — DONNA Premium Voice + Autonomous Guidance Loop V1 (Mega Sprint 1861–1880)
 
 - Created `src/lib/donna/voice/donnaPremiumVoiceRuntime.ts` — Unified `speakDonna()` voice runtime; single canonical entry point for director DONNA voice; server TTS (OpenAI marin) → browser fallback chain; `stopDonna()` for cancellation; `getDonnaSpeakModeLabel()` for UI display; clearly identifies premium vs. browser_fallback mode
