@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-04 — DONNA Wake Word V1 (Mega Sprint 1791–1800)
+
+- Created `src/lib/donna/useDonnaWakeWord.ts` — wake word state machine hook: states dormant / listening / wakeDetected / active / processing / timedOut; persistent SpeechRecognition in continuous mode with auto-restart on silence; 60s inactivity timeout; dispatches `donna:open` event with command when wake phrase detected; `startListening` / `stopListening` controls; Chrome/Edge only, graceful fallback when unsupported
+- Created `src/components/donna/DonnaWakeWordLayer.tsx` — fixed bottom-left pill UI for director portal; renders state-appropriate messages ("Say Hey Donna" / "Listening for Hey Donna…" / "Hi, I'm listening." / "Working on it…" / "Say Hey Donna to continue."); mic toggle with pulse/ping animations; hidden on mobile and unsupported browsers; permission error display
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — added `pendingWakeCommand` state + useEffect: extends `donna:open` event to accept `autoSubmit: true` flag; when set, `handleCommandSubmit(prompt)` fires 400ms after panel opens, routing the wake command through the full DONNA pipeline with all existing guardrails intact
+- Modified `src/app/director/layout.tsx` — mounts `<DonnaWakeWordLayer />` alongside `<DonnaAssistantButton>`; desktop-only; academyId-gated
+- Created `docs/qa/DONNA_WAKE_WORD_V1.md` — 8 QA scenarios covering bare wake, full command, focus question, continued session, timeout, manual stop, text fallback, and mic permission denial; safety check table
+- TypeScript: clean
+
 ## 2026-06-04 — Mega Sprint 1771–1790 — AcademyOS Atomic Loop Deferred Fixes V1
 
 - Modified `src/app/director/review/WrapUpDraftCard.tsx` — Loop 3 fix: adds "Step 2 of 2 required — Apply to execute" callout at the top of the card body when `draft.status === 'approved'`; callout names the "Apply Session Actual" button explicitly; states "Approval alone makes no changes"; prevents directors from missing the second required step after approval

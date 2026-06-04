@@ -4,6 +4,7 @@ import { DirectorMobileNav } from '@/components/nav/DirectorMobileNav'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
+import { DonnaWakeWordLayer } from '@/components/donna/DonnaWakeWordLayer'
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 import { DonnaSessionContextProvider } from '@/components/donna/DonnaSessionContextProvider'
@@ -120,6 +121,8 @@ export default async function DirectorLayout({
             directorName={userDisplayName || undefined}
           />
         )}
+        {/* Sprint 1791 — Hey Donna wake word layer (desktop only, opt-in) */}
+        {academyId && <DonnaWakeWordLayer />}
         <DirectorMobileNav pendingCount={pendingCount} />
         {/* Sprint 817 — DONNA guided highlight banner, mounted at layout level */}
         <DonnaHighlightBanner />

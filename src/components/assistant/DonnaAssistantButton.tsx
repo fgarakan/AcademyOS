@@ -841,6 +841,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Set to true at the start of the follow-up resolver path and the COO router path
   // so "Thinking…" appears in the header for the duration of that render frame.
   const [isProcessingCommand, setIsProcessingCommand] = useState(false)
+  // Sprint 1791 — Wake word auto-submit: set when donna:open fires with autoSubmit:true
+  const [pendingWakeCommand, setPendingWakeCommand] = useState<string | null>(null)
   // Sprint 1011 — God Mode LLM orchestrator state
   const [godModeOutput, setGodModeOutput] = useState<OrchestratorOutput | null>(null)
   const [isGodModeLoading, setIsGodModeLoading] = useState(false)
@@ -1198,9 +1200,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 405 — donna:open custom event listener
   // Allows any page component to open DONNA and pre-fill the input via:
   // window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: '...' } }))
+  // Sprint 1791 — also supports autoSubmit:true from the wake word layer
   useEffect(() => {
     function handleDonnaOpen(e: Event) {
-      const detail = (e as CustomEvent<{ prompt?: string; donnaAnswer?: { message: string; type: 'info' | 'success' | 'warning' | 'error'; label?: string } }>).detail
+      const detail = (e as CustomEvent<{ prompt?: string; autoSubmit?: boolean; donnaAnswer?: { message: string; type: 'info' | 'success' | 'warning' | 'error'; label?: string } }>).detail
       openDonnaPanel()
       if (detail?.donnaAnswer) {
         const { message, label } = detail.donnaAnswer
@@ -1209,11 +1212,27 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       }
       if (detail?.prompt) {
         setTypedText(detail.prompt)
+        // Sprint 1791: wake word auto-submit — routes the wake command through the pipeline
+        if (detail.autoSubmit) {
+          setPendingWakeCommand(detail.prompt)
+        }
       }
     }
     window.addEventListener('donna:open', handleDonnaOpen)
     return () => window.removeEventListener('donna:open', handleDonnaOpen)
   }, [])
+
+  // Sprint 1791 — auto-submit wake word commands after panel has had time to open (400ms).
+  // handleCommandSubmit is called with the command string so typedText state is bypassed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!pendingWakeCommand) return
+    const timer = setTimeout(() => {
+      handleCommandSubmit(pendingWakeCommand)
+      setPendingWakeCommand(null)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [pendingWakeCommand]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sprint 748 — auto-scroll thread to latest message whenever cooThread changes.
   // Sprint 824 — scoped to the inner thread container only (cooThreadScrollRef).
