@@ -1,6 +1,6 @@
 # Current Build Target
 
-**Last updated:** 2026-05-21
+**Last updated:** 2026-06-05
 **Current phase:** Mega Sprint 554–603 COMPLETE — Curriculum-Centered V1 Productization
 
 ---
@@ -19,7 +19,7 @@ All 50 sprints across 5 phases complete and pushed.
 | Phase 4 (584–593) | Coach Mobile + Curriculum/Assessment Capture | On-court action hub, session focus card, attendance exception draft, quick capture V2, voice-to-curriculum, voice-to-assessment, recap polish, observation draft review, curriculum feedback loop |
 | Phase 5 (594–603) | Player/Parent Portal + Licensing | Badge system wired (player wins, wins page, celebration), progress indicators, parent badge visibility, pilot readiness dashboard, skill-path progress, mission engine recommendation |
 
-**Next up:** Apply pending Supabase migrations (see `docs/KNOWN_LIMITATIONS.md`), then begin Director Dashboard KPI wiring and attention queue wiring.
+**Next up:** Director Dashboard and Curriculum UX Reimagination — implement the specs in `docs/ux/` (Director Homepage Reimagination, Curriculum Command Center Reimagination). No migrations pending. All 83 migrations confirmed live as of 2026-06-05 (`docs/qa/BUILD_TARGET_STALENESS_AUDIT_V1.md`).
 
 ---
 
@@ -117,20 +117,20 @@ All phases: pure TypeScript — no migrations, no RLS changes, no new dependenci
 
 ## What still needs UI wiring
 
-These library modules exist but are not yet connected to route pages:
+Verified status as of 2026-06-05 (`docs/qa/BUILD_TARGET_STALENESS_AUDIT_V1.md`):
 
-| Module | Wires to |
-|---|---|
-| `attentionQueue/` | `/director` hero section |
-| `kpiDashboard.ts` | `/director` KPI grid |
-| `groupIntelligence.ts` | `/director/groups` |
-| `curriculumOperatingView.ts` | `/director/curriculum` |
-| `coachPortalAssembly.ts` | `/coach` home page |
-| `parentPortalSummary.ts` | `/parent` page |
-| `playerPortalExperience.ts` | `/player` page |
-| `badgeEligibilityEngine.ts` | `/player` + `/director/players/[id]` |
-| `missionEngine.ts` | `/player` home card |
-| `curriculum/inbox/` | `/director/review` curriculum tab |
+| Module | Wires to | Status |
+|---|---|---|
+| `attentionQueue/` | `/director` hero section | **WIRED** — live in `src/app/director/page.tsx` |
+| `kpiDashboard.ts` | `/director` KPI grid | **WIRED** — live in `src/app/director/page.tsx` |
+| `groupIntelligence.ts` | `/director/groups` | Not wired — no `/director/groups` route exists |
+| `curriculumOperatingView.ts` | `/director/curriculum` | Unverified — route exists, wiring depth unknown |
+| `coachPortalAssembly.ts` | `/coach` home page | Unverified |
+| `parentPortalSummary.ts` | `/parent` page | Unverified |
+| `playerPortalExperience.ts` | `/player` page | Unverified |
+| `badgeEligibilityEngine.ts` | `/player` + `/director/players/[id]` | Unverified |
+| `missionEngine.ts` | `/player` home card | Unverified |
+| `curriculum/inbox/` | `/director/review` curriculum tab | Unverified |
 
 ---
 

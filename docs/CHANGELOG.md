@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-05 — Documentation Staleness Cleanup V1
+
+- `docs/CURRENT_BUILD_TARGET.md` — Removed stale "apply pending migrations" prerequisite (all 83 confirmed live); updated UI wiring table with verified statuses (attentionQueue/kpiDashboard marked WIRED); updated last-modified date
+- `docs/KNOWN_LIMITATIONS.md` — Marked RESOLVED: migration 058 / template_block_exercises RLS, Director Dashboard placeholder, Players List missing; updated sidebar unbuilt routes list (removed curriculum and sessions, kept 4 true 404s); updated last-modified date
+- No code changes. No migrations.
+
+---
+
 ## 2026-06-05 — AcademyOS UX Reimagination Master Audit V1 (Mega Sprint 2101–2150)
 
 - Created `docs/ux/DIRECTOR_WORKFLOW_AUDIT_V1.md` — Complete director journey audit (7 stages, 34 friction items identified, 10-second test results, root cause analysis)

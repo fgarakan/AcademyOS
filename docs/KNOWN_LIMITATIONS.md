@@ -1,6 +1,6 @@
 # Known Limitations
 
-**Last updated:** 2026-05-08
+**Last updated:** 2026-06-05
 
 This file documents what is currently broken, missing, or intentionally incomplete.
 These are not bugs to fix immediately — they are known gaps that future sessions should be aware of.
@@ -160,22 +160,19 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Navigation gaps
 
-### Players List is missing
+### Players List — RESOLVED
 - **Route:** `/director/players`
-- **Impact:** There is no way for a director to navigate to player profiles through the UI.
-  The only working path to a player profile is by knowing the player's UUID and typing it directly into the URL.
-- **Fix:** Build step 1 in `CURRENT_BUILD_TARGET.md`.
+- **Status:** RESOLVED. `src/app/director/players/page.tsx` exists and renders `PlayersDirectoryClient`. Confirmed 2026-06-05.
 
-### Director Dashboard is a placeholder
+### Director Dashboard — RESOLVED
 - **Route:** `/director`
-- **Impact:** A director who logs in sees only a grey text message: "Director Dashboard — coming in Phase 5."
-  There is no orientation, no data, no value.
-- **Fix:** Build step 5 in `CURRENT_BUILD_TARGET.md`, after the player spine is complete.
+- **Status:** RESOLVED. `src/app/director/page.tsx` is a 1490-line production dashboard with attention queue, KPI surfaces, DONNA integration, and academy health. Confirmed 2026-06-05.
 
 ### Sidebar links to unbuilt routes
-- **Routes:** `/director/curriculum`, `/director/sessions`, `/director/competition`, `/director/intelligence`, `/director/reports`, `/director/configuration`
-- **Impact:** All six sidebar links lead to pages that do not exist (will return a Next.js 404).
-- **Fix:** Build each route in order per `CURRENT_BUILD_TARGET.md`. Do not remove the links — they are intentional placeholders.
+- **Routes still returning 404:** `/director/competition`, `/director/intelligence`, `/director/reports`, `/director/configuration`
+- **Routes now built (removed from this list):** `/director/curriculum` (full subtree exists), `/director/sessions` (full subtree exists)
+- **Impact:** Four sidebar links lead to pages that do not exist.
+- **Fix:** Build each route when prioritized. Do not remove the links — they are intentional placeholders.
 
 ### Coach, Player, Parent portals are stubs
 - **Routes:** `/coach`, `/player`, `/parent`
@@ -305,16 +302,9 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 - **`database.types.ts` regenerated (Mega Sprint 1981–1990):** All tables including `player_gate_status`, `curriculum_gates`, `player_evidence_records` are now in the generated types. `recordGateEvidenceAction` can be updated to use typed queries if desired.
 
-### `template_block_exercises` missing RLS policies — migration 058 pending live application
+### `template_block_exercises` RLS policies — RESOLVED (confirmed 2026-06-05)
 
-- **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. Migration 055 was written to fix this but was never applied to the live database before migrations 056–057 were committed. Migration 058 supersedes 055 with idempotent DROP/CREATE guards and explicit `WITH CHECK` on INSERT and UPDATE. **Migration 058 must still be applied to the live Supabase instance.**
-- **Error before fix:** Director clicks "Populate Blocks with Exercises" → `populateFitnessTemplateBlocksAction` → INSERT into `template_block_exercises` → "new row violates row-level security policy for table template_block_exercises".
-- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/058_template_block_exercises_rls.sql`, and Run. No code changes or restart needed. The migrate is idempotent — safe to run even if migration 055 was partially applied.
-- **Verification:** After applying, run in SQL Editor:
-  ```sql
-  SELECT policyname FROM pg_policies WHERE tablename = 'template_block_exercises' ORDER BY policyname;
-  ```
-  Expect four rows: `"Staff delete template block exercises"`, `"Staff insert template block exercises"`, `"Staff see template block exercises"`, `"Staff update template block exercises"`.
+- **Status:** RESOLVED. Migration 058 is confirmed live. `MIGRATION_LIVE_DB_AUDIT.md` (2026-06-02) confirms migrations 001–075 are all applied to the live DB. `template_block_exercises` RLS policies are active.
 
 ### Preview mode write actions previously threw uncaught errors — RESOLVED (Sprint 261)
 - **Status:** Server Actions that guard writes with `assertNotPreviewMode()` now catch the throw and return `{ error: 'Writes are disabled in preview mode.' }` instead of propagating the exception to the client. Preview banner ("Writes are disabled in preview.") displays in the director layout when in preview mode.
