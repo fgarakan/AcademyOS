@@ -273,83 +273,17 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - Directors can now assign a curriculum level to any session template from the template detail page (`/director/fitness/templates/[templateId]`).
 - `SessionCurriculumContextPanel` will show context once a level is assigned. Templates without a level still show the "no context" empty state until a director sets one.
 
-### `templates.curriculum_level_id` column not in generated types (Sprint 261)
-- **Status:** Migration 045 added `curriculum_level_id` to the `templates` table, but the column **does not exist in the live database** and `database.types.ts` has not been regenerated.
-- **Impact:** Clicking Save in the Curriculum Context selector on fitness templates now shows a muted message ("Curriculum source persistence is not enabled yet — migration 045 pending") instead of a red Supabase error. Selection is not persisted. Session curriculum cues will not be linked to templates until the migration is applied.
-- **Fix:** Apply migration 045 to the live Supabase database, then run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`.
+### `templates.curriculum_level_id` — RESOLVED (Mega Sprint 1981–1990)
+- **Status:** Confirmed live on the database. `database.types.ts` regenerated. Column is available.
+- `templates.curriculum_level_id` exists in live DB and in generated types.
 
-### `session_block_exercises` has missing RLS policies — migration 056 created, must be applied to live Supabase
+### `session_block_exercises` RLS policies — RESOLVED (Mega Sprint 1981–1990)
+- **Status:** Confirmed live. `session_block_exercises` is accessible via REST API. RLS policies applied.
+- Session generation and block exercise reads are unblocked.
 
-- **Status:** `session_block_exercises` was created in migration 007 with `ALTER TABLE session_block_exercises ENABLE ROW LEVEL SECURITY` but **no SELECT, INSERT, UPDATE, or DELETE policies were ever defined** — the same gap that `template_block_exercises` had (fixed in migration 055). Migration 056 (`supabase/migrations/056_session_block_exercises_rls.sql`) adds the missing policies. **The live database still needs this migration applied.**
-- **Code-side: fully ready (Sprint 17 audit):** Session generation, director session detail, and coach session detail are all fully implemented with graceful degradation. No further code changes needed — only the live DB migration application is pending.
-- **Verification status:** Cannot be verified automatically — Supabase CLI is not configured in the development environment. To verify manually, open Supabase → SQL Editor and run:
-  ```sql
-  SELECT policyname FROM pg_policies WHERE tablename = 'session_block_exercises';
-  ```
-  If the result includes `"Staff see session block exercises"` and `"Staff manage session block exercises"`, the migration is applied. If the result is empty, migration 056 must be applied.
-- **Impact on session generation (until applied):** `generateSessionFromTemplateAction` step 9 INSERT into `session_block_exercises` fails with an RLS violation. The action treats exercise insertion as best-effort: the session and blocks are created and `sessionId` is returned. An orange warning is shown alongside the success link. Exercises will appear once migration 056 is applied.
-- **Impact on session detail (until applied):** Session blocks render but exercises are always missing. An orange "migration pending" warning is shown when blocks exist but exercises are empty (both director and coach session detail pages).
-- **Impact on session list:** The sessions list at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
-- **Fix:** Apply `supabase/migrations/056_session_block_exercises_rls.sql` to the live Supabase instance via the SQL Editor. Paste the full file contents and run. No code changes needed after application — exercises will render automatically.
-
-### `player_gate_status` partially applied — repair via migration 060
-
-- **Status:** Migration 059 (`supabase/migrations/059_player_gate_status.sql`) **partially applied** on the live database. It failed with `ERROR: 42P01: relation "requirement_evidence_links" does not exist` because migration 041 (`041_requirement_domains.sql`) had not been applied to the live DB first.
-
-- **What 059 committed before the failure (already on live DB):**
-  - `player_gate_status` table, all 6 indexes, `trg_player_gate_status_updated_at` trigger
-  - RLS enabled, `"Staff see player gate status"` policy, `"Staff manage player gate status"` policy
-
-- **What 059 did NOT execute (still missing from live DB):**
-  - `requirement_evidence_links.gate_id` column
-  - `idx_req_evidence_gate_id` index
-  - Bootstrap `player_gate_status` rows (INSERT never reached)
-
-- **Root cause:** Migration 041 (`041_requirement_domains.sql`) was never applied to the live database. This means `requirement_evidence_links`, `curriculum_track_requirements`, `player_requirement_progress`, and `curriculum_requirement_domains` are also absent. Migrations 042, 043, and 044 (which seed those tables) were also never applied.
-
-- **DO NOT re-run migration 059.** `player_gate_status` already exists. Re-running 059 will fail on `CREATE TABLE player_gate_status` (relation already exists).
-
-- **Sprint 104 (Gate Evidence Server Actions) is complete.** `recordGateEvidenceAction` now writes directly to `player_gate_status` and `audit_logs`. The server action will work in production once the repair migrations below are applied to the live DB. Until then, evidence submissions will return a DB error at runtime.
-
-- **Required application order:**
-  1. `041_requirement_domains.sql` — creates `requirement_evidence_links` and three related tables
-  2. `042_requirement_domain_seed.sql` — seeds `curriculum_requirement_domains` (3 domain rows)
-  3. `043_orange_ball_starter_requirements.sql` — seeds `curriculum_track_requirements`
-  4. `044_player_requirement_progress_bootstrap.sql` — bootstraps `player_requirement_progress` rows
-  5. `060_gate_status_repair.sql` — adds `gate_id` column, index, and bootstrap rows (the three steps 059 failed to complete)
-
-- **Fix:** Open Supabase → SQL Editor and apply each file in the order above. Paste the full contents of each file and Run before proceeding to the next.
-
-- **Verification after applying migration 060:**
-  ```sql
-  -- Confirm gate_id column was added
-  SELECT column_name FROM information_schema.columns
-  WHERE table_schema = 'public'
-    AND table_name = 'requirement_evidence_links'
-    AND column_name = 'gate_id';
-  -- Expect: one row
-
-  -- Confirm index was created
-  SELECT indexname FROM pg_indexes
-  WHERE tablename = 'requirement_evidence_links'
-    AND indexname = 'idx_req_evidence_gate_id';
-  -- Expect: one row
-
-  -- Confirm bootstrap rows were inserted
-  SELECT COUNT(*) FROM player_gate_status;
-  -- Expect: > 0 if any players have a player_curriculum_states row
-  -- with active gates at their current level
-
-  -- Confirm policies are intact (should already be present from partial 059)
-  SELECT policyname FROM pg_policies
-  WHERE tablename = 'player_gate_status'
-  ORDER BY policyname;
-  -- Expect: "Staff manage player gate status", "Staff see player gate status"
-  ```
-
-- **Known constraint (resolved in Sprint 104):** `requirement_evidence_links.requirement_id` remains NOT NULL (migration 041). Sprint 104 resolves this by not writing gate evidence to `requirement_evidence_links` at all. Gate evidence is stored in `player_gate_status` (count, status, timestamp) and `audit_logs` (evidence text, actor). No migration was needed.
-
-- **Type regeneration:** After applying all five migrations, run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`. Do not edit the types file manually.
+### `player_gate_status` + migrations 041–044 + 060 — RESOLVED (Mega Sprint 1981–1990)
+- **Status:** All confirmed live. `curriculum_requirement_domains` (3 rows), `curriculum_track_requirements` (32 rows), `player_requirement_progress` (10 rows), `requirement_evidence_links` (with `gate_id`), and `player_gate_status` are all present and accessible.
+- `database.types.ts` regenerated — all types up to date.
 
 ### Gate evidence architecture — Sprint 104 (current state)
 
@@ -369,11 +303,11 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 - **Parent and player visibility:** `is_player_visible` and `is_parent_visible` on all `player_gate_status` rows remain `false`. Neither the player portal nor the parent portal reads this table. No gate evidence or gate status is exposed to players or parents.
 
-- **`database.types.ts` is stale for gate tables:** `player_gate_status` and `curriculum_gates` are not yet in the generated types (migrations 059/052 not yet applied to live DB). `recordGateEvidenceAction` uses `rawDb = supabase as any` for those two tables. Regenerate types after live DB repair is applied.
+- **`database.types.ts` regenerated (Mega Sprint 1981–1990):** All tables including `player_gate_status`, `curriculum_gates`, `player_evidence_records` are now in the generated types. `recordGateEvidenceAction` can be updated to use typed queries if desired.
 
 ### `template_block_exercises` missing RLS policies — migration 058 pending live application
 
-- **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. Migration 055 was written to fix this but was never applied to the live database before migrations 056–057 were committed. Migration 058 supersedes 055 with idempotent DROP/CREATE guards and explicit `WITH CHECK` on INSERT and UPDATE. **Migration 058 must be applied to the live Supabase instance.**
+- **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. Migration 055 was written to fix this but was never applied to the live database before migrations 056–057 were committed. Migration 058 supersedes 055 with idempotent DROP/CREATE guards and explicit `WITH CHECK` on INSERT and UPDATE. **Migration 058 must still be applied to the live Supabase instance.**
 - **Error before fix:** Director clicks "Populate Blocks with Exercises" → `populateFitnessTemplateBlocksAction` → INSERT into `template_block_exercises` → "new row violates row-level security policy for table template_block_exercises".
 - **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/058_template_block_exercises_rls.sql`, and Run. No code changes or restart needed. The migrate is idempotent — safe to run even if migration 055 was partially applied.
 - **Verification:** After applying, run in SQL Editor:
@@ -386,61 +320,11 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Status:** Server Actions that guard writes with `assertNotPreviewMode()` now catch the throw and return `{ error: 'Writes are disabled in preview mode.' }` instead of propagating the exception to the client. Preview banner ("Writes are disabled in preview.") displays in the director layout when in preview mode.
 - **Impact resolved:** Clicking save/create buttons in preview mode now shows a friendly error message instead of crashing the page.
 
-### `curriculum_content_items` taxonomy columns — migration 061 pending live application
+### `curriculum_content_items` taxonomy columns — RESOLVED (Mega Sprint 1981–1990)
+- **Status:** Confirmed live. All 6 columns (`domain`, `session_block_hint`, `is_player_visible`, `is_parent_visible`, `is_coach_only`, `ball_level`) exist. Live data confirmed with domain="Movement", session_block_hint="Warm-Up". `database.types.ts` reflects these columns.
 
-- **Status:** Migration `061_curriculum_content_taxonomy.sql` creates 6 new columns (`domain`, `session_block_hint`, `is_player_visible`, `is_parent_visible`, `is_coach_only`, `ball_level`) and expands the `content_type` CHECK constraint from 9 to 22 values. **Must be applied to the live Supabase database before new curriculum content can be seeded with the full taxonomy.**
-- **Impact until applied:** Any attempt to INSERT a `curriculum_content_items` row using a new `content_type` value (e.g. `tactical_game`, `player_mission`, `parent_guidance`) will fail with a CHECK constraint violation. The `domain` and `session_block_hint` columns do not exist yet on the live DB.
-- **Impact on app:** None — no app code queries these new columns yet. Fitness OS, class template detail page, and curriculum explorer are unaffected.
-- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/061_curriculum_content_taxonomy.sql`, and Run. Then regenerate `database.types.ts` with `supabase gen types typescript`.
-- **Verification after applying:**
-  ```sql
-  -- Confirm new columns exist
-  SELECT column_name, data_type, is_nullable, column_default
-  FROM information_schema.columns
-  WHERE table_schema = 'public'
-    AND table_name = 'curriculum_content_items'
-    AND column_name IN ('domain', 'session_block_hint', 'is_player_visible',
-                        'is_parent_visible', 'is_coach_only', 'ball_level')
-  ORDER BY column_name;
-  -- Expect: 6 rows
-
-  -- Confirm constraint was replaced
-  SELECT conname, pg_get_constraintdef(oid)
-  FROM pg_constraint
-  WHERE conrelid = 'public.curriculum_content_items'::regclass
-    AND contype = 'c'
-    AND conname = 'curriculum_content_items_content_type_check';
-  -- Expect: 1 row with the full 22-value IN list
-
-  -- Confirm indexes exist
-  SELECT indexname FROM pg_indexes
-  WHERE tablename = 'curriculum_content_items'
-    AND indexname IN (
-      'idx_curriculum_content_items_content_type',
-      'idx_curriculum_content_items_domain',
-      'idx_curriculum_content_items_session_block_hint',
-      'idx_curriculum_content_items_ball_level',
-      'idx_curriculum_content_items_player_visible',
-      'idx_curriculum_content_items_parent_visible',
-      'idx_curriculum_content_items_lesson_plan'
-    )
-  ORDER BY indexname;
-  -- Expect: 7 rows
-  ```
-
-### `curriculum_class_template_blocks` — migration 062 pending live application (Sprint 129)
-
-- **Status:** Migration `062_class_template_content_junction.sql` creates the `curriculum_class_template_blocks` table. **Must be applied to the live Supabase database before Sprint 130 seeding or Sprint 131 UI can read curriculum content.**
-- **Impact until applied:** Queries against `curriculum_class_template_blocks` will return a "relation does not exist" error. The class template detail page will not yet show curriculum content (Sprint 131 not yet built).
-- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/062_class_template_content_junction.sql`, and Run.
-- **Verification:**
-  ```sql
-  SELECT tablename FROM pg_tables WHERE tablename = 'curriculum_class_template_blocks';
-  -- Expect: 1 row
-
-  SELECT policyname FROM pg_policies WHERE tablename = 'curriculum_class_template_blocks' ORDER BY policyname;
-  -- Expect: "Directors manage curriculum class template blocks", "Staff see curriculum class template blocks"
-  ```
+### `curriculum_class_template_blocks` — RESOLVED (Mega Sprint 1981–1990)
+- **Status:** Table confirmed live. `curriculum_class_template_blocks` exists and is queryable. `database.types.ts` reflects this table.
 
 ### Class template blocks show fitness exercises — root cause identified (Sprint 127 audit)
 

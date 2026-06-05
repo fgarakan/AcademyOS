@@ -50,6 +50,61 @@ export type Database = {
         }
         Relationships: []
       }
+      academy_assessment_templates: {
+        Row: {
+          academy_id: string
+          cloned_from_global_at: string
+          created_at: string
+          current_version_id: string | null
+          id: string
+          is_active: boolean
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          cloned_from_global_at?: string
+          created_at?: string
+          current_version_id?: string | null
+          id?: string
+          is_active?: boolean
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          cloned_from_global_at?: string
+          created_at?: string
+          current_version_id?: string | null
+          id?: string
+          is_active?: boolean
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_assessment_templates_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_assessment_templates_current_version_id_fkey"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_template_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_assessment_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_calendar: {
         Row: {
           academy_id: string
@@ -762,6 +817,450 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pending_proposed_actions"
             referencedColumns: ["action_id"]
+          },
+        ]
+      }
+      assessment_events: {
+        Row: {
+          academy_id: string
+          assessment_id: string | null
+          assessment_mode: string
+          assessment_type: string
+          assessor_id: string | null
+          blueprint_recommendation: string | null
+          blueprint_update_applied_at: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          player_id: string
+          previous_assessment_id: string | null
+          previous_blueprint_id: string | null
+          requested_by: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: string
+          trigger_source: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          assessment_id?: string | null
+          assessment_mode?: string
+          assessment_type?: string
+          assessor_id?: string | null
+          blueprint_recommendation?: string | null
+          blueprint_update_applied_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          previous_assessment_id?: string | null
+          previous_blueprint_id?: string | null
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: string
+          trigger_source?: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          assessment_id?: string | null
+          assessment_mode?: string
+          assessment_type?: string
+          assessor_id?: string | null
+          blueprint_recommendation?: string | null
+          blueprint_update_applied_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          previous_assessment_id?: string | null
+          previous_blueprint_id?: string | null
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: string
+          trigger_source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_events_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_assessor_id_fkey"
+            columns: ["assessor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_assessor_id_fkey"
+            columns: ["assessor_id"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_assessor_id_fkey"
+            columns: ["assessor_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_academy_priority_queue"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_reassessment_pipeline"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_previous_assessment_id_fkey"
+            columns: ["previous_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_events_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_events_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+        ]
+      }
+      assessment_template_sections: {
+        Row: {
+          coach_guidance: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_custom: boolean
+          is_visible: boolean
+          level_applicability: string[]
+          parent_safe_label: string | null
+          pathway_category: string | null
+          player_safe_label: string | null
+          section_key: string
+          sort_order: number
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          coach_guidance?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          is_custom?: boolean
+          is_visible?: boolean
+          level_applicability?: string[]
+          parent_safe_label?: string | null
+          pathway_category?: string | null
+          player_safe_label?: string | null
+          section_key: string
+          sort_order?: number
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          coach_guidance?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_custom?: boolean
+          is_visible?: boolean
+          level_applicability?: string[]
+          parent_safe_label?: string | null
+          pathway_category?: string | null
+          player_safe_label?: string | null
+          section_key?: string
+          sort_order?: number
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_template_sections_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_template_skills: {
+        Row: {
+          appears_in_deep: boolean
+          appears_in_quick: boolean
+          appears_in_standard: boolean
+          coach_guidance: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_custom: boolean
+          is_required: boolean
+          is_visible: boolean
+          level_applicability: string[]
+          parent_safe_label: string | null
+          pathway_category: string | null
+          player_safe_label: string | null
+          scoring_scale: string
+          section_id: string
+          skill_key: string
+          sort_order: number
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          appears_in_deep?: boolean
+          appears_in_quick?: boolean
+          appears_in_standard?: boolean
+          coach_guidance?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          is_custom?: boolean
+          is_required?: boolean
+          is_visible?: boolean
+          level_applicability?: string[]
+          parent_safe_label?: string | null
+          pathway_category?: string | null
+          player_safe_label?: string | null
+          scoring_scale?: string
+          section_id: string
+          skill_key: string
+          sort_order?: number
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          appears_in_deep?: boolean
+          appears_in_quick?: boolean
+          appears_in_standard?: boolean
+          coach_guidance?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_custom?: boolean
+          is_required?: boolean
+          is_visible?: boolean
+          level_applicability?: string[]
+          parent_safe_label?: string | null
+          pathway_category?: string | null
+          player_safe_label?: string | null
+          scoring_scale?: string
+          section_id?: string
+          skill_key?: string
+          sort_order?: number
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_template_skills_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_template_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_template_skills_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_template_versions: {
+        Row: {
+          academy_id: string | null
+          change_note: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          snapshot: Json
+          template_id: string
+          version_num: number
+        }
+        Insert: {
+          academy_id?: string | null
+          change_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot: Json
+          template_id: string
+          version_num?: number
+        }
+        Update: {
+          academy_id?: string | null
+          change_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot?: Json
+          template_id?: string
+          version_num?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_template_versions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_template_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_template_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_template_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "assessment_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_templates: {
+        Row: {
+          academy_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_global: boolean
+          name: string
+          platform_version: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_global?: boolean
+          name?: string
+          platform_version?: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_global?: boolean
+          name?: string
+          platform_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_templates_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3198,6 +3697,511 @@ export type Database = {
           },
         ]
       }
+      donna_conversation_messages: {
+        Row: {
+          academy_id: string
+          confidence: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_id: string | null
+          id: string
+          intent: string | null
+          message_kind: string
+          message_text: string
+          metadata: Json
+          page_path: string | null
+          proposed_action_id: string | null
+          role: string
+          session_id: string
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          academy_id: string
+          confidence?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_id?: string | null
+          id?: string
+          intent?: string | null
+          message_kind?: string
+          message_text: string
+          metadata?: Json
+          page_path?: string | null
+          proposed_action_id?: string | null
+          role: string
+          session_id: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          academy_id?: string
+          confidence?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_id?: string | null
+          id?: string
+          intent?: string | null
+          message_kind?: string
+          message_text?: string
+          metadata?: Json
+          page_path?: string | null
+          proposed_action_id?: string | null
+          role?: string
+          session_id?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donna_conversation_messages_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "donna_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+        ]
+      }
+      donna_conversation_sessions: {
+        Row: {
+          academy_id: string
+          active_page: string | null
+          active_workflow: string | null
+          created_at: string
+          current_entity_id: string | null
+          current_entity_type: string | null
+          ended_at: string | null
+          id: string
+          last_message_at: string | null
+          metadata: Json
+          role: Database["public"]["Enums"]["user_role"]
+          started_at: string
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academy_id: string
+          active_page?: string | null
+          active_workflow?: string | null
+          created_at?: string
+          current_entity_id?: string | null
+          current_entity_type?: string | null
+          ended_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          metadata?: Json
+          role: Database["public"]["Enums"]["user_role"]
+          started_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academy_id?: string
+          active_page?: string | null
+          active_workflow?: string | null
+          created_at?: string
+          current_entity_id?: string | null
+          current_entity_type?: string | null
+          ended_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          metadata?: Json
+          role?: Database["public"]["Enums"]["user_role"]
+          started_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donna_conversation_sessions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "donna_conversation_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+        ]
+      }
+      donna_placement_recommendations: {
+        Row: {
+          academy_id: string
+          alternative_placements: Json
+          assessment_id: string | null
+          check_after_4_to_6_weeks: string[]
+          confidence_score: number
+          confidence_tier: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
+          director_note: string | null
+          donna_explanation: string | null
+          evidence_used: string[]
+          final_group_id: string | null
+          final_group_name: string | null
+          final_level_id: string | null
+          final_level_name: string | null
+          generated_at: string
+          generated_by: string | null
+          id: string
+          input_behavioral_score: number | null
+          input_competition_score: number | null
+          input_current_level_id: string | null
+          input_current_level_name: string | null
+          input_current_stage: string | null
+          input_gates_met: number | null
+          input_gates_total: number | null
+          input_movement_score: number | null
+          input_overall_avg: number | null
+          input_player_age_years: number | null
+          input_tactical_score: number | null
+          input_technical_score: number | null
+          limiting_factors: string[]
+          outcome_assessment_id: string | null
+          outcome_notes: string | null
+          outcome_recorded_at: string | null
+          override_reason: string | null
+          player_id: string
+          proposed_action_id: string | null
+          recommended_group_id: string | null
+          recommended_group_name: string | null
+          recommended_level_id: string | null
+          recommended_level_name: string | null
+          recommended_reassessment_weeks: number | null
+          recommended_stage: string | null
+          risk_notes: string[]
+          status: string
+          top_reasons: string[]
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          alternative_placements?: Json
+          assessment_id?: string | null
+          check_after_4_to_6_weeks?: string[]
+          confidence_score?: number
+          confidence_tier?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          director_note?: string | null
+          donna_explanation?: string | null
+          evidence_used?: string[]
+          final_group_id?: string | null
+          final_group_name?: string | null
+          final_level_id?: string | null
+          final_level_name?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          input_behavioral_score?: number | null
+          input_competition_score?: number | null
+          input_current_level_id?: string | null
+          input_current_level_name?: string | null
+          input_current_stage?: string | null
+          input_gates_met?: number | null
+          input_gates_total?: number | null
+          input_movement_score?: number | null
+          input_overall_avg?: number | null
+          input_player_age_years?: number | null
+          input_tactical_score?: number | null
+          input_technical_score?: number | null
+          limiting_factors?: string[]
+          outcome_assessment_id?: string | null
+          outcome_notes?: string | null
+          outcome_recorded_at?: string | null
+          override_reason?: string | null
+          player_id: string
+          proposed_action_id?: string | null
+          recommended_group_id?: string | null
+          recommended_group_name?: string | null
+          recommended_level_id?: string | null
+          recommended_level_name?: string | null
+          recommended_reassessment_weeks?: number | null
+          recommended_stage?: string | null
+          risk_notes?: string[]
+          status?: string
+          top_reasons?: string[]
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          alternative_placements?: Json
+          assessment_id?: string | null
+          check_after_4_to_6_weeks?: string[]
+          confidence_score?: number
+          confidence_tier?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          director_note?: string | null
+          donna_explanation?: string | null
+          evidence_used?: string[]
+          final_group_id?: string | null
+          final_group_name?: string | null
+          final_level_id?: string | null
+          final_level_name?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          input_behavioral_score?: number | null
+          input_competition_score?: number | null
+          input_current_level_id?: string | null
+          input_current_level_name?: string | null
+          input_current_stage?: string | null
+          input_gates_met?: number | null
+          input_gates_total?: number | null
+          input_movement_score?: number | null
+          input_overall_avg?: number | null
+          input_player_age_years?: number | null
+          input_tactical_score?: number | null
+          input_technical_score?: number | null
+          limiting_factors?: string[]
+          outcome_assessment_id?: string | null
+          outcome_notes?: string | null
+          outcome_recorded_at?: string | null
+          override_reason?: string | null
+          player_id?: string
+          proposed_action_id?: string | null
+          recommended_group_id?: string | null
+          recommended_group_name?: string | null
+          recommended_level_id?: string | null
+          recommended_level_name?: string | null
+          recommended_reassessment_weeks?: number | null
+          recommended_stage?: string | null
+          risk_notes?: string[]
+          status?: string
+          top_reasons?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donna_placement_recommendations_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_outcome_assessment_id_fkey"
+            columns: ["outcome_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_academy_priority_queue"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "donna_placement_recommendations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_reassessment_pipeline"
+            referencedColumns: ["player_id"]
+          },
+        ]
+      }
+      donna_working_memory: {
+        Row: {
+          academy_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          memory_key: string
+          memory_value: Json
+          scope: string
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academy_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          memory_key: string
+          memory_value?: Json
+          scope?: string
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academy_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          memory_key?: string
+          memory_value?: Json
+          scope?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donna_working_memory_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_working_memory_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "donna_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_working_memory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donna_working_memory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "donna_working_memory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+        ]
+      }
       drill_gate_mappings: {
         Row: {
           created_at: string
@@ -3538,6 +4542,110 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "academies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      friction_reports: {
+        Row: {
+          academy_id: string
+          comment: string | null
+          created_at: string
+          donna_context: string | null
+          friction_type: string
+          id: string
+          page_path: string
+          reporter_id: string
+          reporter_role: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          comment?: string | null
+          created_at?: string
+          donna_context?: string | null
+          friction_type: string
+          id?: string
+          page_path: string
+          reporter_id: string
+          reporter_role: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          comment?: string | null
+          created_at?: string
+          donna_context?: string | null
+          friction_type?: string
+          id?: string
+          page_path?: string
+          reporter_id?: string
+          reporter_role?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friction_reports_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friction_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friction_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "friction_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "friction_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friction_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "friction_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
           },
         ]
       }
@@ -5173,6 +6281,205 @@ export type Database = {
           },
         ]
       }
+      player_development_blueprints: {
+        Row: {
+          academy_id: string
+          assessment_id: string | null
+          behavioral_score: number | null
+          coach_brief: string | null
+          coach_focus_areas: string[]
+          competition_priorities: Json
+          competition_score: number | null
+          created_at: string
+          curriculum_level_id: string | null
+          curriculum_level_name: string | null
+          curriculum_stage_key: string | null
+          donna_brief: string | null
+          fitness_priorities: Json
+          gaps: string[]
+          generated_at: string
+          generated_by: string | null
+          id: string
+          mental_priorities: Json
+          movement_score: number | null
+          overall_score: number | null
+          parent_development_focus: string | null
+          parent_next_steps: string[]
+          parent_summary: string | null
+          parent_thirty_day_preview: string | null
+          placement_recommendation_id: string | null
+          player_id: string
+          skill_priorities: Json
+          status: string
+          strengths: string[]
+          superseded_at: string | null
+          superseded_by: string | null
+          tactical_score: number | null
+          technical_score: number | null
+          thirty_day_plan: Json
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          assessment_id?: string | null
+          behavioral_score?: number | null
+          coach_brief?: string | null
+          coach_focus_areas?: string[]
+          competition_priorities?: Json
+          competition_score?: number | null
+          created_at?: string
+          curriculum_level_id?: string | null
+          curriculum_level_name?: string | null
+          curriculum_stage_key?: string | null
+          donna_brief?: string | null
+          fitness_priorities?: Json
+          gaps?: string[]
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          mental_priorities?: Json
+          movement_score?: number | null
+          overall_score?: number | null
+          parent_development_focus?: string | null
+          parent_next_steps?: string[]
+          parent_summary?: string | null
+          parent_thirty_day_preview?: string | null
+          placement_recommendation_id?: string | null
+          player_id: string
+          skill_priorities?: Json
+          status?: string
+          strengths?: string[]
+          superseded_at?: string | null
+          superseded_by?: string | null
+          tactical_score?: number | null
+          technical_score?: number | null
+          thirty_day_plan?: Json
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          assessment_id?: string | null
+          behavioral_score?: number | null
+          coach_brief?: string | null
+          coach_focus_areas?: string[]
+          competition_priorities?: Json
+          competition_score?: number | null
+          created_at?: string
+          curriculum_level_id?: string | null
+          curriculum_level_name?: string | null
+          curriculum_stage_key?: string | null
+          donna_brief?: string | null
+          fitness_priorities?: Json
+          gaps?: string[]
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          mental_priorities?: Json
+          movement_score?: number | null
+          overall_score?: number | null
+          parent_development_focus?: string | null
+          parent_next_steps?: string[]
+          parent_summary?: string | null
+          parent_thirty_day_preview?: string | null
+          placement_recommendation_id?: string | null
+          player_id?: string
+          skill_priorities?: Json
+          status?: string
+          strengths?: string[]
+          superseded_at?: string | null
+          superseded_by?: string | null
+          tactical_score?: number | null
+          technical_score?: number | null
+          thirty_day_plan?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_development_blueprints_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_curriculum_level_id_fkey"
+            columns: ["curriculum_level_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_curriculum_level_id_fkey"
+            columns: ["curriculum_level_id"]
+            isOneToOne: false
+            referencedRelation: "v_curriculum_level_requirements"
+            referencedColumns: ["level_id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_academy_priority_queue"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_reassessment_pipeline"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_development_blueprints_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "player_development_blueprints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_development_signals: {
         Row: {
           academy_id: string
@@ -5538,6 +6845,188 @@ export type Database = {
           },
         ]
       }
+      player_evidence_records: {
+        Row: {
+          academy_id: string
+          anonymized_at: string | null
+          anonymized_player_key: string | null
+          confidence: number
+          consent_status: string
+          consent_version: string | null
+          created_at: string
+          created_by: string | null
+          curriculum_level_id: string | null
+          curriculum_level_name: string | null
+          curriculum_requirement_id: string | null
+          curriculum_requirement_label: string | null
+          evidence_category: string | null
+          evidence_strength: string
+          evidence_summary: string
+          evidence_weight: number
+          expires_at: string | null
+          former_player_age_band: string | null
+          former_player_stage: string | null
+          id: string
+          owner_scope: string
+          pathway: string | null
+          player_id: string | null
+          portability_status: string
+          priority_key: string | null
+          priority_label: string | null
+          source_id: string | null
+          source_type: string
+          transferred_at: string | null
+          updated_at: string
+          visible_to_coach: boolean
+          visible_to_director: boolean
+          visible_to_parent: boolean
+          visible_to_player: boolean
+        }
+        Insert: {
+          academy_id: string
+          anonymized_at?: string | null
+          anonymized_player_key?: string | null
+          confidence?: number
+          consent_status?: string
+          consent_version?: string | null
+          created_at?: string
+          created_by?: string | null
+          curriculum_level_id?: string | null
+          curriculum_level_name?: string | null
+          curriculum_requirement_id?: string | null
+          curriculum_requirement_label?: string | null
+          evidence_category?: string | null
+          evidence_strength?: string
+          evidence_summary?: string
+          evidence_weight?: number
+          expires_at?: string | null
+          former_player_age_band?: string | null
+          former_player_stage?: string | null
+          id?: string
+          owner_scope?: string
+          pathway?: string | null
+          player_id?: string | null
+          portability_status?: string
+          priority_key?: string | null
+          priority_label?: string | null
+          source_id?: string | null
+          source_type: string
+          transferred_at?: string | null
+          updated_at?: string
+          visible_to_coach?: boolean
+          visible_to_director?: boolean
+          visible_to_parent?: boolean
+          visible_to_player?: boolean
+        }
+        Update: {
+          academy_id?: string
+          anonymized_at?: string | null
+          anonymized_player_key?: string | null
+          confidence?: number
+          consent_status?: string
+          consent_version?: string | null
+          created_at?: string
+          created_by?: string | null
+          curriculum_level_id?: string | null
+          curriculum_level_name?: string | null
+          curriculum_requirement_id?: string | null
+          curriculum_requirement_label?: string | null
+          evidence_category?: string | null
+          evidence_strength?: string
+          evidence_summary?: string
+          evidence_weight?: number
+          expires_at?: string | null
+          former_player_age_band?: string | null
+          former_player_stage?: string | null
+          id?: string
+          owner_scope?: string
+          pathway?: string | null
+          player_id?: string | null
+          portability_status?: string
+          priority_key?: string | null
+          priority_label?: string | null
+          source_id?: string | null
+          source_type?: string
+          transferred_at?: string | null
+          updated_at?: string
+          visible_to_coach?: boolean
+          visible_to_director?: boolean
+          visible_to_parent?: boolean
+          visible_to_player?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_evidence_records_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_curriculum_level_id_fkey"
+            columns: ["curriculum_level_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_curriculum_level_id_fkey"
+            columns: ["curriculum_level_id"]
+            isOneToOne: false
+            referencedRelation: "v_curriculum_level_requirements"
+            referencedColumns: ["level_id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_academy_priority_queue"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_evidence_records_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_reassessment_pipeline"
+            referencedColumns: ["player_id"]
+          },
+        ]
+      }
       player_gate_status: {
         Row: {
           academy_id: string
@@ -5848,6 +7337,162 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "v_reassessment_pipeline"
             referencedColumns: ["player_id"]
+          },
+        ]
+      }
+      player_mission_assignments: {
+        Row: {
+          academy_id: string
+          assigned_by: string | null
+          completed_at: string | null
+          completion_note: string | null
+          created_at: string
+          curriculum_level_key: string | null
+          curriculum_source_label: string | null
+          curriculum_stage_key: string | null
+          display_order: number
+          ends_at: string | null
+          id: string
+          mission_description: string | null
+          mission_label: string
+          period_label: string | null
+          player_id: string
+          proposed_action_id: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_type: string
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          assigned_by?: string | null
+          completed_at?: string | null
+          completion_note?: string | null
+          created_at?: string
+          curriculum_level_key?: string | null
+          curriculum_source_label?: string | null
+          curriculum_stage_key?: string | null
+          display_order?: number
+          ends_at?: string | null
+          id?: string
+          mission_description?: string | null
+          mission_label: string
+          period_label?: string | null
+          player_id: string
+          proposed_action_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_type?: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          assigned_by?: string | null
+          completed_at?: string | null
+          completion_note?: string | null
+          created_at?: string
+          curriculum_level_key?: string | null
+          curriculum_source_label?: string | null
+          curriculum_stage_key?: string | null
+          display_order?: number
+          ends_at?: string | null
+          id?: string
+          mission_description?: string | null
+          mission_label?: string
+          period_label?: string | null
+          player_id?: string
+          proposed_action_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_type?: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_mission_assignments_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_academy_priority_queue"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "v_reassessment_pipeline"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "player_mission_assignments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
           },
         ]
       }
