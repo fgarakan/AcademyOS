@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-06-05 — AcademyOS UX Reimagination Master Audit V1 (Mega Sprint 2101–2150)
+
+- Created `docs/ux/DIRECTOR_WORKFLOW_AUDIT_V1.md` — Complete director journey audit (7 stages, 34 friction items identified, 10-second test results, root cause analysis)
+- Created `docs/ux/CURRICULUM_EXPERIENCE_AUDIT_V1.md` — Curriculum workflow audit through Linear/Apple/OpenAI lens; 4 workflows analyzed; 10 top UX problems ranked; ideal curriculum flow specified
+- Created `docs/ux/DONNA_COO_AUDIT_V1.md` — DONNA evaluated against ChatGPT, Claude, Perplexity, Superhuman, OpenAI Voice; 5 categories of robotic behavior identified; 8 workflows where DONNA should take first action
+- Created `docs/ux/ACADEMYOS_INFORMATION_ARCHITECTURE_V2.md` — Full IA redesign: 12-item sidebar → 5+gear, 8 DONNA surfaces → 1 brief, dashboard sections 8+ → 3, curriculum default changed from builder to health
+- Created `docs/ux/ACADEMYOS_UX_CONSTITUTION_V1.md` — 12 enforceable UX laws with specific violation examples, compliant examples, and enforcement process
+- Created `docs/ux/ACADEMYOS_WIREFRAME_BLUEPRINTS_V1.md` — ASCII wireframe blueprints for 6 screens: Director Today, Curriculum Command Center, Academy Health, DONNA Daily Brief, Player Profile, Coach Profile
+- Created `docs/ux/ACADEMYOS_UX_REIMAGINATION_ROADMAP_V1.md` — Prioritized implementation roadmap: what to remove (7 immediate, 8 after consolidation), merge (8 items), rename (14 labels), move (8 elements), hide (6 behind DONNA), DONNA absorb (7 static elements); 5 implementation phases + sprint estimates
+- Created `docs/ux/ACADEMYOS_10X_UX_MASTER_PLAN_V1.md` — Executive summary: 3 design decisions that change everything; full vision; 10-second test promise; before/after comparison table
+- Created `docs/ux/CURRENT_DIRECTOR_CURRICULUM_UX_FAILURE_AUDIT_V1.md` — Full source audit of `/director` and `/director/curriculum` pages; maps exact code patterns to UX failures
+- Created `docs/ux/DIRECTOR_HOMEPAGE_REIMAGINATION_V1.md` — Transformation spec: Dashboard → Daily COO Briefing; DONNA thinks, UI proves, director decides
+- Created `docs/ux/CURRICULUM_COMMAND_CENTER_REIMAGINATION_V1.md` — Transformation spec: Curriculum Browser → Curriculum Command Center; DONNA surfaces what's broken, UI proves it
+- Created `docs/ux/DONNA_UI_RESPONSIBILITY_MODEL_V1.md` — Defines exact boundary between DONNA (intelligence layer) and UI (evidence layer); decision matrix for all 6 content categories
+- Created `docs/qa/BUILD_TARGET_STALENESS_AUDIT_V1.md` — Cross-referenced CURRENT_BUILD_TARGET.md and KNOWN_LIMITATIONS.md against git log and live files; confirmed no pending migrations; identified stale claims in both docs
+- No code changes. No migrations. Audit and planning only.
+
+---
+
 ## 2026-06-05 — Academy Health Activation V1 (Mega Sprint 2016–2030)
 
 - `src/lib/donna/intelligence/academyHealthBrief.ts` — Added `'critical'` to `HealthBriefSection.status`; restructured 6 sections to new spec labels (Curriculum Health, Player Progress Health, Review & Approval Health, Coach Execution Health, Parent Communication Health, Onboarding Health); added `AcademyHealthReport` type + `AcademyHealthSection` type + `HealthStatus` type; added `buildAcademyHealthReport()` (dashboard-path-safe, 6 independent section functions); updated `buildAcademyHealthBriefAnswer()` to handle critical status (🚨)
