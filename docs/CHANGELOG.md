@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-05 — AcademyOS UX Final Blueprint V1
+
+- Created `docs/ux/ACADEMYOS_UX_FINAL_BLUEPRINT_V1.md` — Single source of truth synthesized from all 10 UX audit and reimagination docs. Covers: final navigation (5+gear), Director Today (4 zones above fold), Curriculum Command Center, DONNA experience (1 brief + 1 floating panel), Academy Health, naming conventions, mobile rules, zero-scroll rules, and 8-phase implementation order (A–H, ~35 sprints). Supersedes all prior UX audit docs.
+- No code changes. No migrations. Blueprint only.
+
+---
+
 ## 2026-06-05 — Documentation Staleness Cleanup V1
 
 - `docs/CURRENT_BUILD_TARGET.md` — Removed stale "apply pending migrations" prerequisite (all 83 confirmed live); updated UI wiring table with verified statuses (attentionQueue/kpiDashboard marked WIRED); updated last-modified date
