@@ -13,23 +13,24 @@ import { buildContextFirstSummary } from '@/lib/donna/curriculumBuilderOperator'
 import { DonnaCurriculumImproveDraftButton } from './DonnaCurriculumImproveDraftButton'
 
 // ─── Level key → label map ────────────────────────────────────────────────────
+// Keys match the LevelKey type in levelInsightMap.ts (e.g. 'orange2', 'hp1').
 
 const LEVEL_LABELS: Record<string, string> = {
-  red_ball:        'Red Ball',
-  red_ball_1:      'Red Ball 1',
-  red_ball_2:      'Red Ball 2',
-  red_ball_3:      'Red Ball 3',
-  orange_ball:     'Orange Ball',
-  orange_ball_1:   'Orange Ball 1',
-  orange_ball_2:   'Orange Ball 2',
-  orange_ball_3:   'Orange Ball 3',
-  green_dot:       'Green Dot',
-  green_dot_1:     'Green Dot 1',
-  green_dot_2:     'Green Dot 2',
-  yellow_ball:     'Yellow Ball',
-  yellow_ball_1:   'Yellow Ball 1',
-  yellow_ball_2:   'Yellow Ball 2',
-  high_performance: 'High Performance',
+  red1:    'Red Ball 1',
+  red2:    'Red Ball 2',
+  red3:    'Red Ball 3',
+  orange1: 'Orange Ball 1',
+  orange2: 'Orange Ball 2',
+  orange3: 'Orange Ball 3',
+  green1:  'Green Ball 1',
+  green2:  'Green Ball 2',
+  green3:  'Green Ball 3',
+  yellow1: 'Yellow Ball 1',
+  yellow2: 'Yellow Ball 2',
+  yellow3: 'Yellow Ball 3',
+  hp1:     'High Performance 1',
+  hp2:     'High Performance 2',
+  hp3:     'High Performance 3',
 }
 
 const CONFIDENCE_COLORS = {

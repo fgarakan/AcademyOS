@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronRight, Search, X, ExternalLink } from 'lucide-react'
+import { ChevronDown, ChevronRight, Search, X, ExternalLink, Sparkles } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 
 const STAGE_ORDER = [
@@ -35,6 +35,14 @@ const STAGE_DOT: Record<string, string> = {
   green_performance:  'bg-green-400',
   yellow_competitive: 'bg-yellow-300',
   high_performance:   'bg-violet-400',
+}
+
+const STAGE_PREFIX: Record<string, string> = {
+  red_foundation:     'red',
+  orange_development: 'orange',
+  green_performance:  'green',
+  yellow_competitive: 'yellow',
+  high_performance:   'hp',
 }
 
 interface Props {
@@ -155,24 +163,38 @@ export function CurriculumLevelTree({ explorerData }: Props) {
                   const drillCount = explorerData.drills.filter(d => d.level_min_id === level.id).length
                   const cueCount = explorerData.coachLanguage.filter(c => c.level_id === level.id).length
 
+                  const levelKey = `${STAGE_PREFIX[level.stage] ?? level.stage.split('_')[0]}${level.level_number}`
+
                   return (
-                    <Link
+                    <div
                       key={level.id}
-                      href={`/director/curriculum/level/${level.id}`}
-                      className="flex items-center gap-3 px-4 py-3 bg-surface hover:bg-surface-raised hover:border-l-2 hover:border-l-lime transition-colors group"
+                      className="flex items-stretch bg-surface hover:bg-surface-raised hover:border-l-2 hover:border-l-lime transition-colors group"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium truncate text-text-secondary group-hover:text-text-primary transition-colors">
-                          {level.display_name}
-                        </p>
-                        {explorerData.tablesAvailable && (
-                          <p className="text-[10px] text-text-muted mt-0.5 font-mono">
-                            {gateCount}g · {drillCount}d · {cueCount}cl
+                      <Link
+                        href={`/director/curriculum/level/${level.id}`}
+                        className="flex flex-1 items-center gap-3 px-4 py-3 min-w-0"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-medium truncate text-text-secondary group-hover:text-text-primary transition-colors">
+                            {level.display_name}
                           </p>
-                        )}
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0 text-text-muted group-hover:text-lime transition-colors" />
-                    </Link>
+                          {explorerData.tablesAvailable && (
+                            <p className="text-[10px] text-text-muted mt-0.5 font-mono">
+                              {gateCount}g · {drillCount}d · {cueCount}cl
+                            </p>
+                          )}
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0 text-text-muted group-hover:text-lime transition-colors" />
+                      </Link>
+                      <Link
+                        href={`/director/curriculum?improve=${levelKey}`}
+                        className="shrink-0 flex items-center gap-1 px-3 border-l border-border text-[10px] font-medium text-text-muted hover:text-lime hover:bg-lime/5 transition-colors"
+                        title="DONNA curriculum improvement analysis"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        Improve
+                      </Link>
+                    </div>
                   )
                 })}
               </div>
