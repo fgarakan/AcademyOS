@@ -18,28 +18,20 @@ import { formatDate } from '@/lib/utils'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
-// Sprint 1034 — DirectorTodayCommandCenter replaced by DirectorPrimaryActionHero
-import { DirectorPrimaryActionHero } from './_components/DirectorPrimaryActionHero'
-// DONNA UI Constitution — DonnaScreenBriefStatic
-import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
-// Sprint 1156: DONNA adoption layer
-import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
-import { DonnaFirstGreeting } from '@/components/donna/DonnaFirstGreeting'
 import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
-import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
 import { DirectorTodayKpiSection } from './_components/DirectorTodayKpiSection'
-// Sprint 1701 — DONNA COO Surface Layer
 import { buildDashboardAttentionContext } from '@/lib/donna/proactive/dashboardAttentionContext'
 import { buildAcademyAttentionReport } from '@/lib/donna/proactive/academyAttentionEngine'
-import { DonnaAcademyCOOBriefCard } from '@/components/donna/DonnaAcademyCOOBriefCard'
 import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader'
 import { deriveLevelKeyFromSignal } from '@/lib/curriculum/curriculumAttentionRanking'
 import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
 import { buildAcademyHealthReport } from '@/lib/donna/intelligence/academyHealthBrief'
-// Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
-// Sprint 804: DonnaDashboardOpenCard removed in Sprint 1034 — replaced by DirectorPrimaryActionHero + persistent DONNA button
+import { DirectorTodayDonnaBrief } from './_components/DirectorTodayDonnaBrief'
+import { DirectorTopPriorities } from './_components/DirectorTopPriorities'
+import { DirectorReviewDecideZone } from './_components/DirectorReviewDecideZone'
+import { DirectorAcademyHealthSnapshot } from './_components/DirectorAcademyHealthSnapshot'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -615,131 +607,64 @@ export default async function DirectorDashboard() {
     }
   }
 
-  // Sprint 763: priorityAction banner removed — subsumed by DirectorAttentionQueueHero above.
+  // Sprint 2176–2195: DONNA brief line2 — best next action from top priority, or second item label
+  const donnaLine2 = cooAttentionReport.topAction?.bestNextAction
+    ?? cooAttentionReport.allItems[1]?.label
+    ?? ''
 
   return (
-    <div className="p-6 space-y-8 animate-fade-in">
+    <div className="p-6 space-y-4 animate-fade-in">
 
-      {/* ── Hero Header ────────────────────────────────────── */}
+      {/* ── Identity Bar ─────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted mb-1">{today}</p>
-          <h1 className="text-4xl font-bold text-text-primary tracking-tight leading-tight">
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight leading-tight">
             {timeGreeting}, {directorDisplayName}.
           </h1>
-          <p className="text-text-secondary text-base mt-1">{academyName}</p>
-          <div className="flex items-center gap-4 mt-3 flex-wrap">
-            <Link
-              href="/director/today"
-              className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-lime transition-colors"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              Today&apos;s Academy
-              <ChevronRight className="w-3 h-3" />
-            </Link>
-            <Link
-              href="/director/review"
-              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-lime transition-colors"
-            >
-              <ClipboardList className="w-3.5 h-3.5" />
-              Approvals
-              {pendingWrapUpsCount > 0 && (
-                <span className="font-mono text-[10px] font-bold text-status-orange bg-status-orange/10 border border-status-orange/30 px-1.5 py-0.5 rounded-full">
-                  {pendingWrapUpsCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/director/donna"
-              className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-lime transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              DONNA
-              <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
+          <p className="text-text-secondary text-sm mt-1">{academyName}</p>
         </div>
-        {/* Academy Health Badge */}
-        <AcademyHealthBadgeWithDrawer
-          healthPct={academyHealthPct}
-          activePlayers={activePlayers}
-          pendingWrapUpsCount={pendingWrapUpsCount}
-          attentionCount={attentionCount}
-          reassessmentDueCount={reassessmentDue}
-          missingFocusCount={missingFocus}
-          newRequestsCount={newRequests}
-          pendingCount={pendingCount}
-          playersWithoutLevel={playersWithoutLevel}
-          curricGapCount={curricGapCount}
-          highPrioritySuggestionsCount={highPrioritySuggestionsCount}
-          pendingSuggestionsCount={pendingSuggestionsCount}
-          sessionsThisWeek={sessionsThisWeek}
-          improvingCount={improvingCount}
-          advancementReadyCount={advancementReadyCount}
-        />
+        <Link
+          href="/director/today"
+          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-lime transition-colors mt-1 shrink-0"
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          Today&apos;s Academy
+          <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
 
-      {/* ── Sprint 1156: DONNA First Daily Greeting ──────────────────── */}
-      <DonnaFirstGreeting
-        directorFirstName={directorDisplayName.split(' ')[0]}
-        greeting={timeGreeting}
-        pendingWrapUps={pendingWrapUpsCount}
-        pendingPlacements={pendingCount}
+      {/* ── DONNA Daily Brief — 2 sentences, 1 CTA ──────────── */}
+      <DirectorTodayDonnaBrief
+        line1={constitutionBrief}
+        line2={donnaLine2}
+        urgency={constitutionUrgency}
+        ctaLabel={constitutionActionLabel}
+        ctaHref={constitutionActionHref}
+      />
+
+      {/* ── Top Priorities — max 3 ───────────────────────────── */}
+      <DirectorTopPriorities attentionQueue={attentionQueue} />
+
+      {/* ── Review & Decide — primary work zone ─────────────── */}
+      <DirectorReviewDecideZone
+        totalPending={pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews + newRequests}
+        wrapUpsCount={pendingWrapUpsCount}
+        assessmentsCount={assessmentsNeedingReview}
+        placementReviewsCount={activePlacementReviews}
+        lessonRequestsCount={newRequests}
+      />
+
+      {/* ── Academy Health Snapshot ──────────────────────────── */}
+      <DirectorAcademyHealthSnapshot
+        healthPct={academyHealthPct}
         attentionCount={attentionCount}
-        parentUpdatesPending={parentUpdatesPendingApproval}
-        advancementReadyCount={advancementReadyCount}
-        activePlayers={activePlayers}
+        criticalCount={reassessmentDue}
       />
 
-      {/* ── DONNA UI Constitution Brief — one sentence, what matters right now ── */}
-      {/* Constitution: every screen has 1 DONNA brief before data. Sprint 1123.       */}
-      <DonnaScreenBriefStatic
-        brief={constitutionBrief}
-        primaryActionLabel={constitutionActionLabel}
-        primaryActionHref={constitutionActionHref}
-        emphasis={constitutionUrgency}
-      />
-
-      {/* ── Sprint 1701: DONNA COO Brief Card ────────────────────────── */}
-      {/* Expanded by default — director sees today's highest-leverage action  */}
-      {/* immediately without clicking. Empty state is honest ("academy clear"). */}
-      {/* Positioned here so DONNA leads the intelligence section.              */}
-      <DonnaAcademyCOOBriefCard
-        report={cooAttentionReport}
-        expanded
-        data-donna-focus-id="academy-coo-brief"
-      />
-
-      {/* ── Sprint 1156: DONNA Command Section ──────────────────────── */}
-      <DonnaCommandSection pagePath="/director" />
-
-      {/* ── Sprint 1034: Primary Action Hero — one clear action at the top ── */}
-      {/* Replaces DonnaDashboardOpenCard (804) + DirectorTodayCommandCenter (767).    */}
-      {/* Sprint 1033 audit: both competed for attention. One hero removes the conflict. */}
-      <div data-donna-focus-id="primary-action-hero">
-        <DirectorPrimaryActionHero
-          pendingReviewCount={pendingWrapUpsCount + newRequests}
-          attentionQueue={attentionQueue}
-          pendingPlacementCount={pendingCount}
-          firstName={directorDisplayName.split(' ')[0]}
-        />
-      </div>
-
-      {/* ── KPI Wiring V1 — 7 real-data KPI tiles replacing the 3-tile pulse strip ── */}
-      <DirectorTodayKpiSection
-        playersNeedingAttention={attentionCount}
-        pendingOnboarding={pendingCount}
-        assessmentsNeedingReview={assessmentsNeedingReview}
-        playersReadyForReassessment={reassessmentDue}
-        parentUpdatesPendingApproval={parentUpdatesPendingApproval}
-        coachRecapsMissing={coachRecapsMissing}
-        activePlacementReviews={activePlacementReviews}
-      />
-
-      {/* ── Sprint 813: Collapsed sections — all closed by default ─────────────────── */}
-      {/* Director landing is a Daily Command screen, not a scrolling dashboard.       */}
-      {/* All detail sections are collapsed — open on demand. No scroll by default.   */}
-      <div className="space-y-2">
+      {/* ── Below fold — collapsed sections ─────────────────────────────────────────── */}
+      {/* All sections below are closed by default. Director landing is a command screen. */}
+      <div className="space-y-2 pt-2">
 
         {/* Sessions This Week */}
         <CollapsibleSection title="Sessions This Week">
@@ -788,43 +713,18 @@ export default async function DirectorDashboard() {
           </Card>
         </CollapsibleSection>
 
-        {/* Quick Actions */}
-        <CollapsibleSection title="Quick Actions">
-          <p className="label-xs mb-4">Quick Actions</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <QuickActionCard
-              icon={<Calendar className="w-4 h-4 text-lime" />}
-              title="View Today's Academy"
-              description="Live session feed, attendance, and on-court status."
-              href="/director/today"
-            />
-            <QuickActionCard
-              icon={<ClipboardList className="w-4 h-4 text-lime" />}
-              title="Session Planning"
-              description="Build and manage sessions from class templates."
-              href="/director/sessions"
-            />
-            <QuickActionCard
-              icon={<Users className="w-4 h-4 text-lime" />}
-              title="Player Profiles"
-              description="View and manage your full player roster."
-              href="/director/players"
-            />
-            <QuickActionCard
-              icon={<Activity className="w-4 h-4 text-lime" />}
-              title="Signals"
-              description="Attendance concerns, missing levels, pending reviews, and lesson requests."
-              href="/director/signals"
-            />
-          </div>
-        </CollapsibleSection>
-
-        {/* Academy Metrics */}
-        {/* Sprint 818: wrapper div carries data-donna-focus-id for DONNA highlight */}
+        {/* Academy Metrics — KPI tiles moved here from above fold */}
         <div data-donna-focus-id="academy-metrics-section">
           <CollapsibleSection title="Academy Metrics">
-            {/* Sprint 803: moved below Sessions + Quick Actions so actionable surfaces come first.
-                KPIs are supporting data for the director — the command center and session list are primary. */}
+            <DirectorTodayKpiSection
+              playersNeedingAttention={attentionCount}
+              pendingOnboarding={pendingCount}
+              assessmentsNeedingReview={assessmentsNeedingReview}
+              playersReadyForReassessment={reassessmentDue}
+              parentUpdatesPendingApproval={parentUpdatesPendingApproval}
+              coachRecapsMissing={coachRecapsMissing}
+              activePlacementReviews={activePlacementReviews}
+            />
             <AcademyKpiCardsSection
               sessionsToday={sessionsThisWeek}
               attendanceExceptions={pendingWrapUpsCount}
@@ -836,8 +736,6 @@ export default async function DirectorDashboard() {
               playerProgress={improvingCount}
               activePlayers={activePlayers}
             />
-            {/* Sprint 767: moved down — supporting analysis, not primary signal.              */}
-            {/* Director uses this to go deep on KPI trends; daily view lives in sections above. */}
             <DirectorKpiHealthSection
               activePlayers={activePlayers}
               advancementReadyCount={advancementReadyCount}
@@ -851,14 +749,11 @@ export default async function DirectorDashboard() {
         </div>
 
         {/* Alerts & Placement */}
-        {/* Sprint 818: wrapper div carries data-donna-focus-id for DONNA highlight */}
         <div data-donna-focus-id="alerts-placement-section">
         <CollapsibleSection title="Alerts &amp; Placement" badge={totalAlerts}>
-          {/* Sprint 807: Renamed from "Roster Signals" — Priority Queue card removed (already shown in */}
-          {/* Command Center above). Pending Placement is the only distinct signal not in the command center. */}
           <div>
             <p className="label-xs">Pending Placement</p>
-            <p className="text-xs text-text-muted mt-1">Players awaiting onboarding completion. Priority action items are surfaced in the Command Center above.</p>
+            <p className="text-xs text-text-muted mt-1">Players awaiting onboarding completion. Priority action items are surfaced above.</p>
           </div>
 
           {/* Pending Placement */}
@@ -923,12 +818,9 @@ export default async function DirectorDashboard() {
           </Card>
 
           {/* Alert Breakdown */}
-          {/* Sprint 807: Renamed from "Academy Health Signals" — demoted to detail section. */}
-          {/* Primary attention surface is DirectorTodayCommandCenter above. This section is   */}
-          {/* a supporting breakdown for directors who want to drill into individual alert types. */}
           <div>
             <p className="text-[10px] uppercase tracking-widest font-medium text-text-muted">Alert Breakdown</p>
-            <p className="text-xs text-text-muted mt-1">Detailed breakdown by type — priority items are already shown in the Command Center above.</p>
+            <p className="text-xs text-text-muted mt-1">Detailed breakdown by type — priority items are shown above.</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
             <AcademyAlertsPanel
@@ -999,7 +891,6 @@ export default async function DirectorDashboard() {
 
         {/* Analytics */}
         <CollapsibleSection title="Analytics">
-          {/* Sprint 767: moved down — supporting context, not primary signal. */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
             <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
             <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
@@ -1087,9 +978,6 @@ export default async function DirectorDashboard() {
             fitnessTemplatesExist={fitnessTemplateCount > 0}
           />
         )}
-
-        {/* Sprint 803: DonnaDashboardPresenceCTA removed — it duplicated the attention items
-            already shown in DirectorTodayCommandCenter at the top of the page. */}
       </div>
 
     </div>
@@ -1262,38 +1150,10 @@ function LiveActivityCard({
       </CardContent>
       <CardFooter>
         <Link href="/director/today" className="text-xs text-lime hover:opacity-80 font-medium">
-          View today's academy →
+          View today&apos;s academy →
         </Link>
       </CardFooter>
     </Card>
-  )
-}
-
-// ── Quick Action Cards ──────────────────────────────────────────
-
-function QuickActionCard({
-  icon, title, description, href,
-}: {
-  icon: ReactNode
-  title: string
-  description: string
-  href: string
-}) {
-  return (
-    <Link href={href} className="block group">
-      <div className="bg-surface border border-lime/15 rounded-2xl p-5 h-full hover:border-lime/30 hover:shadow-cyan transition-all duration-150">
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
-            {icon}
-          </div>
-        </div>
-        <p className="font-semibold text-text-primary text-sm">{title}</p>
-        <p className="text-xs text-text-secondary mt-1">{description}</p>
-        <p className="text-lime text-xs font-medium mt-3 group-hover:translate-x-0.5 transition-transform">
-          Open →
-        </p>
-      </div>
-    </Link>
   )
 }
 
