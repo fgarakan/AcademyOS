@@ -44,7 +44,6 @@ import type { DonnaDraftItem } from './DonnaDraftCard'
 import { loadWrapUpReviewSurface } from '@/lib/donna/wrapUpReviewSurfaceLoader'
 import { WrapUpCoveragePanel } from './WrapUpCoveragePanel'
 import { DonnaReviewBriefPanel } from './DonnaReviewBriefPanel'
-import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
 import { AssessmentStudioDraftCard } from './AssessmentStudioDraftCard'
 import type { EnrichedAssessmentStudioDraftItem, AssessmentStudioDraftPayload } from './AssessmentStudioDraftCard'
 import { DonnaReviewTabGuide } from './DonnaReviewTabGuide'
@@ -1319,9 +1318,6 @@ export default async function DirectorReviewQueuePage({
         parentCommCount={parentCommDrafts.length}
         academyId={academyId}
       />
-
-      {/* Sprint 1156: DONNA Command Section */}
-      <DonnaCommandSection pagePath="/director/review" />
 
       {/* Sprint 969: data-donna-focus-id="review-queue-primary" wraps the entire Tabs component
           so DONNA can reliably highlight the review queue regardless of which tab is active.

@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-05 — Mega Sprint 2196–2215 — DONNA Surface Unification V1
+
+- Created `docs/ux/DONNA_SURFACE_INVENTORY_V1.md` — Full inventory of 110+ DONNA surfaces across all routes; classified KEEP / MERGE / REMOVE / REPLACE with rationale; identifies 6 surfaces eliminated this sprint
+- Created `docs/ux/DONNA_SINGLE_PRESENCE_ARCHITECTURE_V1.md` — Defines the single persistent DONNA architecture: floating shell is THE DONNA; page briefs are read-only ambient intelligence; shared memory/voice/conversation through `DonnaSessionContextProvider`; explains why 3 layout overlays were removed
+- Created `docs/ux/DONNA_BRIEF_STANDARD_V1.md` — Standard for all page-level DONNA briefs: max 2 sentences, max 1 CTA, conclusion-first, no confidence badges, no source labels, honest empty states; per-route brief specs for every major director route
+- Created `docs/ux/DONNA_RESPONSIBILITY_MODEL_V2.md` — Updated responsibility model (supersedes V1): adds single entry point rule, prohibited patterns list (inline command bars, layout overlays, multiple briefs per page), permitted patterns, trust rules
+- Created `docs/ux/DONNA_PAGE_AWARE_MODEL_V1.md` — DONNA behavior definition per major route: what DONNA knows, brief content rules, shell behavior on open, suggested questions, what DONNA must NOT do; context inheritance rules across navigation
+- Created `docs/ux/DONNA_VOICE_ARCHITECTURE_V1.md` — Unified voice architecture: one global listener (`DonnaWakeWordLayer`), "Hey DONNA" wake phrase, 4 voice states (Idle/Listening/Thinking/Responding), coach session voice is isolated and separate, single microphone rule
+- Created `docs/ux/DONNA_CONTINUITY_AUDIT_V1.md` — Memory and continuity audit: 7 context types verified (academy/page/player/workflow/conversation/module/object); test scenarios for "Continue that curriculum improvement", "Show me the player we discussed", "What was wrong with Orange Ball 2?"; documented limitations (no DB persistence, no cross-session memory)
+- Modified `src/app/director/layout.tsx` — Removed `DonnaCOOStatusWrapper` (duplicate status bar), `DonnaDailyCOOBriefSurface` (duplicate daily brief banner), and `DonnaProactiveBriefCard` (duplicate per-route guide card); retained `DonnaAssistantButton`, `DonnaWakeWordLayer`, `DonnaHighlightBanner`, `DonnaSessionContextProvider`
+- Modified `src/app/director/review/page.tsx` — Removed `DonnaCommandSection` (duplicate inline command bar); `DonnaReviewBriefPanel` remains as the single page-level DONNA surface
+- Modified `src/app/director/players/page.tsx` — Removed `DonnaCommandSection` (duplicate inline command bar); `DonnaScreenBriefStatic` + `DonnaPlayersPresenceCTA` remain as the single page-level DONNA surfaces
+- Modified `src/app/director/players/[playerId]/page.tsx` — Removed `DonnaCommandSection` (duplicate inline command bar); `PlayerProfileDonnaRegistrar` + `CollapsedDetailSection` remain; floating DONNA shell is pre-loaded with player context via the registrar
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-05 — Mega Sprint 2176–2195 — Director Today Reimagination V1
 
 - Created `src/app/director/_components/DirectorTodayDonnaBrief.tsx` — Inline DONNA brief for Director Today; 2 sentences + 1 CTA; urgency-aware border/bg (lime for normal, orange for urgent)

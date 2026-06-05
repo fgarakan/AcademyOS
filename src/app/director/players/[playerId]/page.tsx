@@ -78,8 +78,6 @@ import { ReadinessEvidencePanel } from './_components/ReadinessEvidencePanel'
 import { DevelopmentTimeline } from './_components/DevelopmentTimeline'
 import { PriorityMissionEvidenceCard } from './_components/PriorityMissionEvidenceCard'
 import { CollapsedDetailSection } from '@/components/donna/CollapsedDetailSection'
-// Sprint 1156: DONNA command section on player profile
-import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
 // Sprint 1211: Evidence Summary Panel
 import { PlayerEvidenceSummaryPanel } from './_components/PlayerEvidenceSummaryPanel'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
@@ -925,19 +923,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         hasCurriculumState={hasCurriculum}
         observationCount={enrichedObservations.length}
         advancementEligible={curriculumSummary?.advancement_eligible ?? null}
-      />
-
-      {/* Sprint 1156 — DONNA Command Section — player-context questions */}
-      <DonnaCommandSection
-        pagePath={`/director/players/${params.playerId}`}
-        playerId={params.playerId}
-        questions={[
-          `Why is ${player.first_name ?? 'this player'} at this level?`,
-          `What is blocking ${player.first_name ?? 'their'} progress?`,
-          `What should the coach focus on?`,
-          `What should the parent know?`,
-        ]}
-        placeholder={`Ask DONNA about ${player.first_name ?? 'this player'}…`}
       />
 
       {/* Sprint 1131 — Priority → Mission → Evidence cards (top 2 priorities) */}

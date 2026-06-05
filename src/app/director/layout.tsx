@@ -5,13 +5,10 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
 import { DonnaWakeWordLayer } from '@/components/donna/DonnaWakeWordLayer'
-import { DonnaProactiveBriefCard } from '@/components/donna/DonnaProactiveBriefCard'
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 import { DonnaSessionContextProvider } from '@/components/donna/DonnaSessionContextProvider'
 import { DonnaHighlightBanner } from '@/components/donna/DonnaHighlightBanner'
-import { DonnaCOOStatusWrapper } from '@/components/donna/DonnaCOOStatusWrapper'
-import { DonnaDailyCOOBriefSurface } from '@/components/donna/DonnaDailyCOOBriefSurface'
 
 export default async function DirectorLayout({
   children,
@@ -99,19 +96,6 @@ export default async function DirectorLayout({
           <Suspense>
             <DemoModeBanner />
           </Suspense>
-          {/* Sprint 1681 — DONNA COO Status Bar (site-wide, dismissible) */}
-          {academyId && (
-            <DonnaCOOStatusWrapper
-              pendingCount={pendingCount}
-              directorName={userDisplayName || null}
-            />
-          )}
-          {/* Sprint 1681 — DONNA Daily COO Brief Surface (once per day, dismissible) */}
-          {academyId && (
-            <DonnaDailyCOOBriefSurface
-              directorName={userDisplayName || null}
-            />
-          )}
           <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="director">
             {children}
           </FirstRunDeckGate>
@@ -122,10 +106,8 @@ export default async function DirectorLayout({
             directorName={userDisplayName || undefined}
           />
         )}
-        {/* Sprint 1791 — Hey Donna wake word layer (desktop only, opt-in) */}
+        {/* Hey DONNA wake word layer (desktop only, opt-in) — single voice activation system */}
         {academyId && <DonnaWakeWordLayer />}
-        {/* Sprint 1801 — DONNA proactive pilot guide (desktop only, once per route/session) */}
-        {academyId && <DonnaProactiveBriefCard pendingCount={pendingCount} />}
         <DirectorMobileNav pendingCount={pendingCount} />
         {/* Sprint 817 — DONNA guided highlight banner, mounted at layout level */}
         <DonnaHighlightBanner />

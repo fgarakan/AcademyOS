@@ -5,7 +5,6 @@ import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
 import { DonnaPlayersPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
 import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
-import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
 
 export interface PlayerCurriculumEntry {
   levelName: string
@@ -130,9 +129,6 @@ export default async function PlayersPage() {
         primaryActionHref="/director/players/new"
         emphasis={assessmentDueCount > 0 || missingCurriculumCount > 0 ? 'urgent' : 'normal'}
       />
-
-      {/* Sprint 1156: DONNA Command Section */}
-      <DonnaCommandSection pagePath="/director/players" />
 
       {/* Sprint 820: data-donna-focus-id on page header for DONNA "player directory" highlight */}
       <div className="flex items-start justify-between gap-4" data-donna-focus-id="player-directory-summary">
