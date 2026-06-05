@@ -45,6 +45,9 @@ import { detectTodayGuidanceQuestion } from '@/lib/donna/guidance/donnaTodayGuid
 import type { COOOrchestrationState } from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
 import { getWorkflow } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
 import type { GuidedWorkflowId } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
+import type { GoalCompletionSession } from '@/lib/donna/workflows/donnaGoalCompletionModel'
+import { resolveGoalSessionCommand, detectGoalWorkflowIntent } from '@/lib/donna/workflows/donnaWorkflowRegistry'
+import type { GoalSessionCommand } from '@/lib/donna/workflows/donnaWorkflowRegistry'
 import { getDonnaContextPackForRoute, lookupAnswerInContextPack } from '@/lib/donna/donnaContextPackRegistry'
 import { matchesDailyBriefIntent } from '@/lib/donna/donnaIntentClassifier'
 import { CONFIDENCE_ACT_THRESHOLD } from '@/lib/donna/intent/confidenceScoring'
@@ -69,6 +72,8 @@ export interface DonnaMessageInput {
   route: string
   /** Whether the guided workflow is currently active (non-null = active) */
   activeGuidedWorkflowId: GuidedWorkflowId | null
+  /** Active goal completion session (null = no active goal session) */
+  activeGoalSession?: GoalCompletionSession | null
   /** Current COO orchestration state (null = no active priorities) */
   cooState: COOOrchestrationState | null
   /** Goal memory state from sessionStorage */
@@ -86,8 +91,10 @@ export interface DonnaMessageInput {
 export type DonnaMessageAction =
   | 'respond'              // Brain has a direct response → show it + optionally speak
   | 'navigate'             // Navigate to a specific route
-  | 'start_workflow'       // Start a guided completion workflow
+  | 'start_workflow'       // Start a guided completion workflow (form-filling)
+  | 'start_goal_session'   // Start a goal completion session (task-level guided mode)
   | 'route_guided_answer'  // Active guided workflow → existing handleGuidedCompletionAnswer
+  | 'route_goal_session'   // Active goal session → handle goal session command
   | 'route_coo_control'    // COO control command → existing handleCOOControlCommand
   | 'fetch_attention'      // Trigger handleFetchAttention
   | 'fetch_brief'          // Trigger handleFetchDailyBrief
@@ -129,6 +136,10 @@ export interface DonnaMessageResult {
   startWorkflowId: GuidedWorkflowId | null
   /** COO control command detected (for 'route_coo_control' action) */
   cooControl: DirectorControlIntent | null
+  /** Goal session command resolved from short phrases ("yes", "skip", "approve", etc.) */
+  goalSessionCommand: GoalSessionCommand
+  /** Goal type to start (for 'start_goal_session' action) */
+  startGoalType: string | null
   /** Whether this response involves an approval-gated action */
   requiresApproval: boolean
   /** Known limitations or caveats in the response */
@@ -187,6 +198,8 @@ function makeResult(
     navigateTo: partial.navigateTo ?? null,
     startWorkflowId: partial.startWorkflowId ?? null,
     cooControl: partial.cooControl ?? null,
+    goalSessionCommand: partial.goalSessionCommand ?? null,
+    startGoalType: partial.startGoalType ?? null,
     requiresApproval: partial.requiresApproval ?? false,
     limitations: partial.limitations ?? null,
     debugLog,
@@ -205,11 +218,62 @@ function makeResult(
  */
 export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResult {
   const { userMessage, role, route, activeGuidedWorkflowId, cooState, goalMemory } = input
+  const activeGoalSession = input.activeGoalSession ?? null
   const lower = userMessage.toLowerCase().trim()
 
   const debugLog = createDebugLog(userMessage, role, route)
 
-  // ── Step 1: Active guided workflow ───────────────────────────────────────────
+  // ── Step 0a: Active goal session — route session commands first ──────────────
+  // When a goal session is active, interpret short phrases ("yes", "skip",
+  // "approve", "show evidence", "stop") as workflow commands rather than
+  // new questions. Navigation continuity: session state is preserved across pages.
+  logStep(debugLog, 'check_goal_session')
+  if (activeGoalSession !== null &&
+      (activeGoalSession.status === 'active' ||
+       activeGoalSession.status === 'waiting_for_user' ||
+       activeGoalSession.status === 'waiting_for_approval')) {
+    const command = resolveGoalSessionCommand(userMessage)
+    // Any recognized command routes to the goal session handler
+    if (command !== null) {
+      finalizeLog(debugLog, 'check_goal_session', 'route_goal_session')
+      emitDebugLog(debugLog)
+      return makeResult('route_goal_session', {
+        confidence: 1.0,
+        goalSessionCommand: command,
+      }, debugLog)
+    }
+    // Non-command input while session active → still route to session
+    // so the session handler can decide (e.g. treat as a question about current step)
+    finalizeLog(debugLog, 'check_goal_session', 'route_goal_session')
+    emitDebugLog(debugLog)
+    return makeResult('route_goal_session', {
+      confidence: 0.9,
+      goalSessionCommand: null,
+    }, debugLog)
+  }
+
+  // ── Step 0b: Goal workflow intent detection ──────────────────────────────────
+  // Detect whether the director's message triggers one of the 8 goal workflows.
+  // Runs before the form-filling guided workflow check so goal-level tasks
+  // take precedence over form-filling workflows.
+  logStep(debugLog, 'check_goal_workflow_intent')
+  if (activeGoalSession === null && activeGuidedWorkflowId === null) {
+    const goalWorkflow = detectGoalWorkflowIntent(userMessage)
+    if (goalWorkflow) {
+      finalizeLog(debugLog, 'check_goal_workflow_intent', 'start_goal_session')
+      emitDebugLog(debugLog)
+      return makeResult('start_goal_session', {
+        confidence: 0.92,
+        startGoalType: goalWorkflow.id,
+        response: goalWorkflow.openingMessage,
+        spokenResponse: goalWorkflow.openingMessage,
+        followUpQuestion: `Would you like me to walk you through **${goalWorkflow.label}** now?`,
+        navigateTo: goalWorkflow.fallbackRoute,
+      }, debugLog)
+    }
+  }
+
+  // ── Step 1: Active guided workflow (form-filling) ────────────────────────────
   logStep(debugLog, 'check_guided_workflow')
   if (activeGuidedWorkflowId !== null) {
     finalizeLog(debugLog, 'check_guided_workflow', 'route_guided_answer')
