@@ -1,14 +1,12 @@
 import Link from 'next/link'
-import { CheckCircle2, Circle, ChevronRight, Users, CalendarDays, MessageSquare, TrendingUp, GitBranch, Map, BookOpen, Wrench, Sparkles } from 'lucide-react'
+import { CheckCircle2, Circle, ChevronDown, ChevronRight, Map, BookOpen, Wrench, Sparkles } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
-import { CurriculumBuilderWelcome } from '@/components/curriculum/builder/CurriculumBuilderWelcome'
 import { buildCurriculumCoverageReport, type LevelCoverageInput } from '@/lib/curriculum/coverageModel'
 import type { CurriculumStage } from '@/lib/curriculum/visualMapModel'
 import { CurriculumHealthPanel, type DimensionSummary } from './_components/CurriculumHealthPanel'
 import { CurriculumLevelTree } from './_components/CurriculumLevelTree'
-// Sprint 1095B — Curriculum Director Insight View
 import { CurriculumStageInsightCard, type StageInsightData } from './_components/CurriculumStageInsightCard'
 import { getLevelInsight } from '@/lib/curriculum/levelInsightMap'
 import { DonnaCurriculumContextPanel } from './_components/DonnaCurriculumContextPanel'
@@ -17,9 +15,10 @@ import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader
 import { rankCurriculumAttention } from '@/lib/curriculum/curriculumAttentionRanking'
 import { CurriculumIntelligenceCard } from './_components/CurriculumIntelligenceCard'
 import type { ExcludableScoreDimension } from '@/lib/curriculum/coverageModel'
+import { DonnaCurriculumBrief } from './_components/DonnaCurriculumBrief'
+import { CurriculumHealthStrip } from './_components/CurriculumHealthStrip'
 
-// ─── Stage display config (colors + fallback purpose) ─────────────────────────
-// stage_goal comes from DB; these provide color tokens and a fallback.
+// ─── Stage display config ─────────────────────────────────────────────────────
 
 const SPINE_STAGES: Array<{
   stageKey: string
@@ -62,33 +61,6 @@ const SPINE_STAGES: Array<{
     dotClass: 'bg-lime',
     textClass: 'text-lime',
     fallbackPurpose: 'Advanced competition, elite technical refinement, and performance coaching.',
-  },
-]
-
-const CONNECTIONS = [
-  {
-    title: 'Player Profiles',
-    Icon: Users,
-    unlocks:
-      'Curriculum level connects to every player profile, showing where each player sits in the development spine.',
-  },
-  {
-    title: 'Session Planning',
-    Icon: CalendarDays,
-    unlocks:
-      'Templates link to curriculum levels so coaches always train to the right stage requirements.',
-  },
-  {
-    title: 'Coach Notes',
-    Icon: MessageSquare,
-    unlocks:
-      'Observations and gate evidence connect to level requirements, building the advancement case.',
-  },
-  {
-    title: 'Parent / Player Progress',
-    Icon: TrendingUp,
-    unlocks:
-      'Players and parents see their level, what they are working on, and what comes next.',
   },
 ]
 
@@ -194,7 +166,6 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
   })
 
   // ─── Curriculum coverage snapshot ────────────────────────────────────────
-  // Maps DB curriculum_stage enum (snake_case) to the CurriculumStage union used by coverageModel.
   const DB_STAGE_TO_CURRICULUM_STAGE: Record<string, CurriculumStage> = {
     red_foundation:     'Red Ball',
     orange_development: 'Orange Ball',
@@ -204,8 +175,6 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
   }
 
   // ── Phase 5: requirement counts per level (Mega Sprint 1996–2005) ──────────
-  // curriculum_track_requirements has 32 live rows (Orange Ball levels seeded).
-  // Feeds the 'skills' dimension of the coverage model, unlocking 4/8 scoring.
   const requirementCountByLevel: Record<string, number> = {}
   try {
     const { data: reqRows } = await (supabase as any)
@@ -247,8 +216,6 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
   const coverageReport = buildCurriculumCoverageReport(levelCoverageInputs)
 
   // ── Curriculum bottleneck + intelligence ranking (Mega Sprint 1996–2005) ───
-  // loadCurriculumBottleneck reads player_requirement_progress (10 live rows).
-  // Non-fatal — page renders without intelligence card if data is unavailable.
   let curriculumRanking: import('@/lib/curriculum/curriculumAttentionRanking').CurriculumRankingResult = {
     priorities: [], attentionScore: 'healthy', topConcern: null, topConcernCount: 0, allTopConcerns: [], hasData: false,
   }
@@ -311,9 +278,6 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
     : null
 
   // ─── Setup checklist live counts ─────────────────────────────────────────
-  // QW-1: Replace hardcoded false on checklist items 4-5 with live queries.
-  // templates.curriculum_level_id may be pending migration 045 on live DB —
-  // guard with error check and fall back to honest "Not connected yet" state.
   const { count: templatesWithLevelCount, error: templatesCheckError } = await rawDb
     .from('templates')
     .select('*', { count: 'exact', head: true })
@@ -325,44 +289,6 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
     .from('player_curriculum_states')
     .select('*', { count: 'exact', head: true })
     .eq('academy_id', academyId)
-
-  // ─── Status derivation ────────────────────────────────────────────────────
-
-  let statusLabel: string
-  let statusDotClass: string
-  let statusTextClass: string
-  let statusDescription: string
-  let primaryCtaLabel: string
-  let primaryCtaHref: string
-
-  if (!versionData) {
-    statusLabel = 'Setup in progress'
-    statusDotClass = 'bg-status-orange'
-    statusTextClass = 'text-status-orange'
-    statusDescription = 'No curriculum version active. Start setup to activate the Academy OS starter spine.'
-    primaryCtaLabel = 'Start Curriculum Setup'
-    primaryCtaHref = '/director/onboarding/curriculum'
-  } else if (versionData.status === 'active') {
-    statusLabel = 'Starter spine active'
-    statusDotClass = 'bg-status-green'
-    statusTextClass = 'text-status-green'
-    statusDescription = `${versionData.name} — Version ${versionData.version_number}${versionData.override_count > 0 ? ` · ${versionData.override_count} override${versionData.override_count > 1 ? 's' : ''}` : ''}`
-    primaryCtaLabel = 'Open Curriculum Builder'
-    primaryCtaHref = '/director/curriculum/builder'
-  } else {
-    statusLabel = 'Draft in progress'
-    statusDotClass = 'bg-status-orange'
-    statusTextClass = 'text-status-orange'
-    statusDescription = `${versionData.name} — Version ${versionData.version_number} (draft)`
-    primaryCtaLabel = 'Continue Curriculum Setup'
-    primaryCtaHref = '/director/onboarding/curriculum'
-  }
-
-  const nextActionText = !versionData
-    ? 'Start curriculum setup to create your academy development spine.'
-    : versionData.status !== 'active'
-    ? 'Approve your curriculum spine to activate it for your academy.'
-    : 'Review level gates and connect templates to give coaches curriculum context.'
 
   // ─── Setup checklist ──────────────────────────────────────────────────────
 
@@ -394,43 +320,49 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
     },
   ]
 
-  // ─── Next actions ─────────────────────────────────────────────────────────
-
-  const nextActions = !versionData
-    ? [
-        'Start curriculum setup to create your academy development spine.',
-        'Review the starter spine — Academy OS provides Red Ball through High Performance.',
-        'Approve the spine so players, sessions, and templates can connect to it.',
-      ]
-    : versionData.status !== 'active'
-    ? [
-        'Approve your curriculum spine to activate it for your academy.',
-        'Review starter spine levels and adjust any gates that do not match your approach.',
-        'Connect templates once your spine is approved.',
-      ]
-    : [
-        'Review level gates — confirm evidence requirements match your academy standards.',
-        'Connect templates to curriculum levels to give coaches the right context.',
-        'Assign players to levels so curriculum powers their development profiles.',
-      ]
+  const versionStatus: 'none' | 'draft' | 'active' = !versionData
+    ? 'none'
+    : versionData.status === 'active'
+    ? 'active'
+    : 'draft'
 
   return (
-    <div className="animate-fade-in p-6 space-y-8">
+    <div className="animate-fade-in p-6 space-y-6">
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
       <div>
-        <p className="page-eyebrow">Curriculum</p>
-        <h1 className="page-title">Curriculum</h1>
-        <p className="page-subtitle max-w-xl">
-          Your curriculum shapes how players develop. Review levels, check gaps, and manage templates from here.
-        </p>
+        <h1 className="page-title">Curriculum Command Center</h1>
       </div>
 
-      {/* ── 1b. DONNA Curriculum Context Panel — shown when ?improve=[levelKey] ── */}
+      {/* ── 2. Nav tabs — Health is the active (current) tab ─────────────── */}
+      <div className="flex border-b border-border -mt-2">
+        <Link
+          href="/director/curriculum"
+          className="px-4 py-2 text-[13px] font-semibold text-text-primary border-b-2 border-lime -mb-px"
+        >
+          Health
+        </Link>
+        <Link
+          href="/director/curriculum/builder"
+          className="px-4 py-2 text-[13px] text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Builder
+        </Link>
+        <Link
+          href="/director/curriculum/map"
+          className="px-4 py-2 text-[13px] text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Map
+        </Link>
+      </div>
+
+      {/* ── 3. DONNA brief — above fold, before data ──────────────────────── */}
+      <DonnaCurriculumBrief ranking={curriculumRanking} versionStatus={versionStatus} />
+
+      {/* ── 4. DONNA context panel — shown when ?improve=[levelKey] ──────── */}
       {searchParams.improve && academyId && (
         <>
-          {/* Sprint 1681 — Register curriculum level into DonnaSessionContext so
-              "Hey Donna" can reference "Orange Ball 2" by name */}
+          {/* Sprint 1681 — Register curriculum level into DonnaSessionContext */}
           <CurriculumDonnaRegistrar
             levelKey={searchParams.improve}
             levelLabel={searchParams.improve.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
@@ -442,265 +374,169 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
         </>
       )}
 
-      {/* ── 1c. DONNA Welcome ─────────────────────────────────────────────── */}
-      <CurriculumBuilderWelcome hasActiveVersion={!!versionData} />
-
-      {/* ── 2. Curriculum Status hero card ── Sprint 962: data-donna-focus-id added */}
-      <div data-donna-focus-id="curriculum-status" className="rounded-2xl border border-border bg-surface p-5 space-y-4">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-1">
-            <p className="label-xs">Curriculum Status</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${statusDotClass}`} />
-              <p className={`text-sm font-semibold ${statusTextClass}`}>{statusLabel}</p>
-            </div>
-            <p className="text-[12px] text-text-secondary leading-relaxed">{statusDescription}</p>
-          </div>
-          {/* Sprint 962: data-donna-focus-id="curriculum-review-draft" on primary CTA */}
-          <Link href={primaryCtaHref} className="btn-lime shrink-0" data-donna-focus-id="curriculum-review-draft">
-            {primaryCtaLabel}
-          </Link>
-        </div>
-
-        <div className="pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Active Spine</p>
-            <p className="text-[13px] font-medium text-text-primary">
-              {versionData ? versionData.name : 'Academy OS Starter Spine'}
-            </p>
-            <p className="text-[11px] text-text-muted mt-0.5">
-              Red Ball · Orange Ball · Green Ball · Yellow Ball · High Performance
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">
-              Next Recommended Action
-            </p>
-            <p className="text-[12px] text-text-secondary leading-relaxed">{nextActionText}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 2b. Curriculum Intelligence Card — Mega Sprint 1996–2005 ─────── */}
-      {/* Surfaces most blocked level, stall count, completion %, and Improve action */}
-      {/* above the fold so director never needs to search for problems.            */}
+      {/* ── 5. Most Blocked Level hero ────────────────────────────────────── */}
       <CurriculumIntelligenceCard ranking={curriculumRanking} />
 
-      {/* ── 3. Curriculum Spine Insight — Sprint 1095B ───────────────────── */}
-      {/* Replaced hardcoded stage cards with live stage_goal + expandable level insight. */}
-      {stageInsights.some(s => s.levels.length > 0) ? (
-        <section className="space-y-3" data-donna-focus-id="curriculum-spine-insight">
-          <p className="label-xs">Curriculum Spine</p>
-          <div className="space-y-3">
-            {stageInsights.map(stage => (
-              <CurriculumStageInsightCard key={stage.stageKey} stage={stage} />
-            ))}
-          </div>
-        </section>
-      ) : (
+      {/* ── 6. Health strip — compact 4-slot metrics ─────────────────────── */}
+      {explorerData.levels.length > 0 && (
+        <CurriculumHealthStrip report={coverageReport} dimensionSummary={dimensionSummary} />
+      )}
+
+      {/* ── 7. Setup checklist — only rendered when items are incomplete ──── */}
+      {setupItems.some(i => !i.done) && (
         <section className="space-y-3">
-          <p className="label-xs">Curriculum Spine</p>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {SPINE_STAGES.map(stage => (
+          <p className="label-xs">Setup Status</p>
+          <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+            {setupItems.map((item, i) => (
               <div
-                key={stage.label}
-                className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2"
+                key={item.label}
+                className={`flex items-center gap-3 px-4 py-3${i < setupItems.length - 1 ? ' border-b border-border' : ''}`}
               >
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${stage.dotClass}`} />
-                  <p className={`text-[11px] font-semibold ${stage.textClass}`}>{stage.label}</p>
+                {item.done
+                  ? <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
+                  : <Circle className="w-4 h-4 text-text-muted shrink-0" />
+                }
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[12px] font-medium ${item.done ? 'text-text-primary' : 'text-text-secondary'}`}>
+                    {item.label}
+                  </p>
+                  {!item.done && (
+                    <p className="text-[11px] text-text-muted">{item.hint}</p>
+                  )}
                 </div>
-                <p className="text-[11px] text-text-muted leading-relaxed">{stage.fallbackPurpose}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Empty state — shown when no curriculum version exists */}
-      {!versionData && (
-        <div className="rounded-2xl border border-border bg-surface-raised p-6 text-center space-y-3">
-          <p className="text-sm font-semibold text-text-primary">
-            No curriculum spine active yet.
-          </p>
-          <p className="text-[12px] text-text-secondary">
-            Start with the starter curriculum spine, then customize it for your academy.
-          </p>
-          <Link href="/director/onboarding/curriculum" className="btn-lime inline-flex">
-            Start Curriculum Setup
-          </Link>
-        </div>
-      )}
-
-      {/* ── 4. Setup Status ──────────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="label-xs">Setup Status</p>
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-          {setupItems.map((item, i) => (
-            <div
-              key={item.label}
-              className={`flex items-center gap-3 px-4 py-3${i < setupItems.length - 1 ? ' border-b border-border' : ''}`}
-            >
-              {item.done
-                ? <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
-                : <Circle className="w-4 h-4 text-text-muted shrink-0" />
-              }
-              <div className="flex-1 min-w-0">
-                <p className={`text-[12px] font-medium ${item.done ? 'text-text-primary' : 'text-text-secondary'}`}>
-                  {item.label}
-                </p>
-                {!item.done && (
-                  <p className="text-[11px] text-text-muted">{item.hint}</p>
+                {item.done && (
+                  <span className="shrink-0 text-[10px] uppercase tracking-widest text-status-green font-medium">Done</span>
                 )}
               </div>
-              {item.done && (
-                <span className="shrink-0 text-[10px] uppercase tracking-widest text-status-green font-medium">
-                  Done
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 4b. Coverage snapshot ────────────────────────────────────────── */}
-      {explorerData.levels.length > 0 && (
-        <section className="space-y-3">
-          <CurriculumHealthPanel report={coverageReport} dimensionSummary={dimensionSummary} />
+            ))}
+          </div>
         </section>
       )}
 
-      {/* ── 4c. Level tree — Sprint 556 / Sprint 962: data-donna-focus-id added */}
+      {/* ── 8. Collapsed drilldowns ──────────────────────────────────────── */}
+
+      {/* Curriculum Levels */}
       {explorerData.levels.length > 0 && (
-        <section className="space-y-3" data-donna-focus-id="curriculum-level-tree">
-          <p className="label-xs">Curriculum Levels</p>
-          <CurriculumLevelTree explorerData={explorerData} />
-        </section>
+        <details className="group rounded-2xl border border-border bg-surface overflow-hidden">
+          <summary className="list-none flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-surface-raised transition-colors">
+            <p className="label-xs">Curriculum Levels</p>
+            <ChevronDown className="w-4 h-4 text-text-muted shrink-0 transition-transform duration-200 group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-border">
+            <CurriculumLevelTree explorerData={explorerData} />
+          </div>
+        </details>
       )}
 
-      {/* ── 6. Connected System ──────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="label-xs">Connected System</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {CONNECTIONS.map(({ title, Icon, unlocks }) => (
-            <div key={title} className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Icon className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                <p className="text-[12px] font-semibold text-text-primary">{title}</p>
-              </div>
-              <p className="text-[11px] text-text-muted leading-relaxed">{unlocks}</p>
+      {/* Curriculum Spine */}
+      <details className="group rounded-2xl border border-border bg-surface overflow-hidden">
+        <summary className="list-none flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-surface-raised transition-colors">
+          <p className="label-xs">Curriculum Spine</p>
+          <ChevronDown className="w-4 h-4 text-text-muted shrink-0 transition-transform duration-200 group-open:rotate-180" />
+        </summary>
+        <div className="border-t border-border p-4 space-y-3">
+          {stageInsights.some(s => s.levels.length > 0) ? (
+            <div className="space-y-3">
+              {stageInsights.map(stage => (
+                <CurriculumStageInsightCard key={stage.stageKey} stage={stage} />
+              ))}
             </div>
-          ))}
-          {/* QW-2: Academy Version chip — visible without opening advanced tools */}
-          {versionData && (
-            <Link
-              href="/director/curriculum/academy-version"
-              className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                <GitBranch className="w-3.5 h-3.5 text-lime shrink-0" />
-                <p className="text-[12px] font-semibold text-text-primary">Academy Version</p>
-              </div>
-              <p className="text-[11px] text-text-muted leading-relaxed">
-                View your overrides, customizations, and curriculum version history.
-              </p>
-              <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
-                View Academy Version <ChevronRight className="w-3 h-3" />
-              </p>
-            </Link>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {SPINE_STAGES.map(stage => (
+                <div key={stage.label} className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${stage.dotClass}`} />
+                    <p className={`text-[11px] font-semibold ${stage.textClass}`}>{stage.label}</p>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-relaxed">{stage.fallbackPurpose}</p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      </section>
+      </details>
 
-      {/* ── 7. Next Recommended Actions ──────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="label-xs">Next Recommended Actions</p>
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-          {nextActions.map((action, i) => (
-            <div
-              key={i}
-              className={`flex items-start gap-3 px-4 py-3${i < nextActions.length - 1 ? ' border-b border-border' : ''}`}
-            >
-              <span className="shrink-0 w-5 h-5 rounded-full border border-border flex items-center justify-center text-[9px] font-mono text-lime mt-0.5">
-                {i + 1}
-              </span>
-              <p className="text-[12px] text-text-secondary leading-relaxed">{action}</p>
+      {/* Health Detail + Tools */}
+      <details className="group rounded-2xl border border-border bg-surface overflow-hidden">
+        <summary className="list-none flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-surface-raised transition-colors">
+          <p className="label-xs">Health Detail &amp; Tools</p>
+          <ChevronDown className="w-4 h-4 text-text-muted shrink-0 transition-transform duration-200 group-open:rotate-180" />
+        </summary>
+        <div className="border-t border-border p-4 space-y-6">
+          {explorerData.levels.length > 0 && (
+            <CurriculumHealthPanel report={coverageReport} dimensionSummary={dimensionSummary} />
+          )}
+          <div>
+            <p className="label-xs mb-3">Curriculum Tools</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                href="/director/curriculum/builder"
+                className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+              >
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-3.5 h-3.5 text-lime shrink-0" />
+                  <p className="text-[12px] font-semibold text-text-primary">Curriculum Builder</p>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Review and customize each level. DONNA guides you one stage at a time.
+                </p>
+                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                  Open Builder <ChevronRight className="w-3 h-3" />
+                </p>
+              </Link>
+
+              <Link
+                href="/director/curriculum/map"
+                className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+              >
+                <div className="flex items-center gap-2">
+                  <Map className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  <p className="text-[12px] font-semibold text-text-primary">Curriculum Map</p>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Visual overview of all levels, gates, and connections across your academy spine.
+                </p>
+                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                  View Map <ChevronRight className="w-3 h-3" />
+                </p>
+              </Link>
+
+              <Link
+                href="/director/curriculum/guided"
+                className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  <p className="text-[12px] font-semibold text-text-primary">Guided Review</p>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Let DONNA walk you through incomplete levels and customization priorities.
+                </p>
+                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                  Start Guided Review <ChevronRight className="w-3 h-3" />
+                </p>
+              </Link>
+
+              <Link
+                href="/director/curriculum/learning"
+                className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+              >
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  <p className="text-[12px] font-semibold text-text-primary">Learning Modules</p>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Player-facing learning content connected to each curriculum level and stage.
+                </p>
+                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                  View Modules <ChevronRight className="w-3 h-3" />
+                </p>
+              </Link>
             </div>
-          ))}
+          </div>
         </div>
-      </section>
-
-      {/* ── 8. Curriculum Tools ──────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="label-xs">Curriculum Tools</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-          <Link
-            href="/director/curriculum/builder"
-            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <Wrench className="w-3.5 h-3.5 text-lime shrink-0" />
-              <p className="text-[12px] font-semibold text-text-primary">Curriculum Builder</p>
-            </div>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Review and customize each level. DONNA guides you one stage at a time.
-            </p>
-            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
-              Open Builder <ChevronRight className="w-3 h-3" />
-            </p>
-          </Link>
-
-          <Link
-            href="/director/curriculum/map"
-            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <Map className="w-3.5 h-3.5 text-text-muted shrink-0" />
-              <p className="text-[12px] font-semibold text-text-primary">Curriculum Map</p>
-            </div>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Visual overview of all levels, gates, and connections across your academy spine.
-            </p>
-            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
-              View Map <ChevronRight className="w-3 h-3" />
-            </p>
-          </Link>
-
-          <Link
-            href="/director/curriculum/guided"
-            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-text-muted shrink-0" />
-              <p className="text-[12px] font-semibold text-text-primary">Guided Review</p>
-            </div>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Let DONNA walk you through incomplete levels and customization priorities.
-            </p>
-            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
-              Start Guided Review <ChevronRight className="w-3 h-3" />
-            </p>
-          </Link>
-
-          <Link
-            href="/director/curriculum/learning"
-            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-3.5 h-3.5 text-text-muted shrink-0" />
-              <p className="text-[12px] font-semibold text-text-primary">Learning Modules</p>
-            </div>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Player-facing learning content connected to each curriculum level and stage.
-            </p>
-            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
-              View Modules <ChevronRight className="w-3 h-3" />
-            </p>
-          </Link>
-
-        </div>
-      </section>
+      </details>
 
     </div>
   )

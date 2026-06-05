@@ -12,10 +12,10 @@ import { getInitials } from '@/lib/utils'
 // Sprint 1060 — locked director IA: 9 primary items in exact order
 const ACADEMY_ITEMS = [
   { label: 'Today',          href: '/director',                    icon: LayoutDashboard },
-  { label: 'Approvals',      href: '/director/review',             icon: ClipboardList },
+  { label: 'Review & Decide', href: '/director/review',             icon: ClipboardList },
   { label: 'Players',        href: '/director/players',            icon: Users },
   { label: 'Sessions',       href: '/director/sessions',           icon: Calendar },
-  { label: 'Curriculum',     href: '/director/curriculum/builder', icon: BookOpen },
+  { label: 'Curriculum',     href: '/director/curriculum',         icon: BookOpen },
   { label: 'Parent Updates', href: '/director/parents',            icon: MessageSquare },
   { label: 'Academy Health', href: '/director/kpi',                icon: BarChart2 },
   { label: 'Templates',      href: '/director/templates',          icon: LayoutTemplate },
@@ -157,7 +157,7 @@ export function SidebarNav({
             key={item.href}
             item={item}
             isActive={isActive(item.href)}
-            badge={item.label === 'Approvals' ? pendingCount : undefined}
+            badge={item.label === 'Review & Decide' ? pendingCount : undefined}
           />
         ))}
 

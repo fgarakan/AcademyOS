@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-06-05 — Mega Sprint 2176–2195 — Director Today Reimagination V1
+
+- Created `src/app/director/_components/DirectorTodayDonnaBrief.tsx` — Inline DONNA brief for Director Today; 2 sentences + 1 CTA; urgency-aware border/bg (lime for normal, orange for urgent)
+- Created `src/app/director/_components/DirectorTopPriorities.tsx` — Max-3 priority items from `AttentionQueue`; each row: priority-coloured dot + label (What) + description (Why) + Act link; empty state when queue is clear
+- Created `src/app/director/_components/DirectorReviewDecideZone.tsx` — Compact primary work zone showing total pending count + breakdown (wrap-ups · assessments · placements · lesson requests) + "Open →" CTA to `/director/review`
+- Created `src/app/director/_components/DirectorAcademyHealthSnapshot.tsx` — Single-row health bar linking to `/director/kpi`; status dot + label + attention count + overdue count
+- Modified `src/app/director/page.tsx` — Full render restructure: removed DonnaFirstGreeting, DonnaScreenBriefStatic, DonnaAcademyCOOBriefCard, DonnaCommandSection, DirectorPrimaryActionHero, AcademyHealthBadgeWithDrawer; added 4 new above-fold components in zero-scroll order; moved DirectorTodayKpiSection into collapsed Academy Metrics; removed Quick Actions section; removed QuickActionCard helper; heading reduced from text-4xl → text-3xl; removed "Approvals" and "DONNA" hero nav links; spacing tightened from space-y-8 → space-y-4
+- TypeScript: clean (0 errors)
+
+---
+
+## 2026-06-05 — Mega Sprint 2161–2175 — Curriculum Command Center Foundation V1
+
+- Created `src/app/director/curriculum/_components/DonnaCurriculumBrief.tsx` — Inline DONNA brief above fold; 5-case logic (no spine, draft spine, no data, needs_attention, critical, healthy); 2 sentences + 1 CTA; derived from `CurriculumRankingResult` + `versionStatus`
+- Created `src/app/director/curriculum/_components/CurriculumHealthStrip.tsx` — Compact 4-slot health strip (Health Score · Gates · Drills · Coach Cues) from `CurriculumCoverageReport` + `DimensionSummary`; replaces full `CurriculumHealthPanel` in the primary flow
+- Modified `src/app/director/curriculum/page.tsx` — Full restructure to Curriculum Command Center: new title, nav tabs (Health/Builder/Map), DONNA brief above fold, `CurriculumIntelligenceCard` promoted to hero, health strip inline, setup checklist hidden when all complete, three collapsed drilldowns (Curriculum Levels / Curriculum Spine / Health Detail + Tools); removed `CurriculumBuilderWelcome`, `CONNECTIONS` section, `nextActions` section, status hero card, 5 unused icon imports
+- Modified `src/components/nav/SidebarNav.tsx` — Fixed Curriculum href (`/builder` → `/director/curriculum`); renamed "Approvals" → "Review & Decide"
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-05 — AcademyOS UX Implementation Master Plan V1
 
 - Created `docs/ux/ACADEMYOS_UX_IMPLEMENTATION_MASTER_PLAN_V1.md` — Converts the UX Final Blueprint into 8 executable phases (A–H). Each phase: objective, affected routes, affected components, affected DONNA systems, sprint count, dependencies, user impact, risk level, rollback complexity, what changes/removed/renamed/moved/DONNA-absorbs, user benefit unlocked. Includes dependency map (two parallel tracks: Curriculum and Homepage/IA), strategic analysis (safest/highest-ROI/highest-risk phase), and the 30-sprint recommendation. Final answer: Phase D (Director Today) is the highest-ROI single phase; Phase A is the required starting gate regardless of ROI.
