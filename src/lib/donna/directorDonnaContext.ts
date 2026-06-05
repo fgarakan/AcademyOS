@@ -39,6 +39,8 @@ import { loadRecentDecisions } from '@/lib/donna/recentDecisionsLoader'
 import type { RecentDecisionSummary } from '@/lib/donna/recentDecisionsLoader'
 import { detectPlayerProgressStalls } from '@/lib/donna/playerProgressStallDetector'
 import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
+import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader'
+import { deriveLevelKeyFromSignal } from '@/lib/curriculum/curriculumAttentionRanking'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -120,6 +122,12 @@ export interface DirectorDonnaContext {
   playerProgressStalls: PlayerProgressStall[]
   playerProgressStallCount: number
   playerProgressStallContextAvailable: boolean
+  // Curriculum bottleneck (Mega Sprint 1996–2005)
+  mostBlockedLevelName: string | null
+  mostBlockedLevelKey: string | null
+  mostBlockedLevelStalledCount: number
+  mostBlockedLevelAvgCompletion: number
+  topTaggedConcern: string | null
   // Sprint 913.1 — Operating Intelligence Context Expansion
   // curriculum override drafts (academy_curriculum_overrides — separate from proposed_actions)
   curriculumDraftCount: number
@@ -233,6 +241,12 @@ function buildDemoContext(): DirectorDonnaContext {
     playerProgressStalls: [],
     playerProgressStallCount: 0,
     playerProgressStallContextAvailable: false,
+    // Curriculum bottleneck — empty in demo mode
+    mostBlockedLevelName: null,
+    mostBlockedLevelKey: null,
+    mostBlockedLevelStalledCount: 0,
+    mostBlockedLevelAvgCompletion: 0,
+    topTaggedConcern: null,
     // Sprint 913.1 — Operating Intelligence (demo values)
     curriculumDraftCount: 2,
     oldestPendingReviewAgeDays: 3,
@@ -660,6 +674,33 @@ export async function loadDirectorDonnaContext(
   const playerProgressStallCount = stallResult.stalls.length
   const playerProgressStallContextAvailable = stallResult.stallContextAvailable
 
+  // ── Curriculum bottleneck (Mega Sprint 1996–2005) ────────────────────────
+  // Reads player_requirement_progress to surface the most blocked curriculum level.
+  // Non-fatal — all fields zero-default when unavailable.
+
+  let mostBlockedLevelName: string | null = null
+  let mostBlockedLevelKey: string | null = null
+  let mostBlockedLevelStalledCount = 0
+  let mostBlockedLevelAvgCompletion = 0
+  let topTaggedConcern: string | null = null
+
+  try {
+    const bottleneckResult = await loadCurriculumBottleneck(db, academyId)
+    if (bottleneckResult.levelBottlenecks.length > 0) {
+      const top = bottleneckResult.levelBottlenecks[0]
+      mostBlockedLevelName         = top.levelName
+      mostBlockedLevelKey          = deriveLevelKeyFromSignal(top.stage, top.levelName)
+      mostBlockedLevelStalledCount = top.stalled
+      mostBlockedLevelAvgCompletion = top.avgCompletionPct
+    }
+    if (bottleneckResult.topTaggedConcerns.length > 0) {
+      topTaggedConcern = bottleneckResult.topTaggedConcerns[0].tag
+    }
+    fieldStatuses.curriculumBottleneck = bottleneckResult.fieldStatus
+  } catch {
+    fieldStatuses.curriculumBottleneck = 'insufficient_data'
+  }
+
   // ── Sprint 913.1: Derived operating intelligence fields ──────────────────
   // Computed from already-loaded context — no new DB queries.
 
@@ -892,6 +933,12 @@ export async function loadDirectorDonnaContext(
     playerProgressStalls,
     playerProgressStallCount,
     playerProgressStallContextAvailable,
+    // Curriculum bottleneck (Mega Sprint 1996–2005)
+    mostBlockedLevelName,
+    mostBlockedLevelKey,
+    mostBlockedLevelStalledCount,
+    mostBlockedLevelAvgCompletion,
+    topTaggedConcern,
     // Sprint 913.1 — Operating Intelligence Context Expansion
     curriculumDraftCount,
     oldestPendingReviewAgeDays,

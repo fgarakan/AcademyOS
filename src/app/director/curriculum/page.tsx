@@ -13,6 +13,10 @@ import { CurriculumStageInsightCard, type StageInsightData } from './_components
 import { getLevelInsight } from '@/lib/curriculum/levelInsightMap'
 import { DonnaCurriculumContextPanel } from './_components/DonnaCurriculumContextPanel'
 import { CurriculumDonnaRegistrar } from './_components/CurriculumDonnaRegistrar'
+import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader'
+import { rankCurriculumAttention } from '@/lib/curriculum/curriculumAttentionRanking'
+import { CurriculumIntelligenceCard } from './_components/CurriculumIntelligenceCard'
+import type { ExcludableScoreDimension } from '@/lib/curriculum/coverageModel'
 
 // ─── Stage display config (colors + fallback purpose) ─────────────────────────
 // stage_goal comes from DB; these provide color tokens and a fallback.
@@ -199,27 +203,59 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
     high_performance:   'High Performance',
   }
 
-  const levelCoverageInputs: LevelCoverageInput[] = explorerData.levels.map(level => ({
-    levelId:                   level.id,
-    levelName:                 level.display_name,
-    stage:                     DB_STAGE_TO_CURRICULUM_STAGE[level.stage] ?? 'Red Ball',
-    gateCount:                 explorerData.gates.filter(g => g.from_level_id === level.id).length,
-    drillCount:                explorerData.drills.filter(d => d.level_min_id === level.id).length,
-    coachCueCount:             explorerData.coachLanguage.filter(c => c.level_id === level.id).length,
-    skillCount:                0,
-    assessmentCriteriaCount:   0,
-    evidenceRequirementCount:  0,
-    missionCount:              0,
-    badgeCount:                0,
-    parentGuidanceCount:       0,
-    learningModuleCount:       0,
-    // Sprint 795: exclude dimensions not yet tracked from scoring so that levels
-    // are not unfairly penalised for content that has no data source yet.
-    // Score is normalised to the 3 available dimensions: gates, drills, coachCues.
-    excludeFromScoring: ['skills', 'assessment', 'missions', 'parentGuidance', 'badges'],
-  }))
+  // ── Phase 5: requirement counts per level (Mega Sprint 1996–2005) ──────────
+  // curriculum_track_requirements has 32 live rows (Orange Ball levels seeded).
+  // Feeds the 'skills' dimension of the coverage model, unlocking 4/8 scoring.
+  const requirementCountByLevel: Record<string, number> = {}
+  try {
+    const { data: reqRows } = await (supabase as any)
+      .from('curriculum_track_requirements')
+      .select('curriculum_level_id')
+      .eq('is_active', true)
+    for (const row of reqRows ?? []) {
+      if (row.curriculum_level_id) {
+        requirementCountByLevel[row.curriculum_level_id] =
+          (requirementCountByLevel[row.curriculum_level_id] ?? 0) + 1
+      }
+    }
+  } catch { /* non-fatal — coverage model falls back to 3-dimension scoring */ }
+
+  const levelCoverageInputs: LevelCoverageInput[] = explorerData.levels.map(level => {
+    const skillCount = requirementCountByLevel[level.id] ?? 0
+    const excludeFromScoring: ExcludableScoreDimension[] = [
+      ...(skillCount === 0 ? ['skills' as ExcludableScoreDimension] : []),
+      'assessment', 'missions', 'parentGuidance', 'badges',
+    ]
+    return {
+      levelId:                   level.id,
+      levelName:                 level.display_name,
+      stage:                     DB_STAGE_TO_CURRICULUM_STAGE[level.stage] ?? 'Red Ball',
+      gateCount:                 explorerData.gates.filter(g => g.from_level_id === level.id).length,
+      drillCount:                explorerData.drills.filter(d => d.level_min_id === level.id).length,
+      coachCueCount:             explorerData.coachLanguage.filter(c => c.level_id === level.id).length,
+      skillCount,
+      assessmentCriteriaCount:   0,
+      evidenceRequirementCount:  0,
+      missionCount:              0,
+      badgeCount:                0,
+      parentGuidanceCount:       0,
+      learningModuleCount:       0,
+      excludeFromScoring,
+    }
+  })
 
   const coverageReport = buildCurriculumCoverageReport(levelCoverageInputs)
+
+  // ── Curriculum bottleneck + intelligence ranking (Mega Sprint 1996–2005) ───
+  // loadCurriculumBottleneck reads player_requirement_progress (10 live rows).
+  // Non-fatal — page renders without intelligence card if data is unavailable.
+  let curriculumRanking: import('@/lib/curriculum/curriculumAttentionRanking').CurriculumRankingResult = {
+    priorities: [], attentionScore: 'healthy', topConcern: null, topConcernCount: 0, hasData: false,
+  }
+  try {
+    const bottleneckResult = await loadCurriculumBottleneck(supabase as import('@/lib/types/db').DB, academyId)
+    curriculumRanking = rankCurriculumAttention(bottleneckResult, coverageReport)
+  } catch { /* non-fatal */ }
 
   const dimensionSummary: DimensionSummary = {
     gates:           explorerData.gates.length,
@@ -444,6 +480,11 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
           </div>
         </div>
       </div>
+
+      {/* ── 2b. Curriculum Intelligence Card — Mega Sprint 1996–2005 ─────── */}
+      {/* Surfaces most blocked level, stall count, completion %, and Improve action */}
+      {/* above the fold so director never needs to search for problems.            */}
+      <CurriculumIntelligenceCard ranking={curriculumRanking} />
 
       {/* ── 3. Curriculum Spine Insight — Sprint 1095B ───────────────────── */}
       {/* Replaced hardcoded stage cards with live stage_goal + expandable level insight. */}

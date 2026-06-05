@@ -69,6 +69,7 @@ const SCORE_MEDIUM_RISK_PLAYER_BASE  = 55
 const SCORE_ADVANCEMENT_ELIGIBLE_BASE = 50
 const SCORE_CURRICULUM_DRAFTS_BASE   = 40
 const SCORE_CURRICULUM_GAPS_BASE     = 35
+const SCORE_CURRICULUM_BOTTLENECK_BASE = 52  // Mega Sprint 1996–2005
 const SCORE_ONBOARDING_NOT_STARTED   = 45
 const SCORE_ONBOARDING_PARTIAL       = 30
 
@@ -428,7 +429,33 @@ export function buildAttentionPriorities(
     })
   }
 
-  // ── 10. Onboarding incomplete ─────────────────────────────────────────────
+  // ── 10. Curriculum bottleneck (Mega Sprint 1996–2005) ────────────────────
+  if (ctx.mostBlockedLevelName && ctx.mostBlockedLevelStalledCount > 0) {
+    const completionDeficit = 100 - ctx.mostBlockedLevelAvgCompletion
+    const score = cap(
+      SCORE_CURRICULUM_BOTTLENECK_BASE + ctx.mostBlockedLevelStalledCount * 5 + Math.round(completionDeficit * 0.3),
+      85,
+    )
+    const plural = ctx.mostBlockedLevelStalledCount !== 1
+    const href = ctx.mostBlockedLevelKey
+      ? `/director/curriculum?improve=${ctx.mostBlockedLevelKey}`
+      : '/director/curriculum'
+    priorities.push({
+      id: 'curriculum_bottleneck',
+      label: `${ctx.mostBlockedLevelName} — ${ctx.mostBlockedLevelStalledCount} player${plural ? 's' : ''} stalled at ${ctx.mostBlockedLevelAvgCompletion}% completion`,
+      category: 'curriculum',
+      severity: ctx.mostBlockedLevelStalledCount >= 3 || completionDeficit >= 70 ? 'high' : 'medium',
+      score,
+      whyItMatters: `Players at ${ctx.mostBlockedLevelName} are not progressing through their requirement checklist. At ${ctx.mostBlockedLevelAvgCompletion}% average completion, they cannot advance without a curriculum intervention.`,
+      evidence: `${ctx.mostBlockedLevelStalledCount} stalled player${plural ? 's' : ''} · ${ctx.mostBlockedLevelAvgCompletion}% avg requirement completion · source: player_requirement_progress`,
+      bestNextAction: `Open the DONNA curriculum improvement analysis for ${ctx.mostBlockedLevelName} to identify root causes and draft changes for director review.`,
+      href,
+      requiresApproval: false,
+      donnaWillNotDo: 'DONNA will not move players between levels automatically. Curriculum changes require director approval.',
+    })
+  }
+
+  // ── 11. Onboarding incomplete ─────────────────────────────────────────────
   const readiness = ctx.onboardingReadinessLevel
   if (readiness === 'not_started' || readiness === 'partial') {
     const score = readiness === 'not_started' ? SCORE_ONBOARDING_NOT_STARTED : SCORE_ONBOARDING_PARTIAL

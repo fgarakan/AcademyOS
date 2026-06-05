@@ -38,6 +38,11 @@ export interface DashboardAttentionInput {
   sessionsThisWeek:          number
   /** whether the academy has live data (vs demo/empty) */
   isLive:                    boolean
+  // Curriculum bottleneck (Mega Sprint 1996–2005)
+  mostBlockedLevelName:      string | null
+  mostBlockedLevelKey:       string | null
+  mostBlockedLevelStalledCount: number
+  mostBlockedLevelAvgCompletion: number
 }
 
 export function buildDashboardAttentionContext(
@@ -88,6 +93,12 @@ export function buildDashboardAttentionContext(
     templateDrafts:              0,
     curriculumOverrideDrafts:    0,
     onboardingStatus:            null,
+
+    // Curriculum bottleneck (Mega Sprint 1996–2005)
+    mostBlockedLevelName:         input.mostBlockedLevelName,
+    mostBlockedLevelKey:          input.mostBlockedLevelKey,
+    mostBlockedLevelStalledCount: input.mostBlockedLevelStalledCount,
+    mostBlockedLevelAvgCompletion: input.mostBlockedLevelAvgCompletion,
 
     // ── Metadata ──────────────────────────────────────────────────────────────
     confidence:  input.isLive ? 'high' : 'insufficient',

@@ -34,6 +34,8 @@ import { DirectorTodayKpiSection } from './_components/DirectorTodayKpiSection'
 import { buildDashboardAttentionContext } from '@/lib/donna/proactive/dashboardAttentionContext'
 import { buildAcademyAttentionReport } from '@/lib/donna/proactive/academyAttentionEngine'
 import { DonnaAcademyCOOBriefCard } from '@/components/donna/DonnaAcademyCOOBriefCard'
+import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader'
+import { deriveLevelKeyFromSignal } from '@/lib/curriculum/curriculumAttentionRanking'
 // Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
 // Sprint 804: DonnaDashboardOpenCard removed in Sprint 1034 — replaced by DirectorPrimaryActionHero + persistent DONNA button
 
@@ -445,6 +447,23 @@ export default async function DirectorDashboard() {
   // Academy live state — all 4 setup steps complete
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
+  // Curriculum bottleneck for DONNA brief (Mega Sprint 1996–2005)
+  // Non-fatal — zeros default when data unavailable.
+  let mostBlockedLevelName: string | null = null
+  let mostBlockedLevelKey: string | null = null
+  let mostBlockedLevelStalledCount = 0
+  let mostBlockedLevelAvgCompletion = 0
+  try {
+    const bottleneck = await loadCurriculumBottleneck(supabase as import('@/lib/types/db').DB, academyId)
+    if (bottleneck.levelBottlenecks.length > 0) {
+      const top = bottleneck.levelBottlenecks[0]
+      mostBlockedLevelName          = top.levelName
+      mostBlockedLevelKey           = deriveLevelKeyFromSignal(top.stage, top.levelName)
+      mostBlockedLevelStalledCount  = top.stalled
+      mostBlockedLevelAvgCompletion = top.avgCompletionPct
+    }
+  } catch { /* non-fatal */ }
+
   // Sprint 1701 — Build COO attention report from dashboard-available data.
   // No new DB queries — re-uses values already computed above.
   // Total pending reviews: wrap-ups + assessments + placement reviews.
@@ -458,9 +477,13 @@ export default async function DirectorDashboard() {
     playerProgressStallCount: stalledPlayerCount,
     curriculumGapCount:       curricGapCount,
     curriculumDraftCount:     pendingSuggestionsCount,
-    reassessmentDueCount:     reassessmentDue,
+    reassessmentDueCount:          reassessmentDue,
     sessionsThisWeek,
-    isLive:                   isAcademyLive,
+    isLive:                        isAcademyLive,
+    mostBlockedLevelName,
+    mostBlockedLevelKey,
+    mostBlockedLevelStalledCount,
+    mostBlockedLevelAvgCompletion,
   })
   const cooAttentionReport = buildAcademyAttentionReport(cooAttentionCtx)
 
