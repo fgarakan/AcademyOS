@@ -56,7 +56,9 @@ export function CurriculumIntelligenceCard({ ranking }: Props) {
                 <p className="text-[12px] font-semibold text-text-primary truncate">{p.levelName}</p>
                 <p className="text-[10px] font-mono text-text-muted mt-0.5">
                   {p.stalledPlayers} stalled · {p.avgCompletionPct}% completion
-                  {p.lowestDomain ? ` · weak ${p.lowestDomain}` : ''}
+                  {p.lowestDomain
+                    ? ` · weak ${p.lowestDomain}${p.lowestDomainCompletionPct !== null ? ` — ${p.lowestDomainCompletionPct}%` : ''}`
+                    : ''}
                 </p>
               </div>
               {p.levelKey && (
@@ -73,16 +75,21 @@ export function CurriculumIntelligenceCard({ ranking }: Props) {
         </div>
       )}
 
-      {/* Top tagged concern */}
-      {ranking.topConcern && (
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-surface border border-border">
-          <AlertTriangle className="w-3.5 h-3.5 text-status-orange shrink-0" />
-          <p className="text-[11px] text-text-secondary min-w-0">
-            <span className="font-medium text-text-primary capitalize">{ranking.topConcern}</span>
-            {' '}tagged as concern{' '}
-            <span className="font-mono text-status-orange">{ranking.topConcernCount}×</span>
-            {' '}this month
-          </p>
+      {/* Top tagged concerns — ranked top 3 */}
+      {ranking.allTopConcerns.length > 0 && (
+        <div className="rounded-xl border border-border bg-surface divide-y divide-border overflow-hidden">
+          {ranking.allTopConcerns.map((concern, idx) => (
+            <div key={concern.tag} className="flex items-center gap-2.5 px-3 py-2">
+              <AlertTriangle className={`w-3.5 h-3.5 shrink-0 ${idx === 0 ? 'text-status-orange' : 'text-text-muted'}`} />
+              <p className="text-[11px] text-text-secondary min-w-0 flex-1">
+                <span className="font-mono text-text-muted mr-1.5">{idx + 1}.</span>
+                <span className="font-medium text-text-primary capitalize">{concern.tag}</span>
+              </p>
+              <span className="shrink-0 font-mono text-[10px] text-text-muted">
+                {concern.count}×
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>

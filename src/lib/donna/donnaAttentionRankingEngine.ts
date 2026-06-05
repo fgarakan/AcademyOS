@@ -70,6 +70,7 @@ const SCORE_ADVANCEMENT_ELIGIBLE_BASE = 50
 const SCORE_CURRICULUM_DRAFTS_BASE   = 40
 const SCORE_CURRICULUM_GAPS_BASE     = 35
 const SCORE_CURRICULUM_BOTTLENECK_BASE = 52  // Mega Sprint 1996–2005
+const SCORE_TAGGED_CONCERN_BASE       = 45  // Sprint 2006–2010
 const SCORE_ONBOARDING_NOT_STARTED   = 45
 const SCORE_ONBOARDING_PARTIAL       = 30
 
@@ -452,6 +453,31 @@ export function buildAttentionPriorities(
       href,
       requiresApproval: false,
       donnaWillNotDo: 'DONNA will not move players between levels automatically. Curriculum changes require director approval.',
+    })
+  }
+
+  // ── 10.5. Tagged curriculum concern (Sprint 2006–2010, gated Sprint 2011–2015) ─
+  // Fires when topTaggedConcern is set AND either:
+  //   a) topTaggedConcernCount ≥ 2 (credible: multiple observations)
+  //   b) topTaggedConcernCount === 0 (fallback: count unavailable, fire on presence)
+  // Suppressed when count = 1 — single observation is insufficient pattern evidence.
+  if (ctx.topTaggedConcern && (ctx.topTaggedConcernCount >= 2 || ctx.topTaggedConcernCount === 0)) {
+    const concern = ctx.topTaggedConcern
+    const href = ctx.mostBlockedLevelKey
+      ? `/director/curriculum?improve=${ctx.mostBlockedLevelKey}`
+      : '/director/curriculum'
+    priorities.push({
+      id: 'tagged_curriculum_concern',
+      label: `"${concern}" is showing up repeatedly in coach notes`,
+      category: 'curriculum',
+      severity: 'medium',
+      score: SCORE_TAGGED_CONCERN_BASE,
+      whyItMatters: `When coaches tag the same concern across multiple sessions, it signals a curriculum pattern rather than an isolated observation. "${concern}" may indicate a skill gap the current drill sequence is not addressing.`,
+      evidence: `"${concern}" is the top-tagged concern in coach observations from the last 30 days · source: coach_observations.tags`,
+      bestNextAction: `Review coach observations tagged "${concern}" and consider whether the related curriculum level needs a drill or gate adjustment.`,
+      href,
+      requiresApproval: false,
+      donnaWillNotDo: 'DONNA will not modify curriculum content automatically. Curriculum changes go through draft → review → director approval.',
     })
   }
 

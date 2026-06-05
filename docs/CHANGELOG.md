@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-06-05 — Academy Health Activation V1 (Mega Sprint 2016–2030)
+
+- `src/lib/donna/intelligence/academyHealthBrief.ts` — Added `'critical'` to `HealthBriefSection.status`; restructured 6 sections to new spec labels (Curriculum Health, Player Progress Health, Review & Approval Health, Coach Execution Health, Parent Communication Health, Onboarding Health); added `AcademyHealthReport` type + `AcademyHealthSection` type + `HealthStatus` type; added `buildAcademyHealthReport()` (dashboard-path-safe, 6 independent section functions); updated `buildAcademyHealthBriefAnswer()` to handle critical status (🚨)
+- `src/lib/donna/academyHealthSourceMap.ts` — Fixed stale `daily_sessions` table refs; updated `player_attention_risk` and `wrap_up_coverage_rate` to `live`; added 7 new signals: `curriculum_template_coverage_gaps`, `tagged_curriculum_concern` (partial), `player_progress_stalls`, `stale_review_queue`, `advancement_eligible`, `onboarding_readiness`, `assessment_coverage_gaps`
+- `src/app/director/page.tsx` — Imported `buildAcademyHealthReport`; added new `constitutionBrief` branch: when attention engine has no `topAction` but health report has a `topIssue`, uses health report issue + route
+- Created `docs/qa/ACADEMY_HEALTH_SIGNAL_MAP_V1.md` — 19-signal inventory with source, computed status, surfaced status, health section mapping
+- Created `docs/qa/ACADEMY_HEALTH_ACTIVATION_V1.md` — per-phase QA record
+- Created `docs/qa/ACADEMY_HEALTH_SCORECARD_V1.md` — per-section readiness scores (overall 7.2/10)
+
+## 2026-06-05 — DONNA Attention Engine Data Activation V1 (Mega Sprint 2011–2015)
+
+- `src/app/director/page.tsx` — Phase 1: added oldest pending review age query (1 row, ordered by created_at asc); Phase 2: derived `onboardingReadinessLevel` from activePlayers + classTemplateCount + sessionsExist; Phase 3: extended `curricStateRows` select to include `current_level_id`, extended `templateCheckData` select to include `curriculum_level_id`, computed `curriculumTemplateCoverageGapCount` as set difference; Phase 4: extracted `topTaggedConcernCount` from bottleneck result; Phase 6: built `PlayerProgressStall[]` by joining stalled curriculum rows to player summaries — no new DB query
+- `src/lib/donna/proactive/dashboardAttentionContext.ts` — added 7 new fields to `DashboardAttentionInput` and `buildDashboardAttentionContext()` return; removed duplicate `playerProgressStallContextAvailable`
+- `src/lib/donna/donnaAttentionRankingEngine.ts` — `tagged_curriculum_concern` gate updated from presence-only to `topTaggedConcernCount >= 2 || topTaggedConcernCount === 0` (count=1 suppressed; count=0 falls back to presence)
+- `src/lib/curriculum/curriculumAttentionRanking.ts` — added `allTopConcerns: Array<{tag: string; count: number}>` (top 3) to `CurriculumRankingResult`; populated as `bottleneck.topTaggedConcerns.slice(0, 3)`
+- `src/app/director/curriculum/_components/CurriculumIntelligenceCard.tsx` — replaced single `topConcern` block with ranked top-3 `allTopConcerns` list showing rank number, label, and observation count
+- `src/app/director/curriculum/page.tsx` — added `allTopConcerns: []` to inline fallback `CurriculumRankingResult`
+- `src/lib/donna/directorDonnaContext.ts` — added `topTaggedConcernCount: number` to interface, demo context, aggregator, and live return
+- Created `docs/qa/DONNA_ATTENTION_ENGINE_DATA_ACTIVATION_V1.md` — per-phase QA record
+- Created `docs/qa/DONNA_EXECUTIVE_INTELLIGENCE_SCORECARD_V1.md` — 15-item attention engine signal status scorecard (11 LIVE, 1 ZERO, 3 N/A)
+
+## 2026-06-05 — DONNA Executive Intelligence Activation V1 (Mega Sprint 2006–2010)
+
+- `src/app/director/page.tsx` — `constitutionBrief` now leads with `cooAttentionReport.topAction.label`; extracts `topTaggedConcern` from bottleneck result; passes it through `buildDashboardAttentionContext`
+- `src/lib/donna/intelligence/academyHealthBrief.ts` — curriculum section now leads with bottleneck level + stall count; appends `topTaggedConcern` when set
+- `src/lib/donna/academyHealthSourceMap.ts` — `curriculum_bottleneck` updated from `deferred` to `partial`; tables corrected
+- `src/lib/donna/donnaAttentionRankingEngine.ts` — added `tagged_curriculum_concern` priority item (score 45, severity medium)
+- `src/lib/donna/proactive/dashboardAttentionContext.ts` — added `topTaggedConcern` to `DashboardAttentionInput` and return
+- `src/lib/curriculum/curriculumAttentionRanking.ts` — added `lowestDomainCompletionPct` to `CurriculumAttentionPriority`
+- `src/app/director/curriculum/_components/CurriculumIntelligenceCard.tsx` — renders `lowestDomainCompletionPct` inline: `weak forehand — 12%`
+- Created `docs/qa/DONNA_EXECUTIVE_INTELLIGENCE_ACTIVATION_V1.md`
+
+---
+
 ## 2026-06-04 — AcademyOS Curriculum Operating System Audit V1 (Mega Sprint 1971–1980)
 
 - Created `docs/audit/CURRICULUM_SYSTEM_MAP_AUDIT_V1.md` — full map of all curriculum routes, lib modules, DB tables, templates, evidence, IDP, missions, badges, DONNA intelligence, and critical pending migrations

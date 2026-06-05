@@ -14,6 +14,7 @@
 //   - Intentionally conservative: unknown fields default to 0/[] (never inflated).
 
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
 
 export interface DashboardAttentionInput {
   /** coach wrap-ups missing from today's sessions */
@@ -43,6 +44,22 @@ export interface DashboardAttentionInput {
   mostBlockedLevelKey:       string | null
   mostBlockedLevelStalledCount: number
   mostBlockedLevelAvgCompletion: number
+  // Curriculum concern tag (Sprint 2006–2010)
+  topTaggedConcern:          string | null
+  // Sprint 2011–2015 — Attention Engine Data Activation
+  /** age in days of oldest pending proposed_action; null when queue is empty */
+  oldestPendingReviewAgeDays:        number | null
+  /** derived from activePlayers + classTemplateCount + sessionsExist */
+  onboardingReadinessLevel:          'not_started' | 'partial' | 'nearly_ready' | 'ready_signal' | 'unknown'
+  hasPlayers:                        boolean
+  hasTemplates:                      boolean
+  hasCurriculumGaps:                 boolean
+  /** levels with enrolled players that have no matching class template */
+  curriculumTemplateCoverageGapCount: number
+  /** observation count for the top tagged concern — enables ≥2 confidence gate */
+  topTaggedConcernCount:             number
+  /** stalled player objects with name, level, days — for evidence text */
+  playerProgressStalls:              PlayerProgressStall[]
 }
 
 export function buildDashboardAttentionContext(
@@ -76,7 +93,6 @@ export function buildDashboardAttentionContext(
     highRiskPlayerCount:         input.highRiskPlayerCount,
     advancementEligibleCount:    input.advancementEligibleCount,
     playerProgressStallCount:    input.playerProgressStallCount,
-    playerProgressStallContextAvailable: input.playerProgressStallCount > 0,
     curriculumDraftCount:        input.curriculumDraftCount,
     curriculumGaps,
     assessmentCoverageGaps,
@@ -86,19 +102,32 @@ export function buildDashboardAttentionContext(
     attentionItems:              [],
     academyRisks:                [],
     recommendedActions:          [],
-    templateCoverageGaps:        [],
-    playerProgressStalls:        [],
     recentDecisions:             [],
-    oldestPendingReviewAgeDays:  null,
     templateDrafts:              0,
     curriculumOverrideDrafts:    0,
     onboardingStatus:            null,
 
-    // Curriculum bottleneck (Mega Sprint 1996–2005)
+    // ── Curriculum bottleneck (Mega Sprint 1996–2005) ─────────────────────────
     mostBlockedLevelName:         input.mostBlockedLevelName,
     mostBlockedLevelKey:          input.mostBlockedLevelKey,
     mostBlockedLevelStalledCount: input.mostBlockedLevelStalledCount,
     mostBlockedLevelAvgCompletion: input.mostBlockedLevelAvgCompletion,
+    // Curriculum concern tag (Sprint 2006–2010)
+    topTaggedConcern:             input.topTaggedConcern,
+
+    // ── Sprint 2011–2015 — Attention Engine Data Activation ──────────────────
+    oldestPendingReviewAgeDays:         input.oldestPendingReviewAgeDays,
+    onboardingReadinessLevel:           input.onboardingReadinessLevel,
+    hasPlayers:                         input.hasPlayers,
+    hasCoaches:                         true,  // no coach count on dashboard path — default safe
+    hasTemplates:                       input.hasTemplates,
+    hasCurriculumGaps:                  input.hasCurriculumGaps,
+    curriculumTemplateCoverageGapCount: input.curriculumTemplateCoverageGapCount,
+    curriculumTemplateCoverageGaps:     [],    // count available; full objects require full context
+    templateCoverageContextAvailable:   input.hasPlayers,
+    topTaggedConcernCount:              input.topTaggedConcernCount,
+    playerProgressStalls:               input.playerProgressStalls,
+    playerProgressStallContextAvailable: input.playerProgressStallCount > 0,
 
     // ── Metadata ──────────────────────────────────────────────────────────────
     confidence:  input.isLive ? 'high' : 'insufficient',

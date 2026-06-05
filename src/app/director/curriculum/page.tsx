@@ -250,7 +250,7 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
   // loadCurriculumBottleneck reads player_requirement_progress (10 live rows).
   // Non-fatal — page renders without intelligence card if data is unavailable.
   let curriculumRanking: import('@/lib/curriculum/curriculumAttentionRanking').CurriculumRankingResult = {
-    priorities: [], attentionScore: 'healthy', topConcern: null, topConcernCount: 0, hasData: false,
+    priorities: [], attentionScore: 'healthy', topConcern: null, topConcernCount: 0, allTopConcerns: [], hasData: false,
   }
   try {
     const bottleneckResult = await loadCurriculumBottleneck(supabase as import('@/lib/types/db').DB, academyId)

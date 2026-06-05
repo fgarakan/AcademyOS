@@ -128,6 +128,7 @@ export interface DirectorDonnaContext {
   mostBlockedLevelStalledCount: number
   mostBlockedLevelAvgCompletion: number
   topTaggedConcern: string | null
+  topTaggedConcernCount: number  // Sprint 2011–2015: observation count for confidence gating
   // Sprint 913.1 — Operating Intelligence Context Expansion
   // curriculum override drafts (academy_curriculum_overrides — separate from proposed_actions)
   curriculumDraftCount: number
@@ -247,6 +248,7 @@ function buildDemoContext(): DirectorDonnaContext {
     mostBlockedLevelStalledCount: 0,
     mostBlockedLevelAvgCompletion: 0,
     topTaggedConcern: null,
+    topTaggedConcernCount: 0,
     // Sprint 913.1 — Operating Intelligence (demo values)
     curriculumDraftCount: 2,
     oldestPendingReviewAgeDays: 3,
@@ -683,6 +685,7 @@ export async function loadDirectorDonnaContext(
   let mostBlockedLevelStalledCount = 0
   let mostBlockedLevelAvgCompletion = 0
   let topTaggedConcern: string | null = null
+  let topTaggedConcernCount = 0
 
   try {
     const bottleneckResult = await loadCurriculumBottleneck(db, academyId)
@@ -694,7 +697,8 @@ export async function loadDirectorDonnaContext(
       mostBlockedLevelAvgCompletion = top.avgCompletionPct
     }
     if (bottleneckResult.topTaggedConcerns.length > 0) {
-      topTaggedConcern = bottleneckResult.topTaggedConcerns[0].tag
+      topTaggedConcern      = bottleneckResult.topTaggedConcerns[0].tag
+      topTaggedConcernCount = bottleneckResult.topTaggedConcerns[0].count
     }
     fieldStatuses.curriculumBottleneck = bottleneckResult.fieldStatus
   } catch {
@@ -939,6 +943,7 @@ export async function loadDirectorDonnaContext(
     mostBlockedLevelStalledCount,
     mostBlockedLevelAvgCompletion,
     topTaggedConcern,
+    topTaggedConcernCount,
     // Sprint 913.1 — Operating Intelligence Context Expansion
     curriculumDraftCount,
     oldestPendingReviewAgeDays,

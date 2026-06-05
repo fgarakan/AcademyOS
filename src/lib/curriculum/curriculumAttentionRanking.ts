@@ -17,6 +17,7 @@ export interface CurriculumAttentionPriority {
   avgCompletionPct: number
   coverageScore: number
   lowestDomain: string | null
+  lowestDomainCompletionPct: number | null  // completion % for the weakest domain
   priorityScore: number          // 0–100, higher = more urgent
   reason: string                 // compact human-readable summary
 }
@@ -28,6 +29,7 @@ export interface CurriculumRankingResult {
   attentionScore: CurriculumAttentionScore
   topConcern: string | null
   topConcernCount: number
+  allTopConcerns: Array<{ tag: string; count: number }>  // top 3 concern tags ranked by frequency
   hasData: boolean
 }
 
@@ -59,6 +61,7 @@ export function rankCurriculumAttention(
       attentionScore: 'healthy',
       topConcern: null,
       topConcernCount: 0,
+      allTopConcerns: [],
       hasData: false,
     }
   }
@@ -83,16 +86,17 @@ export function rankCurriculumAttention(
     if (signal.lowestDomain) parts.push(`weak ${signal.lowestDomain}`)
 
     return {
-      levelId:         signal.levelId,
-      levelName:       signal.levelName,
-      levelKey:        deriveLevelKeyFromSignal(signal.stage, signal.levelName),
-      stage:           signal.stage,
-      stalledPlayers:  signal.stalled,
-      avgCompletionPct: signal.avgCompletionPct,
+      levelId:                    signal.levelId,
+      levelName:                  signal.levelName,
+      levelKey:                   deriveLevelKeyFromSignal(signal.stage, signal.levelName),
+      stage:                      signal.stage,
+      stalledPlayers:             signal.stalled,
+      avgCompletionPct:           signal.avgCompletionPct,
       coverageScore,
-      lowestDomain:    signal.lowestDomain,
+      lowestDomain:               signal.lowestDomain,
+      lowestDomainCompletionPct:  signal.lowestDomainCompletionPct,
       priorityScore,
-      reason:          parts.join(' · ') || 'Monitoring',
+      reason:                     parts.join(' · ') || 'Monitoring',
     }
   })
 
@@ -101,6 +105,7 @@ export function rankCurriculumAttention(
 
   const topConcern      = bottleneck.topTaggedConcerns[0]?.tag ?? null
   const topConcernCount = bottleneck.topTaggedConcerns[0]?.count ?? 0
+  const allTopConcerns  = bottleneck.topTaggedConcerns.slice(0, 3)
 
   const attentionScore: CurriculumAttentionScore =
     top5.some(p => p.priorityScore >= 60 || p.stalledPlayers >= 3) ? 'critical' :
@@ -112,6 +117,7 @@ export function rankCurriculumAttention(
     attentionScore,
     topConcern,
     topConcernCount,
+    allTopConcerns,
     hasData: true,
   }
 }

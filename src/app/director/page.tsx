@@ -36,6 +36,8 @@ import { buildAcademyAttentionReport } from '@/lib/donna/proactive/academyAttent
 import { DonnaAcademyCOOBriefCard } from '@/components/donna/DonnaAcademyCOOBriefCard'
 import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader'
 import { deriveLevelKeyFromSignal } from '@/lib/curriculum/curriculumAttentionRanking'
+import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
+import { buildAcademyHealthReport } from '@/lib/donna/intelligence/academyHealthBrief'
 // Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
 // Sprint 804: DonnaDashboardOpenCard removed in Sprint 1034 — replaced by DirectorPrimaryActionHero + persistent DONNA button
 
@@ -180,12 +182,13 @@ export default async function DirectorDashboard() {
   // Sprint 762: added enrolled_at to existing select (1 extra field, same RLS).
   const { data: curricStateRows } = await rawDb
     .from('player_curriculum_states')
-    .select('player_id, advancement_eligible, enrolled_at')
+    .select('player_id, advancement_eligible, enrolled_at, current_level_id')
     .eq('academy_id', academyId)
   const typedCurricRows = (curricStateRows ?? []) as Array<{
     player_id: string
     advancement_eligible: boolean | null
     enrolled_at: string | null
+    current_level_id: string | null
   }>
   const playersWithLevel = typedCurricRows.length
   const playersWithoutLevel = Math.max(0, activePlayers - playersWithLevel)
@@ -195,11 +198,31 @@ export default async function DirectorDashboard() {
   // Sprint 762: computed from enrolled_at — no new query.
   const now180dAgo = new Date()
   now180dAgo.setDate(now180dAgo.getDate() - 180)
-  const stalledPlayerCount = typedCurricRows.filter(r =>
+  const stalledRows = typedCurricRows.filter(r =>
     r.enrolled_at !== null &&
     new Date(r.enrolled_at) <= now180dAgo &&
     r.advancement_eligible !== true,
-  ).length
+  )
+  const stalledPlayerCount = stalledRows.length
+
+  // Phase 6 — PlayerProgressStall objects for attention engine evidence text.
+  // Joins stalled curriculum rows to player summaries (already fetched above).
+  const playerSummaryById = new Map(players.map(p => [p.player_id, p]))
+  const playerProgressStalls: PlayerProgressStall[] = stalledRows
+    .map(r => {
+      const ps = playerSummaryById.get(r.player_id)
+      const daysAtCurrentLevel = Math.floor(
+        (Date.now() - new Date(r.enrolled_at!).getTime()) / 86400000,
+      )
+      return {
+        playerId:                r.player_id,
+        playerName:              ps?.full_name ?? 'Unknown Player',
+        currentLevelDisplayName: ps?.level_label ?? r.current_level_id ?? null,
+        daysAtCurrentLevel,
+        stallSeverity:           (daysAtCurrentLevel > 270 ? 'high' : 'medium') as 'high' | 'medium',
+      }
+    })
+    .slice(0, 5)
 
   // Pending coach wrap-ups
   const { data: pendingWrapUpData } = await rawDb
@@ -209,6 +232,19 @@ export default async function DirectorDashboard() {
     .eq('target_module', 'session_wrap_up_v1')
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
+
+  // Phase 1 — oldest pending review age (for stale_review_queue attention item)
+  const { data: oldestPendingRows } = await rawDb
+    .from('proposed_actions')
+    .select('created_at')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .order('created_at', { ascending: true })
+    .limit(1)
+  const oldestPendingCreatedAt = ((oldestPendingRows ?? []) as Array<{ created_at: string }>)[0]?.created_at ?? null
+  const oldestPendingReviewAgeDays = oldestPendingCreatedAt != null
+    ? Math.floor((Date.now() - new Date(oldestPendingCreatedAt).getTime()) / 86400000)
+    : null
 
   // KPI wiring — assessment items in review queue
   const { count: assessmentsInReviewCount } = await rawDb
@@ -286,11 +322,11 @@ export default async function DirectorDashboard() {
   // Checklist
   const { data: templateCheckData } = await rawDb
     .from('templates')
-    .select('id, tags')
+    .select('id, tags, curriculum_level_id')
     .eq('academy_id', academyId)
     .limit(20)
-  const classTemplateCount = ((templateCheckData ?? []) as Array<{ id: string; tags: string[] | null }>)
-    .filter((t) => !(t.tags ?? []).includes('fitness_template:true')).length
+  const typedTemplateRows = (templateCheckData ?? []) as Array<{ id: string; tags: string[] | null; curriculum_level_id: string | null }>
+  const classTemplateCount = typedTemplateRows.filter((t) => !(t.tags ?? []).includes('fitness_template:true')).length
 
   const { data: anySessionData } = await supabase
     .from('sessions')
@@ -441,18 +477,39 @@ export default async function DirectorDashboard() {
   }
   const attentionQueue = buildAttentionQueue(attentionQueueInput)
 
-  const fitnessTemplateCount = ((templateCheckData ?? []) as Array<{ id: string; tags: string[] | null }>)
-    .filter((t) => (t.tags ?? []).includes('fitness_template:true')).length
+  const fitnessTemplateCount = typedTemplateRows.filter((t) => (t.tags ?? []).includes('fitness_template:true')).length
 
   // Academy live state — all 4 setup steps complete
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
-  // Curriculum bottleneck for DONNA brief (Mega Sprint 1996–2005)
-  // Non-fatal — zeros default when data unavailable.
+  // Phase 2 — onboarding readiness level (for onboarding_incomplete attention item)
+  const hasPlayers = activePlayers > 0
+  const hasTemplates = classTemplateCount > 0
+  const hasCurriculumGaps = curricGapCount > 0
+  const onboardingReadinessLevel: 'not_started' | 'partial' | 'nearly_ready' | 'ready_signal' | 'unknown' =
+    activePlayers === 0 && classTemplateCount === 0 ? 'not_started' :
+    activePlayers === 0 || classTemplateCount === 0 ? 'partial' :
+    !sessionsExist ? 'nearly_ready' :
+    'ready_signal'
+
+  // Phase 3 — curriculum template coverage gap count
+  // Levels with enrolled players that have no matching class template
+  const enrolledLevelIds = new Set(typedCurricRows.map(r => r.current_level_id).filter((id): id is string => id != null))
+  const templateLevelIds = new Set(
+    typedTemplateRows
+      .filter(t => !(t.tags ?? []).includes('fitness_template:true') && t.curriculum_level_id != null)
+      .map(t => t.curriculum_level_id as string),
+  )
+  const curriculumTemplateCoverageGapCount = Array.from(enrolledLevelIds).filter(id => !templateLevelIds.has(id)).length
+
+  // Curriculum bottleneck for DONNA brief (Mega Sprint 1996–2005, extended Sprint 2006–2010)
+  // Non-fatal — zeros/nulls default when data unavailable.
   let mostBlockedLevelName: string | null = null
   let mostBlockedLevelKey: string | null = null
   let mostBlockedLevelStalledCount = 0
   let mostBlockedLevelAvgCompletion = 0
+  let topTaggedConcern: string | null = null
+  let topTaggedConcernCount = 0
   try {
     const bottleneck = await loadCurriculumBottleneck(supabase as import('@/lib/types/db').DB, academyId)
     if (bottleneck.levelBottlenecks.length > 0) {
@@ -461,6 +518,10 @@ export default async function DirectorDashboard() {
       mostBlockedLevelKey           = deriveLevelKeyFromSignal(top.stage, top.levelName)
       mostBlockedLevelStalledCount  = top.stalled
       mostBlockedLevelAvgCompletion = top.avgCompletionPct
+    }
+    if (bottleneck.topTaggedConcerns.length > 0) {
+      topTaggedConcern      = bottleneck.topTaggedConcerns[0].tag
+      topTaggedConcernCount = bottleneck.topTaggedConcerns[0].count
     }
   } catch { /* non-fatal */ }
 
@@ -477,15 +538,26 @@ export default async function DirectorDashboard() {
     playerProgressStallCount: stalledPlayerCount,
     curriculumGapCount:       curricGapCount,
     curriculumDraftCount:     pendingSuggestionsCount,
-    reassessmentDueCount:          reassessmentDue,
+    reassessmentDueCount:     reassessmentDue,
     sessionsThisWeek,
-    isLive:                        isAcademyLive,
+    isLive:                   isAcademyLive,
     mostBlockedLevelName,
     mostBlockedLevelKey,
     mostBlockedLevelStalledCount,
     mostBlockedLevelAvgCompletion,
+    topTaggedConcern,
+    // Sprint 2011–2015 — Attention Engine Data Activation
+    oldestPendingReviewAgeDays,
+    onboardingReadinessLevel,
+    hasPlayers,
+    hasTemplates,
+    hasCurriculumGaps,
+    curriculumTemplateCoverageGapCount,
+    topTaggedConcernCount,
+    playerProgressStalls,
   })
   const cooAttentionReport = buildAcademyAttentionReport(cooAttentionCtx)
+  const academyHealthReport = buildAcademyHealthReport(cooAttentionCtx)
 
   // DONNA UI Constitution — compute screen brief (1–2 sentences from real data)
   const constitutionTotal =
@@ -497,12 +569,33 @@ export default async function DirectorDashboard() {
   let constitutionActionHref: string | undefined
 
   if (constitutionTotal === 0 && activePlayers === 0) {
+    // No players yet — setup state
     constitutionBrief = 'Start by adding players and assigning curriculum levels — then today\'s signals will appear here.'
     constitutionActionLabel = 'Add Players'
     constitutionActionHref = '/director/players'
+  } else if (cooAttentionReport.topAction) {
+    // Lead with the highest-ranked priority from the attention engine.
+    constitutionBrief = cooAttentionReport.topAction.label
+    const sev = cooAttentionReport.topAction.severity
+    constitutionUrgency = sev === 'critical' || sev === 'high' ? 'urgent' : 'normal'
+    if (cooAttentionReport.topAction.href) {
+      constitutionActionLabel = 'Review'
+      constitutionActionHref = cooAttentionReport.topAction.href
+    }
+  } else if (academyHealthReport.topIssue) {
+    // Fallback to top Academy Health issue when attention engine yields no ranked action.
+    constitutionBrief = academyHealthReport.topIssue
+    const s = academyHealthReport.overallStatus
+    constitutionUrgency = s === 'critical' || s === 'action_needed' ? 'urgent' : 'normal'
+    if (academyHealthReport.recommendedRoute) {
+      constitutionActionLabel = 'Review'
+      constitutionActionHref = academyHealthReport.recommendedRoute
+    }
   } else if (constitutionTotal === 0) {
+    // No signals active — all clear
     constitutionBrief = `${activePlayers} active player${activePlayers !== 1 ? 's' : ''}. No urgent items today — academy is running smoothly.`
   } else {
+    // Fallback: hardcoded counter list when attention engine yields nothing but raw counts exist
     const parts: string[] = []
     if (attentionCount > 0) parts.push(`${attentionCount} player${attentionCount !== 1 ? 's' : ''} need${attentionCount !== 1 ? '' : 's'} attention`)
     if (pendingCount > 0) parts.push(`${pendingCount} pending onboarding`)
@@ -513,7 +606,6 @@ export default async function DirectorDashboard() {
     if (activePlacementReviews > 0) parts.push(`${activePlacementReviews} placement review${activePlacementReviews !== 1 ? 's' : ''} active`)
     constitutionBrief = parts.slice(0, 3).join(', ') + (parts.length > 3 ? `, and ${parts.length - 3} more item${parts.length - 3 !== 1 ? 's' : ''}.` : '.')
     if (constitutionTotal > 5) constitutionUrgency = 'urgent'
-    // Primary action: highest-urgency first
     if (attentionCount > 0 || assessmentsNeedingReview > 0 || activePlacementReviews > 0) {
       constitutionActionLabel = 'Review Queue'
       constitutionActionHref = '/director/review'
