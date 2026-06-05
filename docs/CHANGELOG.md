@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-05 — AcademyOS UX Implementation Master Plan V1
+
+- Created `docs/ux/ACADEMYOS_UX_IMPLEMENTATION_MASTER_PLAN_V1.md` — Converts the UX Final Blueprint into 8 executable phases (A–H). Each phase: objective, affected routes, affected components, affected DONNA systems, sprint count, dependencies, user impact, risk level, rollback complexity, what changes/removed/renamed/moved/DONNA-absorbs, user benefit unlocked. Includes dependency map (two parallel tracks: Curriculum and Homepage/IA), strategic analysis (safest/highest-ROI/highest-risk phase), and the 30-sprint recommendation. Final answer: Phase D (Director Today) is the highest-ROI single phase; Phase A is the required starting gate regardless of ROI.
+- No code changes. No migrations. Planning only.
+
+---
+
 ## 2026-06-05 — AcademyOS UX Final Blueprint V1
 
 - Created `docs/ux/ACADEMYOS_UX_FINAL_BLUEPRINT_V1.md` — Single source of truth synthesized from all 10 UX audit and reimagination docs. Covers: final navigation (5+gear), Director Today (4 zones above fold), Curriculum Command Center, DONNA experience (1 brief + 1 floating panel), Academy Health, naming conventions, mobile rules, zero-scroll rules, and 8-phase implementation order (A–H, ~35 sprints). Supersedes all prior UX audit docs.
