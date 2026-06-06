@@ -315,7 +315,13 @@ import { getWorkflow } from '@/lib/donna/guidedCompletion/guidedCompletionRegist
 import { processDonnaMessage } from '@/lib/donna/brain/processDonnaMessage'
 import type { DonnaResponseRole } from '@/lib/donna/brain/donnaRoleResponsePolicy'
 import { recordConversationTurn } from '@/lib/donna/brain/donnaConversationState'
-import { getCurrentGoalState } from '@/lib/donna/memory/donnaGoalMemory'
+import { getCurrentGoalState, updateLastEntity } from '@/lib/donna/memory/donnaGoalMemory'
+import type { EntityType } from '@/lib/donna/entities/donnaEntityResolver'
+
+// Sprint 2321 — DONNA Entity Execution Integration V1
+import type { AcademyEntityContext } from '@/lib/donna/entity/donnaEntityResolver'
+import type { DisambiguationQuestion } from '@/lib/donna/entity/donnaDisambiguationEngine'
+import { fetchEntityContextAction } from '@/app/director/_actions/donnaEntityContextAction'
 
 // Sprint 1881 — COO Today Guidance + Orchestration
 import { detectTodayGuidanceQuestion } from '@/lib/donna/guidance/donnaTodayGuidanceLoop'
@@ -864,6 +870,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [isLoadingContext, setIsLoadingContext] = useState(false)
   // Predictive suggestions — computed from context summary, local only (Sprint 267)
   const [suggestions, setSuggestions] = useState<DonnaSuggestion[]>([])
+  // Sprint 2321 — Entity context for V2 inline entity resolution (loaded once on panel open)
+  const [entityContext, setEntityContext] = useState<AcademyEntityContext | null>(null)
+  const entityContextLoadedRef = useRef(false)
+  // Sprint 2321 — Pending disambiguation: set when DONNA asks "which one did you mean?"
+  const [pendingDisambiguation, setPendingDisambiguation] = useState<DisambiguationQuestion | null>(null)
 
   // Class-template creation state — wired, saves via saveAssistantTemplateDraftAction (Sprints 262/263)
   const [templateDraft, setTemplateDraft] = useState<TemplateDraft | null>(null)
@@ -1210,6 +1221,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setIsGodModeLoading(false)
     setGodModeHistory([])
     setIsProcessingCommand(false)
+    // Sprint 2321 — clear pending disambiguation on panel close
+    setPendingDisambiguation(null)
   }, [realtimeDisconnect, closeDonnaPanel])
 
   // Sprint 787 — Reset the 3-minute idle timer on any director interaction.
@@ -1265,6 +1278,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     } else {
       window.sessionStorage.removeItem('academyos:donna:panelOpen:v1')
     }
+  }, [panelOpen])
+
+  // Sprint 2321 — Load entity context once when the panel first opens.
+  // Entity context is loaded client-side (no SSR needed) via a server action.
+  // Loaded only once per session — entityContextLoadedRef prevents repeat fetches.
+  useEffect(() => {
+    if (!panelOpen) return
+    if (entityContextLoadedRef.current) return
+    entityContextLoadedRef.current = true
+    void fetchEntityContextAction().then(ctx => {
+      if (ctx !== null) setEntityContext(ctx)
+    })
   }, [panelOpen])
 
   // Sprint 787 — Idle timer lifecycle: start 3-min timer when panel opens, clear when it closes.
@@ -3933,6 +3958,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         role: (t.role === 'user' ? 'user' : 'donna') as 'user' | 'donna',
         content: t.content,
       })),
+      entityContext: entityContext ?? null,
+      pendingDisambiguation: pendingDisambiguation ?? null,
     })
 
     switch (brainResult.action) {
@@ -3986,10 +4013,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         recordSignal('command_issued')
         break
 
-      case 'navigate':
+      case 'navigate': {
+        // Show confirmation message when entity intelligence provides one
+        if (brainResult.response) {
+          setCommandResponse({ message: brainResult.response, type: 'info', label: 'DONNA' })
+          setCooThread(prev => [...prev.slice(-4), { user: text, donna: brainResult.response, type: 'info' as const }])
+          if (brainResult.shouldSpeak) speakDonna(brainResult.spokenResponse || brainResult.response)
+        }
         if (brainResult.navigateTo) router.push(brainResult.navigateTo)
+        // Save resolved entity to goal memory for pronoun continuity ("how is she doing?")
+        if (brainResult.resolvedEntityV2) {
+          const ev2 = brainResult.resolvedEntityV2
+          const kindToV1: Record<string, EntityType> = {
+            player: 'player', coach: 'coach', parent: 'parent',
+            group: 'group', curriculum_level: 'curriculum_level',
+            assessment: 'assessment', template: 'template', session: 'session',
+          }
+          const entityType: EntityType = kindToV1[ev2.kind] ?? 'unknown'
+          updateLastEntity(ev2.displayName, entityType)
+        }
+        setPendingDisambiguation(null)
         recordSignal('command_issued')
         break
+      }
 
       case 'route_coo_prompt': {
         // Brain defers to the full COO prompt chain (handles today-guidance, KPI, intelligence, etc.)
@@ -4058,10 +4104,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           userMessage: text,
           donnaResponse: brainResult.response,
           intentDetected: brainResult.intent,
-          entityLabel: brainResult.entity?.primary?.normalizedLabel ?? null,
+          entityLabel: brainResult.resolvedEntityV2?.displayName
+            ?? brainResult.entity?.primary?.normalizedLabel
+            ?? null,
           goalLabel: brainResult.goal?.goal ?? null,
           followUpQuestion: brainResult.followUpQuestion,
         })
+        // Sprint 2321 — store disambiguation question for next turn, or clear it
+        if (brainResult.disambiguationQuestion) {
+          setPendingDisambiguation(brainResult.disambiguationQuestion)
+        } else {
+          setPendingDisambiguation(null)
+        }
+        // Sprint 2321 — save resolved entity to goal memory for pronoun continuity
+        if (brainResult.resolvedEntityV2) {
+          const ev2 = brainResult.resolvedEntityV2
+          const kindToV1: Record<string, EntityType> = {
+            player: 'player', coach: 'coach', parent: 'parent',
+            group: 'group', curriculum_level: 'curriculum_level',
+            assessment: 'assessment', template: 'template', session: 'session',
+          }
+          const entityType: EntityType = kindToV1[ev2.kind] ?? 'unknown'
+          updateLastEntity(ev2.displayName, entityType)
+        }
         break
       }
     }

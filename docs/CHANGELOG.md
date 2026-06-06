@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-06-06 — Mega Sprint 2321–2340 — DONNA Entity Execution Integration V1
+
+- Created `src/lib/donna/entity/donnaEntityIntentRouter.ts` — `detectEntityIntent(text)` detects entity navigation/query intents ("show me X", "open X", "improve X", "status of X", "tell me about X"); returns `EntityIntentResult { kind, entityPhrase, rawText }` or null; guard phrases prevent interception of review queue / attention / brief / workflow phrases; entity phrase cleaner strips possessives, articles, trailing punctuation; vague phrase rejection list
+- Created `src/lib/donna/entity/donnaEntityContextLoader.ts` — `EntityContextSlice` interface; `buildEntityContext(slice)` bridges the server-loaded slice into `AcademyEntityContext` for the V2 resolver; coaches and parents left empty (honest limitation, no loader yet)
+- Created `src/lib/donna/entity/donnaEntityNavigation.ts` — `buildEntityNavigationResponse(entity, intent)` builds per-kind confirmation messages (player: "Opening Jake's profile", curriculum: "Taking you to the Orange Ball 2 curriculum view", group/template/assessment/coach variants); `buildEntityConfirmMessage(entity)` for medium-confidence confirm prompts; `shouldNavigate` flag when entity has a route
+- Created `src/app/director/_actions/donnaEntityContextAction.ts` — Server action: loads players/groups/templates/assessments in parallel via existing `extendedContextLoaders`; RLS-scoped (no service role); returns `AcademyEntityContext | null`; fails safely
+- Created `docs/ux/DONNA_ENTITY_EXECUTION_INTEGRATION_AUDIT_V1.md` — Full audit of live pipeline; insertion points for Step 0.5 (disambiguation) and Step 10.5 (entity intelligence); entity context data path; backward compatibility assessment; safe action boundaries table; known limitations
+- Created `docs/qa/DONNA_ENTITY_EXECUTION_INTEGRATION_V1.md` — 12-item success criteria checklist; 10 QA test cases (direct navigation, curriculum nav, short-code alias, group membership, disambiguation flow, pronoun resolution, guard phrase protection, low confidence fallthrough, null context fallthrough, panel close disambiguation clear); manual console test script
+- Modified `src/lib/donna/brain/donnaBrainDebugLog.ts` — Added `check_disambiguation` and `check_entity_intent` to `BrainRoutingStep` union
+- Modified `src/lib/donna/brain/processDonnaMessage.ts` — New imports (V2 resolver, disambiguation engine, relationship graph, entity intent router, navigation builder); `entityContext` and `pendingDisambiguation` added to `DonnaMessageInput`; `resolvedEntityV2` and `disambiguationQuestion` added to `DonnaMessageResult`; Step 0.5 (disambiguation resolution — runs before guided workflow check); Step 10.5 (entity intelligence — relationship query path + entity navigation/query path, falls through when entityContext is null)
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — Imports `updateLastEntity`, `EntityType`, `AcademyEntityContext`, `DisambiguationQuestion`, `fetchEntityContextAction`; `entityContext` state + `entityContextLoadedRef`; `pendingDisambiguation` state; useEffect loads entity context once on panel open; `processDonnaMessage` call extended with `entityContext` and `pendingDisambiguation`; `navigate` case shows confirmation message + saves entity to goal memory + clears disambiguation; `respond` case stores/clears disambiguation state + saves resolved entity to goal memory; `closePanel` clears `pendingDisambiguation`
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-06 — Mega Sprint 2291–2320 — DONNA Academy Entity Intelligence V1
 
 - Created `docs/ux/DONNA_ENTITY_AUDIT_V1.md` — Full audit of all 9 entity types (player, coach, parent, group, curriculum level, assessment, template, session, workflow); source table, searchable fields, alias patterns, routing destination, current resolution gaps; resolution priority order table; gap summary matrix

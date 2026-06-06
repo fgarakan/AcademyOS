@@ -35,6 +35,20 @@ import { classifyIntent } from '@/lib/donna/intent/donnaIntentEngine'
 import type { DirectorIntent } from '@/lib/donna/intent/donnaIntentEngine'
 import { resolveEntities } from '@/lib/donna/entities/donnaEntityResolver'
 import type { EntityResolutionResult } from '@/lib/donna/entities/donnaEntityResolver'
+import { resolveEntityWithContext } from '@/lib/donna/entity/donnaEntityContextResolver'
+import type { AcademyEntityContext, ResolvedEntityV2 } from '@/lib/donna/entity/donnaEntityResolver'
+import {
+  buildDisambiguationQuestion,
+  resolveDisambiguationAnswer,
+  formatChoicesForDisplay,
+} from '@/lib/donna/entity/donnaDisambiguationEngine'
+import type { DisambiguationQuestion } from '@/lib/donna/entity/donnaDisambiguationEngine'
+import { isRelationshipQuery, resolveRelationshipQuery } from '@/lib/donna/entity/donnaRelationshipGraph'
+import { detectEntityIntent } from '@/lib/donna/entity/donnaEntityIntentRouter'
+import {
+  buildEntityNavigationResponse,
+  buildEntityConfirmMessage,
+} from '@/lib/donna/entity/donnaEntityNavigation'
 import { resolveIntentToGoal, buildGoalInferenceMessage } from '@/lib/donna/goals/donnaGoalEngine'
 import type { GoalResult } from '@/lib/donna/goals/donnaGoalEngine'
 import { buildContinuityResponse, isContinuityPhrase } from '@/lib/donna/memory/donnaGoalMemory'
@@ -84,6 +98,10 @@ export interface DonnaMessageInput {
   pendingReviews?: number
   /** Recent conversation turns for context */
   conversationHistory?: Array<{ role: 'user' | 'donna'; content: string }>
+  /** V2 entity context for inline entity resolution (optional — null = skip V2 path) */
+  entityContext?: AcademyEntityContext | null
+  /** Pending disambiguation question from previous turn (optional) */
+  pendingDisambiguation?: DisambiguationQuestion | null
 }
 
 // ── Action contract ───────────────────────────────────────────────────────────
@@ -144,6 +162,10 @@ export interface DonnaMessageResult {
   requiresApproval: boolean
   /** Known limitations or caveats in the response */
   limitations: string | null
+  /** V2 resolved entity (entity intelligence path) */
+  resolvedEntityV2: ResolvedEntityV2 | null
+  /** Disambiguation question to show director when entity matches multiple candidates */
+  disambiguationQuestion: DisambiguationQuestion | null
   /** Dev-only decision log */
   debugLog: BrainDecisionLog
 }
@@ -202,6 +224,8 @@ function makeResult(
     startGoalType: partial.startGoalType ?? null,
     requiresApproval: partial.requiresApproval ?? false,
     limitations: partial.limitations ?? null,
+    resolvedEntityV2: partial.resolvedEntityV2 ?? null,
+    disambiguationQuestion: partial.disambiguationQuestion ?? null,
     debugLog,
   }
 }
@@ -271,6 +295,53 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
         navigateTo: goalWorkflow.fallbackRoute,
       }, debugLog)
     }
+  }
+
+  // ── Step 0.5: Pending disambiguation resolution ──────────────────────────────
+  // When the director was asked "which one did you mean?" in a previous turn,
+  // their reply ("the player", "1", "Jake Barrios") should resolve the pending
+  // question before any other brain step touches the message.
+  logStep(debugLog, 'check_disambiguation')
+  const pendingDisambiguation = input.pendingDisambiguation ?? null
+  if (pendingDisambiguation !== null) {
+    const disambigResolved = resolveDisambiguationAnswer(userMessage, pendingDisambiguation)
+    if (disambigResolved !== null && disambigResolved.route) {
+      const navResponse = buildEntityNavigationResponse(
+        disambigResolved,
+        { kind: 'navigate', entityPhrase: userMessage, rawText: userMessage },
+      )
+      finalizeLog(debugLog, 'check_disambiguation', 'navigate')
+      emitDebugLog(debugLog)
+      return makeResult('navigate', {
+        response:          navResponse.message,
+        spokenResponse:    navResponse.spokenMessage,
+        navigateTo:        navResponse.navigateTo,
+        resolvedEntityV2:  disambigResolved,
+        confidence:        0.92,
+      }, debugLog)
+    }
+    if (disambigResolved !== null) {
+      // Resolved but no route — respond with entity summary
+      const msg = `I found ${disambigResolved.displayName}. Unfortunately I don't have a direct navigation link for this item yet.`
+      finalizeLog(debugLog, 'check_disambiguation', 'respond')
+      emitDebugLog(debugLog)
+      return makeResult('respond', {
+        response:         msg,
+        spokenResponse:   msg,
+        resolvedEntityV2: disambigResolved,
+        confidence:       0.85,
+      }, debugLog)
+    }
+    // Director's reply didn't match any choice — re-ask the same question
+    const reaskMsg = `I didn't quite catch that. Which one did you mean?\n\n${formatChoicesForDisplay(pendingDisambiguation)}`
+    finalizeLog(debugLog, 'check_disambiguation', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:               reaskMsg,
+      spokenResponse:         'Which one did you mean? Please say the number.',
+      disambiguationQuestion: pendingDisambiguation,
+      confidence:             0.50,
+    }, debugLog)
   }
 
   // ── Step 1: Active guided workflow (form-filling) ────────────────────────────
@@ -367,6 +438,133 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   const entityResult = resolveEntities(messageToProcess)
   if (entityResult.primary) {
     debugLog.entityDetected = entityResult.primary.normalizedLabel
+  }
+
+  // ── Step 10.5: Entity intelligence (V2) ─────────────────────────────────────
+  // Intercepts entity navigation intents ("show me Jake", "open OB2", etc.)
+  // using the V2 resolver + page-aware boosting. Falls through silently when
+  // entityContext is not loaded or no entity intent is detected.
+  logStep(debugLog, 'check_entity_intent')
+  const entityContext = input.entityContext ?? null
+  if (entityContext !== null) {
+    // Check relationship query first (pronouns + "Jake's parent", "who coaches X")
+    const isRelQuery = isRelationshipQuery(messageToProcess)
+    const entityIntent = isRelQuery ? null : detectEntityIntent(messageToProcess)
+
+    if (isRelQuery || entityIntent !== null) {
+      // Build a minimal last-entity ref from goal memory for pronoun resolution
+      const lastEntityForRel: ResolvedEntityV2 | undefined =
+        goalMemory?.lastRelevantEntity
+          ? {
+              kind:            'player',
+              id:              null,
+              displayName:     goalMemory.lastRelevantEntity,
+              route:           null,
+              confidence:      0.70,
+              confidenceLevel: 'high',
+              reasoning:       'Restored from goal memory',
+            }
+          : undefined
+
+      if (isRelQuery) {
+        // ── Relationship query path ──────────────────────────────────────────
+        const relResult = resolveRelationshipQuery(messageToProcess, entityContext, lastEntityForRel)
+        if (relResult !== null) {
+          if (relResult.confidence >= CONFIDENCE_ACT_THRESHOLD && relResult.resolved !== null) {
+            if (relResult.resolved.route) {
+              finalizeLog(debugLog, 'check_entity_intent', 'navigate')
+              emitDebugLog(debugLog)
+              return makeResult('navigate', {
+                response:         relResult.message,
+                spokenResponse:   relResult.message,
+                navigateTo:       relResult.resolved.route,
+                resolvedEntityV2: relResult.resolved,
+                confidence:       relResult.confidence,
+              }, debugLog)
+            }
+            finalizeLog(debugLog, 'check_entity_intent', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response:         relResult.message,
+              spokenResponse:   relResult.message,
+              resolvedEntityV2: relResult.resolved,
+              confidence:       relResult.confidence,
+            }, debugLog)
+          }
+          if (relResult.message) {
+            finalizeLog(debugLog, 'check_entity_intent', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response:       relResult.message,
+              spokenResponse: relResult.message,
+              confidence:     relResult.confidence,
+            }, debugLog)
+          }
+        }
+      } else if (entityIntent !== null) {
+        // ── Entity navigation / query path ──────────────────────────────────
+        const resolveResult = resolveEntityWithContext(
+          entityIntent.entityPhrase,
+          entityContext,
+          route,
+          {},
+        )
+
+        if (resolveResult.needsDisambiguation && resolveResult.candidates.length > 0) {
+          const disambigQ = buildDisambiguationQuestion(resolveResult.candidates, entityIntent.entityPhrase)
+          finalizeLog(debugLog, 'check_entity_intent', 'respond')
+          emitDebugLog(debugLog)
+          return makeResult('respond', {
+            response:               disambigQ.questionText,
+            spokenResponse:         'I found a few matches. Which one did you mean?',
+            disambiguationQuestion: disambigQ,
+            confidence:             0.50,
+          }, debugLog)
+        }
+
+        if (resolveResult.entity !== null) {
+          const entity = resolveResult.entity
+
+          if (entity.confidence >= CONFIDENCE_ACT_THRESHOLD) {
+            const navResponse = buildEntityNavigationResponse(entity, entityIntent)
+            if (navResponse.shouldNavigate) {
+              finalizeLog(debugLog, 'check_entity_intent', 'navigate')
+              emitDebugLog(debugLog)
+              return makeResult('navigate', {
+                response:         navResponse.message,
+                spokenResponse:   navResponse.spokenMessage,
+                navigateTo:       navResponse.navigateTo,
+                resolvedEntityV2: entity,
+                confidence:       entity.confidence,
+              }, debugLog)
+            }
+            finalizeLog(debugLog, 'check_entity_intent', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response:         navResponse.message,
+              spokenResponse:   navResponse.spokenMessage,
+              resolvedEntityV2: entity,
+              confidence:       entity.confidence,
+            }, debugLog)
+          }
+
+          if (entity.confidence >= 0.50) {
+            // Medium confidence — offer to navigate, ask for confirmation
+            const confirmMsg = buildEntityConfirmMessage(entity)
+            finalizeLog(debugLog, 'check_entity_intent', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response:         confirmMsg,
+              spokenResponse:   confirmMsg,
+              resolvedEntityV2: entity,
+              confidence:       entity.confidence,
+            }, debugLog)
+          }
+          // Below 0.50 — fall through to existing routing
+        }
+        // noEntityFound — fall through to existing routing
+      }
+    }
   }
 
   // ── Step 11: Goal resolution ─────────────────────────────────────────────────
