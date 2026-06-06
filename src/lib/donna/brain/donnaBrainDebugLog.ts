@@ -18,6 +18,7 @@ export type BrainRoutingStep =
   | 'check_review_queue'
   | 'check_attention'
   | 'check_disambiguation'
+  | 'check_relationship_intelligence'
   | 'check_entity_intent'
   | 'run_intent'
   | 'run_entity'

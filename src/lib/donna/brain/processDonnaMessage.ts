@@ -49,6 +49,17 @@ import {
   buildEntityNavigationResponse,
   buildEntityConfirmMessage,
 } from '@/lib/donna/entity/donnaEntityNavigation'
+import { detectRelationshipIntelligenceIntent } from '@/lib/donna/relationship/donnaRelationshipIntentDetector'
+import {
+  buildRelationshipContext,
+  getCoGroupResult,
+  getPlayerContext,
+} from '@/lib/donna/relationship/donnaRelationshipIntelligence'
+import {
+  buildRelationshipIntelligenceAnswer,
+  buildCoGroupMembersAnswer,
+  buildPlayerContextAnswer,
+} from '@/lib/donna/relationship/donnaRelationshipAnswerBuilder'
 import { resolveIntentToGoal, buildGoalInferenceMessage } from '@/lib/donna/goals/donnaGoalEngine'
 import type { GoalResult } from '@/lib/donna/goals/donnaGoalEngine'
 import { buildContinuityResponse, isContinuityPhrase } from '@/lib/donna/memory/donnaGoalMemory'
@@ -440,12 +451,79 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     debugLog.entityDetected = entityResult.primary.normalizedLabel
   }
 
+  // ── Step 10.4: Relationship intelligence ────────────────────────────────────
+  // Handles complex/aggregate/demonstrative/multi-hop relationship queries.
+  // "who else is in that group?", "which players share the same bottleneck?",
+  // "academy health", "why does Jake need attention?"
+  // Runs before entity intelligence so demonstrative references ("that group")
+  // can use the last resolved entity from goal memory.
+  const entityContext = input.entityContext ?? null
+  logStep(debugLog, 'check_relationship_intelligence')
+  if (entityContext !== null) {
+    const relIntent = detectRelationshipIntelligenceIntent(messageToProcess)
+    if (relIntent !== null) {
+      const rCtx = buildRelationshipContext(entityContext)
+      let message: string
+      let spokenMessage: string
+
+      // Special-case: co_group and group_health require the last known entity
+      if (relIntent.kind === 'co_group_members' || relIntent.kind === 'group_health') {
+        // Resolve subject: named subject in query → or last relevant entity from memory
+        const subjectName = relIntent.subjectPhrase ?? goalMemory?.lastRelevantEntity ?? null
+        if (subjectName) {
+          const lower  = subjectName.toLowerCase()
+          const player = rCtx.players.find(p => p.playerName.toLowerCase().includes(lower))
+          if (player) {
+            const coGroup = getCoGroupResult(player.playerId, rCtx)
+            const answer  = buildCoGroupMembersAnswer(coGroup)
+            finalizeLog(debugLog, 'check_relationship_intelligence', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response:       answer,
+              spokenResponse: answer.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\n+/g, '. '),
+              confidence:     0.88,
+            }, debugLog)
+          }
+        }
+        // Fall through if subject can't be identified
+      } else if (relIntent.kind === 'player_full_context' && !relIntent.subjectPhrase && goalMemory?.lastRelevantEntity) {
+        // "full context" without naming a player → use last entity from memory
+        const lower  = goalMemory.lastRelevantEntity.toLowerCase()
+        const player = rCtx.players.find(p => p.playerName.toLowerCase().includes(lower))
+        if (player) {
+          const ctx    = getPlayerContext(player.playerId, rCtx)
+          message       = ctx ? buildPlayerContextAnswer(ctx) : `I found ${player.playerName} but couldn't build their full context.`
+          spokenMessage = message.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\n+/g, '. ')
+          finalizeLog(debugLog, 'check_relationship_intelligence', 'respond')
+          emitDebugLog(debugLog)
+          return makeResult('respond', {
+            response:       message,
+            spokenResponse: spokenMessage,
+            confidence:     0.88,
+          }, debugLog)
+        }
+      } else {
+        const built = buildRelationshipIntelligenceAnswer(relIntent.kind, relIntent.subjectPhrase, rCtx)
+        message       = built.message
+        spokenMessage = built.spokenMessage
+        if (message) {
+          finalizeLog(debugLog, 'check_relationship_intelligence', 'respond')
+          emitDebugLog(debugLog)
+          return makeResult('respond', {
+            response:       message,
+            spokenResponse: spokenMessage,
+            confidence:     0.85,
+          }, debugLog)
+        }
+      }
+    }
+  }
+
   // ── Step 10.5: Entity intelligence (V2) ─────────────────────────────────────
   // Intercepts entity navigation intents ("show me Jake", "open OB2", etc.)
   // using the V2 resolver + page-aware boosting. Falls through silently when
   // entityContext is not loaded or no entity intent is detected.
   logStep(debugLog, 'check_entity_intent')
-  const entityContext = input.entityContext ?? null
   if (entityContext !== null) {
     // Check relationship query first (pronouns + "Jake's parent", "who coaches X")
     const isRelQuery = isRelationshipQuery(messageToProcess)
