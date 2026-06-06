@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-06 — Mega Sprint 2241–2260 — DONNA Executive Workspace V1
+
+- Created `src/app/director/_components/DonnaExecutiveWorkspace.tsx` — `'use client'` component; reads `GoalCompletionStack` from sessionStorage via `getGoalCompletionStack()` in `useEffect` (SSR-safe); renders `ActiveSessionBanner` with step progress bar + "Continue with DONNA" button when a workflow session is running; renders `PausedSessionRow` chips for each paused workflow with "Resume →"; renders `WorkflowStarterCard` list — contextual cards for Review & Decide (if `totalPendingReviews > 0`), Player Placement (if `pendingPlacementCount > 0`), Curriculum Bottleneck (if `stalledPlayerCount > 0` or `curricGapCount > 0` or `mostBlockedLevelName` set), and Plan My Day (always); each card dispatches `donna:open` CustomEvent with the matching workflow trigger phrase; all-clear minimal state when no signals and no active session
+- Modified `src/app/director/page.tsx` — imported `DonnaExecutiveWorkspace`; inserted between `DirectorTodayDonnaBrief` and `DirectorTopPriorities`; passes `totalPendingReviews`, `pendingPlacementCount`, `stalledPlayerCount`, `mostBlockedLevelName`, `curricGapCount` (all pre-computed)
+- TypeScript: clean
+
+---
+
 ## 2026-06-05 — Mega Sprint 2216–2240 — DONNA Goal Completion Engine V1
 
 - Created `src/lib/donna/workflows/donnaGoalCompletionModel.ts` — `GoalCompletionSession` type with all fields (sessionId, academyId, userId, role, sourceIntent, goalType, status, priority, currentStep, totalSteps, activeObjectType, activeObjectId, recommendedAction, nextQuestion, completionCriteria, stepHistory); `GoalCompletionStack` with active + paused sessions + completed summaries; full session lifecycle API (start, activate, update, pause, resume, complete, cancel, clear); `WorkflowCompletionSummary` builder; navigation continuity via `updateSessionRoute()`; 6-hour sessionStorage TTL

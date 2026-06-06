@@ -32,6 +32,7 @@ import { DirectorTodayDonnaBrief } from './_components/DirectorTodayDonnaBrief'
 import { DirectorTopPriorities } from './_components/DirectorTopPriorities'
 import { DirectorReviewDecideZone } from './_components/DirectorReviewDecideZone'
 import { DirectorAcademyHealthSnapshot } from './_components/DirectorAcademyHealthSnapshot'
+import { DonnaExecutiveWorkspace } from './_components/DonnaExecutiveWorkspace'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -641,6 +642,15 @@ export default async function DirectorDashboard() {
         urgency={constitutionUrgency}
         ctaLabel={constitutionActionLabel}
         ctaHref={constitutionActionHref}
+      />
+
+      {/* ── DONNA Executive Workspace — start / resume workflows ─ */}
+      <DonnaExecutiveWorkspace
+        totalPendingReviews={totalPendingReviews}
+        pendingPlacementCount={pendingCount}
+        stalledPlayerCount={stalledPlayerCount}
+        mostBlockedLevelName={mostBlockedLevelName}
+        curricGapCount={curricGapCount}
       />
 
       {/* ── Top Priorities — max 3 ───────────────────────────── */}
