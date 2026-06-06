@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-06 — Mega Sprint 2291–2320 — DONNA Academy Entity Intelligence V1
+
+- Created `docs/ux/DONNA_ENTITY_AUDIT_V1.md` — Full audit of all 9 entity types (player, coach, parent, group, curriculum level, assessment, template, session, workflow); source table, searchable fields, alias patterns, routing destination, current resolution gaps; resolution priority order table; gap summary matrix
+- Created `src/lib/donna/entity/donnaEntityResolver.ts` — V2 comprehensive entity resolver; `AcademyEntityContext` shape (players, groups, templates, assessments, coaches?, parents?); `CoachSummary` and `ParentSummary` types; `resolveEntityV2(text, ctx, opts)` main entry point; player matching: exact full name (0.98), exact first name (0.85), last name (0.80), possessive (0.82), initials (0.60), nickname map (0.75), fuzzy Levenshtein (≤0.50); curriculum level: complete alias table for RB/OB/GD/YB/HP levels + short codes (OB2, HP1, GD1) + stage patterns; coach resolution with "Coach Danny" prefix + "head coach" role patterns; group + template partial word matching; assessment type patterns; preferred-kind confidence boost (+0.10); ambiguity detection (different kinds within 0.15 confidence) → `needsDisambiguation: true`; inline Levenshtein (no external packages)
+- Created `src/lib/donna/entity/donnaDisambiguationEngine.ts` — `buildDisambiguationQuestion(candidates, rawInput)` → numbered choice list; `resolveDisambiguationAnswer(answer, question)` handles ordinals ("first", "2"), kind references ("the player", "coach"), and name partial match; `formatChoicesForDisplay()` helper
+- Created `src/lib/donna/entity/donnaEntityContextResolver.ts` — `ROUTE_PREFERENCES` map: 9 director routes → preferred entity kinds + boost; `getPreferredKindsForRoute(route)` and `applyPageContext(result, route)` re-score candidates post-resolution; `resolveEntityWithContext(text, ctx, route, opts)` convenience one-call entry point
+- Created `src/lib/donna/entity/donnaRelationshipGraph.ts` — `isRelationshipQuery(text)` detection; `resolveRelationshipQuery(text, ctx, lastEntity?)` handles: parent lookup (degrades gracefully when parents not in ctx), coach lookup (degrades gracefully), player→group matching via levelId join, level→member list, pronoun resolution ("he/she/they" → lastEntity); `getRelationshipKind(text)` classifier
+- Created `docs/qa/DONNA_ENTITY_INTELLIGENCE_V1.md` — 10 QA test cases: exact name, initials, curriculum alias, short code, parent relationship, coach relationship, group membership, pronoun resolution, disambiguation, page context boost; nickname/fuzzy test matrix; curriculum alias test matrix; edge case table; manual console test script
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-06 — Mega Sprint 2241–2260 — DONNA Executive Workspace V1
 
 - Created `src/app/director/_components/DonnaExecutiveWorkspace.tsx` — `'use client'` component; reads `GoalCompletionStack` from sessionStorage via `getGoalCompletionStack()` in `useEffect` (SSR-safe); renders `ActiveSessionBanner` with step progress bar + "Continue with DONNA" button when a workflow session is running; renders `PausedSessionRow` chips for each paused workflow with "Resume →"; renders `WorkflowStarterCard` list — contextual cards for Review & Decide (if `totalPendingReviews > 0`), Player Placement (if `pendingPlacementCount > 0`), Curriculum Bottleneck (if `stalledPlayerCount > 0` or `curricGapCount > 0` or `mostBlockedLevelName` set), and Plan My Day (always); each card dispatches `donna:open` CustomEvent with the matching workflow trigger phrase; all-clear minimal state when no signals and no active session
