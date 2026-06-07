@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 904–933B — DONNA Initial Brain Consolidation V1
+
+**Initial Brain: 21 entries, 4 categories, 0 speculative. Every entry traced to existing source. Certified.**
+
+- Created `src/lib/donna/brain/initialBrainSeed.ts` — 21 `GlobalBrainEntry` records consolidated from existing AcademyOS systems; Vocabulary ×8 (group, session, wrap_up, level, template, coach, player, proposed_action); Intent ×6 (review_queue, daily_brief, academy_attention, today_guidance, coo_intelligence, continuity); Decision Rule ×4 (player_stall_medium=90d, player_stall_high=180d, assessment_overdue=90d, mutation_requires_approval); Philosophy ×3 (voice_creates_ui_confirms, ai_proposes_director_approves, data_never_invented); `SeedBrainEntry` extends `GlobalBrainEntry` with source attribution (file+symbol+sprint+verbatim); `INITIAL_BRAIN_ENTRIES` strips source for runtime; `INITIAL_BRAIN_STATS` summary; `getSeedByType()` and `getSeedByKey()` helpers; no DB, no migrations, no new runtime systems
+- Created `docs/brain/DONNA_INITIAL_BRAIN_904.md` — Architecture and entry map: design decisions, full 21-entry table with source file and symbol, related-keys graph, governance compliance checklist, owner/scope table, what is intentionally excluded
+- Created `docs/qa/DONNA_INITIAL_BRAIN_CERTIFICATION_904.md` — Certification: 60/60 score; 0 duplicate concepts; 0 duplicate intents; 21/21 governance fields present; 21/21 source-traced; 0 speculative entries; 16 gap candidates documented for Brain V2 (vocabulary gaps ×5, intent gaps ×6, decision rule gaps ×3, philosophy gaps ×2)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 904–933A — DONNA Brain Inventory Audit V1
 
 **Audit: 170 DONNA files catalogued. 5 intent systems, 6 routers, 2 entity resolvers mapped. Initial Brain scope defined. No code changed.**
