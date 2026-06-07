@@ -75,6 +75,10 @@ const TASK_INTENT_KEYWORDS: Array<{ taskId: DonnaTaskId; keywords: string[] }> =
       'note for a player',
       'i noticed',
       'save an observation',
+      'notes for',
+      'capture notes',
+      'capture today',
+      "today's notes",
     ],
   },
   {
@@ -88,6 +92,9 @@ const TASK_INTENT_KEYWORDS: Array<{ taskId: DonnaTaskId; keywords: string[] }> =
       'parent communication',
       'write to parent',
       'write an update for',
+      'an update for',
+      'draft an update',
+      "parents'",
     ],
   },
   {
@@ -170,6 +177,50 @@ const TASK_INTENT_KEYWORDS: Array<{ taskId: DonnaTaskId; keywords: string[] }> =
     ],
   },
   {
+    taskId: 'invite_coach',
+    keywords: [
+      'invite a coach',
+      'add a coach',
+      'add coach',
+      'invite coach',
+      'add as a coach',
+      'add as coach',
+      'register a coach',
+      'onboard a coach',
+      'new coach',
+      'coach invitation',
+    ],
+  },
+  {
+    taskId: 'reassign_player_group',
+    keywords: [
+      'reassign player',
+      'move player to',
+      'switch player to',
+      'change player group',
+      'move player',
+      'reassign to group',
+      'transfer player',
+      'move to another group',
+      'move to a different group',
+      'change group for',
+      'switch to group',
+    ],
+  },
+  {
+    taskId: 'assign_coach_to_group',
+    keywords: [
+      'assign coach to group',
+      'assign coach to',
+      'add coach to group',
+      'assign as coach',
+      'assign as primary coach',
+      'add as primary coach',
+      'coach to group',
+      'assign a coach to',
+    ],
+  },
+  {
     taskId: 'summarize_player_progress',
     keywords: [
       'player progress',
@@ -195,8 +246,26 @@ const TASK_INTENT_KEYWORDS: Array<{ taskId: DonnaTaskId; keywords: string[] }> =
   },
 ]
 
+// Pattern-based detection for entity-interpolated commands where an entity name
+// interrupts the phrase, making simple includes() matching impossible.
+// E.g. "Move Emma to Green Ball" — "emma" sits between "move" and "to [group]".
+const ENTITY_INTERPOLATED_PATTERNS: Array<{ taskId: DonnaTaskId; pattern: RegExp; phrase: string }> = [
+  // "Move Emma to Green Ball" / "Move Noah to Red Ball"
+  { taskId: 'reassign_player_group', pattern: /^move [a-z]+ to [a-z]/i, phrase: 'move [name] to [group]' },
+  // "Reassign Emma to Red Ball"
+  { taskId: 'reassign_player_group', pattern: /^reassign [a-z]+ to [a-z]/i, phrase: 'reassign [name] to [group]' },
+]
+
 export function detectTaskIntent(text: string): TaskIntentResult {
   const lower = text.toLowerCase()
+
+  // Check entity-interpolated patterns first — these can't be matched by includes()
+  for (const { taskId, pattern, phrase } of ENTITY_INTERPOLATED_PATTERNS) {
+    if (pattern.test(lower)) {
+      return { taskId, confidence: 'high', matchedPhrases: [phrase] }
+    }
+  }
+
   const matches: Array<{ taskId: DonnaTaskId; count: number; phrases: string[] }> = []
 
   for (const { taskId, keywords } of TASK_INTENT_KEYWORDS) {

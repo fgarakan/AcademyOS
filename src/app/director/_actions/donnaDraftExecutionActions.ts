@@ -11,6 +11,9 @@ import {
 import {
   structureDonnaNote,
 } from '@/components/assistant/donnaNoteStructuring'
+import { inviteCoachAction } from '@/app/director/coaches/inviteCoachAction'
+import { reassignPlayerGroupAction } from '@/app/director/players/[playerId]/_actions/reassignPlayerGroupAction'
+import { assignCoachGroupAction } from '@/app/director/coaches/[coachId]/assignCoachGroupAction'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper — shared by both actions
@@ -690,6 +693,173 @@ export async function populateSessionBlocksAction(
       'No coach, parent, or player has been notified.',
       'The coach brief below is a local draft only — not sent or stored.',
       'Review and edit the session before sending any communications.',
+    ],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// saveInviteCoachDraftAction
+//
+// Delegates to inviteCoachAction. Requires email + role fields.
+// No email invitation is sent — the coach must be notified manually.
+// Handles: linked (new), already_member (idempotent), role_updated, no_account.
+// ---------------------------------------------------------------------------
+
+export async function saveInviteCoachDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const email = (fields.email ?? '').trim().toLowerCase()
+  const roleRaw = (fields.role ?? '').trim().toLowerCase()
+
+  if (!email || !email.includes('@')) {
+    return { ok: false, status: 'error', message: 'A valid coach email address is required.' }
+  }
+
+  const role: 'coach' | 'head_coach' =
+    roleRaw === 'head_coach' || roleRaw === 'head coach' ? 'head_coach' : 'coach'
+
+  const result = await inviteCoachAction({ email, role })
+
+  if (!result.ok) {
+    return { ok: false, status: 'error', message: result.error ?? 'Failed to invite coach.' }
+  }
+
+  const outcomeMessage =
+    result.outcome === 'already_member'
+      ? `${email} is already a member of this academy with the ${role} role.`
+      : result.outcome === 'role_updated'
+      ? `${email}'s role has been updated to ${role}.`
+      : `${email} has been added to the academy as ${role}.`
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: outcomeMessage,
+    safetyNotes: [
+      'The coach must log in with this email to appear in session assignments.',
+      'No automated email invitation was sent — notify the coach manually.',
+    ],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// saveReassignPlayerGroupDraftAction
+//
+// Moves an active player to a new group.
+// Requires confirmed _resolved_player_id and _resolved_group_id.
+// Delegates to reassignPlayerGroupAction which handles auth, RLS, audit log.
+// ---------------------------------------------------------------------------
+
+export async function saveReassignPlayerGroupDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const playerId = (fields._resolved_player_id ?? '').trim() || null
+  if (!playerId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: 'Please confirm the player before reassigning. Use the resolver panel to search and select a player.',
+    }
+  }
+
+  const groupId = (fields._resolved_group_id ?? '').trim() || null
+  if (!groupId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: 'Please confirm the target group before reassigning. Use the resolver panel to search and select a group.',
+    }
+  }
+
+  const reason = (fields.reason ?? '').trim() || 'Director reassignment via DONNA'
+
+  const result = await reassignPlayerGroupAction({ playerId, newGroupId: groupId, reason })
+
+  if (!result.ok) {
+    return { ok: false, status: 'error', message: result.error ?? 'Failed to reassign player.' }
+  }
+
+  const playerLabel = (fields.player ?? '').replace(/\s*✓$/, '').trim() || 'Player'
+  const groupLabel = result.newGroupName ?? ((fields.group ?? '').replace(/\s*✓$/, '').trim() || 'new group')
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: `${playerLabel} has been moved to ${groupLabel}.`,
+    safetyNotes: [
+      'Group membership record updated — previous membership closed.',
+      'Audit log written.',
+      'No parent or player notification has been sent.',
+    ],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// saveAssignCoachGroupDraftAction
+//
+// Assigns or removes a coach from a group.
+// Requires confirmed _resolved_coach_id and _resolved_group_id.
+// Delegates to assignCoachGroupAction which handles auth, RLS, audit log.
+// ---------------------------------------------------------------------------
+
+export async function saveAssignCoachGroupDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const coachId = (fields._resolved_coach_id ?? '').trim() || null
+  if (!coachId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: 'Please confirm the coach before assigning. Use the resolver panel to search and select a coach.',
+    }
+  }
+
+  const groupId = (fields._resolved_group_id ?? '').trim() || null
+  if (!groupId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: 'Please confirm the group before assigning. Use the resolver panel to search and select a group.',
+    }
+  }
+
+  const rawAction = (fields.action_type ?? 'add').trim().toLowerCase()
+  const action: 'add' | 'remove' = rawAction === 'remove' ? 'remove' : 'add'
+
+  const result = await assignCoachGroupAction({ coachId, groupId, action })
+
+  if (!result.ok) {
+    return { ok: false, status: 'error', message: result.error ?? 'Failed to assign coach.' }
+  }
+
+  const coachLabel = (fields.coach ?? '').replace(/\s*✓$/, '').trim() || 'Coach'
+  const groupLabel = (fields.group ?? '').replace(/\s*✓$/, '').trim() || 'group'
+
+  const message =
+    action === 'remove'
+      ? `${coachLabel} has been removed from ${groupLabel}.`
+      : `${coachLabel} has been assigned to ${groupLabel}.`
+
+  return {
+    ok: true,
+    status: 'saved',
+    message,
+    safetyNotes: [
+      'Coach group assignment updated.',
+      'Audit log written.',
+      'No notifications sent.',
     ],
   }
 }

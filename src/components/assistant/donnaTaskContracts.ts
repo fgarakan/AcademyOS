@@ -31,6 +31,9 @@ export type DonnaTaskId =
   | 'recommend_template_for_group'
   | 'draft_session_brief'
   | 'draft_coach_brief'
+  | 'invite_coach'
+  | 'reassign_player_group'
+  | 'assign_coach_to_group'
 
 export interface DonnaTaskField {
   fieldId: string
@@ -491,6 +494,75 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     ],
     reads: ['coach_profile', 'sessions', 'coach_observations', 'proposed_actions', 'voice_notes'],
     createsDraftType: 'coach_brief_readonly',
+    approvalRequired: false,
+    unsafeWithoutApproval: [],
+    saveApplyMethodStatus: 'wired',
+  },
+
+  invite_coach: {
+    taskId: 'invite_coach',
+    label: 'Invite Coach',
+    description:
+      'Help the director add a coach to the academy by email. Looks up an existing account and creates an academy membership. No email invitation is sent automatically.',
+    requiredFields: [
+      { fieldId: 'email', label: 'Coach Email', required: true, example: 'sarah@academy.com' },
+      { fieldId: 'role',  label: 'Role',        required: true, example: 'coach or head_coach' },
+    ],
+    optionalFields: [],
+    questionSequence: [
+      { order: 1, fieldId: 'email', question: 'What is the coach\'s email address?' },
+      { order: 2, fieldId: 'role',  question: 'What role should they have? (coach or head_coach)' },
+    ],
+    reads: ['profiles', 'academy_memberships'],
+    createsDraftType: 'coach_invite_draft',
+    approvalRequired: false,
+    unsafeWithoutApproval: [],
+    saveApplyMethodStatus: 'wired',
+  },
+
+  reassign_player_group: {
+    taskId: 'reassign_player_group',
+    label: 'Reassign Player to Group',
+    description:
+      'Move an active player from their current group to a different group. Closes the existing membership and opens a new one. Director-confirmed only — never automatic.',
+    requiredFields: [
+      { fieldId: 'player', label: 'Player', required: true, example: 'Emma Rodriguez' },
+      { fieldId: 'group',  label: 'Target Group', required: true, example: 'Green Ball Group A' },
+    ],
+    optionalFields: [
+      { fieldId: 'reason', label: 'Reason for Move', required: false, example: 'Level progress — ready for Green Ball' },
+    ],
+    questionSequence: [
+      { order: 1, fieldId: 'player', question: 'Which player are you moving?' },
+      { order: 2, fieldId: 'group',  question: 'Which group should they move to?' },
+      { order: 3, fieldId: 'reason', question: 'What is the reason for this move? (optional — leave blank to use "Director reassignment")' },
+    ],
+    reads: ['player_profile', 'group', 'group_memberships'],
+    createsDraftType: 'player_group_reassignment_draft',
+    approvalRequired: false,
+    unsafeWithoutApproval: [],
+    saveApplyMethodStatus: 'wired',
+  },
+
+  assign_coach_to_group: {
+    taskId: 'assign_coach_to_group',
+    label: 'Assign Coach to Group',
+    description:
+      'Assign or remove a coach from a training group. Creates or deactivates a coach_group_assignments row. Director-confirmed only.',
+    requiredFields: [
+      { fieldId: 'coach', label: 'Coach',  required: true, example: 'Coach Sarah' },
+      { fieldId: 'group', label: 'Group',  required: true, example: 'Orange Ball Group A' },
+    ],
+    optionalFields: [
+      { fieldId: 'action_type', label: 'Action', required: false, example: 'add or remove (default: add)' },
+    ],
+    questionSequence: [
+      { order: 1, fieldId: 'coach',       question: 'Which coach are you assigning?' },
+      { order: 2, fieldId: 'group',       question: 'Which group should they be assigned to?' },
+      { order: 3, fieldId: 'action_type', question: 'Add or remove from this group? (default: add)' },
+    ],
+    reads: ['coach_profile', 'group', 'coach_group_assignments'],
+    createsDraftType: 'coach_group_assignment_draft',
     approvalRequired: false,
     unsafeWithoutApproval: [],
     saveApplyMethodStatus: 'wired',

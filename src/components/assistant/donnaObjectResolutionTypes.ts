@@ -123,6 +123,14 @@ export const FIELD_RESOLUTION_MAP: Partial<
   recommend_template_for_group: {
     group_or_players: 'group',
   },
+  reassign_player_group: {
+    player: 'player',
+    group: 'group',
+  },
+  assign_coach_to_group: {
+    coach: 'coach',
+    group: 'group',
+  },
 }
 
 // ---------------------------------------------------------------------------

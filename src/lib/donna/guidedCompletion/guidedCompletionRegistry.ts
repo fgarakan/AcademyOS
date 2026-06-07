@@ -272,6 +272,10 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
       'let\'s onboard a player',
       'player onboarding',
       'new player',
+      'add player',
+      'create a player',
+      'register a player',
+      'a new player',
     ],
     pageRoutes: [
       '/director/players',

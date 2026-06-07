@@ -206,7 +206,11 @@ function isReviewQueuePhrase(lower: string): boolean {
     lower.includes('needs approval') ||
     lower.includes('pending approval') ||
     lower.includes('pending review') ||
-    lower.includes('what needs approval')
+    lower.includes('what needs approval') ||
+    lower.includes('decisions are waiting') ||
+    lower.includes('pending decisions') ||
+    lower.includes('needs a decision') ||
+    lower.includes('what decisions')
   )
 }
 

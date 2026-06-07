@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 754–783 — DONNA Operator Certification V1
+
+**Operator Certification: 51.3 → 88.4 avg. 9/10 loops deterministic. Three full DONNA workflows created.**
+
+- Modified `src/components/assistant/donnaTaskContracts.ts` — Added 3 new `DonnaTaskId` entries + task contracts: `invite_coach` (email + role; delegates to `inviteCoachAction`), `reassign_player_group` (player + group + reason; delegates to `reassignPlayerGroupAction`), `assign_coach_to_group` (coach + group + action_type; delegates to `assignCoachGroupAction`); all three `saveApplyMethodStatus: 'wired'`
+- Modified `src/components/assistant/donnaObjectResolutionTypes.ts` — Added `FIELD_RESOLUTION_MAP` entries: `reassign_player_group` (player → 'player', group → 'group'), `assign_coach_to_group` (coach → 'coach', group → 'group')
+- Modified `src/components/assistant/donnaTaskRuntime.ts` — Added keyword arrays for `invite_coach`, `reassign_player_group`, `assign_coach_to_group`; patched `capture_coach_note` ('notes for', 'capture notes', "today's notes") and `draft_parent_update` ('an update for', 'draft an update'); added `ENTITY_INTERPOLATED_PATTERNS` with regex patterns `/^move [a-z]+ to [a-z]/i` and `/^reassign [a-z]+ to [a-z]/i` that run before keyword matching — catches "Move Emma to Green Ball" where entity name interrupts the phrase
+- Modified `src/app/director/_actions/donnaDraftExecutionActions.ts` — Added `saveInviteCoachDraftAction`, `saveReassignPlayerGroupDraftAction`, `saveAssignCoachGroupDraftAction`; each validates required resolved IDs, delegates to the pre-existing server action, and maps outcome to `DonnaApprovalExecutionResult`; all three require director confirmation via GenericDraftPanel before execution
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — Imported 3 new save actions; added `invite_coach`, `reassign_player_group`, `assign_coach_to_group` to `WIRED_TASK_IDS`; added 3 dispatch branches in `handleGenericDraftApprove` with entity-resolved field injection; extended `isReviewQueuePhrase` with 'decisions are waiting', 'pending decisions', 'needs a decision', 'what decisions'
+- Modified `src/lib/donna/brain/processDonnaMessage.ts` — Extended local `isReviewQueuePhrase` with 4 new phrases (matches Button file) — catches "What decisions are waiting?"
+- Modified `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — Added trigger phrases to `player_onboarding_completion`: 'add player', 'create a player', 'register a player', 'a new player' — catches "Add player" command
+- Created `docs/qa/DONNA_OPERATOR_CERTIFICATION_754.md` — 10-loop matrix; deterministic routing spec for Loops 2/3/4; pattern matching rationale; confirmation safety audit; failure recovery audit; before/after scores; pilot readiness
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 724–753 — DONNA Approval & Execution Certification V1
 
 **Approval & Execution: 82.7 → 90.4 avg. Three critical silent-failure paths closed.**

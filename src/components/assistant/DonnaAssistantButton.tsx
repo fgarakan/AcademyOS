@@ -46,6 +46,9 @@ import {
   saveSessionDraftAction,
   populateSessionBlocksAction,
   savePlayerNoteDraftAction,
+  saveInviteCoachDraftAction,
+  saveReassignPlayerGroupDraftAction,
+  saveAssignCoachGroupDraftAction,
 } from '@/app/director/_actions/donnaDraftExecutionActions'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 // Sprint 273 — Review Queue Command Center
@@ -361,6 +364,9 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'summarize_player_progress',
   'draft_session_brief',
   'draft_coach_brief',
+  'invite_coach',
+  'reassign_player_group',
+  'assign_coach_to_group',
 ])
 
 // Tasks that are wired but produce a read-only summary (no DB write).
@@ -2319,6 +2325,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       const coachId = resolvedObjects['coach']?.id ?? draft.collectedFields._resolved_coach_id ?? ''
       return fetchCoachIntelligenceAction(coachId)
     }
+    if (draft.taskId === 'invite_coach') {
+      return saveInviteCoachDraftAction(draft.collectedFields)
+    }
+    if (draft.taskId === 'reassign_player_group') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['player']?.id) {
+        fields._resolved_player_id = resolvedObjects['player'].id
+      }
+      if (resolvedObjects['group']?.id) {
+        fields._resolved_group_id = resolvedObjects['group'].id
+      }
+      return saveReassignPlayerGroupDraftAction(fields)
+    }
+    if (draft.taskId === 'assign_coach_to_group') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['coach']?.id) {
+        fields._resolved_coach_id = resolvedObjects['coach'].id
+      }
+      if (resolvedObjects['group']?.id) {
+        fields._resolved_group_id = resolvedObjects['group'].id
+      }
+      return saveAssignCoachGroupDraftAction(fields)
+    }
     return {
       ok: false,
       status: 'not_wired',
@@ -2466,7 +2495,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       lower.includes('unlinked notes') ||
       lower.includes('needs my review') ||
       lower.includes('what needs approval') ||
-      lower.includes('pending approvals')
+      lower.includes('pending approvals') ||
+      lower.includes('decisions are waiting') ||
+      lower.includes('pending decisions') ||
+      lower.includes('needs a decision') ||
+      lower.includes('what decisions')
     )
   }
 
