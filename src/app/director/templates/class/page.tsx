@@ -179,7 +179,7 @@ export default async function ClassTemplatesLibraryPage() {
 
       if (profile?.academy_id) {
         const result = await listTemplatesForAcademy(db, profile.academy_id)
-        if (!result.isSchemaMissing && !result.error && result.data.length > 0) {
+        if (!result.isSchemaMissing && !result.error) {
           liveTemplates = result.data
           dataSource = 'live'
         }
@@ -293,12 +293,28 @@ export default async function ClassTemplatesLibraryPage() {
         </div>
 
         {/* Template grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {dataSource === 'live'
-            ? liveTemplates.map(t => <LiveTemplateCard key={t.id} template={t} />)
-            : DEMO_CLASS_TEMPLATES.map(t => <DemoTemplateCard key={t.id} template={t} />)
-          }
-        </div>
+        {dataSource === 'live' && liveTemplates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-16 rounded-2xl border border-border bg-surface">
+            <div className="w-12 h-12 rounded-2xl bg-lime/10 border border-lime/20 flex items-center justify-center">
+              <LayoutTemplate className="w-5 h-5 text-lime" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-text-primary mb-1">No class templates yet</p>
+              <p className="text-xs text-text-muted max-w-xs">Create your first class template to build reusable session structures for your coaches.</p>
+            </div>
+            <Link href="/director/templates/class/create" className="btn-lime inline-flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Create First Template
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {dataSource === 'live'
+              ? liveTemplates.map(t => <LiveTemplateCard key={t.id} template={t} />)
+              : DEMO_CLASS_TEMPLATES.map(t => <DemoTemplateCard key={t.id} template={t} />)
+            }
+          </div>
+        )}
 
       </div>
 

@@ -4,6 +4,7 @@ import {
   ChevronRight, BookOpen, Users, Clock, AlertCircle,
   CheckCircle2, Zap, ArrowRight, Plus,
 } from 'lucide-react'
+import { getSupabaseServer } from '@/lib/supabase/server'
 import { TemplatesDonnaPanel } from './TemplatesDonnaPanel'
 
 // ── Action cards ─────────────────────────────────────────────────────────────
@@ -43,54 +44,100 @@ const ACTIONS = [
   },
 ]
 
-// ── Stat cards ───────────────────────────────────────────────────────────────
-
-const STATS = [
-  {
-    id: 'class',
-    label: 'Class Templates',
-    value: '12',
-    sub: '4 ready · 6 draft · 2 review',
-    icon: LayoutTemplate,
-    iconClass: 'text-lime',
-    bgClass: 'bg-lime/10',
-    borderClass: 'border-lime/20',
-  },
-  {
-    id: 'fitness',
-    label: 'Fitness Templates',
-    value: '8',
-    sub: '5 ready · 2 draft · 1 review',
-    icon: Dumbbell,
-    iconClass: 'text-status-purple',
-    bgClass: 'bg-status-purple/10',
-    borderClass: 'border-status-purple/20',
-  },
-  {
-    id: 'review',
-    label: 'Needs Review',
-    value: '3',
-    sub: 'Awaiting director approval',
-    icon: AlertCircle,
-    iconClass: 'text-status-orange',
-    bgClass: 'bg-status-orange/10',
-    borderClass: 'border-status-orange/20',
-  },
-  {
-    id: 'recent',
-    label: 'Recently Updated',
-    value: '5',
-    sub: 'In the last 7 days',
-    icon: Clock,
-    iconClass: 'text-status-blue',
-    bgClass: 'bg-status-blue/10',
-    borderClass: 'border-status-blue/20',
-  },
-]
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-export default function TemplatesPage() {
+export default async function TemplatesPage() {
+  // Query real template counts — never show hardcoded fake numbers to a pilot director
+  const supabase = await getSupabaseServer()
+  const rawDb = supabase as any
+
+  let classCount = 0
+  let fitnessCount = 0
+  let recentCount = 0
+  let countsAvailable = false
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.academy_id) {
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString()
+
+        const { data: rows, error } = await rawDb
+          .from('templates')
+          .select('id, category, updated_at')
+          .eq('academy_id', profile.academy_id)
+
+        if (!error) {
+          countsAvailable = true
+          for (const t of (rows ?? []) as Array<{ id: string; category: string | null; updated_at: string | null }>) {
+            const cat = (t.category ?? '').toLowerCase()
+            if (cat === 'fitness' || cat.includes('fitness')) {
+              fitnessCount++
+            } else {
+              classCount++
+            }
+            if (t.updated_at && t.updated_at >= sevenDaysAgoStr) recentCount++
+          }
+        }
+      }
+    }
+  } catch {
+    // DB error — show '--' rather than fake numbers
+  }
+
+  const totalCount = classCount + fitnessCount
+
+  const STATS = [
+    {
+      id: 'class',
+      label: 'Class Templates',
+      value: countsAvailable ? String(classCount) : '--',
+      sub: countsAvailable && classCount === 0 ? 'None yet — create your first' : 'On-court session blueprints',
+      icon: LayoutTemplate,
+      iconClass: 'text-lime',
+      bgClass: 'bg-lime/10',
+      borderClass: 'border-lime/20',
+    },
+    {
+      id: 'fitness',
+      label: 'Fitness Templates',
+      value: countsAvailable ? String(fitnessCount) : '--',
+      sub: countsAvailable && fitnessCount === 0 ? 'None yet — create your first' : 'Physical training blocks',
+      icon: Dumbbell,
+      iconClass: 'text-status-purple',
+      bgClass: 'bg-status-purple/10',
+      borderClass: 'border-status-purple/20',
+    },
+    {
+      id: 'total',
+      label: 'Total Templates',
+      value: countsAvailable ? String(totalCount) : '--',
+      sub: countsAvailable && totalCount === 0 ? 'Start by creating a class template' : 'Across all categories',
+      icon: ClipboardList,
+      iconClass: 'text-status-blue',
+      bgClass: 'bg-status-blue/10',
+      borderClass: 'border-status-blue/20',
+    },
+    {
+      id: 'recent',
+      label: 'Recently Updated',
+      value: countsAvailable ? String(recentCount) : '--',
+      sub: 'In the last 7 days',
+      icon: Clock,
+      iconClass: 'text-status-blue',
+      bgClass: 'bg-status-blue/10',
+      borderClass: 'border-status-blue/20',
+    },
+  ]
+
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
 
