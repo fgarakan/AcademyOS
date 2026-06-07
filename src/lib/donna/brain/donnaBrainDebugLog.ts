@@ -25,6 +25,7 @@ export type BrainRoutingStep =
   | 'run_entity'
   | 'run_goal'
   | 'check_context_pack'
+  | 'check_brain_context'
   | 'build_reasoning'
   | 'build_response'
   | 'route_coo_prompt'

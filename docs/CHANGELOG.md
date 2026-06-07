@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 934–963C — DONNA Page State Synchronization V1
+
+**DONNA answers now update page form fields in real time. PageStatePatch contract created. Class template page listens for patches. Template name and level update visibly when DONNA answers. TypeScript clean.**
+
+- Created `src/lib/donna/pageSync/donnaPageStateSync.ts` — `PageStatePatch` interface (patchId, workflowId, route, fieldId, registryFieldId, value, displayLabel, validationStatus: 'pending', source: 'donna_goal_session', timestamp); `buildPageStatePatch()` factory — maps workflowId + registryFieldId → page-native fieldId via `WORKFLOW_FIELD_MAPS`; 6 workflow maps defined (template_builder, player_onboarding, assessment, parent_update, curriculum_builder, academy_setup); `isFieldSynced()` and `getSyncedFieldIds()` helpers; pure TypeScript — no browser APIs, no React, no DB
+- Created `src/lib/donna/pageSync/donnaPageSyncEvents.ts` — browser custom event contract; 3 event constants (`donna:page-state-patch`, `donna:goal-session-started`, `donna:goal-session-completed`); `dispatchPageStatePatch()`, `dispatchGoalSessionStarted()`, `dispatchGoalSessionCompleted()` — all client-only with `typeof window` guard; `onPageStatePatch()`, `onGoalSessionStarted()`, `onGoalSessionCompleted()` — listener factories that return cleanup functions for `useEffect`; events dispatch on `window` with `bubbles: false`
+- Updated `src/lib/donna/goalSessions/donnaGoalSessionRuntime.ts` — added `pageStatePatch: PageStatePatch | null` to `GoalSessionResult`; `goal_session_step` computes patch via `buildPageStatePatch({ workflowId, route, registryFieldId: currentStepDef.fieldId, value: input.userMessage })`; `goal_session_complete` also includes patch (for the final step answer); all other actions set `pageStatePatch: null`; runtime never dispatches events — caller owns dispatch
+- Updated `src/components/donna/DonnaVoiceReadyShell.tsx` — imported `processGoalSession` and dispatch helpers; added goal session block BEFORE the brain bridge; calls `processGoalSession()` first; on `action !== 'no_session'`: renders DONNA message, navigates if `navigateTo` set, dispatches `dispatchPageStatePatch(patch)` when patch non-null, dispatches `dispatchGoalSessionStarted()` on start, dispatches `dispatchGoalSessionCompleted()` on completion; speaks if `shouldSpeak`; returns early — brain bridge only runs if no goal session matched
+- Updated `src/app/director/templates/class/create/page.tsx` — added `templateName: string` state; added `donnaSyncedFields: Set<string>` state; added `useEffect(() => onPageStatePatch(...), [])` listener with route filter (`patch.route.includes('/templates')`); handles `template_name` → `setTemplateName()`, `level` → `setSelectedLevel()`, `objective` → `setSelectedGoal()`; added template name text input field above review notice (full-width, lime focus ring); added "Set by DONNA" sparkle indicator next to Template Name label and Choose Curriculum Level heading when patched; passes `templateName` to `saveClassTemplateDraftFromWizardAction`
+- Updated `src/lib/actions/templateDraftAction.ts` — added `templateName?: string` to `SaveClassTemplateDraftWizardInput`; uses `input.templateName?.trim() || fallback` for the draft `name` field
+- Created `docs/architecture/DONNA_PAGE_STATE_SYNC_934.md` — core principle (page owns state, DONNA emits patches); PageStatePatch contract; browser event contract; workflow field maps; runtime integration (where patches are built vs dispatched); class template field wiring table; approval + safety guarantees; system gaps
+- Created `docs/qa/DONNA_PAGE_STATE_SYNC_CERTIFICATION_934.md` — 6 certification scenarios: (1) template name DONNA fill; (2) curriculum level DONNA select at Step 6; (3) route filter prevents cross-workflow contamination; (4) no sidebar storage — answers in sessionStorage only; (5) no save without director confirmation; (6) director can override DONNA's answer; build classification table
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 934–963B — DONNA Goal Session Runtime V1
 
 **DONNA transformed from command router to goal-completion system. Guided workflow runtime coordinates 6 existing workflows into a unified Q&A session loop. TypeScript clean.**

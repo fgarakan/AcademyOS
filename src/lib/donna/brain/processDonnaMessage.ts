@@ -88,6 +88,7 @@ import {
   emitDebugLog,
 } from './donnaBrainDebugLog'
 import type { BrainDecisionLog } from './donnaBrainDebugLog'
+import { retrieveKnowledgeContext, formatKnowledgeForResponse } from './donnaKnowledgeContextAdapter'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -734,6 +735,39 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
         followUpQuestion: followUp,
       }, debugLog)
     }
+  }
+
+  // ── Step 12.5: Brain knowledge context ──────────────────────────────────────
+  // Queries the certified DONNA Global Brain (21 initial entries via donnaBrainRuntime).
+  // Only fires when the brain has a high-confidence match for the message.
+  // Vocabulary definitions, decision rule thresholds, and philosophy principles
+  // are answered here — before falling through to goal/intent routing.
+  // Does NOT block context pack answers (Step 12 runs first).
+  logStep(debugLog, 'check_brain_context')
+  const brainCtx = retrieveKnowledgeContext({
+    query:        messageToProcess,
+    role,
+    currentRoute: route,
+  })
+  const brainFormatted = formatKnowledgeForResponse(brainCtx)
+  if (brainFormatted) {
+    const followUp = buildFollowUpForGoal(goalResult, null)
+    const formatted = buildChatGptLikeResponse({
+      answer: brainFormatted,
+      followUpQuestion: followUp,
+      role,
+    })
+    finalizeLog(debugLog, 'check_brain_context', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:          applyRolePolicy(formatted.display, role),
+      spokenResponse:    formatted.spoken,
+      intent:            intentResult.intent,
+      entity:            entityResult,
+      goal:              goalResult,
+      confidence:        0.80,
+      followUpQuestion:  followUp,
+    }, debugLog)
   }
 
   // ── Step 13: High-confidence goal → guided workflow ──────────────────────────

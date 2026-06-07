@@ -165,6 +165,7 @@ export async function saveTemplateDraftAction(
 export interface SaveClassTemplateDraftWizardInput {
   curriculumLevel: string
   templateGoal: string
+  templateName?: string
   blocks: Array<{
     type: string
     title: string
@@ -217,7 +218,7 @@ export async function saveClassTemplateDraftFromWizardAction(
 
   const templateDraft = {
     template_type: 'class_template',
-    name: `${input.curriculumLevel} — Class Template`,
+    name: input.templateName?.trim() || `${input.curriculumLevel} — Class Template`,
     description: input.templateGoal || null,
     total_duration_min: input.blocks.reduce((sum, b) => sum + b.durationMin, 0) || null,
     curriculum_level_key: input.curriculumLevel,

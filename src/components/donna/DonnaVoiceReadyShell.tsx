@@ -156,6 +156,13 @@ import {
   MAX_NO_SPEECH_RETRIES,
   type DonnaPendingConfirmation,
 } from '@/lib/donna/useDonnaConversationMode'
+// Mega Sprint 934–963A — DONNA Unified Assistant Runtime bridge
+// Consults the canonical brain for unmatched queries (vocabulary, entity navigation,
+// relationship intelligence, philosophy) before the routeDonnaPrompt fallback.
+import { processDonnaMessage } from '@/lib/donna/brain/processDonnaMessage'
+// Mega Sprint 934–963C — DONNA Page State Synchronization
+import { processGoalSession } from '@/lib/donna/goalSessions/donnaGoalSessionRuntime'
+import { dispatchPageStatePatch, dispatchGoalSessionStarted, dispatchGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -2606,6 +2613,159 @@ export function DonnaVoiceReadyShell({
         }, 600)
         return
       }
+    }
+
+    // ── Mega Sprint 934–963C: Goal Session page sync ─────────────────────────
+    // Runs before the brain bridge. If a guided workflow is active or triggered,
+    // handles the full Q&A loop and emits a pageStatePatch so the target page
+    // updates its form state. Page owns state — runtime only returns data.
+    {
+      const goalResult = processGoalSession({
+        userMessage:            trimmed,
+        currentRoute:           pathname ?? '/director',
+        activeGuidedWorkflowId: null,
+      })
+
+      if (goalResult.action !== 'no_session') {
+        const goalMsg: ChatMessage = {
+          id:         `donna-goal-${Date.now()}`,
+          role:       'donna',
+          kind:       'text',
+          text:       goalResult.response,
+          timestamp:  new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: 'DONNA Goal Session',
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, goalMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, goalResult.response, { confidence: 'high' })
+
+          if (goalResult.navigateTo) {
+            router.push(goalResult.navigateTo)
+          }
+          if (goalResult.pageStatePatch) {
+            dispatchPageStatePatch(goalResult.pageStatePatch)
+          }
+          if (goalResult.action === 'goal_session_start' && goalResult.workflowId) {
+            dispatchGoalSessionStarted({
+              workflowId: goalResult.workflowId,
+              route:      goalResult.navigateTo ?? pathname ?? '/director',
+              label:      goalResult.workflowId,
+            })
+          }
+          if (goalResult.action === 'goal_session_complete' && goalResult.workflowId && goalResult.draftType) {
+            dispatchGoalSessionCompleted({
+              workflowId: goalResult.workflowId,
+              draftType:  goalResult.draftType,
+              answers:    goalResult.answers ?? {},
+            })
+          }
+          if (goalResult.shouldSpeak && goalResult.spokenResponse) {
+            speakDonnaPremium(goalResult.spokenResponse).catch(() => {})
+          }
+        }, 400)
+        return
+      }
+    }
+
+    // ── Mega Sprint 934–963A: Unified DONNA Brain bridge ────────────────────
+    // Consults processDonnaMessage for unmatched queries after all specialized
+    // routing above has had its chance. Claims high-confidence 'respond' results
+    // (brain vocabulary, decision rules, philosophy) and entity navigation results.
+    // Falls through for 'route_coo_prompt' — handled by routeDonnaPrompt below.
+    // This bridge ensures both voice and sidebar consult the same canonical brain.
+    {
+      const brainResult = processDonnaMessage({
+        userMessage:            trimmed,
+        role:                   plainRole as 'director' | 'coach',
+        route:                  pathname ?? '/director',
+        activeGuidedWorkflowId: null,
+        cooState:               null,
+        goalMemory:             null,
+        conversationHistory:    messages.slice(-5).map(m => ({
+          role:    (m.role === 'user' ? 'user' : 'donna') as 'user' | 'donna',
+          content: m.text ?? '',
+        })),
+        entityContext:           null,
+        pendingDisambiguation:   null,
+      })
+
+      // Claim: high-confidence direct response (brain knowledge, context pack,
+      // relationship/entity intelligence, continuity phrase).
+      // Threshold 0.80 excludes low-confidence goal-inference responses (0.55–0.71)
+      // that the specialized tryAnswer* chain above handles more specifically.
+      if (
+        brainResult.action === 'respond' &&
+        brainResult.response &&
+        brainResult.confidence >= 0.80
+      ) {
+        const brainMsg: ChatMessage = {
+          id:          `donna-brain-${Date.now()}`,
+          role:        'donna',
+          kind:        'text',
+          text:        brainResult.response,
+          timestamp:   new Date().toISOString(),
+          confidence:  brainResult.confidence >= 0.85 ? 'high' : 'partial',
+          sourceNote:  'DONNA Brain',
+          followUp:    brainResult.followUpQuestion ?? undefined,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, brainMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, brainMsg.text, { confidence: brainMsg.confidence })
+          if (brainResult.shouldSpeak && brainResult.spokenResponse) {
+            speakDonnaPremium(brainResult.spokenResponse).catch(() => {})
+          }
+        }, 400)
+        return
+      }
+
+      // Claim: entity / relationship navigation.
+      if (brainResult.action === 'navigate' && brainResult.navigateTo) {
+        const navText = brainResult.response || 'Taking you there…'
+        const navMsg: ChatMessage = {
+          id:        `donna-brain-nav-${Date.now()}`,
+          role:      'donna',
+          kind:      'text',
+          text:      navText,
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: 'DONNA Brain',
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, navMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, navText, { confidence: 'high' })
+          router.push(brainResult.navigateTo!)
+        }, 300)
+        return
+      }
+
+      // Claim: open review queue.
+      if (brainResult.action === 'open_review') {
+        const reviewText = 'Opening the Review Queue now.'
+        const reviewMsg: ChatMessage = {
+          id:        `donna-brain-review-${Date.now()}`,
+          role:      'donna',
+          kind:      'text',
+          text:      reviewText,
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: 'DONNA Brain',
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, reviewMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, reviewText, { confidence: 'high' })
+          router.push('/director/review')
+        }, 300)
+        return
+      }
+
+      // For 'route_coo_prompt', 'fetch_attention', 'fetch_brief',
+      // 'fetch_coo_intelligence', 'start_workflow', 'start_goal_session',
+      // and all other actions: fall through to shortPhrase + routeDonnaPrompt below.
     }
 
     // ── Sprint 728: Short-phrase / vague-input handler ───────────────────────

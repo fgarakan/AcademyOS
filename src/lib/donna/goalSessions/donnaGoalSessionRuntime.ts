@@ -38,6 +38,8 @@ import {
   isWorkflowComplete,
   buildResumeMessage,
 } from '../guidedCompletion/guidedCompletionStepRunner'
+import { buildPageStatePatch } from '../pageSync/donnaPageStateSync'
+import type { PageStatePatch } from '../pageSync/donnaPageStateSync'
 
 // ── Input ──────────────────────────────────────────────────────────────────────
 
@@ -71,6 +73,8 @@ export interface GoalSessionResult {
   confidence: number
   shouldSpeak: boolean
   spokenResponse: string | null
+  /** Patch to emit as donna:page-state-patch. Caller dispatches; runtime never mutates DOM. */
+  pageStatePatch: PageStatePatch | null
 }
 
 // ── Cancel intent detection ────────────────────────────────────────────────────
@@ -116,16 +120,17 @@ function isResumeIntent(lower: string): boolean {
 
 function noSession(): GoalSessionResult {
   return {
-    action:        'no_session',
-    response:      '',
-    navigateTo:    null,
-    workflowId:    null,
-    draftType:     null,
-    answers:       null,
-    completionPct: 0,
-    confidence:    0,
-    shouldSpeak:   false,
+    action:         'no_session',
+    response:       '',
+    navigateTo:     null,
+    workflowId:     null,
+    draftType:      null,
+    answers:        null,
+    completionPct:  0,
+    confidence:     0,
+    shouldSpeak:    false,
     spokenResponse: null,
+    pageStatePatch: null,
   }
 }
 
@@ -180,6 +185,7 @@ export function processGoalSession(input: GoalSessionInput): GoalSessionResult {
         confidence:     1.0,
         shouldSpeak:    true,
         spokenResponse: 'Okay, cancelled.',
+        pageStatePatch: null,
       }
     }
 
@@ -201,6 +207,7 @@ export function processGoalSession(input: GoalSessionInput): GoalSessionResult {
         confidence:     1.0,
         shouldSpeak:    false,
         spokenResponse: null,
+        pageStatePatch: null,
       }
     }
 
@@ -234,12 +241,21 @@ export function processGoalSession(input: GoalSessionInput): GoalSessionResult {
         confidence:     1.0,
         shouldSpeak:    true,
         spokenResponse: summary.headline,
+        pageStatePatch: null,
       }
     }
 
     // Record the answer against the current step's fieldId
     const updated = recordAnswer(currentStepDef.fieldId, input.userMessage)
     if (!updated) return noSession()
+
+    // Build page state patch for this answer
+    const patch = buildPageStatePatch({
+      workflowId:      existingSession.workflowId,
+      route:           input.currentRoute,
+      registryFieldId: currentStepDef.fieldId,
+      value:           input.userMessage,
+    })
 
     // Check if now complete
     if (isWorkflowComplete(existingSession.workflowId, updated.answers)) {
@@ -260,6 +276,7 @@ export function processGoalSession(input: GoalSessionInput): GoalSessionResult {
         confidence:     1.0,
         shouldSpeak:    true,
         spokenResponse: summary.headline,
+        pageStatePatch: patch,
       }
     }
 
@@ -284,6 +301,7 @@ export function processGoalSession(input: GoalSessionInput): GoalSessionResult {
       confidence:     1.0,
       shouldSpeak:    false,
       spokenResponse: null,
+      pageStatePatch: patch,
     }
   }
 
@@ -323,5 +341,6 @@ export function processGoalSession(input: GoalSessionInput): GoalSessionResult {
     confidence:     0.95,
     shouldSpeak:    true,
     spokenResponse: `${matchedWorkflow.label} started.`,
+    pageStatePatch: null,
   }
 }

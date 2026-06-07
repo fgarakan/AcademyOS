@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info, Eye, Loader2 } from 'lucide-react'
 import { saveClassTemplateDraftFromWizardAction } from '@/lib/actions/templateDraftAction'
+import { onPageStatePatch } from '@/lib/donna/pageSync/donnaPageSyncEvents'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import {
   CURRICULUM_LEVEL_PREVIEWS,
@@ -74,10 +75,30 @@ export default function CreateClassTemplatePage() {
   const [step, setStep] = useState<Step>(1)
   const [selectedLevel, setSelectedLevel] = useState<string>('')
   const [selectedGoal, setSelectedGoal] = useState<string>('')
+  const [templateName, setTemplateName] = useState<string>('')
   const [blocks, setBlocks] = useState<Block[]>([])
   const [selectedDrills, setSelectedDrills] = useState<Record<string, string[]>>({})
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'schema_missing'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [donnaSyncedFields, setDonnaSyncedFields] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    return onPageStatePatch(patch => {
+      if (!patch.route.includes('/templates')) return
+      setDonnaSyncedFields(prev => new Set(prev).add(patch.fieldId))
+      switch (patch.fieldId) {
+        case 'template_name':
+          setTemplateName(patch.value)
+          break
+        case 'level':
+          setSelectedLevel(patch.value)
+          break
+        case 'objective':
+          setSelectedGoal(patch.value)
+          break
+      }
+    })
+  }, [])
 
   const preview = getCurriculumLevelPreview(selectedLevel)
   const stage = getCurriculumStage(selectedLevel)
@@ -139,6 +160,7 @@ export default function CreateClassTemplatePage() {
     const result = await saveClassTemplateDraftFromWizardAction({
       curriculumLevel: selectedLevel,
       templateGoal: selectedGoal,
+      templateName: templateName || undefined,
       blocks: blocks.map(b => ({
         type: b.type,
         title: b.title,
@@ -179,6 +201,26 @@ export default function CreateClassTemplatePage() {
           <p className="page-eyebrow">Templates</p>
           <h1 className="page-title">Create Class Template</h1>
           <p className="page-subtitle">Build a reusable session structure step by step.</p>
+        </div>
+
+        {/* Template name */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] uppercase tracking-widest text-text-muted">Template Name</label>
+            {donnaSyncedFields.has('template_name') && (
+              <span className="flex items-center gap-1 text-[10px] text-lime">
+                <Sparkles className="w-3 h-3" />
+                Set by DONNA
+              </span>
+            )}
+          </div>
+          <input
+            type="text"
+            value={templateName}
+            onChange={e => setTemplateName(e.target.value)}
+            placeholder="e.g. Orange Ball 2 — Forehand Focus"
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface-raised text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40 focus:ring-1 focus:ring-lime/20 transition-all duration-150"
+          />
         </div>
 
         {/* Review notice */}
@@ -232,7 +274,15 @@ export default function CreateClassTemplatePage() {
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-base font-bold text-text-primary mb-1">Choose Curriculum Level</h2>
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="text-base font-bold text-text-primary">Choose Curriculum Level</h2>
+                  {donnaSyncedFields.has('level') && (
+                    <span className="flex items-center gap-1 text-[10px] text-lime">
+                      <Sparkles className="w-3 h-3" />
+                      Set by DONNA
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-text-secondary">The curriculum level is the source of truth. It determines which goals, drills, and assessment gates apply to this template.</p>
               </div>
 
