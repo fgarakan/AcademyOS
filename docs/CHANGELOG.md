@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-06-07 — Director Dashboard Reimagination V1 — DONNA COO Operating Surface
+
+**Redesigned the Director homepage from a data portal into a DONNA COO daily briefing surface.**
+
+- Created `src/lib/donna/confidenceEngine.ts` — `ConfidenceLevel` type; `deriveConfidence()` derives High/Medium/Low from record count + window; `factualConfidence()`, `inferredConfidence()`, `earlySignalConfidence()` preset helpers
+- Created `src/app/director/_components/DonnaSignalMeta.tsx` — Shared confidence + evidence chip used across all 7 sections; renders confidence badge (color-coded), plain-language evidence summary, optional recommended action link
+- Created `src/app/director/_components/DonnaAskButton.tsx` — Client component; fires `donna:open` custom event to open the DONNA assistant shell with a prompt
+- Created `src/app/director/_components/DonnaMorningBrief.tsx` — Zone 1+2 unified component; identity bar (greeting, academy name, date) + right-aligned Academy Health % badge + DONNA brief card (2 sentences max, decisions count, prepared count, primary CTA, Ask DONNA button)
+- Created `src/app/director/_components/ImmediateAttentionFeed.tsx` — Up to 5 ranked attention items from the attention queue; each item: severity dot (red/orange/yellow/muted), situation label, evidence sentence, confidence chip, single action link
+- Created `src/app/director/_components/TodayOperationsPanel.tsx` — Calm ops snapshot; today's session count, expected attendance, coach coverage status, ratio warnings, assessments due, parent updates pending; all derived from already-fetched data
+- Created `src/app/director/_components/DevelopmentWatchList.tsx` — 3-bucket player intelligence (Moving Fast / Needs Support / Watch Closely); buckets hidden when empty; each player: avatar, name, level badge, signal sentence, confidence chip, view link
+- Created `src/app/director/_components/DirectorDecisionsQueue.tsx` — Decision-queue surface; groups pending items by type (Wrap-ups / Assessments / Placements / Lesson Requests); each group: type badge, count, DONNA 1-sentence prep context, risk level, oldest age flag, action button; disappears when queue is empty
+- Created `src/app/director/_components/ProgramHealthNarrative.tsx` — DONNA program analysis card; health %, 3 key numbers (active players / sessions / improving), advancement-eligible count, group enrollment table with capacity bars; confidence chip
+- Created `src/app/director/_components/AcademyIntelligenceSection.tsx` — Strategic causal intelligence; up to 5 insights derived from available data (graduation vs intake flow, curriculum bottleneck, over-capacity groups, template gaps, recap completion); each insight: observation + causal explanation + confidence chip
+- Created `src/app/director/_components/DonnaRecommendedActions.tsx` — DONNA's prepared work surface; up to 5 items derived from academy_suggestions + stall/advancement signals; each item: type badge, label, reasoning sentence, confidence chip, action link
+- Modified `src/app/director/page.tsx` — Full rewrite; same 25 DB queries preserved; added derivations for today's sessions, expected attendance, coach coverage gaps, Development Watch List buckets (movingFast/needsSupport/watchClosely), program health confidence; renders 8 COO sections in order; removed DonnaExecutiveWorkspace, AcademyHealthChartCard, LiveActivityCard, AcademyAlertsPanel, DirectorTodayKpiSection, AcademyKpiCardsSection, DirectorKpiHealthSection, DirectorReviewDecideZone, DirectorAcademyHealthSnapshot, DirectorTodayDonnaBrief, DirectorTopPriorities, CollapsibleSection; Academy Setup section preserved at bottom when !isAcademyLive
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-06 — Mega Sprint 2341–2370 — DONNA Academy Relationship Intelligence V1
 
 - Created `src/lib/donna/relationship/donnaRelationshipIntelligence.ts` — Core relationship engine; `RelationshipContext` with 6 derived Maps (`playerByPlayerId`, `playersByLevelId`, `playersByLevelName`, `assessmentsByPlayerId`, `groupByLevelId`, `templatesByLevelId`); stall detection mirroring `playerProgressStallDetector.ts` (medium=90d, high=180d); `buildRelationshipContext(ctx)` main factory; `getPlayerContext()`, `getGroupContext()`, `getLevelContext()` full context resolvers; `getCoGroupResult()` co-group members; `getPlayersNeedingAttention()`, `getPlayersWithoutRecentAssessment()`, `buildAcademyInsight()` aggregate queries; fuzzy level name matching in `getLevelContext()`

@@ -1,38 +1,27 @@
-import type { ReactNode } from 'react'
-import Link from 'next/link'
-import {
-  Users, Calendar, ChevronRight, ChevronDown, Activity,
-  Clock, Brain, AlertTriangle,
-  GraduationCap, Sparkles, ClipboardList,
-} from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { getAcademyPriorityQueue, getReassessmentPipeline } from '@/lib/backend/dashboard'
 import { computeRecapCompletionRate, type RecapCheckRow } from '@/lib/kpi/coachExecutionKpiEngine'
-import {
-  Card, CardHeader, CardContent, CardFooter,
-  EmptyState, Avatar, StatusBadge,
-} from '@/components/ui'
-import { urgencyToLabel } from '@/lib/utils'
-import { formatDate } from '@/lib/utils'
-import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
-import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
-import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
 import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
-import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
-import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
-import { DirectorTodayKpiSection } from './_components/DirectorTodayKpiSection'
 import { buildDashboardAttentionContext } from '@/lib/donna/proactive/dashboardAttentionContext'
 import { buildAcademyAttentionReport } from '@/lib/donna/proactive/academyAttentionEngine'
 import { loadCurriculumBottleneck } from '@/lib/donna/curriculumBottleneckLoader'
 import { deriveLevelKeyFromSignal } from '@/lib/curriculum/curriculumAttentionRanking'
-import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
 import { buildAcademyHealthReport } from '@/lib/donna/intelligence/academyHealthBrief'
-import { DirectorTodayDonnaBrief } from './_components/DirectorTodayDonnaBrief'
-import { DirectorTopPriorities } from './_components/DirectorTopPriorities'
-import { DirectorReviewDecideZone } from './_components/DirectorReviewDecideZone'
-import { DirectorAcademyHealthSnapshot } from './_components/DirectorAcademyHealthSnapshot'
-import { DonnaExecutiveWorkspace } from './_components/DonnaExecutiveWorkspace'
+import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
+
+import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
+import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
+import { DonnaMorningBrief } from './_components/DonnaMorningBrief'
+import { ImmediateAttentionFeed } from './_components/ImmediateAttentionFeed'
+import { TodayOperationsPanel } from './_components/TodayOperationsPanel'
+import { DevelopmentWatchList } from './_components/DevelopmentWatchList'
+import type { WatchPlayer } from './_components/DevelopmentWatchList'
+import { DirectorDecisionsQueue } from './_components/DirectorDecisionsQueue'
+import { ProgramHealthNarrative } from './_components/ProgramHealthNarrative'
+import { AcademyIntelligenceSection } from './_components/AcademyIntelligenceSection'
+import { DonnaRecommendedActions } from './_components/DonnaRecommendedActions'
+import { inferredConfidence, factualConfidence } from '@/lib/donna/confidenceEngine'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -42,28 +31,6 @@ function isPending(status: string | null): boolean {
     status === 'placement_in_progress' ||
     status === 'pending_approval'
   )
-}
-
-type BadgeStatus =
-  | 'action_needed' | 'needs_attention' | 'check_in'
-  | 'on_track' | 'complete' | 'building' | 'warning' | 'info'
-
-function pendingStatusBadge(status: string | null): { status: BadgeStatus; label: string } {
-  switch (status) {
-    case 'pending_placement':     return { status: 'building',  label: 'Pending placement' }
-    case 'placement_in_progress': return { status: 'building',  label: 'In progress' }
-    case 'pending_approval':      return { status: 'check_in',  label: 'Pending approval' }
-    default:                      return { status: 'building',  label: 'Pending' }
-  }
-}
-
-function urgencyBadgeClass(urgency: string | null): string {
-  switch (urgency) {
-    case 'immediate': return 'bg-status-red/15 text-status-red border border-status-red/30'
-    case 'urgent':    return 'bg-status-orange/15 text-status-orange border border-status-orange/30'
-    case 'high':      return 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
-    default:          return 'bg-surface-raised text-text-muted border border-border'
-  }
 }
 
 // ── Page ───────────────────────────────────────────────────────
@@ -90,7 +57,7 @@ export default async function DirectorDashboard() {
     .single()
 
   const academyId: string | null = profile?.academy_id ?? null
-  const directorDisplayName: string = profile?.display_name ?? 'Director'
+  const directorDisplayName: string = profile?.display_name ?? ''
 
   if (!academyId) {
     return (
@@ -113,25 +80,23 @@ export default async function DirectorDashboard() {
   const reassessmentPipeline = await getReassessmentPipeline(supabase, academyId)
 
   // Player counts
-  const activePlayers   = players.filter(p => p.player_status === 'active').length
-  const pendingCount    = players.filter(p => isPending(p.player_status)).length
-  const attentionCount  = players.filter(
+  const activePl      = players.filter(p => p.player_status === 'active')
+  const activePlayers = activePl.length
+  const pendingCount  = players.filter(p => isPending(p.player_status)).length
+  const attentionCount = players.filter(
     p => p.player_status === 'on_hold' || p.player_status === 'reassessment_due'
   ).length
-  const pendingList     = players.filter(p => isPending(p.player_status)).slice(0, 5)
 
-  // Academy improvement
-  const activePl = players.filter(p => p.player_status === 'active')
-  const withDelta = activePl.filter(p => p.score_delta !== null && p.score_delta !== undefined)
+  const withDelta      = activePl.filter(p => p.score_delta !== null && p.score_delta !== undefined)
   const improvingCount = withDelta.filter(p => (p.score_delta ?? 0) > 0).length
 
-  // Sessions this week
-  const now = new Date()
+  // Sessions — this week
+  const now      = new Date()
   const weekStart = new Date(now)
   weekStart.setDate(now.getDate() - now.getDay())
   weekStart.setHours(0, 0, 0, 0)
   const weekStartStr = weekStart.toISOString().split('T')[0]
-  const weekEndStr = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const weekEndStr   = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
     .toISOString().split('T')[0]
 
   const { data: weekSessions } = await supabase
@@ -143,7 +108,12 @@ export default async function DirectorDashboard() {
 
   const sessionsThisWeek = (weekSessions ?? []).length
 
-  // Onboarding settings — derived from academy already fetched above (no extra query)
+  // Today's sessions
+  const todayStr     = now.toISOString().split('T')[0]
+  const todaySessions = (weekSessions ?? []).filter(s => s.scheduled_date === todayStr)
+  const coachCoverageGaps = todaySessions.filter(s => !s.coach_id).length
+
+  // Onboarding settings
   const onboardingSettings = (academy?.settings as Record<string, unknown>) ?? {}
   const hasAcademyDna = typeof onboardingSettings.academy_dna === 'object' && onboardingSettings.academy_dna !== null
   const dnaSavedAt = typeof onboardingSettings.academy_dna_completed_at === 'string'
@@ -159,7 +129,7 @@ export default async function DirectorDashboard() {
   const allRequests = (plrData ?? []) as Array<{ id: string; status: string }>
   const newRequests = allRequests.filter(r => r.status === 'new').length
 
-  // AI Suggestions — single query; derive pending count, high-priority count, and curriculum gap count
+  // AI Suggestions
   const { data: suggestionCountData } = await rawDb
     .from('academy_suggestions')
     .select('priority, suggestion_type')
@@ -167,12 +137,9 @@ export default async function DirectorDashboard() {
     .eq('status', 'pending')
   const pendingSuggestions = (suggestionCountData ?? []) as Array<{ priority: string; suggestion_type: string }>
   const pendingSuggestionsCount = pendingSuggestions.length
-  const highPrioritySuggestionsCount = pendingSuggestions.filter(s => s.priority === 'high').length
   const curricGapCount = pendingSuggestions.filter(s => s.suggestion_type === 'curriculum_gap').length
 
-  // Curriculum coverage — single query; derive players-with-level, advancement-ready count,
-  // and stalled-player count (enrolled > 180 days, not yet advancement-eligible).
-  // Sprint 762: added enrolled_at to existing select (1 extra field, same RLS).
+  // Curriculum coverage
   const { data: curricStateRows } = await rawDb
     .from('player_curriculum_states')
     .select('player_id, advancement_eligible, enrolled_at, current_level_id')
@@ -183,12 +150,11 @@ export default async function DirectorDashboard() {
     enrolled_at: string | null
     current_level_id: string | null
   }>
-  const playersWithLevel = typedCurricRows.length
+  const playersWithLevel    = typedCurricRows.length
   const playersWithoutLevel = Math.max(0, activePlayers - playersWithLevel)
   const advancementReadyCount = typedCurricRows.filter(r => r.advancement_eligible === true).length
 
-  // Stalled players: enrolled > 180 days AND not yet advancement-eligible.
-  // Sprint 762: computed from enrolled_at — no new query.
+  // Stalled players (enrolled > 180 days, not advancement-eligible)
   const now180dAgo = new Date()
   now180dAgo.setDate(now180dAgo.getDate() - 180)
   const stalledRows = typedCurricRows.filter(r =>
@@ -198,8 +164,6 @@ export default async function DirectorDashboard() {
   )
   const stalledPlayerCount = stalledRows.length
 
-  // Phase 6 — PlayerProgressStall objects for attention engine evidence text.
-  // Joins stalled curriculum rows to player summaries (already fetched above).
   const playerSummaryById = new Map(players.map(p => [p.player_id, p]))
   const playerProgressStalls: PlayerProgressStall[] = stalledRows
     .map(r => {
@@ -226,7 +190,7 @@ export default async function DirectorDashboard() {
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
 
-  // Phase 1 — oldest pending review age (for stale_review_queue attention item)
+  // Oldest pending review age
   const { data: oldestPendingRows } = await rawDb
     .from('proposed_actions')
     .select('created_at')
@@ -239,7 +203,7 @@ export default async function DirectorDashboard() {
     ? Math.floor((Date.now() - new Date(oldestPendingCreatedAt).getTime()) / 86400000)
     : null
 
-  // KPI wiring — assessment items in review queue
+  // Assessments in review queue
   const { count: assessmentsInReviewCount } = await rawDb
     .from('proposed_actions')
     .select('*', { count: 'exact', head: true })
@@ -248,7 +212,7 @@ export default async function DirectorDashboard() {
     .in('target_module', ['assessment_studio_draft', 'placement_assessment_draft'])
   const assessmentsNeedingReview = assessmentsInReviewCount ?? 0
 
-  // KPI wiring — parent updates pending director approval
+  // Parent updates pending
   const { count: parentUpdatesCount } = await rawDb
     .from('proposed_actions')
     .select('*', { count: 'exact', head: true })
@@ -257,7 +221,7 @@ export default async function DirectorDashboard() {
     .eq('target_module', 'parent_communication')
   const parentUpdatesPendingApproval = parentUpdatesCount ?? 0
 
-  // KPI wiring — active placement and level review items
+  // Placement reviews
   const { count: placementReviewCount } = await rawDb
     .from('proposed_actions')
     .select('*', { count: 'exact', head: true })
@@ -266,10 +230,7 @@ export default async function DirectorDashboard() {
     .in('target_module', ['placement_review', 'placement_recommendation_draft', 'level_review'])
   const activePlacementReviews = placementReviewCount ?? 0
 
-  // Sprint 762 — Recap completion KPI (KPI 4) via coachExecutionKpiEngine.
-  // Query 1: completed sessions in last 30 days, academy scoped.
-  // Query 2: voice_notes linked to those sessions, academy scoped.
-  // Builds RecapCheckRow[] for computeRecapCompletionRate().
+  // Recap completion KPI
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
@@ -283,7 +244,6 @@ export default async function DirectorDashboard() {
 
   const completedSessionIds = (completedSessionsData ?? []).map((s: { id: string }) => s.id)
 
-  // sessionsWithNote hoisted so recapsMissingCount can be derived below
   let sessionsWithNote = new Set<string>()
   let recapCompletionPct: number | null = null
 
@@ -309,17 +269,17 @@ export default async function DirectorDashboard() {
     recapCompletionPct = recapResult.value
   }
 
-  // Coach recaps missing = completed sessions (last 30 days) with no voice_note
   const coachRecapsMissing = completedSessionIds.filter(id => !sessionsWithNote.has(id)).length
 
-  // Checklist
+  // Templates
   const { data: templateCheckData } = await rawDb
     .from('templates')
     .select('id, tags, curriculum_level_id')
     .eq('academy_id', academyId)
     .limit(20)
   const typedTemplateRows = (templateCheckData ?? []) as Array<{ id: string; tags: string[] | null; curriculum_level_id: string | null }>
-  const classTemplateCount = typedTemplateRows.filter((t) => !(t.tags ?? []).includes('fitness_template:true')).length
+  const classTemplateCount  = typedTemplateRows.filter(t => !(t.tags ?? []).includes('fitness_template:true')).length
+  const fitnessTemplateCount = typedTemplateRows.filter(t => (t.tags ?? []).includes('fitness_template:true')).length
 
   const { data: anySessionData } = await supabase
     .from('sessions')
@@ -329,32 +289,21 @@ export default async function DirectorDashboard() {
   const sessionsExist = (anySessionData ?? []).length > 0
 
   // Alert counts
-  const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
+  const missingFocus    = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
   const reassessmentDue = reassessmentPipeline.filter(
     r => r.urgency === 'overdue' || r.urgency === 'due_soon'
   ).length
   const totalAlerts = missingFocus + attentionCount + reassessmentDue + newRequests + pendingWrapUpsCount
 
-  // Derived KPI values — no new DB queries
+  // Derived KPIs
   const curriculumExecutionPct = activePlayers > 0
     ? Math.round((playersWithLevel / activePlayers) * 100)
     : 0
-  // Academy health: inverse of alert ratio, clamped 0–100
   const academyHealthPct = activePlayers > 0
     ? Math.max(0, Math.min(100, Math.round(100 - (totalAlerts / Math.max(activePlayers, 1)) * 25)))
     : 85
 
-  // Greeting
-  const hour = now.getHours()
-  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-
-  const today = now.toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
-
-  // Sprint 764 — Enrichment query A: v_group_summary for group capacity signals.
-  // Provides overCapacityGroups (groups where player_count > max_players) and
-  // noCoverageGroupCount (groups with no session this week, crossed against weekSessions).
+  // Group summary — capacity signals
   const { data: groupSummaryRaw } = await rawDb
     .from('v_group_summary')
     .select('group_id, group_name, player_count, max_players')
@@ -366,9 +315,7 @@ export default async function DirectorDashboard() {
     max_players: number | null
   }>
 
-  // Sprint 764 — Enrichment query B: v_pending_proposed_actions for real per-item data.
-  // Provides action_label, expires_at, risk_level per pending action (up to 10).
-  // View is pre-filtered to pending_review status by name convention.
+  // Pending proposed actions
   const { data: pendingActionsRaw } = await rawDb
     .from('v_pending_proposed_actions')
     .select('action_id, action_label, expires_at, risk_level')
@@ -381,7 +328,7 @@ export default async function DirectorDashboard() {
     risk_level: string | null
   }>
 
-  // Sprint 764 — Derive overCapacityGroups from group summary.
+  // Over-capacity groups
   const overCapacityGroups = groupSummaryRows
     .filter(g =>
       g.group_id !== null &&
@@ -397,8 +344,7 @@ export default async function DirectorDashboard() {
       maxPlayers: g.max_players,
     }))
 
-  // Sprint 764 — Derive noCoverageGroupCount from group summary × weekSessions.
-  // Groups with no sessions scheduled this week are coverage gaps.
+  // No-coverage group count
   const sessionGroupIds = new Set(
     (weekSessions ?? []).map(s => s.group_id).filter(Boolean) as string[],
   )
@@ -406,87 +352,7 @@ export default async function DirectorDashboard() {
     g => g.group_id !== null && !sessionGroupIds.has(g.group_id),
   ).length
 
-  // Sprint 763 / Sprint 764 — Build attention queue.
-  // pendingApprovals: real per-item data from v_pending_proposed_actions + non-action synthetics.
-  // Fallback: if view returned nothing and wrap-ups are known, add synthetic wrap-up item.
-  // highAlerts: mapped from priorityQueue (already fetched via getAcademyPriorityQueue).
-  // overCapacityGroups: now live from v_group_summary (Sprint 764).
-  // noCoverageGroupCount: now live from groups × sessions cross-check (Sprint 764).
-  const attentionQueueInput: AttentionQueueInput = {
-    pendingApprovals: [
-      // Real proposed-action items with expiry and risk data
-      ...pendingActionsRows
-        .filter(a => a.action_id !== null)
-        .map(a => ({
-          id: a.action_id!,
-          actionLabel: a.action_label ?? 'Pending action requiring review',
-          riskLevel: a.risk_level ?? null,
-          expiresAt: a.expires_at ?? null,
-          entityLabel: null,
-        })),
-      // Fallback: view returned nothing but we know wrap-ups exist
-      ...(pendingActionsRows.length === 0 && pendingWrapUpsCount > 0 ? [{
-        id: 'pending-wrap-ups-fallback',
-        actionLabel: `${pendingWrapUpsCount.toString()} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
-        riskLevel: 'medium',
-        expiresAt: null,
-        entityLabel: null,
-      }] : []),
-      // Non-proposed-action items (private_lesson_requests, player status signals)
-      ...(newRequests > 0 ? [{
-        id: 'lesson-requests',
-        actionLabel: `${newRequests.toString()} lesson request${newRequests !== 1 ? 's' : ''} need review`,
-        riskLevel: 'medium',
-        expiresAt: null,
-        entityLabel: null,
-      }] : []),
-      ...(reassessmentDue > 0 ? [{
-        id: 'reassessment-due',
-        actionLabel: `${reassessmentDue.toString()} player${reassessmentDue !== 1 ? 's' : ''} overdue for reassessment`,
-        riskLevel: 'high',
-        expiresAt: null,
-        entityLabel: null,
-      }] : []),
-      ...(pendingCount > 0 ? [{
-        id: 'pending-placement',
-        actionLabel: `${pendingCount.toString()} player${pendingCount !== 1 ? 's' : ''} awaiting curriculum placement`,
-        riskLevel: 'low',
-        expiresAt: null,
-        entityLabel: null,
-      }] : []),
-    ],
-    highAlerts: priorityQueue.map(item => ({
-      signalId: item.player_id ?? null,
-      playerId: item.player_id ?? null,
-      playerName: item.full_name ?? null,
-      title: item.primary_action ?? null,
-      severity: item.urgency === 'immediate' ? 'critical'
-              : (item.urgency === 'urgent' || item.urgency === 'high') ? 'high'
-              : 'medium',
-    })),
-    overCapacityGroups,
-    curriculumGapCount: curricGapCount,
-    noCoverageGroupCount,
-  }
-  const attentionQueue = buildAttentionQueue(attentionQueueInput)
-
-  const fitnessTemplateCount = typedTemplateRows.filter((t) => (t.tags ?? []).includes('fitness_template:true')).length
-
-  // Academy live state — all 4 setup steps complete
-  const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
-
-  // Phase 2 — onboarding readiness level (for onboarding_incomplete attention item)
-  const hasPlayers = activePlayers > 0
-  const hasTemplates = classTemplateCount > 0
-  const hasCurriculumGaps = curricGapCount > 0
-  const onboardingReadinessLevel: 'not_started' | 'partial' | 'nearly_ready' | 'ready_signal' | 'unknown' =
-    activePlayers === 0 && classTemplateCount === 0 ? 'not_started' :
-    activePlayers === 0 || classTemplateCount === 0 ? 'partial' :
-    !sessionsExist ? 'nearly_ready' :
-    'ready_signal'
-
-  // Phase 3 — curriculum template coverage gap count
-  // Levels with enrolled players that have no matching class template
+  // Curriculum template coverage gap
   const enrolledLevelIds = new Set(typedCurricRows.map(r => r.current_level_id).filter((id): id is string => id != null))
   const templateLevelIds = new Set(
     typedTemplateRows
@@ -495,8 +361,7 @@ export default async function DirectorDashboard() {
   )
   const curriculumTemplateCoverageGapCount = Array.from(enrolledLevelIds).filter(id => !templateLevelIds.has(id)).length
 
-  // Curriculum bottleneck for DONNA brief (Mega Sprint 1996–2005, extended Sprint 2006–2010)
-  // Non-fatal — zeros/nulls default when data unavailable.
+  // Curriculum bottleneck
   let mostBlockedLevelName: string | null = null
   let mostBlockedLevelKey: string | null = null
   let mostBlockedLevelStalledCount = 0
@@ -518,28 +383,34 @@ export default async function DirectorDashboard() {
     }
   } catch { /* non-fatal */ }
 
-  // Sprint 1701 — Build COO attention report from dashboard-available data.
-  // No new DB queries — re-uses values already computed above.
-  // Total pending reviews: wrap-ups + assessments + placement reviews.
+  // Academy attention + health reports
   const totalPendingReviews = pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews
+  const hasPlayers    = activePlayers > 0
+  const hasTemplates  = classTemplateCount > 0
+  const hasCurriculumGaps = curricGapCount > 0
+  const onboardingReadinessLevel: 'not_started' | 'partial' | 'nearly_ready' | 'ready_signal' | 'unknown' =
+    activePlayers === 0 && classTemplateCount === 0 ? 'not_started' :
+    activePlayers === 0 || classTemplateCount === 0 ? 'partial' :
+    !sessionsExist ? 'nearly_ready' :
+    'ready_signal'
+
   const cooAttentionCtx = buildDashboardAttentionContext({
-    missingWrapUps:           coachRecapsMissing,
-    highRiskPlayerCount:      attentionCount,
-    pendingReviews:           totalPendingReviews,
-    attendanceExceptions:     pendingWrapUpsCount,
-    advancementEligibleCount: advancementReadyCount,
-    playerProgressStallCount: stalledPlayerCount,
-    curriculumGapCount:       curricGapCount,
-    curriculumDraftCount:     pendingSuggestionsCount,
-    reassessmentDueCount:     reassessmentDue,
+    missingWrapUps:                    coachRecapsMissing,
+    highRiskPlayerCount:               attentionCount,
+    pendingReviews:                    totalPendingReviews,
+    attendanceExceptions:              pendingWrapUpsCount,
+    advancementEligibleCount:          advancementReadyCount,
+    playerProgressStallCount:          stalledPlayerCount,
+    curriculumGapCount:                curricGapCount,
+    curriculumDraftCount:              pendingSuggestionsCount,
+    reassessmentDueCount:              reassessmentDue,
     sessionsThisWeek,
-    isLive:                   isAcademyLive,
+    isLive:                            sessionsExist && activePlayers > 0 && playersWithLevel > 0,
     mostBlockedLevelName,
     mostBlockedLevelKey,
     mostBlockedLevelStalledCount,
     mostBlockedLevelAvgCompletion,
     topTaggedConcern,
-    // Sprint 2011–2015 — Attention Engine Data Activation
     oldestPendingReviewAgeDays,
     onboardingReadinessLevel,
     hasPlayers,
@@ -549,812 +420,343 @@ export default async function DirectorDashboard() {
     topTaggedConcernCount,
     playerProgressStalls,
   })
-  const cooAttentionReport = buildAcademyAttentionReport(cooAttentionCtx)
+  const cooAttentionReport  = buildAcademyAttentionReport(cooAttentionCtx)
   const academyHealthReport = buildAcademyHealthReport(cooAttentionCtx)
 
-  // DONNA UI Constitution — compute screen brief (1–2 sentences from real data)
+  // Build attention queue for ImmediateAttentionFeed
+  const attentionQueueInput: AttentionQueueInput = {
+    pendingApprovals: [
+      ...pendingActionsRows
+        .filter(a => a.action_id !== null)
+        .map(a => ({
+          id: a.action_id!,
+          actionLabel: a.action_label ?? 'Pending action requiring review',
+          riskLevel: a.risk_level ?? null,
+          expiresAt: a.expires_at ?? null,
+          entityLabel: null,
+        })),
+      ...(pendingActionsRows.length === 0 && pendingWrapUpsCount > 0 ? [{
+        id: 'pending-wrap-ups-fallback',
+        actionLabel: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
+        riskLevel: 'medium',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+      ...(newRequests > 0 ? [{
+        id: 'lesson-requests',
+        actionLabel: `${newRequests} lesson request${newRequests !== 1 ? 's' : ''} need review`,
+        riskLevel: 'medium',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+      ...(reassessmentDue > 0 ? [{
+        id: 'reassessment-due',
+        actionLabel: `${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} overdue for reassessment`,
+        riskLevel: 'high',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+      ...(pendingCount > 0 ? [{
+        id: 'pending-placement',
+        actionLabel: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} awaiting curriculum placement`,
+        riskLevel: 'low',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+    ],
+    highAlerts: priorityQueue.map(item => ({
+      signalId:   item.player_id ?? null,
+      playerId:   item.player_id ?? null,
+      playerName: item.full_name ?? null,
+      title:      item.primary_action ?? null,
+      severity:   item.urgency === 'immediate' ? 'critical'
+                : (item.urgency === 'urgent' || item.urgency === 'high') ? 'high'
+                : 'medium',
+    })),
+    overCapacityGroups,
+    curriculumGapCount: curricGapCount,
+    noCoverageGroupCount,
+  }
+  const attentionQueue = buildAttentionQueue(attentionQueueInput)
+
+  // ── DONNA Morning Brief content ────────────────────────────────
+
+  // Greetings
+  const hour = now.getHours()
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const today = now.toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+
+  // Brief line derivation (decision tree per spec)
   const constitutionTotal =
     attentionCount + pendingCount + assessmentsNeedingReview +
     reassessmentDue + parentUpdatesPendingApproval + coachRecapsMissing + activePlacementReviews
-  let constitutionBrief: string
-  let constitutionUrgency: 'normal' | 'urgent' = 'normal'
-  let constitutionActionLabel: string | undefined
-  let constitutionActionHref: string | undefined
+
+  let briefLine1: string
+  let briefLine2: string = ''
+  let briefUrgency: 'normal' | 'urgent' = 'normal'
+  let briefCtaLabel: string | undefined
+  let briefCtaHref: string | undefined
 
   if (constitutionTotal === 0 && activePlayers === 0) {
-    // No players yet — setup state
-    constitutionBrief = 'Start by adding players and assigning curriculum levels — then today\'s signals will appear here.'
-    constitutionActionLabel = 'Add Players'
-    constitutionActionHref = '/director/players'
+    briefLine1 = "Start by adding players and assigning curriculum levels — then I can surface what needs attention."
+    briefCtaLabel = 'Add Players'
+    briefCtaHref  = '/director/players'
   } else if (cooAttentionReport.topAction) {
-    // Lead with the highest-ranked priority from the attention engine.
-    constitutionBrief = cooAttentionReport.topAction.label
-    const sev = cooAttentionReport.topAction.severity
-    constitutionUrgency = sev === 'critical' || sev === 'high' ? 'urgent' : 'normal'
+    briefLine1 = cooAttentionReport.topAction.label
+    briefLine2 = cooAttentionReport.topAction.bestNextAction ?? cooAttentionReport.allItems[1]?.label ?? ''
+    const sev  = cooAttentionReport.topAction.severity
+    briefUrgency = sev === 'critical' || sev === 'high' ? 'urgent' : 'normal'
     if (cooAttentionReport.topAction.href) {
-      constitutionActionLabel = 'Review'
-      constitutionActionHref = cooAttentionReport.topAction.href
+      briefCtaLabel = 'Review'
+      briefCtaHref  = cooAttentionReport.topAction.href
     }
   } else if (academyHealthReport.topIssue) {
-    // Fallback to top Academy Health issue when attention engine yields no ranked action.
-    constitutionBrief = academyHealthReport.topIssue
-    const s = academyHealthReport.overallStatus
-    constitutionUrgency = s === 'critical' || s === 'action_needed' ? 'urgent' : 'normal'
+    briefLine1 = academyHealthReport.topIssue
+    const s    = academyHealthReport.overallStatus
+    briefUrgency = s === 'critical' || s === 'action_needed' ? 'urgent' : 'normal'
     if (academyHealthReport.recommendedRoute) {
-      constitutionActionLabel = 'Review'
-      constitutionActionHref = academyHealthReport.recommendedRoute
+      briefCtaLabel = 'Review'
+      briefCtaHref  = academyHealthReport.recommendedRoute
     }
   } else if (constitutionTotal === 0) {
-    // No signals active — all clear
-    constitutionBrief = `${activePlayers} active player${activePlayers !== 1 ? 's' : ''}. No urgent items today — academy is running smoothly.`
+    briefLine1 = `${activePlayers} active player${activePlayers !== 1 ? 's' : ''}. No urgent items today — academy is running smoothly.`
   } else {
-    // Fallback: hardcoded counter list when attention engine yields nothing but raw counts exist
     const parts: string[] = []
-    if (attentionCount > 0) parts.push(`${attentionCount} player${attentionCount !== 1 ? 's' : ''} need${attentionCount !== 1 ? '' : 's'} attention`)
-    if (pendingCount > 0) parts.push(`${pendingCount} pending onboarding`)
-    if (assessmentsNeedingReview > 0) parts.push(`${assessmentsNeedingReview} assessment${assessmentsNeedingReview !== 1 ? 's' : ''} to review`)
-    if (reassessmentDue > 0) parts.push(`${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} due for reassessment`)
-    if (parentUpdatesPendingApproval > 0) parts.push(`${parentUpdatesPendingApproval} parent update${parentUpdatesPendingApproval !== 1 ? 's' : ''} pending`)
-    if (coachRecapsMissing > 0) parts.push(`${coachRecapsMissing} coach recap${coachRecapsMissing !== 1 ? 's' : ''} missing`)
-    if (activePlacementReviews > 0) parts.push(`${activePlacementReviews} placement review${activePlacementReviews !== 1 ? 's' : ''} active`)
-    constitutionBrief = parts.slice(0, 3).join(', ') + (parts.length > 3 ? `, and ${parts.length - 3} more item${parts.length - 3 !== 1 ? 's' : ''}.` : '.')
-    if (constitutionTotal > 5) constitutionUrgency = 'urgent'
-    if (attentionCount > 0 || assessmentsNeedingReview > 0 || activePlacementReviews > 0) {
-      constitutionActionLabel = 'Review Queue'
-      constitutionActionHref = '/director/review'
-    } else {
-      constitutionActionLabel = 'Players'
-      constitutionActionHref = '/director/players'
-    }
+    if (attentionCount > 0)             parts.push(`${attentionCount} player${attentionCount !== 1 ? 's' : ''} need attention`)
+    if (pendingCount > 0)               parts.push(`${pendingCount} pending onboarding`)
+    if (assessmentsNeedingReview > 0)   parts.push(`${assessmentsNeedingReview} assessment${assessmentsNeedingReview !== 1 ? 's' : ''} to review`)
+    if (reassessmentDue > 0)            parts.push(`${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} due for reassessment`)
+    if (coachRecapsMissing > 0)         parts.push(`${coachRecapsMissing} recap${coachRecapsMissing !== 1 ? 's' : ''} missing`)
+    briefLine1 = parts.slice(0, 3).join(', ') + (parts.length > 3 ? `, and ${parts.length - 3} more.` : '.')
+    if (constitutionTotal > 5) briefUrgency = 'urgent'
+    briefCtaLabel = 'Review Queue'
+    briefCtaHref  = '/director/review'
   }
 
-  // Sprint 2176–2195: DONNA brief line2 — best next action from top priority, or second item label
-  const donnaLine2 = cooAttentionReport.topAction?.bestNextAction
-    ?? cooAttentionReport.allItems[1]?.label
-    ?? ''
+  // ── Development Watch List — derive 3 buckets ──────────────────
+
+  // Moving fast: advancement-eligible or positive score delta
+  const curricStateById = new Map(typedCurricRows.map(r => [r.player_id, r]))
+
+  const movingFast: WatchPlayer[] = activePl
+    .filter(p => {
+      if (!p.player_id) return false
+      const cs = curricStateById.get(p.player_id)
+      return cs?.advancement_eligible === true || (p.score_delta !== null && (p.score_delta ?? 0) > 0)
+    })
+    .sort((a, b) => {
+      const aAdv = curricStateById.get(a.player_id ?? '')?.advancement_eligible === true ? 2 : 0
+      const bAdv = curricStateById.get(b.player_id ?? '')?.advancement_eligible === true ? 2 : 0
+      return (bAdv + (b.score_delta ?? 0)) - (aAdv + (a.score_delta ?? 0))
+    })
+    .slice(0, 3)
+    .map(p => {
+      const cs = curricStateById.get(p.player_id ?? '')
+      const isAdv = cs?.advancement_eligible === true
+      return {
+        playerId:        p.player_id ?? '',
+        name:            p.full_name ?? 'Unknown',
+        levelLabel:      p.level_label ?? null,
+        signal:          isAdv
+          ? 'Advancement-eligible — meets all gate criteria. Ready to move up.'
+          : `Score improved ${(p.score_delta ?? 0) > 0 ? '+' : ''}${p.score_delta ?? 0} — progressing well.`,
+        href:            `/director/players/${p.player_id}`,
+        confidence:      isAdv ? 'high' as const : 'medium' as const,
+        evidenceSummary: isAdv
+          ? 'Based on gate completion records'
+          : 'Based on recent assessment score delta',
+      }
+    })
+
+  // Needs support: on_hold, reassessment_due, or high-severity stall
+  const stallById = new Map(playerProgressStalls.map(s => [s.playerId, s]))
+  const stalledPlayerIds = new Set(stalledRows.map(r => r.player_id))
+
+  const needsSupportRaw = activePl.filter(p =>
+    p.player_id !== null && (
+      p.player_status === 'on_hold' ||
+      p.player_status === 'reassessment_due' ||
+      stalledPlayerIds.has(p.player_id!)
+    )
+  )
+
+  const needsSupport: WatchPlayer[] = needsSupportRaw.slice(0, 3).map(p => {
+    const stall = stallById.get(p.player_id ?? '')
+    const isOnHold         = p.player_status === 'on_hold'
+    const isReassessment   = p.player_status === 'reassessment_due'
+    return {
+      playerId:        p.player_id ?? '',
+      name:            p.full_name ?? 'Unknown',
+      levelLabel:      p.level_label ?? null,
+      signal:          isOnHold
+        ? 'On hold — needs director review before returning to program.'
+        : isReassessment
+          ? 'Reassessment overdue — hasn\'t been evaluated recently.'
+          : stall
+            ? `Stalled ${stall.daysAtCurrentLevel} days at this level — gate review may help.`
+            : 'Needs attention.',
+      href:            `/director/players/${p.player_id}`,
+      confidence:      (isOnHold || isReassessment) ? 'high' as const : 'medium' as const,
+      evidenceSummary: (isOnHold || isReassessment)
+        ? 'Based on player status record'
+        : stall
+          ? `Based on ${stall.daysAtCurrentLevel}-day enrollment and gate records`
+          : 'Based on player status',
+    }
+  })
+
+  // Watch closely: pending placement (new players not yet placed)
+  const watchClosely: WatchPlayer[] = players
+    .filter(p => isPending(p.player_status) && p.player_id != null)
+    .slice(0, 3)
+    .map(p => ({
+      playerId:        p.player_id!,
+      name:            p.full_name ?? 'Unknown',
+      levelLabel:      null,
+      signal:          'Awaiting curriculum placement — cannot join a group until placed.',
+      href:            `/director/players/${p.player_id}`,
+      confidence:      'high' as const,
+      evidenceSummary: 'Based on player onboarding status',
+    }))
+
+  // ── Expected attendance — today's groups ──────────────────────
+
+  const todayGroupIds = new Set(
+    todaySessions.map(s => s.group_id).filter(Boolean) as string[]
+  )
+  const expectedAttendance = groupSummaryRows
+    .filter(g => g.group_id !== null && todayGroupIds.has(g.group_id!))
+    .reduce((sum, g) => sum + (g.player_count ?? 0), 0)
+
+  // ── Program health confidence ─────────────────────────────────
+
+  const programHealthSignal = cooAttentionReport.topAction?.label ?? academyHealthReport.topIssue ?? null
+  const programHealthConf = activePlayers >= 10
+    ? factualConfidence(`Based on ${activePlayers} active player records and ${sessionsThisWeek} sessions this week`)
+    : inferredConfidence(`Based on ${activePlayers} player records — signal will strengthen as the academy grows`)
+
+  // ── Academy live state ────────────────────────────────────────
+
+  const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
+
+  // ── Prepared count for morning brief ─────────────────────────
+
+  const preparedCount = pendingSuggestionsCount
+
+  // ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 space-y-4 animate-fade-in">
+    <div className="p-6 space-y-6 animate-fade-in">
 
-      {/* ── Identity Bar ─────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted mb-1">{today}</p>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight leading-tight">
-            {timeGreeting}, {directorDisplayName}.
-          </h1>
-          <p className="text-text-secondary text-sm mt-1">{academyName}</p>
-        </div>
-        <Link
-          href="/director/today"
-          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-lime transition-colors mt-1 shrink-0"
-        >
-          <Calendar className="w-3.5 h-3.5" />
-          Today&apos;s Academy
-          <ChevronRight className="w-3 h-3" />
-        </Link>
-      </div>
-
-      {/* ── DONNA Daily Brief — 2 sentences, 1 CTA ──────────── */}
-      <DirectorTodayDonnaBrief
-        line1={constitutionBrief}
-        line2={donnaLine2}
-        urgency={constitutionUrgency}
-        ctaLabel={constitutionActionLabel}
-        ctaHref={constitutionActionHref}
+      {/* Section 1 — DONNA Morning Brief */}
+      <DonnaMorningBrief
+        directorName={directorDisplayName}
+        academyName={academyName}
+        today={today}
+        timeGreeting={timeGreeting}
+        healthPct={academyHealthPct}
+        line1={briefLine1}
+        line2={briefLine2}
+        urgency={briefUrgency}
+        decisionsCount={totalPendingReviews}
+        preparedCount={preparedCount}
+        ctaLabel={briefCtaLabel}
+        ctaHref={briefCtaHref}
       />
 
-      {/* ── DONNA Executive Workspace — start / resume workflows ─ */}
-      <DonnaExecutiveWorkspace
-        totalPendingReviews={totalPendingReviews}
-        pendingPlacementCount={pendingCount}
-        stalledPlayerCount={stalledPlayerCount}
-        mostBlockedLevelName={mostBlockedLevelName}
-        curricGapCount={curricGapCount}
+      {/* Section 2 — Immediate Attention */}
+      <ImmediateAttentionFeed items={attentionQueue.items} />
+
+      {/* Section 3 — Today's Operations */}
+      <TodayOperationsPanel
+        todaySessions={todaySessions as Array<{ id: string; name: string | null; scheduled_date: string; status: string; coach_id: string | null; group_id: string | null }>}
+        expectedAttendance={expectedAttendance}
+        coachCoverageGaps={coachCoverageGaps}
+        overCapacityGroups={overCapacityGroups}
+        assessmentsDue={reassessmentDue}
+        parentUpdatesPending={parentUpdatesPendingApproval}
       />
 
-      {/* ── Top Priorities — max 3 ───────────────────────────── */}
-      <DirectorTopPriorities attentionQueue={attentionQueue} />
+      {/* Section 4 — Development Watch List */}
+      <DevelopmentWatchList
+        movingFast={movingFast}
+        needsSupport={needsSupport}
+        watchClosely={watchClosely}
+      />
 
-      {/* ── Review & Decide — primary work zone ─────────────── */}
-      <DirectorReviewDecideZone
-        totalPending={pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews + newRequests}
+      {/* Section 5 — Director Decisions Queue */}
+      <DirectorDecisionsQueue
         wrapUpsCount={pendingWrapUpsCount}
         assessmentsCount={assessmentsNeedingReview}
         placementReviewsCount={activePlacementReviews}
         lessonRequestsCount={newRequests}
+        totalCount={totalPendingReviews + newRequests}
+        oldestPendingAgeDays={oldestPendingReviewAgeDays}
       />
 
-      {/* ── Academy Health Snapshot ──────────────────────────── */}
-      <DirectorAcademyHealthSnapshot
+      {/* Section 6 — Program Health */}
+      <ProgramHealthNarrative
         healthPct={academyHealthPct}
-        attentionCount={attentionCount}
-        criticalCount={reassessmentDue}
+        activePlayers={activePlayers}
+        sessionsThisWeek={sessionsThisWeek}
+        improvingCount={improvingCount}
+        groups={groupSummaryRows.map(g => ({
+          group_name:   g.group_name,
+          player_count: g.player_count,
+          max_players:  g.max_players,
+        }))}
+        overCapacityCount={overCapacityGroups.length}
+        advancementReadyCount={advancementReadyCount}
+        topSignal={programHealthSignal}
+        confidence={programHealthConf.confidence}
+        evidenceSummary={programHealthConf.evidenceSummary}
       />
 
-      {/* ── Below fold — collapsed sections ─────────────────────────────────────────── */}
-      {/* All sections below are closed by default. Director landing is a command screen. */}
-      <div className="space-y-2 pt-2">
+      {/* Section 7 — Academy Intelligence */}
+      <AcademyIntelligenceSection
+        advancementReadyCount={advancementReadyCount}
+        pendingCount={pendingCount}
+        mostBlockedLevelName={mostBlockedLevelName}
+        mostBlockedLevelStalledCount={mostBlockedLevelStalledCount}
+        mostBlockedLevelAvgCompletion={mostBlockedLevelAvgCompletion}
+        curriculumTemplateCoverageGapCount={curriculumTemplateCoverageGapCount}
+        overCapacityGroups={overCapacityGroups}
+        recapCompletionPct={recapCompletionPct}
+        completedSessionCount={completedSessionIds.length}
+        activePlayers={activePlayers}
+      />
 
-        {/* Sessions This Week */}
-        <CollapsibleSection title="Sessions This Week">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="label-xs">Sessions This Week</p>
-              <p className="text-xs text-text-muted mt-1">Sessions scheduled for the current week. Create sessions from class templates to build your coaching history.</p>
-            </div>
-            <Link
-              href="/director/sessions"
-              className="shrink-0 text-xs text-lime hover:opacity-80 font-medium"
-            >
-              View all →
-            </Link>
-          </div>
-          <Card>
-            <CardContent className="py-4">
-              {(weekSessions ?? []).length === 0 ? (
-                <EmptyState
-                  icon={<Calendar className="w-5 h-5" />}
-                  title="No sessions this week"
-                  description="Sessions appear here once created from a class template. Schedule your first session to get started."
-                  className="py-6"
-                />
-              ) : (
-                <div className="space-y-1">
-                  {(weekSessions ?? []).slice(0, 4).map(session => (
-                    <Link
-                      key={session.id}
-                      href={`/director/sessions/${session.id}`}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {session.name ?? 'Untitled Session'}
-                        </p>
-                        <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
-                      </div>
-                      <SessionStatusPill status={session.status} />
-                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </CollapsibleSection>
+      {/* Section 8 — DONNA Recommended Actions */}
+      <DonnaRecommendedActions
+        suggestions={pendingSuggestions}
+        curricGapCount={curricGapCount}
+        stalledPlayerCount={stalledPlayerCount}
+        advancementReadyCount={advancementReadyCount}
+      />
 
-        {/* Academy Metrics — KPI tiles moved here from above fold */}
-        <div data-donna-focus-id="academy-metrics-section">
-          <CollapsibleSection title="Academy Metrics">
-            <DirectorTodayKpiSection
-              playersNeedingAttention={attentionCount}
-              pendingOnboarding={pendingCount}
-              assessmentsNeedingReview={assessmentsNeedingReview}
-              playersReadyForReassessment={reassessmentDue}
-              parentUpdatesPendingApproval={parentUpdatesPendingApproval}
-              coachRecapsMissing={coachRecapsMissing}
-              activePlacementReviews={activePlacementReviews}
-            />
-            <AcademyKpiCardsSection
-              sessionsToday={sessionsThisWeek}
-              attendanceExceptions={pendingWrapUpsCount}
-              coachRecaps={pendingWrapUpsCount}
-              levelUpCandidates={advancementReadyCount}
-              parentUpdates={newRequests}
-              academyHealthPct={academyHealthPct}
-              curriculumExecution={curriculumExecutionPct}
-              playerProgress={improvingCount}
-              activePlayers={activePlayers}
-            />
-            <DirectorKpiHealthSection
-              activePlayers={activePlayers}
-              advancementReadyCount={advancementReadyCount}
-              curriculumExecutionPct={curriculumExecutionPct}
-              pendingWrapUpsCount={pendingWrapUpsCount}
-              improvingCount={improvingCount}
-              recapCompletionPct={recapCompletionPct}
-              stalledPlayerCount={stalledPlayerCount}
-            />
-          </CollapsibleSection>
-        </div>
-
-        {/* Alerts & Placement */}
-        <div data-donna-focus-id="alerts-placement-section">
-        <CollapsibleSection title="Alerts &amp; Placement" badge={totalAlerts}>
+      {/* ── Academy Setup — bottom only when incomplete ────────── */}
+      {!isAcademyLive && (
+        <div
+          className="space-y-4 pt-4"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+        >
           <div>
-            <p className="label-xs">Pending Placement</p>
-            <p className="text-xs text-text-muted mt-1">Players awaiting onboarding completion. Priority action items are surfaced above.</p>
+            <p className="label-xs">Academy Setup</p>
+            <p className="text-xs text-text-muted mt-1">
+              Complete these steps to activate your academy.
+            </p>
           </div>
-
-          {/* Pending Placement */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-text-primary">Pending Placement</h2>
-                  <p className="text-xs text-text-muted mt-0.5">Players awaiting onboarding completion</p>
-                </div>
-                {pendingList.length > 0 && (
-                  <span className="font-mono text-status-orange text-xl font-bold leading-none">
-                    {pendingCount}
-                  </span>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {pendingList.length === 0 ? (
-                <EmptyState
-                  icon={<Clock className="w-5 h-5" />}
-                  title="No pending placements"
-                  description={players.length === 0 ? "No players have been added yet. Add your first player to begin the placement process." : "All players have completed placement. New players will appear here when onboarding."}
-                  className="py-10"
-                />
-              ) : (
-                <ul className="space-y-1">
-                  {pendingList.map(player => {
-                    if (!player.player_id) return null
-                    const badge = pendingStatusBadge(player.player_status)
-                    return (
-                      <li key={player.player_id}>
-                        <Link
-                          href={`/director/players/${player.player_id}`}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                        >
-                          <Avatar name={player.full_name ?? '?'} size="sm" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-text-primary truncate">
-                              {player.full_name ?? '—'}
-                            </p>
-                            <StatusBadge status={badge.status} label={badge.label} size="sm" />
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </CardContent>
-            {pendingList.length > 0 && (
-              <CardFooter>
-                <Link
-                  href="/director/players"
-                  className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-                >
-                  View all players →
-                </Link>
-              </CardFooter>
-            )}
-          </Card>
-
-          {/* Alert Breakdown */}
-          <div>
-            <p className="text-[10px] uppercase tracking-widest font-medium text-text-muted">Alert Breakdown</p>
-            <p className="text-xs text-text-muted mt-1">Detailed breakdown by type — priority items are shown above.</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-            <AcademyAlertsPanel
-              missingFocusCount={missingFocus}
-              attentionCount={attentionCount}
-              reassessmentDueCount={reassessmentDue}
-              newRequestsCount={newRequests}
-              pendingCount={pendingCount}
-              pendingWrapUpsCount={pendingWrapUpsCount}
-            />
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="font-semibold text-text-primary flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-lime" />
-                      AI Suggestions
-                    </h2>
-                    <p className="text-xs text-text-muted mt-0.5">Suggested actions for review</p>
-                  </div>
-                  {pendingSuggestionsCount > 0 && (
-                    <span className="font-mono text-lime text-xl font-bold leading-none">
-                      {pendingSuggestionsCount}
-                    </span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {pendingSuggestionsCount === 0 ? (
-                  <EmptyState
-                    icon={<Brain className="w-5 h-5" />}
-                    title="No pending suggestions"
-                    description="Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
-                    className="py-8"
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between px-1">
-                      <span className="text-xs text-text-secondary">
-                        {pendingSuggestionsCount} suggestion{pendingSuggestionsCount !== 1 ? 's' : ''} pending review
-                      </span>
-                      {highPrioritySuggestionsCount > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 border-status-orange/20 text-status-orange">
-                          <AlertTriangle className="w-2.5 h-2.5" />
-                          {highPrioritySuggestionsCount} high priority
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-text-muted px-1">
-                      Nothing changes until you review and accept each suggestion.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Link
-                  href="/director/ai-suggestions"
-                  className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-                >
-                  {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
-                </Link>
-              </CardFooter>
-            </Card>
-          </div>
-        </CollapsibleSection>
-        </div>{/* /alerts-placement-section */}
-
-        {/* Analytics */}
-        <CollapsibleSection title="Analytics">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-            <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
-            <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
-          </div>
-
-          {/* Curriculum Coverage */}
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 mb-3">
-                <GraduationCap className="w-4 h-4 text-lime" />
-                <p className="label-xs">Curriculum Coverage</p>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <Link href="/director/players" className="group">
-                  <div className="bg-surface-raised rounded-xl px-4 py-3 border border-border hover:border-lime/30 transition-colors">
-                    <p className="font-mono font-bold text-3xl text-lime leading-none">{playersWithLevel}</p>
-                    <p className="text-xs text-text-secondary mt-1">With curriculum level</p>
-                  </div>
-                </Link>
-                <Link href="/director/players" className="group">
-                  <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${playersWithoutLevel > 0 ? 'border-status-orange/30 hover:border-status-orange/50' : 'border-border hover:border-lime/30'}`}>
-                    <p className={`font-mono font-bold text-3xl leading-none ${playersWithoutLevel > 0 ? 'text-status-orange' : 'text-text-muted'}`}>{playersWithoutLevel}</p>
-                    <p className="text-xs text-text-secondary mt-1">Missing level</p>
-                  </div>
-                </Link>
-                <Link href="/director/signals" className="group hidden sm:block">
-                  <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${curricGapCount > 0 ? 'border-lime/20 hover:border-lime/40' : 'border-border hover:border-lime/30'}`}>
-                    <p className={`font-mono font-bold text-3xl leading-none ${curricGapCount > 0 ? 'text-lime' : 'text-text-muted'}`}>{curricGapCount}</p>
-                    <p className="text-xs text-text-secondary mt-1">Curriculum gap suggestions</p>
-                  </div>
-                </Link>
-              </div>
-              {players.length === 0 && (
-                <p className="text-xs text-text-muted mt-3">Add players and assign curriculum levels to see coverage stats here.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* First class template prompt */}
-          {classTemplateCount === 0 && players.length > 0 && (
-            <NextBestActionCard
-              variant="guide"
-              title="Create your first class template"
-              body="Class templates let you generate curriculum-aligned lesson plans that coaches can run on court."
-              actionLabel="New Template"
-              actionHref="/director/class-templates/new"
-            />
-          )}
-        </CollapsibleSection>
-
-      </div>
-
-      {/* ── Academy Setup + Admin ─────────────────────────── */}
-      {/* Sprint 765: moved from top to bottom to reduce cognitive load.      */}
-      {/* Sprint 767: remains at bottom — setup is secondary to operations.   */}
-      <div
-        className="space-y-4 pt-4"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-      >
-        <div>
-          <p className="label-xs">Academy Setup</p>
-          <p className="text-xs text-text-muted mt-1">One-time setup steps and academy DNA. Revisit anytime to update your configuration.</p>
-        </div>
-
-        {/* DNA saved badge — shown when academy DNA has been completed */}
-        {hasAcademyDna && (
-          <DirectorDnaStatusBadge savedAt={dnaSavedAt} />
-        )}
-
-        {/* Academy live banner OR setup task list */}
-        {isAcademyLive ? (
-          <div className="rounded-xl border border-status-green/20 bg-status-green/5 px-4 py-3.5 flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-status-green animate-pulse shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-text-primary">Academy is live</p>
-              <p className="text-xs text-text-muted mt-0.5">
-                Players, curriculum, templates, and sessions are all active.
-              </p>
-            </div>
-          </div>
-        ) : (
+          {hasAcademyDna && <DirectorDnaStatusBadge savedAt={dnaSavedAt} />}
           <DirectorContinueSetupPanel
             playersExist={players.length > 0}
             classTemplatesExist={classTemplateCount > 0}
             fitnessTemplatesExist={fitnessTemplateCount > 0}
           />
-        )}
-      </div>
+        </div>
+      )}
 
     </div>
-  )
-}
-
-// ── Academy Health Chart Card (static SVG) ─────────────────────
-
-function AcademyHealthChartCard({ healthPct, totalAlerts }: { healthPct: number; totalAlerts: number }) {
-  // Seven static data points representing the week — derived from healthPct for visual coherence
-  const base = Math.max(50, healthPct - 15)
-  const points: number[] = [
-    base + 5, base + 2, base - 3, base + 4, base + 6, base + 3, healthPct,
-  ].map(v => Math.max(10, Math.min(95, v)))
-
-  const w = 260
-  const h = 80
-  const xs = points.map((_, i) => Math.round((i / (points.length - 1)) * w))
-  const ys = points.map(v => Math.round(h - (v / 100) * h))
-  const pathD = xs.map((x, i) => `${i === 0 ? 'M' : 'L'} ${x} ${ys[i]}`).join(' ')
-  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`
-
-  const lineColor = healthPct >= 80 ? '#2dd4bf' : healthPct >= 60 ? '#facc15' : '#FF3B30'
-
-  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const today = new Date().getDay()
-  const labels = dayLabels.map((_, i) => dayLabels[(today - 6 + i + 7) % 7])
-
-  return (
-    <Card>
-      <CardContent className="py-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="label-xs">Academy Health This Week</p>
-            <p className="text-[11px] text-text-muted mt-0.5">Derived from alert counts and activity signals</p>
-          </div>
-          <span className="font-mono font-bold text-2xl"
-            style={{ color: lineColor }}>
-            {healthPct}%
-          </span>
-        </div>
-
-        {/* Sparkline */}
-        <div className="w-full overflow-hidden rounded-lg mb-3" style={{ height: `${h}px` }}>
-          <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="healthGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={lineColor} stopOpacity="0.15" />
-                <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d={areaD} fill="url(#healthGrad)" />
-            <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            {/* Terminal dot */}
-            <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="3.5" fill={lineColor} />
-          </svg>
-        </div>
-
-        {/* Day labels */}
-        <div className="flex justify-between">
-          {labels.map((l, i) => (
-            <span key={i} className={`text-[11px] font-medium ${i === labels.length - 1 ? 'text-text-secondary' : 'text-text-muted'}`}>
-              {l}
-            </span>
-          ))}
-        </div>
-
-        {totalAlerts > 0 && (
-          <div className="mt-3 px-3 py-2 rounded-lg bg-yellow-500/5 border border-yellow-500/15">
-            <p className="text-[11px] text-yellow-400">
-              {totalAlerts} alert{totalAlerts !== 1 ? 's' : ''} affecting health score —
-              <Link href="/director/signals" className="ml-1 underline underline-offset-2">review signals</Link>
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-// ── Live Activity Card ──────────────────────────────────────────
-
-interface SessionRow {
-  id: string
-  name: string | null
-  scheduled_date: string
-  status: string
-  coach_id: string
-  group_id: string | null
-}
-
-function LiveActivityCard({
-  sessions,
-  pendingWrapUps,
-  pendingPlacements,
-}: {
-  sessions: SessionRow[]
-  pendingWrapUps: number
-  pendingPlacements: number
-}) {
-  interface ActivityItem {
-    icon: ReactNode
-    text: string
-    time: string
-    color: string
-  }
-
-  const items: ActivityItem[] = []
-
-  sessions.slice(0, 3).forEach(s => {
-    const isPast = new Date(s.scheduled_date) < new Date()
-    items.push({
-      icon: <Calendar className="w-3.5 h-3.5" />,
-      text: s.name ?? 'Session',
-      time: isPast ? formatDate(s.scheduled_date) : `Upcoming: ${formatDate(s.scheduled_date)}`,
-      color: s.status === 'completed' ? '#30D158' : s.status === 'in_progress' ? '#C8FF00' : '#AAAAAA',
-    })
-  })
-
-  if (pendingWrapUps > 0) {
-    items.push({
-      icon: <ClipboardList className="w-3.5 h-3.5" />,
-      text: `${pendingWrapUps} coach wrap-up${pendingWrapUps !== 1 ? 's' : ''} in review queue`,
-      time: 'Needs review',
-      color: '#FF9500',
-    })
-  }
-
-  if (pendingPlacements > 0) {
-    items.push({
-      icon: <Users className="w-3.5 h-3.5" />,
-      text: `${pendingPlacements} player${pendingPlacements !== 1 ? 's' : ''} pending placement`,
-      time: 'Awaiting action',
-      color: '#FF9500',
-    })
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-lime animate-pulse shrink-0" />
-          <h2 className="font-semibold text-text-primary text-sm">Live Activity</h2>
-        </div>
-        <p className="text-xs text-text-muted mt-0.5">Recent operational events</p>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {items.length === 0 ? (
-          <EmptyState
-            icon={<Activity className="w-5 h-5" />}
-            title="No recent activity"
-            description="Activity appears here as sessions run and coaches submit recaps."
-            className="py-8"
-          />
-        ) : (
-          <ul className="space-y-3">
-            {items.map((item, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                <span className="shrink-0 mt-0.5" style={{ color: item.color }}>
-                  {item.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">{item.text}</p>
-                  <p className="text-xs text-text-muted">{item.time}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Link href="/director/today" className="text-xs text-lime hover:opacity-80 font-medium">
-          View today&apos;s academy →
-        </Link>
-      </CardFooter>
-    </Card>
-  )
-}
-
-// ── Academy Alerts Panel ────────────────────────────────────────
-
-function AcademyAlertsPanel({
-  missingFocusCount,
-  attentionCount,
-  reassessmentDueCount,
-  newRequestsCount,
-  pendingCount,
-  pendingWrapUpsCount,
-}: {
-  missingFocusCount: number
-  attentionCount: number
-  reassessmentDueCount: number
-  newRequestsCount: number
-  pendingCount: number
-  pendingWrapUpsCount: number
-}) {
-  type Severity = 'high' | 'medium' | 'low'
-
-  interface AlertItem {
-    severity: Severity
-    title: string
-    why: string
-    href: string
-    count: number
-  }
-
-  const alerts: AlertItem[] = [
-    missingFocusCount > 0 && {
-      severity: 'medium' as Severity,
-      title: `${missingFocusCount} player${missingFocusCount !== 1 ? 's' : ''} missing current focus`,
-      why: 'Players without focus areas cannot receive targeted coaching.',
-      href: '/director/players',
-      count: missingFocusCount,
-    },
-    attentionCount > 0 && {
-      severity: 'high' as Severity,
-      title: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} needing attention`,
-      why: 'Players on hold or due for reassessment are not progressing.',
-      href: '/director/players',
-      count: attentionCount,
-    },
-    reassessmentDueCount > 0 && {
-      severity: 'high' as Severity,
-      title: `${reassessmentDueCount} player${reassessmentDueCount !== 1 ? 's' : ''} due for reassessment`,
-      why: 'Overdue reassessments delay curriculum progression.',
-      href: '/director/players',
-      count: reassessmentDueCount,
-    },
-    pendingWrapUpsCount > 0 && {
-      severity: 'medium' as Severity,
-      title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
-      why: 'Coach session wrap-ups are in the review queue and have not been approved.',
-      href: '/director/review?tab=wrap-ups',
-      count: pendingWrapUpsCount,
-    },
-    newRequestsCount > 0 && {
-      severity: 'medium' as Severity,
-      title: `${newRequestsCount} private lesson request${newRequestsCount !== 1 ? 's' : ''} waiting`,
-      why: 'Parent requests need director review and routing.',
-      href: '/director/review',
-      count: newRequestsCount,
-    },
-    pendingCount > 0 && {
-      severity: 'low' as Severity,
-      title: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} pending placement`,
-      why: 'New players cannot join groups until placement is complete.',
-      href: '/director/players',
-      count: pendingCount,
-    },
-  ].filter(Boolean) as AlertItem[]
-
-  const sevColor: Record<Severity, string> = {
-    high:   'bg-status-red/10 border-status-red/20 text-status-red',
-    medium: 'bg-status-orange/10 border-status-orange/20 text-status-orange',
-    low:    'bg-surface-raised border-border text-text-muted',
-  }
-  const sevLabel: Record<Severity, string> = {
-    high: 'Urgent', medium: 'Review', low: 'Info',
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-text-primary">Academy Alerts</h2>
-            <p className="text-xs text-text-muted mt-0.5">Items that need director attention</p>
-          </div>
-          {alerts.length > 0 && (
-            <span className="font-mono text-status-orange text-xl font-bold leading-none">
-              {alerts.length}
-            </span>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {alerts.length === 0 ? (
-          <EmptyState
-            icon={<Activity className="w-5 h-5" />}
-            title="All clear"
-            description="No alerts at this time. Alerts appear when players miss sessions, are due for reassessment, or need coaching focus updates."
-            className="py-8"
-          />
-        ) : (
-          <div className="space-y-2">
-            {alerts.map((alert, i) => (
-              <Link key={i} href={alert.href} className="block group">
-                <div className="flex items-start gap-3 px-3 py-3 rounded-xl border border-transparent hover:bg-surface-raised hover:border-border transition-all">
-                  <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${sevColor[alert.severity]}`}>
-                    {sevLabel[alert.severity]}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary">{alert.title}</p>
-                    <p className="text-xs text-text-muted mt-0.5">{alert.why}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0 mt-1" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Link
-          href="/director/signals"
-          className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-        >
-          View all signals →
-        </Link>
-      </CardFooter>
-    </Card>
-  )
-}
-
-// ── Session Status Pill ─────────────────────────────────────────
-
-function SessionStatusPill({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    planned:     'bg-surface-raised text-text-muted border-border',
-    in_progress: 'bg-lime/10 text-lime border-lime/30',
-    completed:   'bg-status-green/10 text-status-green border-status-green/30',
-    cancelled:   'bg-status-red/10 text-status-red border-status-red/30',
-  }
-  const label: Record<string, string> = {
-    planned: 'Planned', in_progress: 'In Progress',
-    completed: 'Completed', cancelled: 'Cancelled',
-  }
-  return (
-    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles[status] ?? styles.planned}`}>
-      {label[status] ?? status}
-    </span>
-  )
-}
-
-// ── Collapsible Section (Sprint 813 — Daily Command) ───────────────────────────
-// Pure HTML <details>/<summary> — no client state, works as Server Component.
-// group-open:rotate-180 fires via Tailwind 3 when details[open] ancestor has class="group".
-// defaultOpen={false} renders open={undefined} so the section starts collapsed.
-
-function CollapsibleSection({
-  title,
-  badge,
-  defaultOpen = false,
-  children,
-}: {
-  title: string
-  badge?: number
-  defaultOpen?: boolean
-  children: ReactNode
-}) {
-  return (
-    <details open={defaultOpen || undefined} className="group">
-      <summary
-        className="list-none cursor-pointer flex items-center gap-2.5 px-4 py-3 rounded-xl transition-colors hover:bg-surface-raised"
-        style={{ background: 'var(--color-surface, #111111)', border: '1px solid var(--color-border, #222222)' }}
-      >
-        <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0 transition-transform duration-200 group-open:rotate-180" />
-        <p className="flex-1 text-xs font-semibold text-text-secondary">{title}</p>
-        {badge !== undefined && badge > 0 && (
-          <span className="text-[10px] font-mono font-bold text-status-orange bg-status-orange/10 border border-status-orange/30 px-1.5 py-0.5 rounded-full leading-none">
-            {badge}
-          </span>
-        )}
-      </summary>
-      <div className="pt-4 space-y-4">
-        {children}
-      </div>
-    </details>
   )
 }
