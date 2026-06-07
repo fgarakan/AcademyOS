@@ -45,6 +45,11 @@ export interface COOIntelligenceActionResult {
 function detectCOOCategory(question: string): COOCategory | 'all' {
   const lower = question.toLowerCase()
 
+  // Coach-ownership phrases must resolve before the generic 'which group' program-health catch.
+  // "Which groups have unclear coach ownership?" contains 'which group' and would otherwise
+  // route to program_health, returning the wrong dimension's insights.
+  if (lower.includes('coach ownership') || lower.includes('unclear coach')) return 'coach_intelligence'
+
   // Program health
   if (
     lower.includes('over capacity') || lower.includes('under capacity') ||

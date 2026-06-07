@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 814–843 — DONNA COO Certification V1
+
+**Certification: 22/25 questions fully certified. 0 hallucinations. All 8 gaps disclosed. Score 92/100. Pilot: READY.**
+
+- Created `docs/qa/DONNA_COO_CERTIFICATION_814.md` — Full COO certification matrix: 25 questions × 8 audit dimensions (category detection, evidence, confidence, recommendation, missing-data, hallucination risk, action routing, usefulness); evidence audit; confidence audit; recommendation audit; missing-data audit; hallucination-risk audit; action-routing audit; before/after readiness score (87 → 92); 5 remaining blockers documented; internal pilot recommendation: READY with disclosed limitations
+- Modified `src/app/director/_actions/donnaCOOIntelligenceAction.ts` — Q15 category detection fix: added early-exit for `coach ownership` and `unclear coach` phrases before the generic `which group` program_health catch; corrects Q15 ("Which groups have unclear coach ownership?") to route to `coach_intelligence` instead of `program_health`
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 784–813 — DONNA COO Intelligence V1
 
 **COO Intelligence: 17/25 questions fully covered. 5 dimensions. Evidence + confidence + recommended action. No fake data.**
