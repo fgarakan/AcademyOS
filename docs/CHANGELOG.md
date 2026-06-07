@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 634–663 — DONNA Atomic Loop Completion V1
+
+**Fixed the four highest-priority pilot blockers by closing gaps in Loops 4, 5, 7, and 10.**
+
+- Created `src/app/director/_components/buildMorningBriefNarrative.ts` — Pure function; 8 signal combinations → smart deterministic brief text; `BriefSignals` + `BriefNarrative` interfaces; no DB, no LLM
+- Created `src/app/director/coaches/[coachId]/assignCoachGroupAction.ts` — Server action; manages `coach_group_assignments`; add (upsert/reactivate) or remove (deactivate) with audit log; director/head_coach only
+- Created `src/app/director/coaches/[coachId]/_components/CoachGroupAssignmentPanel.tsx` — Client UI; lime chips for assigned groups with X remove; dropdown picker + Add button; optimistic local state; flash feedback
+- Created `src/app/director/players/[playerId]/_actions/reassignPlayerGroupAction.ts` — Server action; moves active player between groups by closing current `group_memberships` row and opening a new one; audit logged; active-only guard
+- Created `src/app/director/players/[playerId]/_components/PlayerGroupReassignPanel.tsx` — Client UI; group picker + optional reason + confirmation checkbox with change preview arrow; success/error states
+- Modified `src/app/director/coaches/[coachId]/page.tsx` — Added coach group queries; renders CoachGroupAssignmentPanel before empty state
+- Modified `src/app/director/players/[playerId]/page.tsx` — Added group queries + current membership lookup; renders PlayerGroupReassignPanel for active players after PlayerPortalLinkPanel
+- Modified `src/app/director/page.tsx` — Replaced 40-line if/else brief decision tree with `buildMorningBriefNarrative()` call; passes 13 live signals; imports from _components
+- Modified `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added per-player P/A/L/E tap-button grid on Q1 attendance step; writes to existing `attendanceMap` state; summary dropdowns unchanged
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Director Dashboard Reimagination V1 — DONNA COO Operating Surface
 
 **Redesigned the Director homepage from a data portal into a DONNA COO daily briefing surface.**

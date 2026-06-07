@@ -931,6 +931,52 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           </div>
         )}
 
+        {/* Per-player tap grid — attendance step, Mega Sprint 634–663 Loop 7 fix */}
+        {currentStep.key === 'attendance' && roster.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[9px] uppercase tracking-widest text-text-muted">Quick mark each player</p>
+            <div className="space-y-1.5">
+              {roster.map(p => {
+                const status = attendanceMap[p.playerId] ?? 'present'
+                const chips: Array<{ key: 'present' | 'absent' | 'late' | 'excused'; label: string }> = [
+                  { key: 'present',  label: 'P' },
+                  { key: 'absent',   label: 'A' },
+                  { key: 'late',     label: 'L' },
+                  { key: 'excused',  label: 'E' },
+                ]
+                return (
+                  <div key={p.playerId} className="flex items-center gap-2">
+                    <span className="text-xs text-text-secondary flex-1 truncate">{p.fullName}</span>
+                    <div className="flex gap-1 shrink-0">
+                      {chips.map(chip => (
+                        <button
+                          key={chip.key}
+                          type="button"
+                          onClick={() => setAttendanceMap(prev => ({ ...prev, [p.playerId]: chip.key }))}
+                          className={`w-7 h-7 rounded text-[10px] font-bold border transition-colors ${
+                            status === chip.key
+                              ? chip.key === 'present'
+                                ? 'bg-status-green/20 border-status-green text-status-green'
+                                : chip.key === 'absent'
+                                ? 'bg-status-red/20 border-status-red text-status-red'
+                                : chip.key === 'late'
+                                ? 'bg-status-orange/20 border-status-orange text-status-orange'
+                                : 'bg-status-blue/20 border-status-blue text-status-blue'
+                              : 'bg-surface border-border text-text-muted hover:border-lime/30'
+                          }`}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[9px] text-text-muted">P=Present · A=Absent · L=Late · E=Excused</p>
+          </div>
+        )}
+
         {currentStep.key === 'blocks' && (
           <div className="flex gap-2">
             <button

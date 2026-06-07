@@ -98,6 +98,8 @@ import { PlayerCompetitionPathCurriculumPreview, type CompetitionPathPreviewData
 import { CoachWrapUpObservationsPanel } from './CoachWrapUpObservationsPanel'
 // Sprint 1771 — Atomic Loop Clarity: Loop 6 parent update initiation
 import { InitiateParentUpdateButton } from './InitiateParentUpdateButton'
+// Mega Sprint 634–663 — Loop 4: Active player group reassignment
+import { PlayerGroupReassignPanel } from './_components/PlayerGroupReassignPanel'
 
 interface PageProps {
   params: { playerId: string }
@@ -853,6 +855,32 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     profilePendingMissionCount = (pendingCount as number | null) ?? 0
   } catch { /* migration 076 not yet applied */ }
 
+  // ─── Group data — for PlayerGroupReassignPanel (Mega Sprint 634–663) ─────
+  const { data: allGroupsRaw } = await rawDb
+    .from('groups')
+    .select('id, name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+
+  const allGroups = ((allGroupsRaw ?? []) as Array<{ id: string; name: string }>)
+    .map((g: { id: string; name: string }) => ({ id: String(g.id), name: String(g.name) }))
+
+  const { data: currentMembershipRaw } = await rawDb
+    .from('group_memberships')
+    .select('group_id')
+    .eq('academy_id', academyId)
+    .eq('player_id', params.playerId)
+    .eq('is_current', true)
+    .maybeSingle()
+
+  const currentGroupId: string | null = currentMembershipRaw?.group_id
+    ? String(currentMembershipRaw.group_id)
+    : null
+  const currentGroupName: string | null = currentGroupId
+    ? (allGroups.find((g: { id: string; name: string }) => g.id === currentGroupId)?.name ?? null)
+    : null
+
   // ─── Observations — fetched early so overviewSlot can reference them ────
   // rawDb cast avoids TS2589 on the multi-join select; RLS enforces academy scoping.
   const { data: rawObs } = await rawDb
@@ -1121,6 +1149,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
             linkedProfileName={linkedPortalName}
             playerName={player.full_name ?? null}
           />
+
+          {/* Mega Sprint 634–663 — Loop 4: Group reassignment (active players only) */}
+          {player.status === 'active' && (
+            <PlayerGroupReassignPanel
+              playerId={params.playerId}
+              playerName={player.full_name ?? player.first_name ?? 'Player'}
+              currentGroupId={currentGroupId}
+              currentGroupName={currentGroupName}
+              groups={allGroups}
+            />
+          )}
 
           {/* Placement Entry — Sprint 169. Only shown if player was placed via pipeline. */}
           {placementEntryData && (

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { ChevronLeft, User, ClipboardList, MessageSquare, Clock } from 'lucide-react'
+import { CoachGroupAssignmentPanel } from './_components/CoachGroupAssignmentPanel'
 
 interface PageProps {
   params: { coachId: string }
@@ -125,6 +126,32 @@ export default async function CoachProfilePage({ params }: PageProps) {
     created_at: string
   }>
   const pendingCount = pendingActions.length
+
+  // Coach group assignments — current active assignments
+  const { data: assignmentsRaw } = await rawDb
+    .from('coach_group_assignments')
+    .select('id, group_id, role, is_active')
+    .eq('academy_id', academyId)
+    .eq('coach_id', params.coachId)
+    .eq('is_active', true)
+
+  const assignedGroupIds = new Set<string>(
+    ((assignmentsRaw ?? []) as Array<{ group_id: string }>)
+      .map(a => String(a.group_id))
+  )
+
+  // All active groups in this academy for the picker
+  const { data: allGroupsRaw } = await rawDb
+    .from('groups')
+    .select('id, name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+
+  const allGroups = ((allGroupsRaw ?? []) as Array<{ id: string; name: string }>)
+    .map(g => ({ id: String(g.id), name: String(g.name) }))
+
+  const assignedGroups = allGroups.filter(g => assignedGroupIds.has(g.id))
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-6">
@@ -295,6 +322,13 @@ export default async function CoachProfilePage({ params }: PageProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Group assignments — Mega Sprint 634–663 */}
+      <CoachGroupAssignmentPanel
+        coachId={params.coachId}
+        assignedGroups={assignedGroups}
+        allGroups={allGroups}
+      />
 
       {/* Empty state */}
       {sessions.length === 0 && observationCount === 0 && pendingCount === 0 && (

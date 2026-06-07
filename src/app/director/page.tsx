@@ -22,6 +22,7 @@ import { ProgramHealthNarrative } from './_components/ProgramHealthNarrative'
 import { AcademyIntelligenceSection } from './_components/AcademyIntelligenceSection'
 import { DonnaRecommendedActions } from './_components/DonnaRecommendedActions'
 import { inferredConfidence, factualConfidence } from '@/lib/donna/confidenceEngine'
+import { buildMorningBriefNarrative } from './_components/buildMorningBriefNarrative'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -493,47 +494,28 @@ export default async function DirectorDashboard() {
     attentionCount + pendingCount + assessmentsNeedingReview +
     reassessmentDue + parentUpdatesPendingApproval + coachRecapsMissing + activePlacementReviews
 
-  let briefLine1: string
-  let briefLine2: string = ''
-  let briefUrgency: 'normal' | 'urgent' = 'normal'
-  let briefCtaLabel: string | undefined
-  let briefCtaHref: string | undefined
+  const briefNarrative = buildMorningBriefNarrative({
+    activePlayers,
+    constitutionTotal,
+    attentionCount,
+    coachRecapsMissing,
+    assessmentsNeedingReview,
+    reassessmentDue,
+    parentUpdatesPendingApproval,
+    advancementReadyCount: typedCurricRows.filter(r => r.advancement_eligible).length,
+    todaySessionCount: todaySessions.length,
+    healthPct: academyHealthPct,
+    totalPendingReviews: constitutionTotal,
+    topAttentionLabel: cooAttentionReport.topAction?.label ?? null,
+    topAttentionSeverity: cooAttentionReport.topAction?.severity ?? null,
+    topHealthIssue: academyHealthReport.topIssue ?? null,
+  })
 
-  if (constitutionTotal === 0 && activePlayers === 0) {
-    briefLine1 = "Start by adding players and assigning curriculum levels — then I can surface what needs attention."
-    briefCtaLabel = 'Add Players'
-    briefCtaHref  = '/director/players'
-  } else if (cooAttentionReport.topAction) {
-    briefLine1 = cooAttentionReport.topAction.label
-    briefLine2 = cooAttentionReport.topAction.bestNextAction ?? cooAttentionReport.allItems[1]?.label ?? ''
-    const sev  = cooAttentionReport.topAction.severity
-    briefUrgency = sev === 'critical' || sev === 'high' ? 'urgent' : 'normal'
-    if (cooAttentionReport.topAction.href) {
-      briefCtaLabel = 'Review'
-      briefCtaHref  = cooAttentionReport.topAction.href
-    }
-  } else if (academyHealthReport.topIssue) {
-    briefLine1 = academyHealthReport.topIssue
-    const s    = academyHealthReport.overallStatus
-    briefUrgency = s === 'critical' || s === 'action_needed' ? 'urgent' : 'normal'
-    if (academyHealthReport.recommendedRoute) {
-      briefCtaLabel = 'Review'
-      briefCtaHref  = academyHealthReport.recommendedRoute
-    }
-  } else if (constitutionTotal === 0) {
-    briefLine1 = `${activePlayers} active player${activePlayers !== 1 ? 's' : ''}. No urgent items today — academy is running smoothly.`
-  } else {
-    const parts: string[] = []
-    if (attentionCount > 0)             parts.push(`${attentionCount} player${attentionCount !== 1 ? 's' : ''} need attention`)
-    if (pendingCount > 0)               parts.push(`${pendingCount} pending onboarding`)
-    if (assessmentsNeedingReview > 0)   parts.push(`${assessmentsNeedingReview} assessment${assessmentsNeedingReview !== 1 ? 's' : ''} to review`)
-    if (reassessmentDue > 0)            parts.push(`${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} due for reassessment`)
-    if (coachRecapsMissing > 0)         parts.push(`${coachRecapsMissing} recap${coachRecapsMissing !== 1 ? 's' : ''} missing`)
-    briefLine1 = parts.slice(0, 3).join(', ') + (parts.length > 3 ? `, and ${parts.length - 3} more.` : '.')
-    if (constitutionTotal > 5) briefUrgency = 'urgent'
-    briefCtaLabel = 'Review Queue'
-    briefCtaHref  = '/director/review'
-  }
+  const briefLine1   = briefNarrative.line1
+  const briefLine2   = briefNarrative.line2
+  const briefUrgency = briefNarrative.urgency
+  const briefCtaLabel = briefNarrative.ctaLabel
+  const briefCtaHref  = briefNarrative.ctaHref
 
   // ── Development Watch List — derive 3 buckets ──────────────────
 
