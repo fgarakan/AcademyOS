@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 935–964 — DONNA Daily COO Briefing V1
+
+**DONNA now proactively greets the Director with a structured COO brief on every login. Five-section daily brief appears at the top of the director home page without requiring Brian to ask. Real signals, disclosed gaps, top 3 actions. TypeScript clean.**
+
+- Created `src/lib/donna/dailyBrief/donnaDailyCOOAggregator.ts` — `COOAggregatorInput` interface (22 signal fields from existing director page queries); `COOBriefItem` (id, label, detail, urgency, actionLabel, actionHref); `COOBriefSection` (id, title, items, status, clearMessage); `COODailyBrief` (generatedAt, overallStatus, openingStatement, 5 sections, top3Actions, missingDataNotes, hasUrgentItems, totalAttentionItems); `buildCOODailyBrief(input)` → `COODailyBrief`; 5 section builders (todayPriority, watchList, decisionsWaiting, parentCoachFollowUp, setupCurriculum); `deriveTop3Actions()` with de-duplication by actionHref (highest urgency per route wins, max 3); `buildMissingDataNotes()` — discloses missing session and player signals; pure TypeScript — no DB, no API, no side effects
+- Created `src/app/director/_components/DonnaCOODailyBriefPanel.tsx` — server component; `BriefItemRow` with urgency dot, label, detail, action Link; `BriefSection` with clear state (CheckCircle2) and item list; `Top3Actions` with numbered action links (critical/high/medium/low urgency dots); status badge per `overallStatus` (red/orange/green/muted); DONNA branding header with Sparkles icon; all-clear state when all sections empty; `AlertTriangle` missing data footer; placed at Section 1b on director home immediately after `DonnaMorningBrief`
+- Updated `src/app/director/page.tsx` — imported `buildCOODailyBrief` and `DonnaCOODailyBriefPanel`; added `cooDaily = buildCOODailyBrief({...})` computation using all existing signal variables (activePlayers, pendingWrapUpsCount, assessmentsNeedingReview, activePlacementReviews, parentUpdatesPendingApproval, newRequests, oldestPendingReviewAgeDays, attentionCount, advancementReadyCount, stalledPlayerCount, pendingCount, reassessmentDue, coachRecapsMissing, coachCoverageGaps, curricGapCount, playersWithoutLevel, curriculumTemplateCoverageGapCount, classTemplateCount, sessionsExist); rendered `<DonnaCOODailyBriefPanel brief={cooDaily} />` as Section 1b
+- Created `docs/architecture/DONNA_DAILY_COO_BRIEFING_935.md` — data flow (page fetches → aggregator → panel); brief structure types; 5-section signal table; top 3 action derivation algorithm; missing data disclosure conditions; overall status derivation; component placement diagram; guarantees
+- Created `docs/qa/DONNA_DAILY_COO_BRIEFING_CERTIFICATION_935.md` — 7 certification scenarios: (1) no-data academy; (2) normal active academy; (3) parent updates waiting; (4) player risks; (5) setup incomplete; (6) curriculum incomplete; (7) missing data disclosed; top 3 de-duplication table; no-mutation guarantee table; build classification
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 934–963C — DONNA Page State Synchronization V1
 
 **DONNA answers now update page form fields in real time. PageStatePatch contract created. Class template page listens for patches. Template name and level update visibly when DONNA answers. TypeScript clean.**

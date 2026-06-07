@@ -23,6 +23,8 @@ import { AcademyIntelligenceSection } from './_components/AcademyIntelligenceSec
 import { DonnaRecommendedActions } from './_components/DonnaRecommendedActions'
 import { inferredConfidence, factualConfidence } from '@/lib/donna/confidenceEngine'
 import { buildMorningBriefNarrative } from './_components/buildMorningBriefNarrative'
+import { buildCOODailyBrief } from '@/lib/donna/dailyBrief/donnaDailyCOOAggregator'
+import { DonnaCOODailyBriefPanel } from './_components/DonnaCOODailyBriefPanel'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -627,6 +629,32 @@ export default async function DirectorDashboard() {
 
   const preparedCount = pendingSuggestionsCount
 
+  // ── COO Daily Brief ───────────────────────────────────────────
+
+  const cooDaily = buildCOODailyBrief({
+    activePlayers,
+    todaySessionCount: todaySessions.length,
+    sessionsThisWeek,
+    pendingWrapUps: pendingWrapUpsCount,
+    assessmentsInReview: assessmentsNeedingReview,
+    placementReviews: activePlacementReviews,
+    parentUpdatesWaiting: parentUpdatesPendingApproval,
+    lessonRequests: newRequests,
+    oldestPendingReviewAgeDays,
+    attentionCount,
+    advancementReadyCount,
+    stalledPlayerCount,
+    pendingPlacementCount: pendingCount,
+    reassessmentDueCount: reassessmentDue,
+    coachRecapsMissing,
+    coachCoverageGaps,
+    curriculumGapCount: curricGapCount,
+    playersWithoutLevel,
+    curriculumTemplateCoverageGapCount,
+    classTemplateCount,
+    sessionsExist,
+  })
+
   // ─────────────────────────────────────────────────────────────
 
   return (
@@ -647,6 +675,9 @@ export default async function DirectorDashboard() {
         ctaLabel={briefCtaLabel}
         ctaHref={briefCtaHref}
       />
+
+      {/* Section 1b — DONNA COO Daily Brief */}
+      <DonnaCOODailyBriefPanel brief={cooDaily} />
 
       {/* Section 2 — Immediate Attention */}
       <ImmediateAttentionFeed items={attentionQueue.items} />
