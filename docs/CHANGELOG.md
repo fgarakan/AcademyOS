@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 934–963B — DONNA Goal Session Runtime V1
+
+**DONNA transformed from command router to goal-completion system. Guided workflow runtime coordinates 6 existing workflows into a unified Q&A session loop. TypeScript clean.**
+
+- Created `docs/architecture/DONNA_GOAL_SESSION_RUNTIME_934.md` — Goal Session architecture: 5-phase lifecycle (detect → navigate → start → loop → complete); integration contract with processDonnaMessage (peer, not subordinate — called first at surface level); which existing systems are coordinated and which are NOT used; GoalSessionAction envelope (6 action types); completion model (draft summary + draftType + approval note + speech); 5 system gaps carried forward with fix paths
+- Created `src/lib/donna/goalSessions/donnaGoalSessionRuntime.ts` — `processGoalSession(input)` → `GoalSessionResult`; Phase 1/4: active session loop (cancel detection via 13 phrases, resume detection via 8 phrases, answer recording via `recordAnswer(fieldId, message)` against first unanswered required step, completion check via `isWorkflowComplete()`, step acknowledgement via `buildAcknowledgement()`); Phase 2/3: no active session — `detectGuidedCompletionIntent()` trigger phrase match against all 6 workflows, `startGuidedCompletion()`, `buildStepMessage()` for Step 1, navigation check via static-prefix route comparison; 6-workflow draftType map (player_profile_draft, academy_setup_draft, curriculum_level_draft, assessment_draft, parent_update_draft, class_template_draft); pure TypeScript — no DB, no API, no LLM, no circular dep with processDonnaMessage
+- Created `docs/qa/DONNA_GOAL_SESSION_CERTIFICATION_934.md` — 6 certification scenarios: (A) Player onboarding full session (7 turns, navigate from /director → /director/players, all 6 steps, draftType verified); (B) Academy setup no-nav session (6 steps, already on target page); (C) Parent update with navigation (5 steps); (D) Assessment with navigation (6 steps); (E) Cancel mid-session (partial answers returned, session cleared, no data leaked); (F) Session persists through page navigation (sessionStorage TTL verified, step continuity after re-render)
+- TypeScript: clean (0 errors)
+
+---
+
+## 2026-06-07 — Mega Sprint 934–963A — DONNA Unified Assistant Runtime V1
+
+**DONNA entry points audited and bridged to the same canonical brain runtime. Brain knowledge now available in sidebar DONNA. Architecture documented. TypeScript clean.**
+
+- Created `docs/qa/DONNA_UNIFIED_ASSISTANT_RUNTIME_934.md` — Full audit of both DONNA surfaces (DonnaAssistantButton floating panel + DonnaVoiceReadyShell sidebar); identifies 6 competing-state risks; documents shared runtime architecture; maps voice-to-runtime, sidebar-to-runtime, response rendering, and speech output flows; 8 remaining gaps with fix paths; 5 certification test groups (A–E) covering brain knowledge, unified routing, voice continuity, and non-regression
+- Updated `src/components/donna/DonnaVoiceReadyShell.tsx` — Added Sprint 934A unified brain bridge in `handleSend()`: imports `processDonnaMessage` from canonical brain; bridge inserts AFTER all 45 existing specialized routing steps (KPI, curriculum, fitness, entity, intelligence, etc.) and BEFORE the `detectShortPhrase` handler; claims `respond` at confidence ≥ 0.80 (brain vocabulary, decision rules, philosophy, relationship intelligence), `navigate` actions (entity navigation), and `open_review` actions; falls through to `routeDonnaPrompt` for `route_coo_prompt` and all other actions; speech output via existing `speakDonnaPremium` (already shared); non-regression: brain bridge fires only when none of the 45 specialized steps matched
+- TypeScript: clean (0 errors)
+
+---
+
+## 2026-06-07 — Mega Sprint 904–933C — DONNA Brain Runtime Wiring V1
+
+**Initial Brain wired into DONNA response pipeline. Knowledge adapter no longer a stub. Single canonical runtime access path. TypeScript clean.**
+
+- Created `src/lib/donna/brain/donnaBrainRuntime.ts` — Single canonical access layer for the DONNA Global Brain; exports `queryBrain({ query, role, currentRoute })` → `BrainQueryResult`; role-based visibility (director sees all, coach sees vocab/rules/philosophy, parent/player see philosophy only); query matcher covers vocabulary (8 entries, 40+ trigger phrases), decision rules (4 entries, 20+ trigger phrases), philosophy (3 entries, 15+ trigger phrases); intent entries accessible via direct lookup only (not query-matched — already handled by upstream Steps 3–7.5); 9 typed lookup functions; `formatBrainQueryResult()` for response formatting; `BRAIN_RUNTIME_STATS` constant; O(21) cost — trivial; no circular dependencies; no DB, no API, no React
+- Updated `src/lib/donna/brain/donnaKnowledgeContextAdapter.ts` — Replaced empty stub with brain-backed retrieval; imports `queryBrain` from `donnaBrainRuntime`; `retrieveKnowledgeContext()` now delegates to `queryBrain()` then `brainResultToContext()`; maps `SeedBrainEntry` → `ApprovedKnowledgeSnippet` with role-appropriate `KnowledgeVisibility` (philosophy=all_staff, vocab/rule=director_coach, intent=director_only); `isLive: true` when brain has matches; `overallTrustLevel: 'high'`; `buildEmptyKnowledgeContext()` unchanged (used as fallback when no match); `formatKnowledgeForResponse()` unchanged (returns null when `!isLive`, now returns real content when brain matches)
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — Added `'check_brain_context'` to `BrainRoutingStep` union type
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — Added Step 12.5 (check_brain_context) between context pack (Step 12) and goal routing (Step 13); imports `retrieveKnowledgeContext` and `formatKnowledgeForResponse` from adapter; when brain matches: returns `respond` action with formatted brain entry at 0.80 confidence; when no brain match: falls through silently; context pack (Step 12, 0.85 confidence) always takes precedence
+- Created `docs/qa/DONNA_BRAIN_RUNTIME_CERTIFICATION_904.md` — Certification: 70/70; all 21 entries reachable; 0 duplicate sources; full wiring chain traced; fallback behavior verified; 7 runtime gaps documented (all pre-existing Brain V2 candidates from 904-933B)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 904–933B — DONNA Initial Brain Consolidation V1
 
 **Initial Brain: 21 entries, 4 categories, 0 speculative. Every entry traced to existing source. Certified.**
