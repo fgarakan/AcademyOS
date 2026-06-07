@@ -50,6 +50,7 @@ import {
   saveReassignPlayerGroupDraftAction,
   saveAssignCoachGroupDraftAction,
 } from '@/app/director/_actions/donnaDraftExecutionActions'
+import { runDonnaCOOIntelligenceAction } from '@/app/director/_actions/donnaCOOIntelligenceAction'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 // Sprint 273 — Review Queue Command Center
 import { getDonnaReviewQueueAction } from '@/app/director/_actions/donnaReviewQueueActions'
@@ -2578,6 +2579,32 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
   }
 
+  // Mega Sprint 784–813 — COO intelligence handler
+  // Calls runDonnaCOOIntelligenceAction with the original user question.
+  // Displays evidence + confidence + recommended action via setCommandResponse.
+  async function handleFetchCOOIntelligence(question: string) {
+    try {
+      const result = await runDonnaCOOIntelligenceAction(question)
+      if (result.ok) {
+        setCommandResponse({ message: result.formatted, type: 'info', label: 'COO Intelligence' })
+        setCooThread(prev => [...prev.slice(-4), { user: question, donna: result.formatted, type: 'info' as const }])
+        speakDonna(result.insights[0]?.finding ?? 'COO intelligence loaded.')
+        recordPrompt(question)
+        recordSummary(result.formatted)
+        recordTurn(question, result.formatted, { domain: 'general' })
+      } else {
+        const errMsg = result.error === 'unauthorized'
+          ? 'COO intelligence is available to directors and head coaches only.'
+          : 'COO intelligence unavailable — check back after coaches submit wrap-ups.'
+        setCommandResponse({ message: errMsg, type: 'honest', label: 'COO Intelligence' })
+      }
+    } catch {
+      setCommandResponse({ message: 'COO intelligence unavailable right now. Try again shortly.', type: 'honest', label: 'COO Intelligence' })
+    } finally {
+      setIsProcessingCommand(false)
+    }
+  }
+
   // Sprint 789 — Build a natural 1–2 sentence spoken summary of the daily brief.
   // Used to auto-narrate when the brief loads. No player names, no raw content — structural metadata only.
   function buildBriefVoiceSummary(brief: import('@/components/assistant/donnaDailyBrief').DailyBrief): string {
@@ -4066,6 +4093,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           updateLastEntity(ev2.displayName, entityType)
         }
         setPendingDisambiguation(null)
+        recordSignal('command_issued')
+        break
+      }
+
+      case 'fetch_coo_intelligence': {
+        // Mega Sprint 784–813 — COO intelligence: evidence + confidence + recommended action
+        void handleFetchCOOIntelligence(text)
         recordSignal('command_issued')
         break
       }

@@ -118,18 +118,19 @@ export interface DonnaMessageInput {
 // ── Action contract ───────────────────────────────────────────────────────────
 
 export type DonnaMessageAction =
-  | 'respond'              // Brain has a direct response → show it + optionally speak
-  | 'navigate'             // Navigate to a specific route
-  | 'start_workflow'       // Start a guided completion workflow (form-filling)
-  | 'start_goal_session'   // Start a goal completion session (task-level guided mode)
-  | 'route_guided_answer'  // Active guided workflow → existing handleGuidedCompletionAnswer
-  | 'route_goal_session'   // Active goal session → handle goal session command
-  | 'route_coo_control'    // COO control command → existing handleCOOControlCommand
-  | 'fetch_attention'      // Trigger handleFetchAttention
-  | 'fetch_brief'          // Trigger handleFetchDailyBrief
-  | 'open_review'          // Trigger handleOpenReviewQueue
-  | 'route_coo_prompt'     // Complex COO question → existing handleDonnaCooPrompt chain
-  | 'god_mode'             // Route to LLM God Mode
+  | 'respond'                  // Brain has a direct response → show it + optionally speak
+  | 'navigate'                 // Navigate to a specific route
+  | 'start_workflow'           // Start a guided completion workflow (form-filling)
+  | 'start_goal_session'       // Start a goal completion session (task-level guided mode)
+  | 'route_guided_answer'      // Active guided workflow → existing handleGuidedCompletionAnswer
+  | 'route_goal_session'       // Active goal session → handle goal session command
+  | 'route_coo_control'        // COO control command → existing handleCOOControlCommand
+  | 'fetch_attention'          // Trigger handleFetchAttention
+  | 'fetch_brief'              // Trigger handleFetchDailyBrief
+  | 'open_review'              // Trigger handleOpenReviewQueue
+  | 'fetch_coo_intelligence'   // COO-specific question → runDonnaCOOIntelligenceAction
+  | 'route_coo_prompt'         // Complex COO question → existing handleDonnaCooPrompt chain
+  | 'god_mode'                 // Route to LLM God Mode
 
 // ── Result type ───────────────────────────────────────────────────────────────
 
@@ -195,6 +196,51 @@ function isAttentionPhrase(lower: string): boolean {
     lower.includes('any urgent') ||
     lower.includes('priority items')
   )
+}
+
+// Mega Sprint 784–813 — COO intelligence phrase detector
+// Catches specific COO-dimension questions that are NOT already handled by:
+//   - detectTodayGuidanceQuestion (today guidance)
+//   - matchesDailyBriefIntent (daily brief)
+//   - isReviewQueuePhrase (review queue / decisions waiting)
+//   - isAttentionPhrase (what needs attention)
+function isCOOIntelligencePhrase(lower: string): boolean {
+  // Program health
+  if (lower.includes('over capacity') || lower.includes('under capacity')) return true
+  if (lower.includes('group capacity') || lower.includes('group enrollment')) return true
+  if (lower.includes('enrollment problem') || lower.includes('enrollment vs') || lower.includes('enrollment or')) return true
+  if ((lower.includes('why is') || lower.includes('why are')) && (lower.includes('group') || lower.includes('light') || lower.includes('growing') || lower.includes('shrinking'))) return true
+  if (lower.includes('group light') || lower.includes('group growing') || lower.includes('group shrinking')) return true
+
+  // Player intelligence
+  if (lower.includes('ready to move') || lower.includes('ready to advance') || lower.includes('who is ready')) return true
+  if (lower.includes('who is stalled') || lower.includes('stalled player') || lower.includes('players stalled')) return true
+  if (lower.includes('who is accelerating') || lower.includes('accelerating player') || lower.includes('players accelerating')) return true
+  if (lower.includes('attendance risk') || lower.includes('who has attendance')) return true
+  if (lower.includes('player intelligence') || lower.includes('player risk')) return true
+
+  // Coach intelligence
+  if (lower.includes('coach') && lower.includes('support')) return true
+  if (lower.includes('coach') && (lower.includes('following up') || lower.includes('follow up'))) return true
+  if (lower.includes('coach') && lower.includes('missing')) return true
+  if (lower.includes('coach') && lower.includes('driving progression')) return true
+  if (lower.includes('coach') && lower.includes('ownership')) return true
+  if (lower.includes('coach') && lower.includes('reliable')) return true
+  if (lower.includes('coach intelligence')) return true
+  if (lower.includes('unclear coach')) return true
+
+  // Parent confidence
+  if (lower.includes('parent') && (lower.includes('update') || lower.includes('gap') || lower.includes('at risk') || lower.includes('clarity') || lower.includes('check-in') || lower.includes('check in'))) return true
+  if (lower.includes('parent confidence') || lower.includes('family') || lower.includes('families')) return true
+  if (lower.includes('communication gap')) return true
+
+  // Director decision (non-overlapping with today guidance / review queue)
+  if (lower.includes('biggest risk') || lower.includes('biggest academy risk')) return true
+  if (lower.includes('biggest opportunity')) return true
+  if (lower.includes('what would you do') || lower.includes('as coo')) return true
+  if (lower.includes('coo recommendation') || lower.includes('coo intelligence')) return true
+
+  return false
 }
 
 function isReviewQueuePhrase(lower: string): boolean {
@@ -431,6 +477,16 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     finalizeLog(debugLog, 'check_attention', 'fetch_attention')
     emitDebugLog(debugLog)
     return makeResult('fetch_attention', { confidence: 0.90 }, debugLog)
+  }
+
+  // ── Step 7.5: COO intelligence — specific dimension questions ────────────────
+  // Catches group capacity, player readiness/stall, coach support, parent gaps,
+  // and COO recommendation questions BEFORE the LLM fallback path.
+  // Runs after attention/brief/review-queue checks to avoid overlap with those handlers.
+  if (isCOOIntelligencePhrase(lower)) {
+    finalizeLog(debugLog, 'check_coo_intelligence', 'fetch_coo_intelligence')
+    emitDebugLog(debugLog)
+    return makeResult('fetch_coo_intelligence', { confidence: 0.92 }, debugLog)
   }
 
   // ── Step 8: Ambiguity resolution ─────────────────────────────────────────────

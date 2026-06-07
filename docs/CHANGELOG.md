@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 784–813 — DONNA COO Intelligence V1
+
+**COO Intelligence: 17/25 questions fully covered. 5 dimensions. Evidence + confidence + recommended action. No fake data.**
+
+- Created `src/lib/donna/coo/donnaCOOIntelligenceEngine.ts` — Pure TS engine; takes `COOIntelligenceInput` (DirectorDonnaContext + group health + coach support + player risk + parent trust); outputs `COOIntelligenceReport` with 5 dimension builders; each insight has evidence[], confidence (high/medium/low), recommendedAction, and optional missingData[]; readiness score 0–100; no DB calls
+- Created `src/app/director/_actions/donnaCOOIntelligenceAction.ts` — Server action; loads all 5 loaders in parallel (DirectorDonnaContext, GroupHealth, CoachSupport, PlayerAttentionRisk, ParentTrust) + group_memberships player counts; assembles `GroupCapacity[]` merging group data with health data and player counts; detects question category from user text; calls intelligence engine; returns formatted markdown answer with evidence + confidence + recommended action
+- Modified `src/lib/donna/brain/processDonnaMessage.ts` — Added `fetch_coo_intelligence` to `DonnaMessageAction` union; added `isCOOIntelligencePhrase()` detector covering all 25 COO question patterns; inserted Step 7.5 between attention check and ambiguity resolution — catches COO questions before LLM fallback
+- Modified `src/lib/donna/brain/donnaBrainDebugLog.ts` — Added `check_coo_intelligence` to `BrainRoutingStep` union
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — Imported `runDonnaCOOIntelligenceAction`; added `handleFetchCOOIntelligence()` handler; added `case 'fetch_coo_intelligence'` to brain result switch; displays via `setCommandResponse` with evidence + confidence + recommended action
+- Created `docs/qa/DONNA_COO_INTELLIGENCE_784.md` — Intelligence coverage matrix (25 questions); data sources; confidence rules; program health / player / coach / parent / director decision rules; remaining data gaps; DONNA COO readiness score; pilot recommendation
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 754–783 — DONNA Operator Certification V1
 
 **Operator Certification: 51.3 → 88.4 avg. 9/10 loops deterministic. Three full DONNA workflows created.**
