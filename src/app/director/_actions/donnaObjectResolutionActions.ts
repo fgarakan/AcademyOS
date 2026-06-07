@@ -1,11 +1,12 @@
 'use server'
 
-// Donna Object Resolution Server Action — Sprint 269
+// Donna Object Resolution Server Action — Sprint 269 / Mega Sprint 694
 // Read-only: resolves user-typed names/descriptions into real Academy OS objects.
 // Never mutates. Scoped to the current director's academy.
 // Returns structured candidates — director must confirm before any write.
 
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { resolveDatePhrase } from '@/lib/donna/resolveDatePhrase'
 import type {
   DonnaResolvableObjectType,
   DonnaResolvedObjectCandidate,
@@ -38,16 +39,43 @@ async function getReadContext(): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// Confidence scoring helper
+// Confidence scoring
+// Single-word query against a multi-word label is always capped at medium —
+// a first name alone does not uniquely identify a person.
 // ---------------------------------------------------------------------------
 
 function scoreCandidate(label: string, query: string): 'low' | 'medium' | 'high' {
   const lLabel = label.toLowerCase()
   const lQuery = query.toLowerCase().trim()
+  const labelIsMultiWord = lLabel.includes(' ')
+  const queryIsSingleWord = !lQuery.includes(' ')
+
   if (lLabel === lQuery) return 'high'
+
+  // Cap single-word queries against multi-word labels at medium
+  if (queryIsSingleWord && labelIsMultiWord) {
+    if (lLabel.startsWith(lQuery) || lLabel.includes(` ${lQuery}`) || lLabel.includes(lQuery)) {
+      return 'medium'
+    }
+    return 'low'
+  }
+
   if (lLabel.startsWith(lQuery) || lLabel.includes(` ${lQuery}`)) return 'high'
   if (lLabel.includes(lQuery)) return 'medium'
   return 'low'
+}
+
+// ---------------------------------------------------------------------------
+// Token overlap scorer — used for group fuzzy matching fallback
+// Returns ratio of query tokens found in label (0.0 – 1.0)
+// ---------------------------------------------------------------------------
+
+function tokenOverlapRatio(label: string, query: string): number {
+  const labelTokens = label.toLowerCase().split(/\s+/).filter((t) => t.length >= 1)
+  const queryTokens = query.toLowerCase().split(/\s+/).filter((t) => t.length >= 1)
+  if (queryTokens.length === 0) return 0
+  const matchCount = queryTokens.filter((t) => labelTokens.includes(t)).length
+  return matchCount / queryTokens.length
 }
 
 // ---------------------------------------------------------------------------
@@ -135,8 +163,8 @@ async function resolvePlayers(
 }
 
 // ---------------------------------------------------------------------------
-// Group resolution — queries v_group_summary
-// Returns: group_id, group_name, level_label, lead_coach_name, player_count
+// Group resolution — ilike primary, token-overlap fallback
+// "Orange 2" → no ilike hit on "Orange Ball 2" → token overlap finds it
 // ---------------------------------------------------------------------------
 
 async function resolveGroups(
@@ -145,30 +173,57 @@ async function resolveGroups(
   query: string,
 ): Promise<DonnaResolvedObjectCandidate[]> {
   const rawDb = supabase as any
-  const { data, error } = await rawDb
+
+  function mapGroupRow(row: any, confidence: DonnaResolvedObjectCandidate['confidence']): DonnaResolvedObjectCandidate {
+    const parts: string[] = []
+    if (row.level_label) parts.push(row.level_label)
+    if (row.lead_coach_name) parts.push(`Coach: ${row.lead_coach_name}`)
+    if (row.player_count != null) parts.push(`${row.player_count} players`)
+    return {
+      id: row.group_id,
+      type: 'group',
+      label: row.group_name,
+      subtitle: parts.join(' · ') || undefined,
+      confidence,
+    }
+  }
+
+  // Primary: ilike substring match
+  const { data: exactData, error: exactError } = await rawDb
     .from('v_group_summary')
     .select('group_id, group_name, level_label, lead_coach_name, player_count')
     .eq('academy_id', academyId)
     .ilike('group_name', `%${query}%`)
     .limit(5)
 
-  if (error || !data) return []
+  if (!exactError && exactData && exactData.length > 0) {
+    return exactData
+      .filter((row: any) => row.group_id && row.group_name)
+      .map((row: any) => mapGroupRow(row, scoreCandidate(row.group_name, query)))
+  }
 
-  return data
-    .filter((row: any) => row.group_id && row.group_name)
-    .map((row: any): DonnaResolvedObjectCandidate => {
-      const parts: string[] = []
-      if (row.level_label) parts.push(row.level_label)
-      if (row.lead_coach_name) parts.push(`Coach: ${row.lead_coach_name}`)
-      if (row.player_count != null) parts.push(`${row.player_count} players`)
-      return {
-        id: row.group_id,
-        type: 'group',
-        label: row.group_name,
-        subtitle: parts.join(' · ') || undefined,
-        confidence: scoreCandidate(row.group_name, query),
-      }
+  // Token overlap fallback — multi-token queries only
+  // Covers "Orange 2" → "Orange Ball 2" (tokens: ["orange","2"] both present)
+  const queryTokens = query.toLowerCase().split(/\s+/).filter((t) => t.length >= 1)
+  if (queryTokens.length < 2) return []
+
+  const { data: allGroups, error: allError } = await rawDb
+    .from('v_group_summary')
+    .select('group_id, group_name, level_label, lead_coach_name, player_count')
+    .eq('academy_id', academyId)
+    .limit(100)
+
+  if (allError || !allGroups) return []
+
+  const fuzzyMatches = (allGroups as any[])
+    .filter((row: any) => {
+      if (!row.group_id || !row.group_name) return false
+      return tokenOverlapRatio(row.group_name, query) >= 0.6
     })
+    .slice(0, 5)
+
+  // Token-overlap candidates are always medium confidence
+  return fuzzyMatches.map((row: any) => mapGroupRow(row, 'medium'))
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +236,6 @@ async function resolveCoaches(
   academyId: string,
   query: string,
 ): Promise<DonnaResolvedObjectCandidate[]> {
-  // Step 1: get active coach/director memberships for this academy
   const { data: memberships, error: mErr } = await supabase
     .from('academy_memberships')
     .select('profile_id, role')
@@ -193,7 +247,6 @@ async function resolveCoaches(
 
   const profileIds = memberships.map((m) => m.profile_id)
 
-  // Step 2: get profiles matching the query
   const rawDb = supabase as any
   const { data: profiles, error: pErr } = await rawDb
     .from('profiles')
@@ -220,60 +273,182 @@ async function resolveCoaches(
 }
 
 // ---------------------------------------------------------------------------
-// Session resolution — queries sessions table
-// Returns: id, name, scheduled_date, status
+// Session resolution
+// Supports: name search, ISO date, NLP date, group_id filter, coach_id filter
 // ---------------------------------------------------------------------------
 
 async function resolveSessions(
   supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
   academyId: string,
   query: string,
+  context?: { groupId?: string; coachId?: string },
 ): Promise<DonnaResolvedObjectCandidate[]> {
   const rawDb = supabase as any
 
-  // Try name match first
+  // Resolve NLP date before querying — "today" → "2026-06-07"
+  const resolvedDate = resolveDatePhrase(query)
+
+  function mapSessionRow(
+    s: any,
+    confidence: DonnaResolvedObjectCandidate['confidence'],
+  ): DonnaResolvedObjectCandidate {
+    return {
+      id: s.id,
+      type: 'session',
+      label: s.name ?? `Session on ${s.scheduled_date}`,
+      subtitle: `${s.scheduled_date ?? ''}${s.status ? ` · ${s.status}` : ''}`,
+      confidence,
+    }
+  }
+
+  // Group-scoped path — "How did Green Ball do today?"
+  if (context?.groupId) {
+    let q = rawDb
+      .from('sessions')
+      .select('id, name, scheduled_date, status')
+      .eq('academy_id', academyId)
+      .eq('group_id', context.groupId)
+      .order('scheduled_date', { ascending: false })
+      .limit(5)
+
+    if (resolvedDate) {
+      q = q.eq('scheduled_date', resolvedDate)
+    }
+
+    const { data } = await q
+    if (data && data.length > 0) {
+      const conf = resolvedDate ? 'high' : 'medium'
+      return (data as any[]).filter((s: any) => s.id).map((s: any) => mapSessionRow(s, conf))
+    }
+    return []
+  }
+
+  // Coach-scoped path — "How did Danny's group do today?"
+  if (context?.coachId) {
+    let q = rawDb
+      .from('sessions')
+      .select('id, name, scheduled_date, status')
+      .eq('academy_id', academyId)
+      .eq('coach_id', context.coachId)
+      .order('scheduled_date', { ascending: false })
+      .limit(5)
+
+    if (resolvedDate) {
+      q = q.eq('scheduled_date', resolvedDate)
+    }
+
+    const { data } = await q
+    if (data && data.length > 0) {
+      const conf = resolvedDate ? 'high' : 'medium'
+      return (data as any[]).filter((s: any) => s.id).map((s: any) => mapSessionRow(s, conf))
+    }
+    return []
+  }
+
+  // Name match — with resolved date as search term if applicable
+  const nameQuery = resolvedDate ?? query
   const { data: byName } = await rawDb
     .from('sessions')
     .select('id, name, scheduled_date, status')
     .eq('academy_id', academyId)
-    .ilike('name', `%${query}%`)
+    .ilike('name', `%${nameQuery}%`)
     .order('scheduled_date', { ascending: false })
     .limit(5)
 
   if (byName && byName.length > 0) {
-    return byName
+    return (byName as any[])
       .filter((s: any) => s.id)
-      .map((s: any): DonnaResolvedObjectCandidate => ({
-        id: s.id,
-        type: 'session',
-        label: s.name ?? `Session on ${s.scheduled_date}`,
-        subtitle: `${s.scheduled_date ?? ''}${s.status ? ` · ${s.status}` : ''}`,
-        confidence: scoreCandidate(s.name ?? '', query),
-      }))
+      .map((s: any) => mapSessionRow(s, scoreCandidate(s.name ?? '', nameQuery)))
   }
 
-  // Try date match — if query looks like a date fragment
+  // Date match — exact match on scheduled_date (works for both ISO and resolved NLP)
+  const dateToMatch = resolvedDate ?? query
   const { data: byDate } = await rawDb
     .from('sessions')
     .select('id, name, scheduled_date, status')
     .eq('academy_id', academyId)
-    .ilike('scheduled_date', `%${query}%`)
+    .eq('scheduled_date', dateToMatch)
     .order('scheduled_date', { ascending: false })
     .limit(5)
 
   if (byDate && byDate.length > 0) {
-    return byDate
+    return (byDate as any[])
       .filter((s: any) => s.id)
-      .map((s: any): DonnaResolvedObjectCandidate => ({
-        id: s.id,
-        type: 'session',
-        label: s.name ?? `Session on ${s.scheduled_date}`,
-        subtitle: `${s.scheduled_date ?? ''}${s.status ? ` · ${s.status}` : ''}`,
-        confidence: 'medium',
-      }))
+      .map((s: any) => mapSessionRow(s, 'medium'))
   }
 
   return []
+}
+
+// ---------------------------------------------------------------------------
+// Guardian resolution — player_guardians + guardians
+// Primary path: playerId context → fetch all guardians for that player
+// Fallback: name search within academy
+// ---------------------------------------------------------------------------
+
+async function resolveGuardians(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  query: string,
+  context?: { playerId?: string },
+): Promise<DonnaResolvedObjectCandidate[]> {
+  const rawDb = supabase as any
+
+  function mapGuardianRow(g: any, confidence: DonnaResolvedObjectCandidate['confidence']): DonnaResolvedObjectCandidate {
+    const label = `${g.first_name} ${g.last_name}`.trim()
+    const parts: string[] = []
+    if (g.relationship) parts.push(g.relationship)
+    if (g.is_primary) parts.push('Primary')
+    if (g.email) parts.push(g.email)
+    return {
+      id: g.id,
+      type: 'parent_guardian',
+      label,
+      subtitle: parts.join(' · ') || undefined,
+      confidence,
+    }
+  }
+
+  // Player-scoped path — "Noah's parent" after Noah is resolved
+  if (context?.playerId) {
+    const { data: links, error: linkErr } = await supabase
+      .from('player_guardians')
+      .select('guardian_id')
+      .eq('player_id', context.playerId)
+
+    if (linkErr || !links || links.length === 0) return []
+
+    const guardianIds = links.map((l) => l.guardian_id)
+
+    const { data: guardians, error: gErr } = await rawDb
+      .from('guardians')
+      .select('id, first_name, last_name, relationship, is_primary, email')
+      .in('id', guardianIds)
+      .eq('academy_id', academyId)
+
+    if (gErr || !guardians) return []
+
+    return (guardians as any[])
+      .filter((g: any) => g.id && g.first_name)
+      .map((g: any) => mapGuardianRow(g, g.is_primary ? 'high' : 'medium'))
+  }
+
+  // Name search fallback — search by first_name or last_name
+  const { data: guardians, error } = await rawDb
+    .from('guardians')
+    .select('id, first_name, last_name, relationship, is_primary, email')
+    .eq('academy_id', academyId)
+    .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+    .limit(5)
+
+  if (error || !guardians) return []
+
+  return (guardians as any[])
+    .filter((g: any) => g.id && g.first_name)
+    .map((g: any) => {
+      const fullName = `${g.first_name} ${g.last_name}`.toLowerCase()
+      return mapGuardianRow(g, scoreCandidate(fullName, query))
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -296,9 +471,8 @@ async function resolveClassTemplates(
 
   if (error || !data) return []
 
-  return data
+  return (data as any[])
     .filter((t: any) => {
-      // Exclude fitness templates
       const tags: string[] = t.tags ?? []
       return !tags.includes('fitness_template:true')
     })
@@ -337,7 +511,7 @@ async function resolveFitnessTemplates(
 
   if (error || !data) return []
 
-  return data
+  return (data as any[])
     .filter((t: any) => {
       const tags: string[] = t.tags ?? []
       return tags.includes('fitness_template:true')
@@ -360,11 +534,17 @@ async function resolveFitnessTemplates(
 
 // ---------------------------------------------------------------------------
 // Main resolution entry point — called from DonnaAssistantButton
+//
+// context (optional):
+//   groupId  — scope session lookups to a specific group
+//   coachId  — scope session lookups to a specific coach
+//   playerId — scope guardian lookups to a specific player's guardians
 // ---------------------------------------------------------------------------
 
 export async function resolveDonnaObjectAction(
   objectType: DonnaResolvableObjectType,
   query: string,
+  context?: { groupId?: string; coachId?: string; playerId?: string },
 ): Promise<DonnaObjectResolutionResult> {
   const trimmedQuery = query.trim()
 
@@ -409,7 +589,7 @@ export async function resolveDonnaObjectAction(
         candidates = await resolveCoaches(supabase, academyId, trimmedQuery)
         break
       case 'session':
-        candidates = await resolveSessions(supabase, academyId, trimmedQuery)
+        candidates = await resolveSessions(supabase, academyId, trimmedQuery, context)
         break
       case 'class_template':
         candidates = await resolveClassTemplates(supabase, academyId, trimmedQuery)
@@ -418,16 +598,8 @@ export async function resolveDonnaObjectAction(
         candidates = await resolveFitnessTemplates(supabase, academyId, trimmedQuery)
         break
       case 'parent_guardian':
-        return {
-          ok: true,
-          objectType,
-          query,
-          status: 'not_supported',
-          candidates: [],
-          message:
-            'Parent/guardian resolution is not yet available. This feature is coming in a future sprint.',
-          safetyNotes: ['No parent communication will be sent from here.'],
-        }
+        candidates = await resolveGuardians(supabase, academyId, trimmedQuery, context)
+        break
     }
 
     return buildResult(objectType, trimmedQuery, candidates)

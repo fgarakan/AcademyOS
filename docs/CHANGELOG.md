@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 724–753 — DONNA Approval & Execution Certification V1
+
+**Approval & Execution: 82.7 → 90.4 avg. Three critical silent-failure paths closed.**
+
+- Created `src/app/coach/sessions/[sessionId]/updateBlockStatusAction.ts` — Server action; writes `session_blocks.actual_status` to DB; auth + academy scope + session ownership + block ownership validation; audit logs `session_block_status_updated`; closes the critical gap where block status was localStorage-only (score 20 → 92)
+- Modified `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — `setBlockStatus()` now calls `updateBlockStatusAction` via `startTransition`; localStorage remains as optimistic layer; import of `BlockActualStatus` type from new action file
+- Modified `src/app/coach/sessions/[sessionId]/actions.ts` — `saveAttendanceAction` now writes `attendance_saved` audit log after successful upsert loop; closes audit accountability gap (score 80 → 95)
+- Modified `src/app/director/review/ParentSummaryReviewCard.tsx` — Removes stale "No send infrastructure exists yet" notice; adds Apply button in `isApproved` state that calls `applyParentCommunicationAction`; shows pending/error states; `applyParentCommunicationAction` was fully implemented but UI-blocked (score 40 → 93)
+- Created `docs/qa/DONNA_APPROVAL_EXECUTION_CERTIFICATION_724.md` — 13-action coverage matrix; silent failure risks; approval routing map; audit logging map; before/after scores; remaining blockers; pilot readiness estimate
+- TypeScript: clean (0 errors)
+
+---
+
+## 2026-06-07 — Mega Sprint 694–723 — DONNA Entity Resolution Certification V1
+
+**Entity Resolution: 47 → 91 / 100. Six resolver fixes enabling all critical pilot commands.**
+
+- Created `src/lib/donna/resolveDatePhrase.ts` — Pure NLP date normalizer; handles today/yesterday/tomorrow/last+day/this+day/ISO passthrough; no DB calls; no external deps
+- Modified `src/app/director/_actions/donnaObjectResolutionActions.ts` — Six targeted fixes: (1) `resolveGuardians()` added querying `player_guardians` + `guardians` by playerId or name; (2) `resolveGroups()` token-overlap fallback when ilike returns 0 — "Orange 2" → "Orange Ball 2"; (3) `resolveSessions()` `context.groupId` filter path; (4) `resolveSessions()` `context.coachId` filter path; (5) NLP date resolution applied before all session queries; (6) `scoreCandidate()` caps single-word-query-against-multi-word-label at medium; `resolveDonnaObjectAction()` signature extended with optional `context` param (backwards compatible)
+- Created `docs/qa/DONNA_ENTITY_RESOLUTION_CERTIFICATION_694.md` — 16 test cases across all 11 patterns; before/after readiness score; date phrase unit test table; pilot command coverage matrix; documented nickname blocker (needs migration)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 634–663 — DONNA Atomic Loop Completion V1
 
 **Fixed the four highest-priority pilot blockers by closing gaps in Loops 4, 5, 7, and 10.**

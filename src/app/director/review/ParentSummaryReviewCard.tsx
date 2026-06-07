@@ -1,17 +1,11 @@
 'use client'
 
-// Sprint 635 — Parent Summary Review Flow V1
-// Shows a parent_communication proposed_action for director review and edit preview.
-// Rules enforced here:
-//   - No raw coach notes displayed — payload was already filtered at draft creation
-//   - Parent sees nothing until this draft is approved AND a separate send step is triggered
-//   - No send infrastructure exists yet — approval is captured but not transmitted
-//   - Director can review and approve/reject the draft content only
-
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, CheckCircle2, AlertTriangle, ShieldCheck, User, Info } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { Eye, EyeOff, CheckCircle2, AlertTriangle, ShieldCheck, User, Send } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { DonnaIntelligenceDraftDecisionControls } from '@/components/assistant/DonnaIntelligenceDraftDecisionControls'
+import { applyParentCommunicationAction } from './applyParentCommunicationAction'
 
 // ── Payload ────────────────────────────────────────────────────────────────────
 
@@ -62,6 +56,8 @@ function SectionRow({ label, value }: { label: string; value: string | null | un
 
 export function ParentSummaryReviewCard({ draft }: { draft: EnrichedParentSummaryDraftItem }) {
   const router = useRouter()
+  const [applyResult, setApplyResult] = useState<{ ok: boolean; error: string | null } | null>(null)
+  const [isApplyPending, startApplyTransition] = useTransition()
   const p = draft.payload
   const isPending = draft.status === 'pending_review'
   const isApproved = draft.status === 'approved'
@@ -156,19 +152,35 @@ export function ParentSummaryReviewCard({ draft }: { draft: EnrichedParentSummar
           </span>
         </div>
 
-        {/* Send blocker — no send infrastructure */}
-        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-[11px] text-text-muted">
-          <Info className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
-          <span>
-            No send infrastructure exists yet. Approving this draft captures your approval decision only — no message is sent to the parent. A separate send step will be added in a future sprint.
-          </span>
-        </div>
-
-        {/* Approved terminal state */}
+        {/* Approved state — Apply button to publish to parent portal */}
         {isApproved && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-lime/10 border border-lime/20 text-[11px] text-lime">
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            <span>Approved — send step required before parent sees this content. No message sent yet.</span>
+          <div className="space-y-2 pt-1 border-t border-border">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Send to Parent</p>
+            <p className="text-[11px] text-text-muted">
+              This draft is approved. Applying it publishes the summary to the parent portal and records the send in the audit log.
+            </p>
+            {applyResult && !applyResult.ok && (
+              <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-status-red/8 border border-status-red/25 text-[11px] text-status-red">
+                <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                <span>{applyResult.error}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={isApplyPending}
+              onClick={() => {
+                setApplyResult(null)
+                startApplyTransition(async () => {
+                  const result = await applyParentCommunicationAction(draft.id)
+                  setApplyResult({ ok: result.ok, error: result.error })
+                  if (result.ok) router.refresh()
+                })
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-lime/10 border border-lime/30 text-lime text-sm font-semibold hover:bg-lime/20 transition-colors disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {isApplyPending ? 'Sending…' : 'Apply — Publish to Parent Portal'}
+            </button>
           </div>
         )}
 

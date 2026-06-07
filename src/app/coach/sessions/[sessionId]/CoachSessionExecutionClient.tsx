@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { CheckCircle, AlertCircle, Info, Play, Square } from 'lucide-react'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import type { SaveExecutionInput, SaveExecutionResult, SaveAttendanceInput, SaveAttendanceResult } from './actions'
+import { updateBlockStatusAction, type BlockActualStatus } from './updateBlockStatusAction'
 import type { SessionBlock, SessionExercise, RosterPlayer } from './page'
 
 const STAGE_TEXT: Record<string, string> = {
@@ -58,10 +59,10 @@ export function CoachSessionExecutionClient({
     return init
   })
 
-  function setBlockStatus(blockId: string, s: 'planned' | 'in_progress' | 'completed' | 'skipped' | 'modified') {
+  function setBlockStatus(blockId: string, s: BlockActualStatus) {
+    // Optimistic update: React state + localStorage (immediate feedback, no server round-trip wait)
     setBlockStatusMap(prev => {
       const next = { ...prev, [blockId]: s }
-      // Write to localStorage so WrapUp drawer can pre-populate block statuses
       try {
         const wrapUpStatus: Record<string, 'completed' | 'skipped' | 'modified'> = {}
         for (const [id, status] of Object.entries(next)) {
@@ -70,6 +71,10 @@ export function CoachSessionExecutionClient({
         localStorage.setItem(`session_block_status_${sessionId}`, JSON.stringify(wrapUpStatus))
       } catch { /* ignore storage errors */ }
       return next
+    })
+    // Persist to DB — fires in background, failure is non-blocking (status is still saved at wrap-up)
+    startTransition(async () => {
+      await updateBlockStatusAction({ sessionId, blockId, status: s })
     })
   }
 

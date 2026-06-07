@@ -2,6 +2,7 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
 
 export interface ExerciseUpdate {
   id: string
@@ -322,6 +323,17 @@ export async function saveAttendanceAction(
       return { ok: false, error: `Failed to save attendance: ${upsertError.message}` }
     }
   }
+
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: null,
+    action: 'attendance_saved',
+    targetType: 'session',
+    targetId: input.sessionId,
+    payload: { playerCount: input.attendanceUpdates.length },
+  })
 
   return { ok: true, error: null }
 }
