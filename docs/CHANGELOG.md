@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 904–933A — DONNA Brain Inventory Audit V1
+
+**Audit: 170 DONNA files catalogued. 5 intent systems, 6 routers, 2 entity resolvers mapped. Initial Brain scope defined. No code changed.**
+
+- Created `docs/qa/DONNA_BRAIN_INVENTORY_AUDIT_904.md` — Full inventory: brain governance (types only, 0 entries); 5 overlapping intent detection systems (DirectorIntent × 11, DonnaCommandCategory × 10, DonnaIntent × 35+, DonnaUnifiedIntentType × 22, IntentType × 9); 6 active/legacy routers; entity resolution V1 (heuristic) + V2 (DB-backed, fuzzy); 6 guided completion workflows; 8 goal-level workflows; 19 task contracts; 5 COO intelligence dimensions; vocabulary scattered across 12+ files; integration map of processDonnaMessage.ts 16-step sequence; canonical source-of-truth table; risk assessment (DB-backed Initial Brain = HIGH, hardcoded seed = LOW); recommendation: build `brain/initialBrainSeed.ts` as pure TypeScript seed
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-07 — Mega Sprint 874–903 — DONNA Brain Governance V1
 
 **Governance architecture: 5-layer model defined. Permission matrix implemented. Knowledge lifecycle documented. No learning/ingestion/memory built.**
