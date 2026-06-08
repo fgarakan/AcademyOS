@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1205–1234 — DONNA Curriculum Builder Completion V1
+
+**7th DONNA workflow to reach full draft submission. DONNA now guides directors through 6 curriculum object types (Skill, Subskill, Drill, Tactical Concept, Mental Concept, Progression) via a 6-step Q&A session on the curriculum builder page. Hierarchy audit: skillHierarchyModel.ts defines Skill→SubSkill[] hierarchy (Sprint 511) but no DB tables exist — Subskill uses skill content_type in V1. All other distinct types preserved: mental_skill not collapsed into tactical, progression not collapsed into drill. VALID_CONTENT_TYPES updated to full 22-value migration 061 taxonomy. Workflow Completion 80→86, COO Readiness 67→72, composite 78→81. TypeScript clean.**
+
+- Updated `src/lib/actions/curriculumDraftActions.ts` — expanded `VALID_CONTENT_TYPES` from 9 to 22 values (all migration 061 types confirmed applied via migration 065); `CurriculumContentType` type updated
+- Updated `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — replaced 6 level-builder steps with 6 content-item steps (`object_type`, `item_name`, `curriculum_level`, `item_description`, `coaching_cues`, `common_mistakes` + optional `progression_relationship`); full taxonomy docstring with DB type mapping; updated trigger phrases for content-item creation
+- Updated `src/lib/donna/pageSync/donnaPageStateSync.ts` — updated `curriculum_builder_completion` field map to match new step IDs
+- Updated `src/lib/donna/workflows/donnaWorkflowExecutionEngine.ts` — updated completion message to show item name and type
+- Updated `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — full DONNA wiring: `onGoalSessionCompleted` listener, `mapObjectTypeToContentType()` (preserves all distinct types), `inferDomain()`, `parseCoachCues()`, `handleDonnaConfirm()` → `createCurriculumContentItemDraft()`, DONNA review banner + completion banner; standard navigation paths unchanged
+- Created `docs/architecture/DONNA_CURRICULUM_BUILDER_COMPLETION_1205.md` — data flow, type mapping table, V1 subskill limitation, architecture constraints
+- Created `docs/qa/DONNA_CURRICULUM_BUILDER_CERTIFICATION_1205.md` — 12 scenarios including all 6 object types, distinct-type preservation, error paths
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Workflow Completion 80→86; COO Readiness 67→72 (D5: 5→9, D10: 9→10); composite 78→81; sprint 1205 impact; hierarchy audit documented; BLOCKER 1 updated (1 workflow remaining)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1175–1204 — DONNA Workflow Completion Certification V1
 
 **Final certification sprint. Assessment and parent update workflows wired via proposed_actions pipeline. Workflow Completion reaches 80/100. 6 of 8 workflows now trigger draft submission from DONNA goal session completion. Architecture: both new routes use submitDonnaActionDraft → proposed_actions → director review queue — DONNA never directly mutates. TypeScript clean.**

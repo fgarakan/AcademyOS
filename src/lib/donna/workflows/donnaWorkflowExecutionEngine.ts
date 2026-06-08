@@ -442,8 +442,11 @@ function buildCompletionMessage(
       return `**Parent update drafted for ${player}.** It's in the review queue — approve it before anything is sent to the parent.`
     }
     case 'curriculum_builder_completion': {
-      const level = answers['level_name'] ?? entityLabel
-      return `**Curriculum level "${level}" drafted.** The draft is ready for your review. Approve it to make it part of the active curriculum.`
+      const name  = answers['item_name'] ?? entityLabel
+      const type  = answers['object_type'] ?? 'Curriculum item'
+      const level = answers['curriculum_level'] ?? ''
+      const levelStr = level ? ` for ${level}` : ''
+      return `**${type} "${name}" drafted${levelStr}.** The draft is in the curriculum review queue — approve it to make it part of the active curriculum.`
     }
     case 'academy_setup_completion': {
       return `**Academy setup complete.** Your configuration has been saved. You can now add coaches and players.`

@@ -66,21 +66,42 @@ export interface GuidedCompletionWorkflow {
 const WORKFLOWS: GuidedCompletionWorkflow[] = [
 
   // ── 1. Curriculum Builder ──────────────────────────────────────────────────
+  //
+  // Supports 6 object types: Skill, Subskill, Drill, Tactical Concept,
+  // Mental Concept, Progression.
+  //
+  // Type → DB content_type mapping (migration 061 taxonomy):
+  //   Skill            → 'skill'        domain: Technical
+  //   Subskill         → 'skill'        domain: Technical  (V1 limitation: no DB hierarchy yet;
+  //                                     skillHierarchyModel.ts defines Skill→SubSkill but
+  //                                     backing tables not created — Sprint 511)
+  //   Drill            → 'drill'
+  //   Tactical Concept → 'tactical'     domain: Tactical
+  //   Mental Concept   → 'mental_skill' domain: Mentality   (distinct — do NOT collapse into tactical)
+  //   Progression      → 'progression'                      (distinct — do NOT collapse into drill)
   {
     id: 'curriculum_builder_completion',
-    label: 'Curriculum Level Builder',
-    endGoal: 'Define a complete curriculum level — goal, required skills, supporting drills, assessment criteria, and parent/player description — ready for director review.',
+    label: 'Curriculum Item Builder',
+    endGoal: 'Create a curriculum item draft (skill, subskill, drill, tactical concept, mental concept, or progression) for a specific level — ready for director review.',
     triggerPhrases: [
+      'add a skill',
+      'add a drill',
+      'add a tactical concept',
+      'add a mental concept',
+      'add a progression',
+      'add a subskill',
+      'create a curriculum item',
+      'add curriculum item',
+      'build a curriculum item',
+      'draft a skill',
+      'draft a drill',
+      'new curriculum item',
+      'curriculum item',
       'walk me through curriculum builder',
       'walk me through the curriculum builder',
       'help me build curriculum',
-      'help me build a curriculum level',
-      'build a curriculum level',
       'build curriculum',
       'curriculum builder',
-      'guide me through curriculum',
-      'let\'s build a level',
-      'create a curriculum level',
     ],
     pageRoutes: [
       '/director/curriculum',
@@ -88,77 +109,77 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
     ],
     requiredSteps: [
       {
-        stepId: 'level_name',
+        stepId: 'object_type',
         order: 1,
-        question: 'Which level are we building? (e.g. Orange Ball 2, Red 1, Green Ball)',
-        fieldId: 'level_name',
-        hint: 'Use the ball color and number from your curriculum structure.',
+        question: 'What type of curriculum item are you creating? Choose: Skill, Subskill, Drill, Tactical Concept, Mental Concept, or Progression.',
+        fieldId: 'object_type',
+        hint: 'Skill = technical ability · Subskill = component of a skill · Drill = practice activity · Tactical Concept = game strategy · Mental Concept = mindset/routine · Progression = harder/easier variation.',
         required: true,
       },
       {
-        stepId: 'level_goal',
+        stepId: 'item_name',
         order: 2,
-        question: 'What is the main development goal of this level?',
-        fieldId: 'level_goal',
-        hint: 'One sentence. Example: "Build rally consistency under movement pressure."',
+        question: 'What is the name of this item?',
+        fieldId: 'item_name',
+        hint: 'Keep it concise and specific. Example: "Cross-court forehand rally", "Reset mindset cue", "Approach shot progression".',
         required: true,
       },
       {
-        stepId: 'required_skills',
+        stepId: 'curriculum_level',
         order: 3,
-        question: 'What skills must a player demonstrate before advancing to the next level?',
-        fieldId: 'required_skills',
-        hint: 'List 2–4 observable skills. Example: serve rhythm, rally tolerance, recovery position.',
+        question: 'Which curriculum level does this item belong to?',
+        fieldId: 'curriculum_level',
+        hint: 'Use the level name from your curriculum structure. Example: Orange Ball 2, Green Ball 1, Yellow Ball 3.',
         required: true,
       },
       {
-        stepId: 'supporting_drills',
+        stepId: 'item_description',
         order: 4,
-        question: 'What drills or activities best develop these skills at this level?',
-        fieldId: 'supporting_drills',
-        hint: 'Name 2–4 drills. These will be suggested to coaches in session planning.',
+        question: 'Describe this item in 2–3 sentences.',
+        fieldId: 'item_description',
+        hint: 'What is it, and why does it matter at this level? Be specific enough for a coach to understand the intent.',
         required: true,
       },
       {
-        stepId: 'assessment_method',
+        stepId: 'coaching_cues',
         order: 5,
-        question: 'How do you assess whether a player has met the level criteria?',
-        fieldId: 'assessment_method',
-        hint: 'Example: "10-ball rally + serve target test at 70% success rate."',
+        question: 'What are 2–3 key coaching cues for this item?',
+        fieldId: 'coaching_cues',
+        hint: 'Short, actionable phrases a coach would say. Example: "Watch the ball longer", "Stay low through the contact", "Reset before the next point".',
         required: true,
       },
       {
-        stepId: 'parent_player_description',
+        stepId: 'common_mistakes',
         order: 6,
-        question: 'How would you describe this level to a parent or player in plain language?',
-        fieldId: 'parent_player_description',
-        hint: 'Keep it encouraging and jargon-free. This may appear in the parent/player portal.',
+        question: 'What common mistakes or errors should coaches watch for?',
+        fieldId: 'common_mistakes',
+        hint: 'Observable failure patterns. Example: "Early racquet drop", "Looking at opponent instead of ball", "Rushing after a mistake".',
         required: true,
       },
     ],
     optionalSteps: [
       {
-        stepId: 'coach_notes',
+        stepId: 'progression_relationship',
         order: 7,
-        question: 'Any internal notes for coaches about common challenges at this level?',
-        fieldId: 'coach_notes',
-        hint: 'Director-visible only. Not shown to parents or players.',
+        question: 'Does this item connect to a harder or easier version? (optional)',
+        fieldId: 'progression_relationship',
+        hint: 'Example: "Easier: rally to target" / "Harder: rally crosscourt under directional pressure". Leave blank if standalone.',
         required: false,
       },
     ],
-    completionCriteria: 'All 6 required fields answered. Draft is ready for director review.',
+    completionCriteria: 'All 6 required fields answered. Curriculum item draft is ready for director review.',
     safeActions: [
       'ask questions and collect answers',
       'build a draft in conversation memory',
-      'suggest drill names from the curriculum library',
+      'suggest coaching cues based on object type',
       'show progress through the 6 steps',
     ],
     approvalGatedActions: [
-      'save curriculum level to the database',
+      'save curriculum item draft to the review queue',
       'publish curriculum changes to coaches',
-      'make the level visible to players or parents',
+      'make the item visible to players or parents',
     ],
-    openingMessage: "Let's build a curriculum level together. I'll ask you 6 questions — one at a time. Nothing saves until you review and approve the draft.\n\nStep 1 of 6:",
+    openingMessage: "Let's create a curriculum item together. I'll ask you 6 questions — one at a time. Supported types: Skill, Subskill, Drill, Tactical Concept, Mental Concept, Progression.\n\nNothing saves until you review and approve the draft.\n\nStep 1 of 6:",
   },
 
   // ── 2. Academy Setup ───────────────────────────────────────────────────────

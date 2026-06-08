@@ -1,13 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings, ArrowLeft } from 'lucide-react'
+import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumKeyboardHintBar } from '@/components/curriculum/builder/CurriculumKeyboardHintBar'
 import { buildCurriculumGapChip } from '@/lib/donna/curriculumBuilderDonnaContext'
+import { onGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
+import {
+  buildWorkflowExecutionPlan,
+  buildWorkflowDraftPayload,
+  buildWorkflowVerificationResult,
+  buildWorkflowCompletionSummary,
+  type WorkflowExecutionPlan,
+  type WorkflowCompletionSummary,
+} from '@/lib/donna/workflows/donnaWorkflowExecutionEngine'
+import {
+  createCurriculumContentItemDraft,
+  type CurriculumContentType,
+} from '@/lib/actions/curriculumDraftActions'
 
 interface Props {
   initialState: CurriculumSetupState
@@ -88,9 +101,101 @@ function openDonnaWithCurriculumGapPrompt() {
   window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: curriculumGapChip.prompt } }))
 }
 
+// Maps DONNA's free-text object_type answer to the DB content_type.
+// Preserves all distinct types from migration 061 taxonomy.
+// Subskill → 'skill': skillHierarchyModel.ts has Skill→SubSkill hierarchy
+// but backing DB tables do not exist yet (Sprint 511 limitation).
+function mapObjectTypeToContentType(raw: string): CurriculumContentType {
+  const t = raw.toLowerCase()
+  if (t.includes('mental') || t.includes('mindset') || t.includes('focus') || t.includes('emotion')) return 'mental_skill'
+  if (t.includes('progression') || t.includes('pathway'))  return 'progression'
+  if (t.includes('tactical') || t.includes('tactic') || t.includes('strategy')) return 'tactical'
+  if (t.includes('drill') || t.includes('activity') || t.includes('exercise'))  return 'drill'
+  if (t.includes('skill') || t.includes('subskill') || t.includes('sub-skill') || t.includes('technique')) return 'skill'
+  return 'drill'
+}
+
+function inferDomain(objectType: string): string | undefined {
+  const t = objectType.toLowerCase()
+  if (t.includes('mental') || t.includes('mindset') || t.includes('focus') || t.includes('emotion')) return 'Mentality'
+  if (t.includes('tactical') || t.includes('tactic') || t.includes('strategy')) return 'Tactical'
+  if (t.includes('skill') || t.includes('subskill') || t.includes('technique')) return 'Technical'
+  return undefined
+}
+
+function parseCoachCues(raw: string): string[] {
+  return raw.split(/[,;]+/).map(s => s.trim()).filter(Boolean).slice(0, 5)
+}
+
 export function CurriculumSetupBuilder({ levels = [] }: Props) {
   const router = useRouter()
   const [jumpOpen, setJumpOpen] = useState(false)
+
+  const [donnaPlan,       setDonnaPlan]       = useState<WorkflowExecutionPlan | null>(null)
+  const [donnaSubmitting, setDonnaSubmitting] = useState(false)
+  const [donnaError,      setDonnaError]      = useState<string | null>(null)
+  const [donnaCompletion, setDonnaCompletion] = useState<WorkflowCompletionSummary | null>(null)
+
+  useEffect(() => {
+    return onGoalSessionCompleted(detail => {
+      if (detail.workflowId !== 'curriculum_builder_completion') return
+      const plan = buildWorkflowExecutionPlan(detail)
+      if (plan) setDonnaPlan(plan)
+    })
+  }, [])
+
+  async function handleDonnaConfirm() {
+    if (!donnaPlan) return
+    const payload = buildWorkflowDraftPayload(donnaPlan)
+    if (!payload) return
+
+    setDonnaSubmitting(true)
+    setDonnaError(null)
+
+    const ans = payload.answers
+    const objectTypeRaw = ans['object_type'] ?? 'drill'
+    const contentType   = mapObjectTypeToContentType(objectTypeRaw)
+    const domain        = inferDomain(objectTypeRaw)
+    const title         = ans['item_name']?.trim() ?? 'Untitled'
+    const levelName     = ans['curriculum_level']?.trim()
+    const description   = ans['item_description']?.trim()
+    const coachCues     = ans['coaching_cues'] ? parseCoachCues(ans['coaching_cues']) : undefined
+    const regressions   = ans['common_mistakes']?.trim() ? [ans['common_mistakes'].trim()] : undefined
+    const progressions  = ans['progression_relationship']?.trim() ? [ans['progression_relationship'].trim()] : undefined
+
+    const draftResult = await createCurriculumContentItemDraft({
+      contentType,
+      title,
+      levelName,
+      description,
+      coachCues,
+      regressions,
+      progressions,
+      ...(domain ? { pathway: 'skill' as const } : {}),
+      source: 'voice',
+      rawInput: `DONNA curriculum draft: ${title} (${objectTypeRaw})${levelName ? ` · ${levelName}` : ''}`,
+      overrideReason: `DONNA-assisted draft — object type: ${objectTypeRaw}`,
+    })
+
+    const submitResult = {
+      ok:         draftResult.ok,
+      entityId:   draftResult.ok ? draftResult.draftId : null,
+      entityType: 'curriculum_override',
+      redirectTo: '/director/curriculum/builder',
+      error:      draftResult.ok ? null : draftResult.error,
+    }
+
+    const verification = buildWorkflowVerificationResult(submitResult, title)
+
+    if (verification.verified) {
+      const summary = buildWorkflowCompletionSummary('curriculum_builder_completion', verification, ans)
+      setDonnaCompletion(summary)
+      setDonnaPlan(null)
+    } else {
+      setDonnaError(verification.failureReason ?? (!draftResult.ok ? draftResult.error : null) ?? 'Failed to save curriculum draft.')
+    }
+    setDonnaSubmitting(false)
+  }
 
   function handleJump(levelId: string) {
     setJumpOpen(false)
@@ -100,6 +205,70 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
   return (
     <div className="min-h-screen" style={{ background: '#050b09' }}>
       <div className="max-w-[1180px] mx-auto px-6 pt-10 pb-20">
+
+        {/* ── DONNA completion banner ─────────────────── */}
+        {donnaCompletion && (
+          <div className="mb-6 rounded-xl border border-status-green/30 bg-status-green/5 p-4 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
+              <p className="text-sm font-semibold text-status-green">Curriculum item draft queued for review</p>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">{donnaCompletion.donnaMessage}</p>
+            <button
+              type="button"
+              onClick={() => setDonnaCompletion(null)}
+              className="text-[11px] text-text-muted underline underline-offset-2 hover:text-text-secondary mt-1"
+            >
+              Create another item
+            </button>
+          </div>
+        )}
+
+        {/* ── DONNA review banner ─────────────────────── */}
+        {donnaPlan && (
+          <div className="mb-6 rounded-xl border border-lime/25 bg-lime/5 overflow-hidden">
+            <div className="px-4 py-3 border-b border-lime/15 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+              <p className="text-xs font-semibold text-lime">DONNA collected these answers — review before saving</p>
+            </div>
+            <div className="px-4 py-3 space-y-2">
+              {donnaPlan.fields.filter(f => f.filled).map(field => (
+                <div key={field.fieldId} className="flex items-start gap-2">
+                  <ChevronRight className="w-3 h-3 text-lime shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <span className="text-xs text-text-muted">{field.displayLabel}: </span>
+                    <span className="text-xs text-text-primary">{field.value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {donnaError && (
+              <div className="px-4 py-2 border-t border-status-red/20 flex items-center gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-status-red shrink-0" />
+                <p className="text-xs text-status-red">{donnaError}</p>
+              </div>
+            )}
+            <div className="px-4 py-3 border-t border-lime/15 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDonnaConfirm}
+                disabled={!donnaPlan.readyToSubmit || donnaSubmitting}
+                className="btn-lime text-xs px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {donnaSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {donnaSubmitting ? 'Saving…' : 'Confirm & Save Curriculum Draft'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDonnaPlan(null); setDonnaError(null) }}
+                disabled={donnaSubmitting}
+                className="btn-ghost text-xs px-3 py-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Breadcrumb ──────────────────────────────── */}
         <Link

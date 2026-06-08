@@ -40,11 +40,11 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 
 /**
  * Valid content_type values for curriculum_content_items.
- * Source: curriculum_content_items CHECK constraint, migration 045.
- * Migration 061 expands this to 22 values — update this list after
- * migration 061 is confirmed applied to the live database.
+ * Source: curriculum_content_items CHECK constraint, migrations 045 + 061.
+ * Migration 061 confirmed applied — migration 065 seeds mental_skill rows.
  */
 const VALID_CONTENT_TYPES = [
+  // ── Original values — migration 045 ──────────────────────────
   'drill',
   'game',
   'skill',
@@ -54,6 +54,20 @@ const VALID_CONTENT_TYPES = [
   'fitness',
   'tactical',
   'competition',
+  // ── Expanded taxonomy — migration 061 ────────────────────────
+  'tactical_game',
+  'situational',
+  'match_play_theme',
+  'mental_skill',
+  'competition_behavior',
+  'coach_cue',
+  'success_criteria',
+  'success_criteria_item',
+  'progression',
+  'regression',
+  'player_mission',
+  'parent_guidance',
+  'level_gate_support',
 ] as const
 
 export type CurriculumContentType = (typeof VALID_CONTENT_TYPES)[number]

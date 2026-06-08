@@ -96,12 +96,13 @@ const WORKFLOW_FIELD_MAPS: Record<string, Record<string, FieldMapEntry>> = {
   },
 
   curriculum_builder_completion: {
-    level_name:               { pageFieldId: 'level_name',      displayLabel: 'Level Name' },
-    level_goal:               { pageFieldId: 'level_goal',      displayLabel: 'Level Goal' },
-    required_skills:          { pageFieldId: 'required_skills', displayLabel: 'Required Skills' },
-    supporting_drills:        { pageFieldId: 'drills',          displayLabel: 'Supporting Drills' },
-    assessment_method:        { pageFieldId: 'assessment',      displayLabel: 'Assessment Method' },
-    parent_player_description:{ pageFieldId: 'description',     displayLabel: 'Description' },
+    object_type:             { pageFieldId: 'object_type',    displayLabel: 'Item Type' },
+    item_name:               { pageFieldId: 'name',           displayLabel: 'Item Name' },
+    curriculum_level:        { pageFieldId: 'level',          displayLabel: 'Curriculum Level' },
+    item_description:        { pageFieldId: 'description',    displayLabel: 'Description' },
+    coaching_cues:           { pageFieldId: 'coaching_cues',  displayLabel: 'Coaching Cues' },
+    common_mistakes:         { pageFieldId: 'common_mistakes',displayLabel: 'Common Mistakes' },
+    progression_relationship:{ pageFieldId: 'progression',    displayLabel: 'Progression Relationship' },
   },
 
   academy_setup_completion: {
