@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1295–1324 — DONNA Setup Completion Authority V1
+
+**Director can now approve a saved DONNA setup draft and mark two setup steps complete: Academy Identity (`academy_identity_completed = true`) and Director Profile (`director_interview_completed = true`). Server action re-fetches draft from DB, validates hard-required fields (`academy_name`, `academy_timezone`) plus minimum count (≥6/10), maps DONNA operational answers to `settings.director_interview`, updates `academies.name` + `academies.timezone`, and stores approval metadata. Missing fields surface via Evidence Reasoning Engine before blocking approval. Two-step confirmation UI (button → confirm) ensures no accidental mutations. "BLOCKER 1 remaining limitation" from Sprint 1265 resolved. COO Readiness 81→82 (D4: 8→9), Workflow Completion 90→91, composite 85. TypeScript clean.**
+
+- Created `src/app/director/_actions/approveDonnaAcademySetupDraftAction.ts` — `'use server'`; director-only role gate; `assertNotPreviewMode()`; re-fetches `donna_setup_draft` from DB; validates `academy_name` + `academy_timezone` (hard) and ≥6/10 total fields; maps DONNA answers → `settings.director_interview`; sets `academy_identity_completed = true`, `director_interview_completed = true`; updates `academies.name` + `academies.timezone`; stores `donna_setup_approval` metadata (`approved_by`, `approved_at`, `source`, `plan_id`, `fields_applied`); returns `{ ok, missingFields[], error }` for Evidence Reasoning display
+- Updated `src/app/director/setup/AcademySetupDonnaBanner.tsx` — added approval states (`approvalPending`, `approvalSubmitting`, `approvalError`, `approvalMissingRec`, `approvalDone`); "Approve & Apply Setup" button in existing draft notice; two-step confirmation UI; `handleApprovalConfirm` calls `approveDonnaAcademySetupDraftAction` and shows Evidence Reasoning explanation on missing fields via `buildSetupMissingFieldRecommendation`; success shows green "Setup approved" completion notice; all prior DONNA session paths unchanged
+- Created `docs/qa/DONNA_SETUP_COMPLETION_AUTHORITY_CERTIFICATION_1295.md` — 12 scenarios, all PASS; architecture compliance table; known V1 limitations (lossy field mapping, no `router.refresh()`)
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 81→82 (D4: 8→9); Workflow Completion 90→91; composite 85; Sprint 1295 impact recorded; next sprint options documented
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1265–1294 — DONNA Academy Setup Completion V1
 
 **8th and final DONNA workflow to reach full draft submission. All 8 guided workflows now wired end-to-end. DONNA guides the director through a 10-question academy setup interview, shows a review banner with all collected answers, and saves to `academies.settings.donna_setup_draft` on director confirmation. No setup completion flags are touched — the draft is informational context for DONNA. Workflow Completion 86→90, COO Readiness 78→81 (D4: 5→8), composite 83→85. BLOCKER 1 resolved. TypeScript clean.**

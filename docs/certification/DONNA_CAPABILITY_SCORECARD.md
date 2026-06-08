@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1265 (Mega Sprint 1265–1294)
+**Version:** 1295 (Mega Sprint 1295–1324)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **81/100** | 78 | 81 | MEDIUM | 1265 |
+| COO Readiness | **82/100** | 81 | 82 | MEDIUM | 1295 |
 | Conversational Readiness | **72/100** | 64 | 72 | MEDIUM | 1235 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
-| Workflow Completion | **90/100** | 86 | 90 | HIGH | 1265 |
+| Workflow Completion | **91/100** | 90 | 91 | HIGH | 1295 |
 
-**Composite score: 85/100** (unweighted average)
+**Composite score: 85/100** (unweighted average, 85.4 rounds to 85)
 
 ---
 
@@ -88,19 +88,19 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | **+3** (Sprint 1265) | PARTIAL → PASS |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | **+3** total | PASS |
-| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **+3** (Sprint 1265) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | **+4** total (Sprint 1265+1295) | PARTIAL → PASS |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **+1** (Sprint 1295) | |
 
 ### D8 change rationale (5→8) — Sprint 1235
 `buildEvidencedRecommendation()` pre-computes a `why` follow-up answer for every recommendation
@@ -115,6 +115,9 @@ a separate integration sprint is needed.
 The `adaptCOOInsightToEvidence()` adapter maps `COOInsight.missingData` directly to `missingInfo`.
 Score raised from 6→9: DONNA can now explicitly enumerate what data is missing for any of the
 8 COO question categories. Not 10/10 because the engine is not yet integrated into the live pipeline.
+
+### D4 change rationale (8→9) — Sprint 1295
+`approveDonnaAcademySetupDraftAction` now allows director to approve the saved `donna_setup_draft` and mark two setup completion flags: `academy_identity_completed = true` and `director_interview_completed = true`. The server action re-fetches the draft from DB (no client trust), validates minimum field requirements (`academy_name` + `academy_timezone` hard-required; ≥6/10 total), maps DONNA operational fields to `settings.director_interview` structure, stores approval metadata (`approved_by`, `approved_at`, `source`, `plan_id`, `fields_applied`), and updates `academies.name` + `academies.timezone`. Missing fields are shown via `buildSetupMissingFieldRecommendation` (Evidence Reasoning Engine) before blocking approval. Score 8→9: director can now complete setup steps 1 (identity) and 2 (interview) via DONNA without manually visiting the interview page. Not 10/10 because: (a) no field-level pre-fill on the interview form itself, (b) mapping is lossy (DONNA operational answers mapped to philosophical interview fields), (c) remaining 5 setup flags still require manual steps.
 
 ### D4 change rationale (5→8) — Sprint 1265
 `academy_setup_completion` fully wired: 10-step guided Q&A, `AcademySetupDonnaBanner` on `/director/setup`, director-confirmed draft saved to `academies.settings.donna_setup_draft` via `donnaSaveAcademySetupDraftAction`. Existing drafts show a saved-draft notice with fill count and date. Score 5→8: DONNA now guides directors through the complete academy setup interview. Not 9/10 because the draft saves to `donna_setup_draft` only — does not set `director_interview_completed` or any setup completion flag; setup checklist steps still require manual completion. Not 10/10 for same reason plus no field-level pre-fill on the setup page (checklist has no form inputs).
@@ -282,7 +285,7 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | "Set by DONNA" indicators | 4/8 PASS | Template + player + coach + fitness pages show lime sparkle badges |
 
 ### Score derivation
-Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. **Score: 90/100.** (Not 100/100: review banner shows truncated question text not friendly labels; academy_setup draft saves to `donna_setup_draft` only, not to setup completion flags; player creation level/coach/group remain banner-only.)
+Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. Add 1 for academy_setup approval closing the setup completion flag gap. **Score: 91/100.** (Not 100/100: review banner shows truncated question text not friendly labels; player creation level/coach/group remain banner-only; session storage still tab-bound.)
 
 ### Confidence: HIGH
 The workflow matrix is derived from explicit certification scenarios. Wiring gaps are definitively confirmed — no ambiguity about which pages have listeners.
@@ -345,6 +348,32 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1295 — DONNA Setup Completion Authority V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 81 | **82** | +1 (D4: 8→9) |
+| Workflow Completion | 90 | **91** | +1 (approval closes setup flag gap) |
+| Composite | 85 | **85** | 0 (85.4 rounds to 85) |
+
+**What changed:**
+- `approveDonnaAcademySetupDraftAction.ts`: new server action. Re-fetches `donna_setup_draft` from DB. Validates hard-required fields (`academy_name`, `academy_timezone`) and minimum count (≥6/10). Maps DONNA operational answers → `settings.director_interview`. Sets `academy_identity_completed = true`, `director_interview_completed = true`. Updates `academies.name` + `academies.timezone`. Stores approval metadata in `settings.donna_setup_approval`.
+- `AcademySetupDonnaBanner.tsx`: updated existing draft notice to include "Approve & Apply Setup" button with two-step confirmation. Missing fields display via `buildSetupMissingFieldRecommendation` (Evidence Reasoning Engine). Success state shows "Setup approved" completion notice.
+- COO Readiness D4: 8→9. Director can now complete setup steps 1 (identity) and 2 (interview) via DONNA without visiting the interview page manually.
+- Workflow Completion: 90→91. Academy setup draft no longer merely informational — director can apply it to completion flags.
+- "BLOCKER 1 remaining limitation" from Sprint 1265 resolved: `donna_setup_draft` can now set `director_interview_completed`.
+- Certification: `docs/qa/DONNA_SETUP_COMPLETION_AUTHORITY_CERTIFICATION_1295.md` — 12 scenarios, all PASS.
+
+**What didn't change:**
+- Session persistence still tab-bound (BLOCKER 2 open).
+- `DonnaAssistantButton` still not in goal session loop (BLOCKER 4 open).
+- Remaining 5 setup completion flags not set by this sprint.
+- Player creation level/coach/group still banner-only (BLOCKER 6 open).
+
+---
 
 ### Sprint 1265 — DONNA Academy Setup Completion V1
 
@@ -696,11 +725,21 @@ in the DONNA session context from COO/briefing outputs.
 
 ## 9. Next highest-leverage sprint
 
-### Next: Setup Draft → Interview Completion Wiring V1
+### Next: COO Readiness D2/D3 Intelligence V1 or Player Creation Entity Resolution V1
 
-**Rationale:** All 8 workflows are now wired. The highest-impact remaining gap is that `donna_setup_draft` saves DONNA's collected setup context but does NOT set `director_interview_completed` (setup checklist step 2). A director who completes the DONNA setup interview still sees step 2 as "next" in the checklist. A future sprint should: (1) let the director confirm the `donna_setup_draft` to mark `director_interview_completed = true`, and (2) optionally wire COO Readiness D7 (player creation entity ID resolution — coach/group name→ID lookup).
+**Option A — COO Intelligence (D2/D3 improvement):**
+D2 "What do I need to do today?" and D3 "How is everything looking?" have been stuck at 7/10 and 6/10 for multiple sprints. Both can be improved by wiring the Evidence Reasoning Engine (`resolveEvidenceFollowUp`) into the 14-step brain pipeline and populating `cooState` from live Supabase data. Expected: D2 7→8, D3 6→8. +3 COO Readiness, composite 85→86.
 
-**Expected impact:** COO Readiness D4 rises 8→9. Workflow Completion holds at 90. Composite 85→86.
+**Option B — Player Creation Entity Resolution V1 (D7 improvement):**
+Player creation currently collects `assigned_coach: "Coach Sarah"` (text) but cannot resolve it to a coach ID. Adding name→ID lookup in the page listener would make player creation fully wired. Expected: D7 6→8, COO Readiness +2, Workflow Completion +1. Composite 85→86.
+
+**Expected impact (either option):** Composite 85→86.
+
+---
+
+### Previous recommendation: Sprint 1295 — DONNA Setup Completion Authority V1 (DONE)
+
+**Completed impact:** COO Readiness 81→82 (D4: 8→9). Workflow Completion 90→91. Composite 85 (unchanged at 85.4).
 
 ---
 

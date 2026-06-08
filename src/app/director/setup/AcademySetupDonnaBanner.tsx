@@ -1,6 +1,8 @@
 'use client'
 
 // Mega Sprint 1265–1294 — DONNA Academy Setup Completion V1
+// Mega Sprint 1295–1324 — DONNA Setup Completion Authority V1 (approval flow added)
+//
 // Client component wiring DONNA goal session to /director/setup.
 //
 // DONNA path:
@@ -10,11 +12,13 @@
 //   4. Director clicks "Confirm & Save Draft" → donnaSaveAcademySetupDraftAction called
 //   5. WorkflowCompletionSummary shown in banner
 //
-// Existing draft path:
-//   If donna_setup_draft already exists in settings, shows a saved-draft notice.
+// Existing draft approval path:
+//   If donna_setup_draft already exists, director can click "Approve & Apply Setup"
+//   to mark academy_identity_completed and director_interview_completed.
+//   Missing fields are shown via Evidence Reasoning Engine before blocking approval.
 
 import { useState, useEffect } from 'react'
-import { Sparkles, CheckCircle2, AlertCircle, Loader2, ChevronRight, FileText } from 'lucide-react'
+import { Sparkles, CheckCircle2, AlertCircle, Loader2, ChevronRight, FileText, Check } from 'lucide-react'
 import { onPageStatePatch, onGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
 import {
   buildWorkflowExecutionPlan,
@@ -25,7 +29,12 @@ import {
   type WorkflowCompletionSummary,
 } from '@/lib/donna/workflows/donnaWorkflowExecutionEngine'
 import { donnaSaveAcademySetupDraftAction } from '@/app/director/_actions/donnaSaveAcademySetupDraftAction'
-import { ACADEMY_SETUP_REQUIRED_FIELDS } from '@/lib/donna/setup/donnaAcademySetupCompletionEngine'
+import { approveDonnaAcademySetupDraftAction } from '@/app/director/_actions/approveDonnaAcademySetupDraftAction'
+import {
+  ACADEMY_SETUP_REQUIRED_FIELDS,
+  buildSetupMissingFieldRecommendation,
+} from '@/lib/donna/setup/donnaAcademySetupCompletionEngine'
+import type { EvidencedRecommendation } from '@/lib/donna/reasoning/donnaEvidenceReasoningEngine'
 
 interface Props {
   existingDraft: Record<string, string> | null
@@ -37,6 +46,13 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
   const [donnaSubmitting, setDonnaSubmitting] = useState(false)
   const [donnaError,      setDonnaError]      = useState<string | null>(null)
   const [donnaCompletion, setDonnaCompletion] = useState<WorkflowCompletionSummary | null>(null)
+
+  // Approval states (existing draft → mark setup complete)
+  const [approvalPending,    setApprovalPending]    = useState(false)
+  const [approvalSubmitting, setApprovalSubmitting] = useState(false)
+  const [approvalError,      setApprovalError]      = useState<string | null>(null)
+  const [approvalMissingRec, setApprovalMissingRec] = useState<EvidencedRecommendation | null>(null)
+  const [approvalDone,       setApprovalDone]       = useState(false)
 
   // ── DONNA: per-answer progress tracking ──────────────────────────────────────
   useEffect(() => {
@@ -55,7 +71,7 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
     })
   }, [])
 
-  // ── DONNA confirm ─────────────────────────────────────────────────────────────
+  // ── DONNA confirm (save draft) ────────────────────────────────────────────────
   async function handleDonnaConfirm() {
     if (!donnaPlan) return
     const payload = buildWorkflowDraftPayload(donnaPlan)
@@ -97,6 +113,34 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
     setLiveAnswerCount(0)
   }
 
+  // ── Approval confirm (approve existing draft → mark setup complete) ───────────
+  async function handleApprovalConfirm() {
+    setApprovalSubmitting(true)
+    setApprovalError(null)
+    setApprovalMissingRec(null)
+
+    const result = await approveDonnaAcademySetupDraftAction()
+
+    if (result.ok) {
+      setApprovalDone(true)
+      setApprovalSubmitting(false)
+      setApprovalPending(false)
+    } else if (result.missingFields.length > 0) {
+      const rec = buildSetupMissingFieldRecommendation(result.missingFields, [])
+      setApprovalMissingRec(rec)
+      setApprovalSubmitting(false)
+    } else {
+      setApprovalError(result.error)
+      setApprovalSubmitting(false)
+    }
+  }
+
+  function handleApprovalCancel() {
+    setApprovalPending(false)
+    setApprovalError(null)
+    setApprovalMissingRec(null)
+  }
+
   // ── Session in progress ───────────────────────────────────────────────────────
   if (liveAnswerCount > 0 && !donnaPlan && !donnaCompletion) {
     return (
@@ -113,7 +157,7 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
     )
   }
 
-  // ── Completion notice ─────────────────────────────────────────────────────────
+  // ── DONNA session completion notice ───────────────────────────────────────────
   if (donnaCompletion) {
     return (
       <div className="rounded-xl border border-status-green/30 bg-status-green/5 p-4 space-y-2">
@@ -126,7 +170,7 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
     )
   }
 
-  // ── Review banner ─────────────────────────────────────────────────────────────
+  // ── Review banner (after DONNA session completes) ─────────────────────────────
   if (donnaPlan) {
     const filledFields = donnaPlan.fields.filter(f => f.filled)
 
@@ -192,7 +236,22 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
     )
   }
 
-  // ── Existing saved draft notice ───────────────────────────────────────────────
+  // ── Approval success notice ───────────────────────────────────────────────────
+  if (approvalDone) {
+    return (
+      <div className="rounded-xl border border-status-green/30 bg-status-green/5 p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
+          <p className="text-sm font-semibold text-status-green">Setup approved</p>
+        </div>
+        <p className="text-xs text-text-secondary leading-relaxed">
+          Academy identity and director profile are now marked complete. Your setup progress has been updated.
+        </p>
+      </div>
+    )
+  }
+
+  // ── Existing saved draft notice (with approval flow) ──────────────────────────
   if (existingDraft) {
     const filledCount = ACADEMY_SETUP_REQUIRED_FIELDS.filter(
       id => (existingDraft[id] ?? '').trim().length > 0,
@@ -202,21 +261,89 @@ export function AcademySetupDonnaBanner({ existingDraft }: Props) {
       : null
 
     return (
-      <div className="rounded-xl border border-lime/15 bg-lime/5 px-4 py-3 flex items-start gap-3">
-        <FileText className="w-3.5 h-3.5 text-lime/70 shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-text-secondary">
-            DONNA setup draft saved —{' '}
-            <span className="font-mono text-lime">{filledCount}</span>
-            {' '}of{' '}
-            <span className="font-mono text-lime">{ACADEMY_SETUP_REQUIRED_FIELDS.length}</span>
-            {' '}fields.
-            {savedAt && <span className="text-text-muted font-normal"> Saved {savedAt}.</span>}
-          </p>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Ask DONNA to &quot;walk me through academy setup&quot; to update or complete it.
-          </p>
+      <div className="rounded-xl border border-lime/15 bg-lime/5 overflow-hidden">
+        <div className="px-4 py-3 flex items-start gap-3">
+          <FileText className="w-3.5 h-3.5 text-lime/70 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-text-secondary">
+              DONNA setup draft saved —{' '}
+              <span className="font-mono text-lime">{filledCount}</span>
+              {' '}of{' '}
+              <span className="font-mono text-lime">{ACADEMY_SETUP_REQUIRED_FIELDS.length}</span>
+              {' '}fields.
+              {savedAt && <span className="text-text-muted font-normal"> Saved {savedAt}.</span>}
+            </p>
+            <p className="text-[11px] text-text-muted mt-0.5">
+              Ask DONNA to &quot;walk me through academy setup&quot; to update or complete it.
+            </p>
+          </div>
         </div>
+
+        {/* Evidence Reasoning — missing fields explanation when approval is blocked */}
+        {approvalMissingRec && (
+          <div className="px-4 py-3 border-t border-status-orange/20 space-y-1.5">
+            <p className="text-xs font-medium text-status-orange">
+              {approvalMissingRec.confidence.label} — cannot approve yet
+            </p>
+            {approvalMissingRec.confidence.detail && (
+              <p className="text-xs text-text-secondary">{approvalMissingRec.confidence.detail}</p>
+            )}
+            <p className="text-[11px] text-text-muted leading-relaxed">{approvalMissingRec.nextAction}</p>
+          </div>
+        )}
+
+        {/* Generic error (non-missing-fields failure) */}
+        {approvalError && !approvalMissingRec && (
+          <div className="px-4 py-3 border-t border-status-red/20 flex items-center gap-2">
+            <AlertCircle className="w-3.5 h-3.5 text-status-red shrink-0" />
+            <p className="text-xs text-status-red">{approvalError}</p>
+          </div>
+        )}
+
+        {/* Confirmation step */}
+        {approvalPending && (
+          <div className="px-4 py-3 border-t border-lime/15 space-y-3">
+            <p className="text-xs text-text-secondary leading-relaxed">
+              This will mark{' '}
+              <span className="text-text-primary font-medium">Academy Identity</span> and{' '}
+              <span className="text-text-primary font-medium">Director Profile</span> as complete using
+              your DONNA answers. The academy name and timezone will also be updated.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleApprovalConfirm}
+                disabled={approvalSubmitting}
+                className="btn-lime text-xs px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {approvalSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {approvalSubmitting ? 'Applying…' : 'Confirm & Apply Setup'}
+              </button>
+              <button
+                type="button"
+                onClick={handleApprovalCancel}
+                disabled={approvalSubmitting}
+                className="btn-ghost text-xs px-3 py-2"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Primary action — only shown when not in confirmation step */}
+        {!approvalPending && (
+          <div className="px-4 py-3 border-t border-lime/15">
+            <button
+              type="button"
+              onClick={() => { setApprovalPending(true); setApprovalError(null); setApprovalMissingRec(null) }}
+              className="btn-lime text-xs px-4 py-2 flex items-center gap-1.5"
+            >
+              <Check className="w-3.5 h-3.5" />
+              Approve &amp; Apply Setup
+            </button>
+          </div>
+        )}
       </div>
     )
   }
