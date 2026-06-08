@@ -1,7 +1,7 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 965 (Mega Sprint 965–994)
-**Last updated:** 2026-06-07
+**Version:** 995C (Mega Sprint 995–1024C)
+**Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
 ---
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **60/100** | 55 | 60 | MEDIUM | 935 |
-| Conversational Readiness | **62/100** | — | 62 | MEDIUM | 934A |
+| COO Readiness | **61/100** | 60 | 61 | MEDIUM | 995C |
+| Conversational Readiness | **64/100** | 62 | 64 | MEDIUM | 995C |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
 | Workflow Completion | **40/100** | — | 40 | HIGH | 934C |
 
-**Composite score: 68/100** (unweighted average)
+**Composite score: 69/100** (unweighted average)
 
 ---
 
@@ -88,25 +88,26 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Delta | Verdict |
-|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | **+3** | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 0 | PARTIAL |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 0 | PARTIAL |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 0 | PARTIAL |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 0 | PARTIAL |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 0 | PARTIAL |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 0 | FAIL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 0 | PARTIAL |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 0 | PARTIAL |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | **+1** | PARTIAL |
-| | **Total** | **55/100** | **60/100** | **+5** | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Delta | Verdict |
+|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 4/10 | 0 | FAIL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | **+2** total | PARTIAL |
+| | **Total** | **55/100** | **60/100** | **61/100** | **+1** (995C) | |
 
 ### D1 change rationale (5→8)
 Sprint 935 (`docs/architecture/DONNA_DAILY_COO_BRIEFING_935.md`) wired a 5-section COO brief to the director home page. Brief renders on every login without Brian opening DONNA. Covers all 7 brief dimensions with action routes. Missing data is disclosed. This directly addresses the audit finding: "Brief infrastructure is built. The surface delivery is passive. A proactive COO comes to you." Score raised to 8 (not 10) because: brief is not personalized to session context; no badge or notification on approach; top 3 actions are deterministic, not intelligent.
 
-### D10 change rationale (5→6)
-DONNA now proactively surfaces a structured brief — one of the two main behavioral COO gaps (the other being form-filling). Score raised by 1. Not higher because: 5/6 workflows still don't fill forms; session memory is still tab-bound; two surfaces still diverge on goal sessions.
+### D10 change rationale (5→6→7)
+Sprint 935: DONNA now proactively surfaces a structured brief — one of the two main behavioral COO gaps. Score raised from 5 to 6.
+Sprint 995C: Voice coherence certified — exactly one DONNA voice runtime confirmed. Two simultaneous voice sources (one from server TTS and one from browser TTS bypasses) would undermine the COO persona. All speech now routes through a single global lock. Score raised from 6 to 7. Not higher because: 5/6 workflows still don't fill forms; session memory is still tab-bound; two surfaces still diverge on goal sessions.
 
 ### D7 worst dimension — FAIL
 Player creation page (`/director/players`) has no `onPageStatePatch` listener. DONNA can run the 6-step Q&A loop but the form stays blank. Coach/group assignment requires entity ID resolution (not just text). This is the highest-frequency director action post-setup. **Fix in Sprint 936.**
@@ -159,14 +160,22 @@ When Brian types or speaks to DONNA, does the routing, intent classification, en
 | DonnaAssistantButton in goal sessions | FAIL | Floating panel does not call `processGoalSession()` — goal sessions are sidebar-only |
 | Cross-session memory | FAIL | No Supabase-backed session memory. sessionStorage clears on tab close |
 
+### What was added in Sprint 995C
+
+| Component | Status | Evidence |
+|---|---|---|
+| Single voice runtime certified | PASS | V3 bypass search: 0 active `speechSynthesis.speak()` calls; all speech routes through `speakDonnaPremium` with global lock |
+| Caller logging on every utterance | PASS | `DonnaSpeechLogEntry` with `caller`, `requestId`, `timestamp`, `played`/`cancelled` fields |
+| Browser TTS fallback disabled | PASS | `speakBrowserFallback()` and `browserTtsFallback()` return silent; browser cannot produce a second voice |
+
 ### Score derivation
-7 PASS components at 10 each = 70. Penalize: 4 PARTIAL at half value (-20), 2 FAIL components (-8). Final: ~62.
+Sprint 995C baseline: 7 PASS components at 10 each = 70. Penalize: 4 PARTIAL at half value (-20), 2 FAIL components (-8). Base: ~62. Add 2 for single-voice certification (removes a real user-facing coherence failure). Final: **64**.
 
 ### Confidence: MEDIUM
-Surface routing is verified from code review. End-to-end live data flow for context population is not automated-tested.
+Surface routing is verified from code review. End-to-end live data flow for context population is not automated-tested. Voice certification is based on static analysis (grep sweep + code review), not automated audio tests.
 
 ### Update trigger
-Update when: intent systems are consolidated, brain entries expanded past 21, goal sessions added to floating panel, or session memory moves to Supabase.
+Update when: intent systems are consolidated, brain entries expanded past 21, goal sessions added to floating panel, session memory moves to Supabase, or browser fallback is re-enabled and tested.
 
 ---
 
@@ -276,13 +285,23 @@ Listed by impact severity. Each blocker cites its evidence source.
 **Fix path:** Add `processGoalSession()` call to `DonnaAssistantButton.handleCommandSubmit()`, same as sidebar.
 **Severity:** MEDIUM
 
-### BLOCKER 5 — Brain "explain why" coverage is too narrow
+### BLOCKER 5 (resolved) — Two simultaneous DONNA voices
+**Status:** RESOLVED in Sprints 995–1024B/C
+**Summary:** Multiple browser TTS bypass paths existed alongside the global speech lock, allowing two audio channels to play simultaneously. All bypasses now eliminated. One runtime, one lock, one speaker.
+
+### BLOCKER 6 — Brain "explain why" coverage is too narrow
 **Impact:** Brian asks "Why is this player still in Orange Ball 2?" — DONNA cannot answer. Brain has 21 entries covering vocabulary and system rules only. No curriculum advancement criteria, level pedagogical differences, or player development rationale.
 **Evidence:** COO Readiness Audit 935 — Dimension 8 (5/10)
 **Fix path:** Add 10–15 brain entries to `initialBrainSeed.ts` covering curriculum level criteria and player development rationale. No new architecture needed.
 **Severity:** MEDIUM
 
-### BLOCKER 6 — Player creation needs entity ID resolution
+### BLOCKER 7 — Browser TTS fallback is disabled
+**Impact:** When the server has no OPENAI_API_KEY configured, DONNA is silent. There is no graceful degradation to browser TTS during this certification period.
+**Evidence:** Sprint 995 V2 disabled `browserTtsFallback()` and `speakBrowserFallback()` to isolate the second-voice root cause.
+**Fix path:** Once field testing confirms zero second-voice incidents, restore both fallback functions. Instructions in `docs/qa/DONNA_VOICE_FORENSIC_AUDIT_995.md` — "To Re-enable Browser Fallback."
+**Severity:** MEDIUM (only affects deployments without OPENAI_API_KEY)
+
+### BLOCKER 6 (renumbered) — Player creation needs entity ID resolution
 **Impact:** `player_onboarding_completion` collects `assigned_coach: "Coach Sarah"` (text), but the player creation form needs a coach ID. Text→ID resolution not built.
 **Evidence:** COO Readiness Audit 935 — Dimension 7 gap analysis
 **Fix path:** Add a lookup step in the page listener that resolves coach/group names to IDs from the academy context.
@@ -291,6 +310,35 @@ Listed by impact severity. Each blocker cites its evidence source.
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 995C — DONNA Voice Certification V3
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 60/100 | 61/100 | **+1** (D10: 6→7) |
+| Conversational Readiness | 62/100 | 64/100 | **+2** |
+| Atomic Loop Completion | 92/100 | 92/100 | 0 |
+| Director Question Readiness | 88/100 | 88/100 | 0 |
+| Workflow Completion | 40/100 | 40/100 | 0 |
+
+**What changed:**
+- `DirectorInterviewAssistant.tsx` — removed 100-line independent browser TTS implementation (`speakAssistant()`); replaced with thin wrapper over `speakDonnaPremium`. Removed `utteranceRef`, `selectedVoiceRef`, `advanceTimerRef`, voice-loading `useEffect`, `isTtsSupported()`, `speechSynthesis.cancel()` gesture prime.
+- `DonnaAssistantButton.tsx` — deleted dead `speakAssistantText()` function (no remaining callers after V2). Routed `testBrowserVoice()` (dev-only) through `speakDonnaPremium`. Removed `utteranceRef`.
+- `docs/qa/DONNA_VOICE_CERTIFICATION_V3_995.md` — final voice inventory, 0 bypass count, 9 certification scenarios, build classification.
+
+**What didn't change:**
+- No new guided workflow page wiring
+- No brain entries added
+- No session persistence improvement
+- No floating panel goal session parity
+- Browser fallback remains disabled (intentional until field certification)
+
+**Files modified:** `DirectorInterviewAssistant.tsx`, `DonnaAssistantButton.tsx`, `DONNA_CAPABILITY_SCORECARD.md`, `CHANGELOG.md`
+**Files created:** `docs/qa/DONNA_VOICE_CERTIFICATION_V3_995.md`
+
+---
 
 ### Sprint 935 — DONNA Daily COO Briefing V1
 

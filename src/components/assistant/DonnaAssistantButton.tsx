@@ -556,9 +556,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // State key for the last spoken prompt — catches duplicates when the text ref is cleared
   // but the same onboarding step or question fires again within the same session.
   const lastSpokenKeyRef = useRef<string | null>(null)
-  // Tracks the active utterance so cancel() is only called when one is actually in flight.
-  // Unconditional cancel() before speak() triggers Chrome onerror: "canceled" race condition.
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   // Sprint 296B — greeting voice status and watchdog for stuck-state detection
   const [voiceGreetingStatus, setVoiceGreetingStatus] = useState<
     'idle' | 'starting' | 'speaking' | 'stalled' | 'done' | 'error'
@@ -584,93 +581,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [wakeListeningActive, setWakeListeningActive] = useState(false)
   const [wakeDetectedCommand, setWakeDetectedCommand] = useState<string | null>(null)
 
-  // Sprint 1094E — RESTRICTED: only call from (1) playOnboardingVoice browser fallback
-  // for the onboarding interview page, and (2) testBrowserVoice() dev tool.
-  // All other DONNA speech uses speakDonna() for the premium voice path.
-  function speakAssistantText(text: string, onStatus?: (status: 'speaking' | 'done' | 'error') => void) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      return
-    }
-
-    const now = Date.now()
-    const msSinceLast = now - lastSpokenAtRef.current
-
-    // Guard 1 — timestamp + text: same text spoken within 1500ms (catches StrictMode
-    // double-invocation and onstart→setIsSpeaking→re-render triggered duplicate calls).
-    if (lastSpokenTextRef.current === text && msSinceLast < 1500) {
-      return
-    }
-
-    // Guard 2 — state key: same onboarding step or free-text key already spoken.
-    // Cleared explicitly when advancing steps or resetting speech state.
-    const stateKey = onboardingStep !== null ? `onboarding:${onboardingStep}` : `free:${text.slice(0, 40)}`
-    if (lastSpokenKeyRef.current === stateKey) {
-      return
-    }
-
-    lastSpokenTextRef.current = text
-    lastSpokenAtRef.current = now
-    lastSpokenKeyRef.current = stateKey
-
-    // Cancel any active or stuck utterance before queueing a new one.
-    // Only cancel when tracked, or when stuck with no tracked utterance, to avoid the Chrome
-    // race where cancel() + speak() on an idle queue causes the new utterance to be canceled.
-    if (utteranceRef.current !== null) {
-      utteranceRef.current = null
-      window.speechSynthesis.cancel()
-    } else if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-      // Stuck state with no tracked utterance — free the queue before re-queueing.
-      window.speechSynthesis.cancel()
-    }
-    const utt = new SpeechSynthesisUtterance(text)
-    // Sprint 788 — use central voice config (replaces inline hardcoded values from Sprint 719)
-    utt.rate = fallbackBrowserRate
-    utt.pitch = fallbackBrowserPitch
-    utt.volume = fallbackBrowserVolume
-    // Sprint 788 — use central keyword lists for consistent voice selection across all speak paths
-    const voices = window.speechSynthesis.getVoices()
-    const usableVoices = voices.filter(v =>
-      v.lang.startsWith('en') &&
-      !avoidBrowserVoiceKeywords.some(kw => v.name.toLowerCase().includes(kw.toLowerCase()))
-    )
-    let preferred: SpeechSynthesisVoice | null = null
-    for (const keyword of preferredBrowserVoiceKeywords) {
-      const match = usableVoices.find(v => v.name.toLowerCase().includes(keyword.toLowerCase()))
-      if (match) { preferred = match; break }
-    }
-    if (!preferred) preferred = usableVoices.find(v => v.localService) ?? usableVoices[0] ?? null
-    if (preferred) utt.voice = preferred
-    utt.onstart = () => {
-      setIsSpeaking(true)
-      onStatus?.('speaking')
-    }
-    utt.onend = () => {
-      utteranceRef.current = null
-      setIsSpeaking(false)
-      onStatus?.('done')
-    }
-    utt.onerror = () => {
-      utteranceRef.current = null
-      setIsSpeaking(false)
-      onStatus?.('error')
-    }
-    utteranceRef.current = utt
-    window.speechSynthesis.speak(utt)
-  }
-
-  // Isolated TTS test — does NOT touch guard refs or onboardingStep.
-  // Only use for the "Test Donna browser voice" button to rule out guard interference.
+  // Dev-only TTS test — routes through speakDonnaPremium for consistency with the canonical lock.
+  // Sprint 995 V3: speakAssistantText() removed (dead code — all callers now use speakDonnaPremium).
   function testBrowserVoice() {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      setTestVoiceStatus('error')
-      return
-    }
     setTestVoiceStatus('speaking')
-    const utt = new SpeechSynthesisUtterance('Testing browser voice. Donna is here.')
-    utt.onstart = () => setTestVoiceStatus('speaking')
-    utt.onend = () => setTestVoiceStatus('done')
-    utt.onerror = () => setTestVoiceStatus('error')
-    window.speechSynthesis.speak(utt)
+    void speakDonnaPremium('Testing browser voice. Donna is here.', {
+      caller: 'DonnaAssistantButton:testBrowserVoice',
+      onStatus: (status) => {
+        if (status === 'speaking') setTestVoiceStatus('speaking')
+        else if (status === 'done') setTestVoiceStatus('done')
+        else setTestVoiceStatus('error')
+      },
+    })
   }
 
   // Sprint 297 — Play onboarding voice.
@@ -748,9 +670,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   }
 
   // Sprint 350 — Contract TTS: server → browser cascade for known Donna prompts.
-  // Sprint 1094E — CANONICAL DONNA VOICE: all DONNA speech routes through speakDonna.
-  // speakAssistantText is kept ONLY for: (1) playOnboardingVoice browser fallback on the
-  // interview page, and (2) testBrowserVoice() dev tool. Do not add new callers.
+  // Sprint 995 V3: all DONNA speech routes through speakDonnaPremium. No browser TTS bypass paths remain.
   function speakDonna(text: string) {
     // Sprint 717 — sentence-boundary TTS truncation: cut at last sentence end within 150 chars,
     // then last clause, then raw truncation. Full text always shown in UI.
@@ -788,7 +708,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       voiceWatchdogRef.current = null
     }
     playVersionRef.current += 1
-    utteranceRef.current = null
     lastSpokenTextRef.current = null
     lastSpokenAtRef.current = 0
     lastSpokenKeyRef.current = null
@@ -1175,7 +1094,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     lastSpokenTextRef.current = null
     lastSpokenAtRef.current = 0
     lastSpokenKeyRef.current = null
-    utteranceRef.current = null
     setOnboardingStep(null)
     setShowOnboardingSuggestions(false)
     setTestVoiceStatus('idle')

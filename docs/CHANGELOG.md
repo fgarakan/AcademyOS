@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 995–1024C — DONNA Voice Certification V3
+
+**Final voice certification sprint. Zero active browser TTS bypass paths confirmed. DirectorInterviewAssistant was the last component with a direct `window.speechSynthesis.speak()` implementation — its 100-line browser TTS helper `speakAssistant()` replaced with a thin `speakDonnaPremium` wrapper. Dead code (`speakAssistantText` in DonnaAssistantButton — no remaining callers after V2) deleted. Dev-only `testBrowserVoice()` routed through canonical runtime. Comprehensive bypass search confirms 0 active calls. TypeScript clean.**
+
+- Fixed `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — removed `speakAssistant()` browser TTS implementation (100 lines of `window.speechSynthesis.speak()`, `SpeechSynthesisUtterance`, voice selection, advance timer); replaced with thin `speakDonnaPremium` wrapper preserving same callback API (`onEnd`, `onError`). Replaced `stopAssistantSpeech()` with `stopDonna()`. Removed `utteranceRef`, `selectedVoiceRef`, `advanceTimerRef`. Removed voice-loading `useEffect` (`speechSynthesis.getVoices()` + `voiceschanged` listener). Removed `speechSynthesis.cancel()` gesture prime in `startVoiceInterview()`. Removed `isTtsSupported()`. Added caller tag: `DirectorInterviewAssistant`.
+- Fixed `src/components/assistant/DonnaAssistantButton.tsx` — deleted `speakAssistantText()` (dead code, all callers replaced in V2). Removed `utteranceRef`. Routed `testBrowserVoice()` (dev-only diagnostic) through `speakDonnaPremium` with caller `DonnaAssistantButton:testBrowserVoice`.
+- Created `docs/qa/DONNA_VOICE_CERTIFICATION_V3_995.md` — complete final inventory of all speech paths, zero-bypass confirmation, bypass fix history V1→V3, 9 certification scenarios, build classification.
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Conversational Readiness: 62→64 (+2), COO Readiness: 60→61 (D10: 6→7 +1), composite: 68→69. Added BLOCKER 5 (resolved), BLOCKER 7 (browser fallback disabled).
+
+---
+
 ## 2026-06-08 — Mega Sprint 995–1024B — DONNA Voice Runtime Forensic Audit V2
 
 **Eliminated remaining second-voice sources. Three bypass paths (CoachWrapUpDrawer, DonnaWrapUpPrompt, DonnaAssistantButton interview fallback) were calling `window.speechSynthesis` independently, outside the global speech lock. All three now route through `speakDonnaPremium`. Browser TTS fallback temporarily disabled across all paths to flush any remaining ghost voices. Runtime logging added to every speakDonnaPremium call for per-utterance diagnostics.**

@@ -19,6 +19,7 @@ import { INTERVIEW_STEPS, getStepQuestion, type InterviewField, type InterviewSt
 import { updateDirectorInterviewAction } from './updateDirectorInterviewAction'
 import { useRealtimeInterviewVoice, type RealtimeDebugState } from './useRealtimeInterviewVoice'
 import { DONNA_SETUP_LABEL } from '@/components/assistant/donnaAssistantCopy'
+import { speakDonna as speakDonnaPremium, stopDonna } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
 
 // ─── Browser Speech API types (SpeechRecognition not in lib.dom) ──────────────
 interface SpeechRecognitionAlt { transcript: string }
@@ -46,10 +47,6 @@ function getSpeechRecognitionCtor(): (new () => SpeechRecognitionInstance) | nul
   const w = window as unknown as Record<string, unknown>
   const Ctor = w['SpeechRecognition'] ?? w['webkitSpeechRecognition']
   return typeof Ctor === 'function' ? (Ctor as new () => SpeechRecognitionInstance) : null
-}
-
-function isTtsSupported(): boolean {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
 
 // ─── Audio status ─────────────────────────────────────────────────────────────
@@ -1206,10 +1203,6 @@ export function DirectorInterviewAssistant({
     }
   }, [step, realtimeVoice.voiceReadiness, realtimeVoice.prepare])
 
-  // ── Browser TTS refs (speechSynthesis fallback) ──────────────────────────────
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
-  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null)
-  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Prevents the auto-speak useEffect from re-speaking step 0 when the welcome
   // already included the first question.
   const hasSentWelcomeRef = useRef(false)
@@ -1221,26 +1214,9 @@ export function DirectorInterviewAssistant({
   // Counts preflight Q&A exchanges — forces forward to Q1 after 2.
   const preflightExchangeCountRef = useRef(0)
 
-  // Detect TTS support after hydration
+  // Detect client environment after hydration. speakDonnaPremium (server TTS) works on any client.
   useEffect(() => {
-    setTtsSupported(isTtsSupported())
-  }, [])
-
-  // Load and cache a preferred English voice. Chrome loads voices asynchronously.
-  useEffect(() => {
-    if (!isTtsSupported()) return
-    const pick = () => {
-      const voices = window.speechSynthesis.getVoices()
-      if (!voices.length) return
-      selectedVoiceRef.current =
-        voices.find(v => v.lang === 'en-US') ??
-        voices.find(v => v.lang.startsWith('en')) ??
-        voices[0] ??
-        null
-    }
-    pick()
-    window.speechSynthesis.addEventListener('voiceschanged', pick)
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', pick)
+    setTtsSupported(typeof window !== 'undefined')
   }, [])
 
   // ── Wire Realtime user transcript to answer field — phase-aware ──────────────
@@ -1366,114 +1342,39 @@ export function DirectorInterviewAssistant({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realtimeVoice.finalUserTranscript, step, voiceMode, voiceAnswerPhase])
 
-  // ── Browser TTS helper (fallback when Realtime is not connected) ─────────────
+  // ── TTS helper — routes through the global speech lock (speakDonnaPremium) ────
+  // Sprint 995 V3: direct window.speechSynthesis.speak() calls removed.
+  // All speech goes through the canonical runtime to prevent race conditions with
+  // the always-mounted DonnaAssistantButton in the director layout.
   const speakAssistant = useCallback((
     text: string,
     opts?: { onEnd?: () => void; onError?: () => void; timeoutMs?: number }
   ) => {
-    console.log('[Donna TTS] speakAssistant called', {
-      text: text.slice(0, 100),
-      speechSynthesisExists: typeof window !== 'undefined' && 'speechSynthesis' in window,
-      voicesLoaded: typeof window !== 'undefined' && 'speechSynthesis' in window
-        ? window.speechSynthesis.getVoices().length
-        : 0,
-      selectedVoice: selectedVoiceRef.current?.name ?? 'none',
+    console.log('[DonnaVoice] speakAssistant → speakDonnaPremium', { textPreview: text.slice(0, 80), caller: 'DirectorInterviewAssistant' })
+    void speakDonnaPremium(text, {
+      caller: 'DirectorInterviewAssistant',
+      onStatus: (status) => {
+        if (status === 'speaking') {
+          setIsSpeaking(true)
+          setAudioStatus('speaking')
+          setAudioWarning(null)
+        } else if (status === 'done') {
+          setIsSpeaking(false)
+          setAudioStatus('ready')
+          opts?.onEnd?.()
+        } else if (status === 'error') {
+          setIsSpeaking(false)
+          setAudioStatus('error')
+          setAudioWarning("Audio didn't play. Check browser sound or use typed mode.")
+          opts?.onError?.()
+          opts?.onEnd?.()
+        }
+      },
     })
-
-    if (!isTtsSupported()) {
-      console.log('[Donna TTS] speechSynthesis not supported — aborting')
-      setAudioWarning("Speech synthesis is not available in this browser.")
-      setAudioStatus('error')
-      opts?.onError?.()
-      opts?.onEnd?.()
-      return
-    }
-
-    if (advanceTimerRef.current) {
-      clearTimeout(advanceTimerRef.current)
-      advanceTimerRef.current = null
-    }
-
-    // Only cancel if a tracked utterance is currently active.
-    // Calling cancel() immediately before speak() when nothing is playing causes Chrome
-    // to fire onerror 'canceled' on the new utterance (internal cancel race condition).
-    if (utteranceRef.current !== null) {
-      utteranceRef.current = null
-      window.speechSynthesis.cancel()
-    }
-
-    const u = new SpeechSynthesisUtterance(text)
-    u.rate = 0.92
-    u.pitch = 1
-    u.volume = 1
-    if (selectedVoiceRef.current) u.voice = selectedVoiceRef.current
-
-    u.onstart = () => {
-      console.log('[Donna TTS] onstart fired')
-      setIsSpeaking(true)
-      setAudioStatus('speaking')
-      setAudioWarning(null)
-    }
-
-    u.onend = () => {
-      console.log('[Donna TTS] onend fired')
-      utteranceRef.current = null
-      if (advanceTimerRef.current) {
-        clearTimeout(advanceTimerRef.current)
-        advanceTimerRef.current = null
-      }
-      setIsSpeaking(false)
-      setAudioStatus('ready')
-      opts?.onEnd?.()
-    }
-
-    u.onerror = (e) => {
-      console.log('[Donna TTS] onerror fired', { error: e.error })
-      utteranceRef.current = null
-      if (advanceTimerRef.current) {
-        clearTimeout(advanceTimerRef.current)
-        advanceTimerRef.current = null
-      }
-      setIsSpeaking(false)
-      const errCode = e.error as string
-      if (errCode === 'canceled') {
-        // Utterance was queued but cancelled before it started — surface actionable guidance.
-        setAudioStatus('ready')
-        setAudioWarning("Donna's voice was interrupted. Try Browser Voice Mode.")
-      } else if (errCode === 'interrupted') {
-        // Utterance was cancelled while speaking (expected during stop/repeat) — silent.
-        setAudioStatus('ready')
-      } else {
-        setAudioStatus('error')
-        setAudioWarning("Audio didn't play. Check browser sound or switch to typed mode.")
-        opts?.onError?.()
-        opts?.onEnd?.()
-      }
-    }
-
-    utteranceRef.current = u
-
-    const timeoutMs = opts?.timeoutMs ?? Math.max(4000, text.length * 70 + 1500)
-    advanceTimerRef.current = setTimeout(() => {
-      if (utteranceRef.current === u) {
-        utteranceRef.current = null
-        setIsSpeaking(false)
-        setAudioStatus('ready')
-        opts?.onEnd?.()
-      }
-    }, timeoutMs)
-
-    console.log('[Donna TTS] calling window.speechSynthesis.speak()')
-    window.speechSynthesis.speak(u)
   }, [])
 
   const stopAssistantSpeech = useCallback(() => {
-    if (advanceTimerRef.current) {
-      clearTimeout(advanceTimerRef.current)
-      advanceTimerRef.current = null
-    }
-    utteranceRef.current = null
-    if (isTtsSupported()) window.speechSynthesis.cancel()
+    stopDonna()
     setIsSpeaking(false)
   }, [])
 
@@ -1968,14 +1869,6 @@ export function DirectorInterviewAssistant({
     const resolvedName = resolveDirectorName(welcomeNameInput, directorProfileName)
     resolvedNameRef.current = resolvedName
     setDirectorDisplayName(resolvedName ?? '')
-
-    // Prime speechSynthesis within the synchronous user-gesture stack.
-    // Chrome loses the gesture context on any await — calling cancel() here
-    // unlocks speak() for the async continuation of this handler.
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
-      console.log('[Donna TTS] speechSynthesis primed in user-gesture stack before await')
-    }
 
     const ok = await realtimeVoice.connect()
     const shortGreeting = resolvedName ? `Welcome, ${resolvedName}.` : 'Welcome.'
