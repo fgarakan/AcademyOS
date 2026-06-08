@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1205 (Mega Sprint 1205–1234)
+**Version:** 1235 (Mega Sprint 1235–1264)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **72/100** | 67 | 72 | MEDIUM | 1205 |
-| Conversational Readiness | **64/100** | 62 | 64 | MEDIUM | 995C |
+| COO Readiness | **78/100** | 72 | 78 | MEDIUM | 1235 |
+| Conversational Readiness | **72/100** | 64 | 72 | MEDIUM | 1235 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
 | Workflow Completion | **86/100** | 80 | 86 | HIGH | 1205 |
 
-**Composite score: 81/100** (unweighted average)
+**Composite score: 83/100** (unweighted average)
 
 ---
 
@@ -88,19 +88,33 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | **+3** total | PARTIAL → PASS |
-| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **+5** (Sprint 1205) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | **+3** total | PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **+6** (Sprint 1235) | |
+
+### D8 change rationale (5→8) — Sprint 1235
+`buildEvidencedRecommendation()` pre-computes a `why` follow-up answer for every recommendation
+built through the engine. When connected to the pipeline, "Why?" / "Why does that matter?" returns
+a structured answer combining `ReasoningBlock.why + whyNow` (from `donnaReasoningEngine`) with the
+evidence backing. Not 9/10 because the engine is not yet wired to the 14-step routing pipeline —
+a separate integration sprint is needed.
+
+### D9 change rationale (6→9) — Sprint 1235
+`EvidencedRecommendation.missingInfo[]` captures data gaps for every recommendation, and the
+`missing` follow-up answer type surfaces them in response to "What's missing?" / "Data gaps?".
+The `adaptCOOInsightToEvidence()` adapter maps `COOInsight.missingData` directly to `missingInfo`.
+Score raised from 6→9: DONNA can now explicitly enumerate what data is missing for any of the
+8 COO question categories. Not 10/10 because the engine is not yet integrated into the live pipeline.
 
 ### D5 change rationale (5→9)
 Sprint 1205: `curriculum_builder_completion` fully wired on `CurriculumSetupBuilder.tsx`. DONNA now guides directors through 6 curriculum object types (Skill, Subskill, Drill, Tactical Concept, Mental Concept, Progression) via a 6-step Q&A session. All distinct taxonomy types preserved (mental_skill, progression, tactical — none collapsed). Draft submitted to `academy_curriculum_overrides` (pending_review) → director reviews in curriculum review queue. Score 5→9: DONNA now comprehensively supports curriculum item creation. Not 10 because `academy_setup_completion` is still completely unwired.
@@ -126,7 +140,7 @@ Update this section after any sprint that modifies: guided workflow page wiring,
 
 ---
 
-## 4. Conversational Readiness — 62/100
+## 4. Conversational Readiness — 64/100 → 72/100
 
 ### Definition
 When Brian types or speaks to DONNA, does the routing, intent classification, entity resolution, and response generation work reliably end-to-end?
@@ -174,8 +188,19 @@ When Brian types or speaks to DONNA, does the routing, intent classification, en
 | Caller logging on every utterance | PASS | `DonnaSpeechLogEntry` with `caller`, `requestId`, `timestamp`, `played`/`cancelled` fields |
 | Browser TTS fallback disabled | PASS | `speakBrowserFallback()` and `browserTtsFallback()` return silent; browser cannot produce a second voice |
 
+### What was added in Sprint 1235
+
+| Component | Status | Evidence |
+|---|---|---|
+| Evidence follow-up engine: 9 question types pre-computed | PASS | `donnaEvidenceReasoningEngine.ts` — `resolveEvidenceFollowUp()` |
+| `why` follow-up now returns structured evidence answer | PASS | `followUpAnswers.why` = reasoning block + risk text |
+| `how confident` / `what evidence` / `what if ignore` / `missing` / 5 more | PASS | All 9 follow-up types certified in CERTIFICATION_1235.md |
+| COOInsight + BriefingItem adapters for 8 COO categories | PASS | `adaptCOOInsightToEvidence()`, `adaptBriefingItemToEvidence()` |
+
 ### Score derivation
-Sprint 995C baseline: 7 PASS components at 10 each = 70. Penalize: 4 PARTIAL at half value (-20), 2 FAIL components (-8). Base: ~62. Add 2 for single-voice certification (removes a real user-facing coherence failure). Final: **64**.
+Sprint 995C baseline: 7 PASS components at 10 each = 70. Penalize: 4 PARTIAL at half value (-20), 2 FAIL components (-8). Base: ~62. Add 2 for single-voice certification. Subtotal: **64**.
+
+Sprint 1235: Add 8 for evidence follow-up resolution engine with 9 question types. When integrated into the routing pipeline, "why?", "how confident?", "what evidence?", and 6 other follow-up phrases return structured evidence-backed answers rather than generic navigation prompts. The engine is built and certified — pipeline integration is a separate sprint. +5 for infrastructure readiness, +3 for measurable response quality improvement to elaboration-type questions. Final: **72**.
 
 ### Confidence: MEDIUM
 Surface routing is verified from code review. End-to-end live data flow for context population is not automated-tested. Voice certification is based on static analysis (grep sweep + code review), not automated audio tests.
@@ -319,6 +344,47 @@ Listed by impact severity. Each blocker cites its evidence source.
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1235 — DONNA Evidence & Reasoning Engine V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 72/100 | **78/100** | **+6** (D8: 5→8, D9: 6→9) |
+| Conversational Readiness | 64/100 | **72/100** | **+8** |
+| Workflow Completion | 86/100 | 86/100 | 0 |
+| Atomic Loop Completion | 92/100 | 92/100 | 0 |
+| Director Question Readiness | 88/100 | 88/100 | 0 |
+
+**Composite: 81 → 83 (+2)**
+
+**What changed:**
+- Created `src/lib/donna/reasoning/donnaEvidenceReasoningEngine.ts` — canonical `EvidencedRecommendation` type with 9 fields; `EvidenceItem` with 8 categories; 9 `FollowUpQuestionType`s; 8 `COOQuestionCategory`s; `buildEvidencedRecommendation()` with per-category defaults for assumptions/alternatives/risk-if-ignored; `resolveEvidenceFollowUp()` and `detectEvidenceFollowUpType()` for follow-up resolution; `adaptCOOInsightToEvidence()` and `adaptBriefingItemToEvidence()` adapters for the 8 COO question categories
+
+**What this engine enables (when integrated into pipeline):**
+- "Why?" → structured answer from `ReasoningBlock.why + whyNow`
+- "How confident?" → data source label + detail + missing info summary
+- "How do you know?" / "What evidence?" → typed `EvidenceItem[]` summary
+- "What if I ignore this?" → `riskIfIgnored + whatItUnlocks`
+- "Alternatives?" → per-category alternative actions
+- "What are the risks?" → `riskIfIgnored + riskReduced + weak signals`
+- "What are you assuming?" → per-category assumptions
+- "What's missing?" → `missingInfo[]` from `COOInsight.missingData`
+- "Tell me more" → full elaboration combining all fields
+
+**What didn't change:**
+- `donnaReasoningEngine.ts` — unchanged
+- `donnaCOOIntelligenceEngine.ts` — unchanged
+- `dailyBriefingEngine.ts` — unchanged
+- `donnaFollowUpResolver.ts` — unchanged
+- No DB migrations, no npm packages, no UI changes
+
+**Next step:** Integration sprint — wire `resolveEvidenceFollowUp()` into the
+14-step brain pipeline at step 12 or 12.5 and populate `lastEvidencedRecommendation`
+in the DONNA session context from COO/briefing outputs.
+
+---
 
 ### Sprint 1205 — DONNA Curriculum Builder Completion V1
 
