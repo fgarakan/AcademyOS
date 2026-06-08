@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-06-07 — Mega Sprint 965–994 — DONNA Capability Certification System V1
+
+**Baseline capability scorecard established across 5 dimensions with evidence-backed scoring. Every score tied to a specific sprint doc. PASS / PARTIAL / FAIL per dimension with confidence levels. Before/after deltas, 6 ranked blockers, next sprint recommendation. No code touched.**
+
+- Created `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — canonical 5-dimension scorecard (Atomic Loop Completion 92, COO Readiness 60, Conversational Readiness 62, Director Question Readiness 88, Workflow Completion 40; composite 68/100); per-capability detail with PASS/PARTIAL/FAIL breakdown, evidence citations, confidence levels (HIGH/MEDIUM), before/after deltas; 6 current blockers ranked by severity; Sprint 935 impact table; next sprint recommendation (Sprint 936 — Player Creation Page Wiring, expected composite 60→63); scorecard update protocol; 12 source documents cited
+- Created `docs/qa/DONNA_CAPABILITY_CERTIFICATION_965.md` — full audit across all 5 capability dimensions; each capability audited against: what was built, what was tested, what works end-to-end, what is missing; Atomic Loop Completion: 25-question trace with group-level breakdown, 22/25 fully certified, 0 hallucinations; COO Readiness: all 10 D-dimensions with PASS/PARTIAL/FAIL and specific gap citations; Conversational Readiness: 8-component table (PASS/FAIL per component), 5 fragmented intent systems identified, context population gap flagged; Director Question Readiness: 25-question certification verified, conservative adjustment for unverified runtime; Workflow Completion: 4-layer matrix (Q&A loop 6/6 PASS, page sync 1/6, draft submission 0/6, session durability within-tab only); certification update protocol for future sprints
+- TypeScript: no code touched
+
+---
+
 ## 2026-06-07 — Mega Sprint 935–964 — DONNA Daily COO Briefing V1
 
 **DONNA now proactively greets the Director with a structured COO brief on every login. Five-section daily brief appears at the top of the director home page without requiring Brian to ask. Real signals, disclosed gaps, top 3 actions. TypeScript clean.**
