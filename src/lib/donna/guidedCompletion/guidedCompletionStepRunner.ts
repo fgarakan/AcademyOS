@@ -278,6 +278,12 @@ function buildActions(workflowId: GuidedWorkflowId): CompletionAction[] {
         { label: 'Edit a field',          requiresApproval: false, note: 'Change any answer.' },
         { label: 'Save template draft',   requiresApproval: true,  note: 'Saves template for coach use after approval.' },
       ]
+    case 'coach_creation_completion':
+      return [
+        { label: 'Review coach invite',   requiresApproval: false, note: 'Check email and role before linking.' },
+        { label: 'Edit a field',          requiresApproval: false, note: 'Change any answer.' },
+        { label: 'Link coach to academy', requiresApproval: true,  note: 'Links the coach account and grants portal access.' },
+      ]
   }
 }
 

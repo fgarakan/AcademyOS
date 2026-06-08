@@ -224,6 +224,12 @@ const WORKFLOW_META: Record<GuidedWorkflowId, WorkflowMeta> = {
     nextAction:  'Director home',
     nextRoute:   '/director',
   },
+  coach_creation_completion: {
+    entityType:  'coach',
+    entityLabel: 'Coach',
+    nextAction:  'View coaches',
+    nextRoute:   '/director/coaches',
+  },
 }
 
 // ── ID generator ───────────────────────────────────────────────────────────────
@@ -398,6 +404,7 @@ const WORKFLOW_DRAFT_TYPE: Record<GuidedWorkflowId, string> = {
   parent_update_completion:      'parent_update_draft',
   curriculum_builder_completion: 'curriculum_level_draft',
   academy_setup_completion:      'academy_setup_draft',
+  coach_creation_completion:     'coach_invite_draft',
 }
 
 function buildCompletionMessage(
@@ -433,6 +440,12 @@ function buildCompletionMessage(
     }
     case 'academy_setup_completion': {
       return `**Academy setup complete.** Your configuration has been saved. You can now add coaches and players.`
+    }
+    case 'coach_creation_completion': {
+      const email = answers['coach_email'] ?? entityLabel
+      const role  = answers['coach_role'] ?? 'coach'
+      const roleLabel = role.toLowerCase().includes('head') ? 'Head Coach' : 'Coach'
+      return `**${email} has been linked as ${roleLabel}.** They can now log in and access the coach portal.`
     }
     default:
       return `**Done.** ${entityLabel} has been saved successfully.`

@@ -19,6 +19,7 @@ export type GuidedWorkflowId =
   | 'assessment_completion'
   | 'parent_update_completion'
   | 'template_builder_completion'
+  | 'coach_creation_completion'
 
 // ── Step ─────────────────────────────────────────────────────────────────────
 
@@ -635,6 +636,59 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
       'assign template to sessions or groups',
     ],
     openingMessage: "Let's build a class template together. I'll ask 6 questions — one at a time. Nothing saves until you review and confirm the draft.\n\nStep 1 of 6:",
+  },
+
+  // ── 7. Coach Creation ─────────────────────────────────────────────────────
+  {
+    id: 'coach_creation_completion',
+    label: 'Add Coach',
+    endGoal: 'Link a coach to the academy by email and assign their role — ready for director confirmation.',
+    triggerPhrases: [
+      'add a coach',
+      'invite a coach',
+      'add coach',
+      'invite coach',
+      'help me add a coach',
+      'let\'s add a coach',
+      'guide me through adding a coach',
+      'create a coach',
+      'onboard a coach',
+      'new coach',
+    ],
+    pageRoutes: [
+      '/director/coaches',
+    ],
+    requiredSteps: [
+      {
+        stepId: 'coach_email',
+        order: 1,
+        question: 'What is the coach\'s email address?',
+        fieldId: 'coach_email',
+        hint: 'The coach must already have an AcademyOS account. Enter their login email.',
+        required: true,
+      },
+      {
+        stepId: 'coach_role',
+        order: 2,
+        question: 'What role should they have? (coach / head_coach)',
+        fieldId: 'coach_role',
+        hint: '"coach" for regular coaches. "head_coach" for your lead coach with broader permissions.',
+        required: true,
+      },
+    ],
+    optionalSteps: [],
+    completionCriteria: 'Both required fields answered. Ready for director to confirm and link the coach.',
+    safeActions: [
+      'collect coach email and role',
+      'show what the role means',
+      'build a review summary',
+    ],
+    approvalGatedActions: [
+      'link coach to the academy',
+      'assign coach role',
+      'grant access to coach portal',
+    ],
+    openingMessage: "Let's add a coach. I'll ask 2 quick questions — then you confirm.\n\nStep 1 of 2:",
   },
 ]
 

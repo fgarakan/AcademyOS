@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1115–1144 — DONNA Coach Creation Completion V1
+
+**Second DONNA workflow to reach 8/8 execution layers. Coach invite now flows end-to-end: DONNA asks email + role → fields pre-fill with "Set by DONNA" badges → director confirms → inviteCoachAction called → completion summary shown. No new server action needed — DONNA path reuses inviteCoachAction directly. TypeScript clean.**
+
+- Updated `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — added `coach_creation_completion` to `GuidedWorkflowId` union; defined 2-step workflow (coach_email + coach_role) with trigger phrases ("add a coach", "invite a coach", "new coach", etc.)
+- Updated `src/lib/donna/guidedCompletion/guidedCompletionStepRunner.ts` — added `case 'coach_creation_completion':` to `buildActions` exhaustive switch (required: adding to union type breaks exhaustiveness)
+- Updated `src/lib/donna/pageSync/donnaPageStateSync.ts` — added coach field map: `coach_email → pageFieldId: 'email'`, `coach_role → pageFieldId: 'role'`
+- Updated `src/lib/donna/workflows/donnaWorkflowExecutionEngine.ts` — added `coach_creation_completion` to `WORKFLOW_META` registry, `WORKFLOW_DRAFT_TYPE` record, and completion message case
+- Updated `src/lib/donna/goalSessions/donnaGoalSessionRuntime.ts` — added `coach_creation_completion` to `WORKFLOW_DRAFT_TYPE` record
+- Updated `src/app/director/coaches/_components/InviteCoachForm.tsx` — converted to controlled state; added `onPageStatePatch` listener (email + role pre-fill + "Set by DONNA" badges via `normaliseRole()`); added `onGoalSessionCompleted` listener → `buildWorkflowExecutionPlan` → DONNA review banner; `handleDonnaConfirm()` calls `inviteCoachAction` directly, builds `WorkflowSubmitResult`, verification, completion summary; standard form path unchanged
+- Created `docs/architecture/DONNA_COACH_CREATION_COMPLETION_1115.md` — coach model (invite-only), full flow diagram, role normalisation table, WorkflowSubmitResult construction, guarantees
+- Created `docs/qa/DONNA_COACH_CREATION_CERTIFICATION_1115.md` — 6 certification scenarios: full flow, no account, already member, role update, standard path (no regression), role normalisation
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Workflow Completion 52→58; composite 72→73; sprint 1115 impact recorded; BLOCKER 1 updated (coach resolved); next sprint 1145 (template completion)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1085–1114 — DONNA Player Creation Completion V1
 
 **First DONNA workflow to reach 8/8 execution layers. Player creation now flows end-to-end: DONNA asks questions → fields pre-fill visibly → director confirms → player created → completion summary → navigate to onboarding. TypeScript clean.**

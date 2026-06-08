@@ -151,6 +151,7 @@ const WORKFLOW_DRAFT_TYPE: Record<GuidedWorkflowId, string> = {
   assessment_completion:         'assessment_draft',
   parent_update_completion:      'parent_update_draft',
   template_builder_completion:   'class_template_draft',
+  coach_creation_completion:     'coach_invite_draft',
 }
 
 // ── Main runtime ───────────────────────────────────────────────────────────────

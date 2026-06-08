@@ -113,6 +113,11 @@ const WORKFLOW_FIELD_MAPS: Record<string, Record<string, FieldMapEntry>> = {
     first_coach:            { pageFieldId: 'first_coach',     displayLabel: 'First Coach' },
   },
 
+  coach_creation_completion: {
+    coach_email: { pageFieldId: 'email', displayLabel: 'Coach Email' },
+    coach_role:  { pageFieldId: 'role',  displayLabel: 'Coach Role' },
+  },
+
 }
 
 // ── Factory ────────────────────────────────────────────────────────────────────
