@@ -473,6 +473,7 @@ export function DonnaVoiceReadyShell({
     setIsSpeaking(true)
     // Sprint 1911 — unified premium voice runtime
     void speakDonnaPremium(stripMarkdownForTts(lastMsg.text), {
+      caller: 'DonnaVoiceReadyShell',
       onStatus: (status) => {
         if (status === 'done' || status === 'error') {
           setIsSpeaking(false)

@@ -726,38 +726,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
 
     // ── Path 2: Browser TTS (interview page fallback only) ────────────────────
+    // Sprint 995 V2: routes through speakDonnaPremium so the global speech lock applies.
+    // Browser fallback is temporarily disabled — returns silent until double-voice is confirmed fixed.
     activatedVoiceModeRef.current = 'browser'
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      setVoiceGreetingStatus('error')
-      return
-    }
-
-    // Clear dedup guards so the same text isn't blocked by a prior guard state.
     lastSpokenTextRef.current = null
     lastSpokenKeyRef.current = null
-
-    // Watchdog — if onstart doesn't fire within 1500ms, mark as stalled.
-    if (voiceWatchdogRef.current !== null) clearTimeout(voiceWatchdogRef.current)
-    voiceWatchdogRef.current = setTimeout(() => {
-      if (playVersionRef.current === version) {
-        setVoiceGreetingStatus('stalled')
-        voiceWatchdogRef.current = null
-      }
-    }, 1500)
-
-    speakAssistantText(text, (callbackStatus) => {
-      if (playVersionRef.current !== version) return
-      if (callbackStatus === 'speaking') {
-        if (voiceWatchdogRef.current !== null) {
-          clearTimeout(voiceWatchdogRef.current)
-          voiceWatchdogRef.current = null
+    void speakDonnaPremium(text, {
+      mode: 'browser',
+      caller: 'DonnaAssistantButton:playOnboardingVoice',
+      onStatus: (status) => {
+        if (playVersionRef.current !== version) return
+        if (status === 'speaking') {
+          setVoiceGreetingStatus('speaking')
+        } else if (status === 'done') {
+          setVoiceGreetingStatus('done')
+        } else {
+          setVoiceGreetingStatus('error')
         }
-        setVoiceGreetingStatus('speaking')
-      } else if (callbackStatus === 'done') {
-        setVoiceGreetingStatus('done')
-      } else {
-        setVoiceGreetingStatus('error')
-      }
+      },
     })
   }
 
@@ -781,6 +767,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
     // Sprint 1881 — unified premium voice runtime (server TTS → browser fallback)
     void speakDonnaPremium(ttsText, {
+      caller: 'DonnaAssistantButton',
       onStatus: (status) => {
         if (status === 'speaking') setIsSpeaking(true)
         else if (status === 'done' || status === 'error') setIsSpeaking(false)

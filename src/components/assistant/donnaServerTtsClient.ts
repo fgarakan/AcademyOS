@@ -132,36 +132,19 @@ export async function speakWithServerTts(
   return browserTtsFallback(text, onStatus)
 }
 
+// Sprint 995 V2: Browser TTS fallback DISABLED — produces ghost second voices.
+// When server TTS fails or is unavailable, DONNA returns silent instead of speaking
+// through browser speechSynthesis. Re-enable after forensic audit is complete.
 function browserTtsFallback(
   text: string,
   onStatus?: (status: ServerTtsStatus) => void,
 ): Promise<ServerTtsResult> {
-  return new Promise<ServerTtsResult>((resolve) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      onStatus?.('error')
-      resolve({ ok: false, source: 'silent', reason: 'no_browser_tts' })
-      return
-    }
-    window.speechSynthesis.cancel()
-    const utt = new SpeechSynthesisUtterance(text)
-
-    // Sprint 720 — apply central voice config to browser fallback
-    utt.rate = fallbackBrowserRate
-    utt.pitch = fallbackBrowserPitch
-    utt.volume = fallbackBrowserVolume
-    const selectedVoice = pickBrowserVoice()
-    if (selectedVoice) utt.voice = selectedVoice
-    const voiceName = selectedVoice?.name ?? 'default'
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[DonnaTTS] Browser fallback voice:', voiceName)
-    }
-
-    utt.onstart = () => onStatus?.('speaking')
-    utt.onend = () => { onStatus?.('done'); resolve({ ok: true, source: 'browser', voice: voiceName }) }
-    utt.onerror = () => { onStatus?.('error'); resolve({ ok: false, source: 'browser', reason: 'browser_tts_error' }) }
-    window.speechSynthesis.speak(utt)
+  console.warn('[DonnaTTS] Browser fallback DISABLED (Sprint 995 V2).', {
+    textPreview: text.slice(0, 60),
+    reason: 'forensic_audit_in_progress',
   })
+  onStatus?.('error')
+  return Promise.resolve({ ok: false, source: 'silent' as const, reason: 'browser_fallback_disabled' })
 }
 
 export function stopServerTts() {

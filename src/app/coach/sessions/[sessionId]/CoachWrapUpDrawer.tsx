@@ -10,6 +10,7 @@ import { saveWrapUpObservationsAction, type PlayerObservationInput } from './sav
 import { saveAttendanceAction, type AttendanceUpdate } from './actions'
 import { saveWrapUpAttendanceExceptionAction, type WrapUpUnrosteredEntry, type UnrosteredAttendeeNote } from './saveWrapUpAttendanceExceptionAction'
 import type { SessionBlock, RosterPlayer } from './page'
+import { speakDonna as speakDonnaPremium, stopDonna } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
 
 // ─────────────────────────────────────────────────────────────
 // Step definitions
@@ -197,30 +198,24 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
     } catch { /* ignore quota errors */ }
   }, [draftKey, stepIndex, answers, blockStatus, playerNotes, attendanceMap, phase])
 
-  // Voice output — browser speechSynthesis only. No recording, no STT, no external API.
+  // Voice output — Sprint 995 V2: routed through donnaPremiumVoiceRuntime (global speech lock).
   const [voiceEnabled, setVoiceEnabled] = useState(false)
 
   // Speak current question when voice is enabled or step changes
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return
     if (!voiceEnabled || phase !== 'questions') {
-      window.speechSynthesis.cancel()
+      stopDonna()
       return
     }
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(STEPS[stepIndex]?.question ?? '')
-    utterance.rate = 0.9
-    utterance.pitch = 1
-    window.speechSynthesis.speak(utterance)
+    const questionText = STEPS[stepIndex]?.question ?? ''
+    if (questionText) {
+      void speakDonnaPremium(questionText, { caller: 'CoachWrapUpDrawer' })
+    }
   }, [voiceEnabled, stepIndex, phase])
 
   // Cancel speech on unmount
   useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel()
-      }
-    }
+    return () => { stopDonna() }
   }, [])
 
   const isLastQuestion = stepIndex === STEPS.length - 1
@@ -858,7 +853,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           </p>
           <div className="flex items-center gap-2">
             <p className="text-[10px] text-text-muted">Under 60 sec</p>
-            {typeof window !== 'undefined' && 'speechSynthesis' in window && (
+            {(
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -876,11 +871,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                 {voiceEnabled && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (typeof window !== 'undefined' && window.speechSynthesis) {
-                        window.speechSynthesis.cancel()
-                      }
-                    }}
+                    onClick={() => stopDonna()}
                     title="Stop speaking"
                     className="flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-lg border border-status-red/30 bg-status-red/5 text-status-red/70 hover:bg-status-red/10 transition-colors"
                   >

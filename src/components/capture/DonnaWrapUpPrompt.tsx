@@ -1,38 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
-
-// ── TTS helpers ───────────────────────────────────────────────────────────────
-
-function hasSpeechSynthesis(): boolean {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window
-}
-
-interface TTSOptions {
-  text: string
-  rate?: number
-  pitch?: number
-  volume?: number
-}
-
-function speakText({ text, rate = 0.95, pitch = 1.0, volume = 0.9 }: TTSOptions): SpeechSynthesisUtterance | null {
-  if (!hasSpeechSynthesis()) return null
-  window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.rate = rate
-  utterance.pitch = pitch
-  utterance.volume = volume
-  utterance.lang = 'en-US'
-  window.speechSynthesis.speak(utterance)
-  return utterance
-}
-
-function stopSpeaking() {
-  if (hasSpeechSynthesis()) {
-    window.speechSynthesis.cancel()
-  }
-}
+// Sprint 995 V2: routes through donnaPremiumVoiceRuntime (global speech lock).
+// Direct window.speechSynthesis calls removed to prevent ghost second voices.
+import { speakDonna as speakDonnaPremium, stopDonna } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -58,42 +30,44 @@ export function DonnaWrapUpPrompt({
   className,
 }: DonnaWrapUpPromptProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [ttsSupported] = useState(() => hasSpeechSynthesis())
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   // Auto-speak when question changes (if enabled)
   useEffect(() => {
-    if (autoSpeak && voiceEnabled && ttsSupported) {
+    if (autoSpeak && voiceEnabled) {
       const fullText = preamble ? `${preamble}. ${question}` : question
-      const utterance = speakText({ text: fullText })
-      utteranceRef.current = utterance
-      if (utterance) {
-        setIsSpeaking(true)
-        utterance.onend = () => setIsSpeaking(false)
-        utterance.onerror = () => setIsSpeaking(false)
-      }
-    }
-    return () => {
-      stopSpeaking()
+      setIsSpeaking(true)
+      void speakDonnaPremium(fullText, {
+        caller: 'DonnaWrapUpPrompt',
+        onStatus: (status) => {
+          if (status === 'speaking') setIsSpeaking(true)
+          else if (status === 'done' || status === 'error') setIsSpeaking(false)
+        },
+      })
+    } else {
+      stopDonna()
       setIsSpeaking(false)
     }
-  }, [question, autoSpeak, voiceEnabled, ttsSupported, preamble])
+    return () => {
+      stopDonna()
+      setIsSpeaking(false)
+    }
+  }, [question, autoSpeak, voiceEnabled, preamble])
 
   function handleSpeakNow() {
-    if (!ttsSupported) return
     if (isSpeaking) {
-      stopSpeaking()
+      stopDonna()
       setIsSpeaking(false)
       return
     }
     const fullText = preamble ? `${preamble}. ${question}` : question
-    const utterance = speakText({ text: fullText })
-    utteranceRef.current = utterance
-    if (utterance) {
-      setIsSpeaking(true)
-      utterance.onend = () => setIsSpeaking(false)
-      utterance.onerror = () => setIsSpeaking(false)
-    }
+    setIsSpeaking(true)
+    void speakDonnaPremium(fullText, {
+      caller: 'DonnaWrapUpPrompt',
+      onStatus: (status) => {
+        if (status === 'speaking') setIsSpeaking(true)
+        else if (status === 'done' || status === 'error') setIsSpeaking(false)
+      },
+    })
   }
 
   return (
@@ -120,34 +94,26 @@ export function DonnaWrapUpPrompt({
 
           {/* Voice controls */}
           <div className="flex items-center gap-3 mt-2">
-            {ttsSupported && (
-              <button
-                onClick={handleSpeakNow}
-                className={`flex items-center gap-1.5 text-[11px] transition-colors ${
-                  isSpeaking
-                    ? 'text-lime'
-                    : 'text-text-muted hover:text-lime'
-                }`}
-                title={isSpeaking ? 'Stop speaking' : 'Hear this question'}
-              >
-                {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
-                {isSpeaking ? 'Stop' : 'Read aloud'}
-              </button>
-            )}
+            <button
+              onClick={handleSpeakNow}
+              className={`flex items-center gap-1.5 text-[11px] transition-colors ${
+                isSpeaking
+                  ? 'text-lime'
+                  : 'text-text-muted hover:text-lime'
+              }`}
+              title={isSpeaking ? 'Stop speaking' : 'Hear this question'}
+            >
+              {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
+              {isSpeaking ? 'Stop' : 'Read aloud'}
+            </button>
 
-            {onVoiceToggle && ttsSupported && (
+            {onVoiceToggle && (
               <button
                 onClick={() => onVoiceToggle(!voiceEnabled)}
                 className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
               >
                 {voiceEnabled ? 'Turn off voice' : 'Auto-read questions'}
               </button>
-            )}
-
-            {!ttsSupported && (
-              <span className="text-[10px] text-text-muted italic">
-                Voice not available on this browser.
-              </span>
             )}
           </div>
         </div>

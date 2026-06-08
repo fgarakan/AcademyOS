@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 995–1024B — DONNA Voice Runtime Forensic Audit V2
+
+**Eliminated remaining second-voice sources. Three bypass paths (CoachWrapUpDrawer, DonnaWrapUpPrompt, DonnaAssistantButton interview fallback) were calling `window.speechSynthesis` independently, outside the global speech lock. All three now route through `speakDonnaPremium`. Browser TTS fallback temporarily disabled across all paths to flush any remaining ghost voices. Runtime logging added to every speakDonnaPremium call for per-utterance diagnostics.**
+
+- Fixed `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — removed direct `window.speechSynthesis.speak()` / `cancel()`; now calls `speakDonnaPremium(questionText, { caller: 'CoachWrapUpDrawer' })` and `stopDonna()`; Stop button also uses `stopDonna()`
+- Fixed `src/components/capture/DonnaWrapUpPrompt.tsx` — removed local `speakText()`/`stopSpeaking()` helpers and `hasSpeechSynthesis()` / `ttsSupported`; all speech now routed through `speakDonnaPremium` / `stopDonna`
+- Fixed `src/components/assistant/DonnaAssistantButton.tsx` — `playOnboardingVoice()` Path 2 (interview page browser fallback) replaced `speakAssistantText()` with `speakDonnaPremium(text, { mode: 'browser', caller: 'DonnaAssistantButton:playOnboardingVoice' })`
+- Fixed `src/lib/donna/voice/donnaPremiumVoiceRuntime.ts` — added `caller?: string` to `SpeakDonnaOptions`; added `DonnaSpeechLogEntry` type, `_speechLog` ring buffer, `getSpeechLog()` / `clearSpeechLog()` exports; structured `console.log` on every speak/cancel/supersede event; **disabled `speakBrowserFallback()`** — returns silent with warning log
+- Fixed `src/components/assistant/donnaServerTtsClient.ts` — **disabled `browserTtsFallback()`** — returns `{ source: 'silent', reason: 'browser_fallback_disabled' }` with warning log; server TTS failure no longer falls through to browser speech
+- Added `caller` tags to all `speakDonnaPremium` call sites: `DonnaAssistantButton`, `DonnaVoiceReadyShell`, `useSpeechOutput`, `CoachWrapUpDrawer`, `DonnaWrapUpPrompt`
+- Created `docs/qa/DONNA_VOICE_FORENSIC_AUDIT_995.md` — complete speech path inventory, root cause analysis of two-voice scenarios, fix plan, certification checklist, and re-enable instructions
+
+---
+
 ## 2026-06-08 — Mega Sprint 995–1024A — DONNA Single Voice Runtime V1
 
 **Eliminated dual DONNA voice. All speech now serializes through one canonical runtime with AbortController and version guard. No workflow logic changed. No UI redesigned. TypeScript clean.**

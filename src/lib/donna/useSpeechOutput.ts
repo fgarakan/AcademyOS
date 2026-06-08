@@ -44,6 +44,7 @@ export function useSpeechOutput(defaultMuted = false): UseSpeechOutputReturn {
       if (!availableRef.current || isMuted || !text.trim()) return
       setStatus('speaking')
       void speakDonnaPremium(text, {
+        caller: 'useSpeechOutput',
         onStatus: (s) => {
           if (s === 'done' || s === 'error') setStatus('idle')
         },
