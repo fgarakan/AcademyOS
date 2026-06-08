@@ -183,10 +183,21 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
   },
 
   // ── 2. Academy Setup ───────────────────────────────────────────────────────
+  //
+  // 10-step guided setup: academy_name → timezone → program_types → levels →
+  // groups → staff_plan → weekly_schedule → parent_communication_preferences →
+  // curriculum_starting_point → setup_notes.
+  //
+  // Save path: donnaSaveAcademySetupDraftAction saves collected answers to
+  // academies.settings.donna_setup_draft — never directly sets
+  // director_interview_completed or any existing setup completion flag.
+  //
+  // Page state sync: donnaPageStateSync maps all 10 fields to setup/onboarding
+  // page fields. Pages receive patches via donna:page-state-patch browser event.
   {
     id: 'academy_setup_completion',
     label: 'Academy Setup',
-    endGoal: 'Complete the core academy configuration so the platform is ready for coaches and players.',
+    endGoal: 'Collect academy name, timezone, programs, levels, groups, staff, schedule, parent communication preferences, curriculum starting point, and setup notes — ready for director review and save.',
     triggerPhrases: [
       'help me finish academy setup',
       'walk me through academy setup',
@@ -197,8 +208,13 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
       'complete academy setup',
       'academy setup',
       'set up the academy',
+      'set up my academy',
+      'start academy setup',
+      'begin academy setup',
+      'let\'s set up the academy',
     ],
     pageRoutes: [
+      '/director/setup',
       '/director/onboarding',
       '/director/onboarding/interview',
       '/director/onboarding/curriculum',
@@ -214,70 +230,95 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
         required: true,
       },
       {
-        stepId: 'development_philosophy',
+        stepId: 'academy_timezone',
         order: 2,
-        question: 'What is your primary development philosophy? (e.g. player-centered, competition-first, holistic athlete)',
-        fieldId: 'development_philosophy',
-        hint: 'One or two sentences. This shapes how DONNA frames recommendations.',
+        question: 'What timezone does your academy operate in?',
+        fieldId: 'academy_timezone',
+        hint: 'Example: US/Eastern, US/Pacific, Europe/London. Used for scheduling and session timing.',
         required: true,
       },
       {
-        stepId: 'curriculum_structure',
+        stepId: 'program_types',
         order: 3,
-        question: 'Which curriculum structure do you use? (e.g. ITF ball colors, custom levels, age-based)',
-        fieldId: 'curriculum_structure',
-        hint: 'This determines how levels, sessions, and progress are organized.',
+        question: 'What types of training programs do you offer?',
+        fieldId: 'program_types',
+        hint: 'Examples: Junior Development, Adult, Competition Track, Private Lessons, Cardio Tennis.',
         required: true,
       },
       {
-        stepId: 'level_count',
+        stepId: 'levels',
         order: 4,
-        question: 'How many active levels does your program currently run?',
-        fieldId: 'level_count',
-        hint: 'Include only levels with active players. You can add more later.',
+        question: 'What development levels or stages do you use to organize players?',
+        fieldId: 'levels',
+        hint: 'Examples: Red Ball 1–2, Orange Ball 1–2, Green Ball, Yellow Ball 1–3. Or your own naming.',
         required: true,
       },
       {
-        stepId: 'parent_portal_enabled',
+        stepId: 'groups',
         order: 5,
-        question: 'Do you want to enable the parent portal for this pilot? (yes / not yet)',
-        fieldId: 'parent_portal_enabled',
-        hint: 'Parents will only see approved, director-reviewed content.',
+        question: 'How are your players organized into training groups or classes?',
+        fieldId: 'groups',
+        hint: 'Example: "3 groups per level, 6–8 players each" or "age bands: 6–9, 10–12, 13+".',
         required: true,
       },
       {
-        stepId: 'first_coach',
+        stepId: 'staff_plan',
         order: 6,
-        question: 'Who is the first coach you will activate? (name or email)',
-        fieldId: 'first_coach',
-        hint: 'You can add more coaches later from the team settings.',
+        question: 'Tell me about your coaching staff — how many coaches and what roles do they have?',
+        fieldId: 'staff_plan',
+        hint: 'Example: "1 head coach, 2 assistants" or "3 coaches — I manage one group myself".',
+        required: true,
+      },
+      {
+        stepId: 'weekly_schedule',
+        order: 7,
+        question: 'What does a typical week of training look like?',
+        fieldId: 'weekly_schedule',
+        hint: 'Example: "Mon/Wed/Fri, 2 sessions per day, 60 min each" or "4 days, morning and afternoon groups".',
+        required: true,
+      },
+      {
+        stepId: 'parent_communication_preferences',
+        order: 8,
+        question: 'How do you prefer to communicate with parents — and how often?',
+        fieldId: 'parent_communication_preferences',
+        hint: 'Example: "Monthly progress updates, immediate contact for injuries" or "Weekly brief after group sessions".',
+        required: true,
+      },
+      {
+        stepId: 'curriculum_starting_point',
+        order: 9,
+        question: 'What curriculum framework or starting point do you use?',
+        fieldId: 'curriculum_starting_point',
+        hint: 'Example: ITF ball colours, USTA pathway, custom levels, or your own developed curriculum.',
+        required: true,
+      },
+      {
+        stepId: 'setup_notes',
+        order: 10,
+        question: 'Any other important priorities or context I should know about your academy for setup?',
+        fieldId: 'setup_notes',
+        hint: 'Optional but helpful. Example: "We\'re launching in 2 weeks" or "Compliance with local federation required".',
         required: true,
       },
     ],
-    optionalSteps: [
-      {
-        stepId: 'competition_focus',
-        order: 7,
-        question: 'Does your academy have a competition track? (yes / no / mixed)',
-        fieldId: 'competition_focus',
-        hint: 'This affects how DONNA frames readiness and level movement.',
-        required: false,
-      },
-    ],
-    completionCriteria: 'All 6 required answers collected. Setup summary ready for director to confirm and save.',
+    optionalSteps: [],
+    completionCriteria: 'All 10 required answers collected. Setup draft ready for director to review and confirm before saving.',
     safeActions: [
       'ask setup questions one at a time',
       'collect and display answers for review',
-      'explain what each setting does',
-      'show progress through the setup steps',
+      'explain what each setting does and why it matters',
+      'show progress through the 10 setup steps',
+      'use Evidence Reasoning Engine to explain missing or weak answers',
     ],
     approvalGatedActions: [
-      'save academy configuration to the database',
+      'save academy setup draft to the database',
       'activate coach accounts',
       'enable parent or player portal access',
       'publish any academy-level settings',
+      'set director_interview_completed or any existing completion flag',
     ],
-    openingMessage: "Let's complete your academy setup. I'll ask 6 key questions — one at a time. Nothing is saved until you review and confirm.\n\nStep 1 of 6:",
+    openingMessage: "Let's set up your academy together. I'll ask 10 questions — one at a time. Nothing is saved until you review and confirm the full setup draft.\n\nStep 1 of 10:",
   },
 
   // ── 3. Player Onboarding ───────────────────────────────────────────────────

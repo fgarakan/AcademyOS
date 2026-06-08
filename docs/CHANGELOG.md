@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1265–1294 — DONNA Academy Setup Completion V1
+
+**8th and final DONNA workflow to reach full draft submission. All 8 guided workflows now wired end-to-end. DONNA guides the director through a 10-question academy setup interview, shows a review banner with all collected answers, and saves to `academies.settings.donna_setup_draft` on director confirmation. No setup completion flags are touched — the draft is informational context for DONNA. Workflow Completion 86→90, COO Readiness 78→81 (D4: 5→8), composite 83→85. BLOCKER 1 resolved. TypeScript clean.**
+
+- Created `src/lib/donna/setup/donnaAcademySetupCompletionEngine.ts` — canonical 10-field list (`ACADEMY_SETUP_REQUIRED_FIELDS`), `SETUP_FIELD_IMPORTANCE` (why/risk/recommendation per field), `getSetupCompletionStatus()`, `buildSetupMissingFieldRecommendation()` (Evidence Reasoning Engine integration), `buildSetupDraftDescription()`, `buildSetupDraftLabel()`
+- Created `src/app/director/_actions/donnaSaveAcademySetupDraftAction.ts` — `'use server'`; director-only role check; `assertNotPreviewMode()`; merges into existing `academies.settings`; writes only `donna_setup_draft`; never touches `director_interview_completed` or any setup completion flag; revalidates `/director/setup`, `/director/onboarding`
+- Created `src/app/director/setup/AcademySetupDonnaBanner.tsx` — `'use client'`; `onPageStatePatch` listener for live answer count (10 of 10 collected); `onGoalSessionCompleted` → `buildWorkflowExecutionPlan` → review banner; `handleDonnaConfirm` → server action → `buildWorkflowVerificationResult` → `buildWorkflowCompletionSummary`; existing draft notice with fill count and saved date; dismiss resets all state including `liveAnswerCount`
+- Updated `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — `academy_setup_completion` expanded from 6 placeholder steps to 10 canonical steps (`academy_name` → `academy_timezone` → `program_types` → `levels` → `groups` → `staff_plan` → `weekly_schedule` → `parent_communication_preferences` → `curriculum_starting_point` → `setup_notes`); new trigger phrases; `approvalGatedActions` lists save as gated
+- Updated `src/lib/donna/pageSync/donnaPageStateSync.ts` — `academy_setup_completion` field map replaced with all 10 canonical fields and correct page field IDs
+- Updated `src/app/director/setup/page.tsx` — imports and renders `<AcademySetupDonnaBanner existingDraft={existingDraft} />`; extracts `donna_setup_draft` from `academies.settings`
+- Created `docs/qa/DONNA_ACADEMY_SETUP_CERTIFICATION_1265.md` — 12 scenarios, all PASS; architecture compliance table; known V1 limitations
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Workflow Completion 86→90; COO Readiness 78→81 (D4: 5→8); composite 83→85; BLOCKER 1 resolved; sprint 1265 impact recorded
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1205–1234 — DONNA Curriculum Builder Completion V1
 
 **7th DONNA workflow to reach full draft submission. DONNA now guides directors through 6 curriculum object types (Skill, Subskill, Drill, Tactical Concept, Mental Concept, Progression) via a 6-step Q&A session on the curriculum builder page. Hierarchy audit: skillHierarchyModel.ts defines Skill→SubSkill[] hierarchy (Sprint 511) but no DB tables exist — Subskill uses skill content_type in V1. All other distinct types preserved: mental_skill not collapsed into tactical, progression not collapsed into drill. VALID_CONTENT_TYPES updated to full 22-value migration 061 taxonomy. Workflow Completion 80→86, COO Readiness 67→72, composite 78→81. TypeScript clean.**

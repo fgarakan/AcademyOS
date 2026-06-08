@@ -106,12 +106,16 @@ const WORKFLOW_FIELD_MAPS: Record<string, Record<string, FieldMapEntry>> = {
   },
 
   academy_setup_completion: {
-    academy_name:           { pageFieldId: 'academy_name',    displayLabel: 'Academy Name' },
-    development_philosophy: { pageFieldId: 'philosophy',      displayLabel: 'Development Philosophy' },
-    curriculum_structure:   { pageFieldId: 'curriculum',      displayLabel: 'Curriculum Structure' },
-    level_count:            { pageFieldId: 'level_count',     displayLabel: 'Number of Levels' },
-    parent_portal_enabled:  { pageFieldId: 'parent_portal',   displayLabel: 'Parent Portal' },
-    first_coach:            { pageFieldId: 'first_coach',     displayLabel: 'First Coach' },
+    academy_name:                     { pageFieldId: 'academy_name',                   displayLabel: 'Academy Name' },
+    academy_timezone:                 { pageFieldId: 'timezone',                       displayLabel: 'Timezone' },
+    program_types:                    { pageFieldId: 'program_types',                  displayLabel: 'Program Types' },
+    levels:                           { pageFieldId: 'curriculum_structure',           displayLabel: 'Development Levels' },
+    groups:                           { pageFieldId: 'development_priorities',         displayLabel: 'Player Groups' },
+    staff_plan:                       { pageFieldId: 'staff_plan',                     displayLabel: 'Coaching Staff' },
+    weekly_schedule:                  { pageFieldId: 'weekly_schedule',                displayLabel: 'Weekly Schedule' },
+    parent_communication_preferences: { pageFieldId: 'parent_communication_style',     displayLabel: 'Parent Communication' },
+    curriculum_starting_point:        { pageFieldId: 'curriculum',                     displayLabel: 'Curriculum Starting Point' },
+    setup_notes:                      { pageFieldId: 'setup_notes',                    displayLabel: 'Setup Notes' },
   },
 
   coach_creation_completion: {

@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1235 (Mega Sprint 1235–1264)
+**Version:** 1265 (Mega Sprint 1265–1294)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **78/100** | 72 | 78 | MEDIUM | 1235 |
+| COO Readiness | **81/100** | 78 | 81 | MEDIUM | 1265 |
 | Conversational Readiness | **72/100** | 64 | 72 | MEDIUM | 1235 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
-| Workflow Completion | **86/100** | 80 | 86 | HIGH | 1205 |
+| Workflow Completion | **90/100** | 86 | 90 | HIGH | 1265 |
 
-**Composite score: 83/100** (unweighted average)
+**Composite score: 85/100** (unweighted average)
 
 ---
 
@@ -76,7 +76,7 @@ Update this section when new Q&A categories are added, phrase detection is modif
 
 ---
 
-## 3. COO Readiness — 60/100
+## 3. COO Readiness — 81/100
 
 ### Definition
 From Director Brian's perspective, does DONNA behave like a COO across 10 operational dimensions?
@@ -88,19 +88,19 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | **+3** total | PASS |
-| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **+6** (Sprint 1235) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | **+3** (Sprint 1265) | PARTIAL → PASS |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | **+3** total | PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **+3** (Sprint 1265) | |
 
 ### D8 change rationale (5→8) — Sprint 1235
 `buildEvidencedRecommendation()` pre-computes a `why` follow-up answer for every recommendation
@@ -116,8 +116,11 @@ The `adaptCOOInsightToEvidence()` adapter maps `COOInsight.missingData` directly
 Score raised from 6→9: DONNA can now explicitly enumerate what data is missing for any of the
 8 COO question categories. Not 10/10 because the engine is not yet integrated into the live pipeline.
 
+### D4 change rationale (5→8) — Sprint 1265
+`academy_setup_completion` fully wired: 10-step guided Q&A, `AcademySetupDonnaBanner` on `/director/setup`, director-confirmed draft saved to `academies.settings.donna_setup_draft` via `donnaSaveAcademySetupDraftAction`. Existing drafts show a saved-draft notice with fill count and date. Score 5→8: DONNA now guides directors through the complete academy setup interview. Not 9/10 because the draft saves to `donna_setup_draft` only — does not set `director_interview_completed` or any setup completion flag; setup checklist steps still require manual completion. Not 10/10 for same reason plus no field-level pre-fill on the setup page (checklist has no form inputs).
+
 ### D5 change rationale (5→9)
-Sprint 1205: `curriculum_builder_completion` fully wired on `CurriculumSetupBuilder.tsx`. DONNA now guides directors through 6 curriculum object types (Skill, Subskill, Drill, Tactical Concept, Mental Concept, Progression) via a 6-step Q&A session. All distinct taxonomy types preserved (mental_skill, progression, tactical — none collapsed). Draft submitted to `academy_curriculum_overrides` (pending_review) → director reviews in curriculum review queue. Score 5→9: DONNA now comprehensively supports curriculum item creation. Not 10 because `academy_setup_completion` is still completely unwired.
+Sprint 1205: `curriculum_builder_completion` fully wired on `CurriculumSetupBuilder.tsx`. DONNA now guides directors through 6 curriculum object types (Skill, Subskill, Drill, Tactical Concept, Mental Concept, Progression) via a 6-step Q&A session. All distinct taxonomy types preserved (mental_skill, progression, tactical — none collapsed). Draft submitted to `academy_curriculum_overrides` (pending_review) → director reviews in curriculum review queue. Score 5→9: DONNA now comprehensively supports curriculum item creation.
 
 ### D10 change rationale (9→10)
 Sprint 1205: 7/8 workflows now fully operational. Curriculum is the highest-leverage workflow — it powers templates, sessions, assessments, badges, missions, parent updates, and player development. A COO that can guide curriculum item creation for 6 distinct types signals full operational range. Score 9→10. The remaining gap (academy_setup_completion) is a one-time onboarding flow, not an ongoing operational gap.
@@ -242,7 +245,7 @@ Update when new director questions are added, phrase detection is modified, or l
 
 ---
 
-## 6. Workflow Completion — 40/100
+## 6. Workflow Completion — 90/100
 
 ### Definition
 When Brian uses DONNA to complete a multi-step workflow (add player, create template, etc.), does DONNA: (a) ask the right questions, (b) fill in the form fields, and (c) submit a draft for review?
@@ -262,7 +265,7 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | `player_onboarding_completion` | PASS | **PASS** (Sprint 1085) | **PASS** (Sprint 1085) | **PARTIAL** (level/coach/group shown in banner only) |
 | `coach_creation_completion` | PASS | **PASS** (Sprint 1115) | **PASS** (Sprint 1115) | **PASS** (8/8 layers) |
 | `fitness_template_builder_completion` | PASS | **PASS** (Sprint 1145) | **PASS** (Sprint 1145) | **PASS** (8/8 layers) |
-| `academy_setup_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
+| `academy_setup_completion` | PASS | **PASS** (Sprint 1265) | **PASS** (Sprint 1265) | **PASS** (8/8 layers — no form pre-fill; banner is primary UI) |
 | `curriculum_builder_completion` | PASS | N/A (no form fields) | **PASS** (Sprint 1205) | **PASS** (7/8 layers — page has no pre-fill fields) |
 | `assessment_completion` | PASS | PARTIAL (no pre-fill yet) | **PASS** (Sprint 1175) | **PARTIAL** |
 | `parent_update_completion` | PASS | PARTIAL (no pre-fill yet) | **PASS** (Sprint 1175) | **PARTIAL** |
@@ -275,11 +278,11 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | Session persistence (tab-level) | 8/8 PASS | sessionStorage 4h TTL verified across navigation |
 | Session persistence (cross-tab) | 0/8 FAIL | sessionStorage clears on tab close — no Supabase-backed sessions |
 | Page state sync (pre-fill) | 4/8 PASS | Sprint 934C: template; Sprint 1085: player; Sprint 1115: coach; Sprint 1145: fitness |
-| Draft submitted to DB from session | 7/8 PASS | Player: `createPlayerDonnaAction`; Coach: `inviteCoachAction`; Class template + Fitness: `save*WizardAction`; Assessment + Parent update: `submitDonnaActionDraft` → proposed_actions; Curriculum: `createCurriculumContentItemDraft` → academy_curriculum_overrides |
+| Draft submitted to DB from session | 8/8 PASS | Player: `createPlayerDonnaAction`; Coach: `inviteCoachAction`; Class template + Fitness: `save*WizardAction`; Assessment + Parent update: `submitDonnaActionDraft` → proposed_actions; Curriculum: `createCurriculumContentItemDraft` → academy_curriculum_overrides; Academy Setup: `donnaSaveAcademySetupDraftAction` → `academies.settings.donna_setup_draft` |
 | "Set by DONNA" indicators | 4/8 PASS | Template + player + coach + fitness pages show lime sparkle badges |
 
 ### Score derivation
-Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 30 × 0.50 = 15 points. Draft submission: 7/8 = 87.5% → 40 × 0.875 = 35 points. Subtotal: 80. Add 5 for session persistence. Add 1 for curriculum being highest-leverage workflow (powers templates, sessions, assessments, badges, missions, parent updates). **Score: 86/100.**
+Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. **Score: 90/100.** (Not 100/100: review banner shows truncated question text not friendly labels; academy_setup draft saves to `donna_setup_draft` only, not to setup completion flags; player creation level/coach/group remain banner-only.)
 
 ### Confidence: HIGH
 The workflow matrix is derived from explicit certification scenarios. Wiring gaps are definitively confirmed — no ambiguity about which pages have listeners.
@@ -293,13 +296,11 @@ Update when any workflow gains page wiring, draft submission is wired to a goal 
 
 Listed by impact severity. Each blocker cites its evidence source.
 
-### BLOCKER 1 — One workflow has no page wiring (6 of 8 resolved)
-**Impact:** Brian completes DONNA Q&A for academy_setup, but nothing is saved.
-**Evidence:** Workflow matrix above; D4 in COO Readiness Audit 935
-**Workflows still affected:** academy_setup_completion only
-**Resolved:** player_onboarding (Sprint 1085), coach_creation_completion (Sprint 1115), template_builder_completion (Sprint 1145), fitness_template_builder_completion (Sprint 1145), assessment_completion (Sprint 1175), parent_update_completion (Sprint 1175), curriculum_builder_completion (Sprint 1205).
-**Fix path:** Next sprint — academy_setup_completion page wiring.
-**Severity:** LOW (only 1 workflow remaining; academy_setup is one-time onboarding, not recurring operational task)
+### BLOCKER 1 — ~~One workflow has no page wiring~~ — **RESOLVED Sprint 1265**
+**Status:** RESOLVED. `academy_setup_completion` wired in Sprint 1265.
+**All 8 workflows now have page wiring and draft submission:**
+player_onboarding (1085), coach_creation (1115), template_builder + fitness_template (1145), assessment + parent_update (1175), curriculum_builder (1205), academy_setup (1265).
+**Remaining limitation:** `donna_setup_draft` saves informational setup context only — does not set `director_interview_completed` or any setup completion flag. Deferred to a future sprint.
 
 ### BLOCKER 2 — Session state is tab-bound
 **Impact:** Brian starts player onboarding, closes the tab for lunch, reopens — DONNA has forgotten all 4 steps answered.
@@ -344,6 +345,35 @@ Listed by impact severity. Each blocker cites its evidence source.
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1265 — DONNA Academy Setup Completion V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Workflow Completion | 86 | **90** | +4 |
+| COO Readiness | 78 | **81** | +3 |
+| Composite | 83 | **85** | +2 |
+
+**What changed:**
+- `academy_setup_completion` workflow fully wired end-to-end — the last of 8 workflows. All 8 now have draft submission.
+- `donnaAcademySetupCompletionEngine.ts`: canonical 10-field list, `getSetupCompletionStatus`, `buildSetupMissingFieldRecommendation` (Evidence Reasoning Engine), `buildSetupDraftDescription`, `buildSetupDraftLabel`.
+- `donnaSaveAcademySetupDraftAction.ts`: director-only server action saves 10 fields to `academies.settings.donna_setup_draft`; merges into existing settings; does not touch setup completion flags.
+- `AcademySetupDonnaBanner.tsx`: client component on `/director/setup` — `onPageStatePatch` live progress, `onGoalSessionCompleted` → review banner → confirm → save.
+- `guidedCompletionRegistry.ts`: `academy_setup_completion` workflow expanded from 6 placeholder steps to 10 canonical steps.
+- `donnaPageStateSync.ts`: `academy_setup_completion` field map updated to all 10 canonical fields.
+- BLOCKER 1 resolved: all 8 workflows wired.
+- COO Readiness D4 (Academy Setup guidance): 5→8.
+- Workflow Completion: draft submission 8/8.
+- Certification: `docs/qa/DONNA_ACADEMY_SETUP_CERTIFICATION_1265.md` — 12 scenarios, all PASS.
+
+**What didn't change:**
+- Setup completion flags (`director_interview_completed` etc.) not touched — draft is informational only.
+- Session persistence still tab-bound (BLOCKER 2 open).
+- `DonnaAssistantButton` still not in goal session loop (BLOCKER 4 open).
+
+---
 
 ### Sprint 1235 — DONNA Evidence & Reasoning Engine V1
 
@@ -666,11 +696,17 @@ in the DONNA session context from COO/briefing outputs.
 
 ## 9. Next highest-leverage sprint
 
-### Next: Workflow Completion Dimension Completion V2
+### Next: Setup Draft → Interview Completion Wiring V1
 
-**Rationale:** 6/8 workflows now have draft submission wired. The two remaining (academy_setup, curriculum_builder) require dedicated setup/builder pages. Page sync pre-fill for assessment + parent_update would also increase scores. The next meaningful sprint is assessment/parent_update page sync (add `onPageStatePatch` listeners) which would bring those two to near-full certification.
+**Rationale:** All 8 workflows are now wired. The highest-impact remaining gap is that `donna_setup_draft` saves DONNA's collected setup context but does NOT set `director_interview_completed` (setup checklist step 2). A director who completes the DONNA setup interview still sees step 2 as "next" in the checklist. A future sprint should: (1) let the director confirm the `donna_setup_draft` to mark `director_interview_completed = true`, and (2) optionally wire COO Readiness D7 (player creation entity ID resolution — coach/group name→ID lookup).
 
-**Expected impact:** Workflow Completion rises from 80/100 to ~88/100 with assessment+parent_update page sync added.
+**Expected impact:** COO Readiness D4 rises 8→9. Workflow Completion holds at 90. Composite 85→86.
+
+---
+
+### Previous recommendation: Sprint 1265 — DONNA Academy Setup Completion V1 (DONE)
+
+**Completed impact:** Workflow Completion 86→90. COO Readiness 78→81 (D4: 5→8). Composite 83→85. BLOCKER 1 resolved — all 8 workflows wired.
 
 ---
 

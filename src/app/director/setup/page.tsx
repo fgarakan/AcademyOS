@@ -3,6 +3,7 @@ import { ArrowLeft, Rocket, CheckCircle2, ArrowRight, Info } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 import { AnimatedOnboardingDeck } from '../onboarding/AnimatedOnboardingDeck'
+import { AcademySetupDonnaBanner } from './AcademySetupDonnaBanner'
 
 // ── Step definitions ───────────────────────────────────────────
 
@@ -175,6 +176,8 @@ export default async function AcademySetupPage() {
 
   const settings = (academy.settings as Record<string, unknown>) ?? {}
 
+  const existingDraft = (settings.donna_setup_draft ?? null) as Record<string, string> | null
+
   const completedStepNumbers = new Set<number>()
   if (settings.academy_identity_completed === true) completedStepNumbers.add(1)
   if (settings.director_interview_completed === true) completedStepNumbers.add(2)
@@ -229,6 +232,9 @@ export default async function AcademySetupPage() {
           Step-by-step setup for your Academy OS. Each step unlocks the next phase.
         </p>
       </div>
+
+      {/* ── DONNA setup draft banner ── */}
+      <AcademySetupDonnaBanner existingDraft={existingDraft} />
 
       {/* ── Animated overview deck ── */}
       <AnimatedOnboardingDeck
