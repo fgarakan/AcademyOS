@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1025 (Mega Sprint 1025–1054)
+**Version:** 1055 (Mega Sprint 1055–1084)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -311,6 +311,35 @@ Listed by impact severity. Each blocker cites its evidence source.
 
 ## 8. Last sprint impact
 
+### Sprint 1055 — DONNA Workflow Execution Engine V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Workflow Completion | 40/100 | 40/100 | 0 (engine only — no page wiring yet) |
+| COO Readiness | 61/100 | 61/100 | 0 |
+| Conversational Readiness | 64/100 | 64/100 | 0 |
+| Atomic Loop Completion | 92/100 | 92/100 | 0 |
+| Director Question Readiness | 88/100 | 88/100 | 0 |
+
+**What changed:**
+- Created `src/lib/donna/workflows/donnaWorkflowExecutionEngine.ts` — 6 types (`WorkflowExecutionPlan`, `WorkflowDraftPayload`, `WorkflowValidationResult`, `WorkflowSubmitResult`, `WorkflowVerificationResult`, `WorkflowCompletionSummary`) + 7 factory functions + workflow metadata registry
+- Engine is pure TypeScript: no DB, no API, no React, no browser APIs
+- Defines the canonical lifecycle: `GoalSessionCompletedDetail → plan → payload → submitResult → verification → summary → donnaMessage`
+- All 6 creation workflows covered: player, template, assessment, parent update, curriculum, academy setup
+- 8 certification scenarios cover: full lifecycle, missing fields, server failure, unknown workflow, uniqueness, timestamp ordering
+- No page wired yet — engine is the contract; page wiring begins Sprint 1085
+
+**What didn't change:**
+- No page listeners added
+- No server actions changed
+- Workflow Completion score unchanged (40/100) — engine builds the bridge; page wiring moves the score
+
+**Files created:** `src/lib/donna/workflows/donnaWorkflowExecutionEngine.ts`, `docs/architecture/DONNA_WORKFLOW_EXECUTION_ENGINE_1055.md`, `docs/qa/DONNA_WORKFLOW_EXECUTION_ENGINE_CERTIFICATION_1055.md`
+
+---
+
 ### Sprint 1025 — DONNA Workflow Completion Audit V1
 
 **Capability changes:**
@@ -403,13 +432,13 @@ Listed by impact severity. Each blocker cites its evidence source.
 
 ## 9. Next highest-leverage sprint
 
-### Recommended: Sprint 1055 — DONNA Workflow Execution Engine V1
+### Recommended: Sprint 1085 — DONNA Player Creation Completion V1
 
-**Rationale:** The Workflow Completion Audit (Sprint 1025) confirmed that all 7 creation workflows share the same post-session gap: `donna:goal-session-completed` is dispatched but never consumed. A single canonical execution engine (`donnaWorkflowExecutionEngine.ts`) will define the types and lifecycle that all subsequent page-wiring sprints depend on. Building it first prevents each page sprint from inventing its own types.
+**Rationale:** Player creation is the highest-frequency director action post-setup. The execution engine is now built. Player creation page (`/director/players/new/`) has a production-ready server action (`createPlayerAction`). This sprint wires the full lifecycle: `onGoalSessionCompleted` → `buildWorkflowExecutionPlan` → review banner → `buildWorkflowDraftPayload` → `createPlayerAction` → `buildWorkflowVerificationResult` → `buildWorkflowCompletionSummary` → DONNA message.
 
-**Expected impact:** No score change (pure TypeScript). Unblocks Sprints 1085, 1115, 1145.
+**Expected impact:** Workflow Completion rises from 40/100 to ~52/100. COO Readiness D7 rises from 4/10 to 7/10.
 
-**Then:** Sprint 1085 — Player Creation Completion V1 (first workflow to reach 8/8 layers).
+**Key challenge:** `createPlayerAction` expects `first_name` + `last_name` separately; DONNA collects `player_name` (full name). Name splitting required in the page listener.
 
 ---
 
