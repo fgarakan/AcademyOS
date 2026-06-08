@@ -3,6 +3,11 @@
 // Sprint 350 — Server TTS client for Donna contract prompts.
 // Chain: server TTS (/api/donna/tts) → browser speechSynthesis → silent.
 // Sprint 720 — upgraded: reads X-Donna-Voice header, applies voice config to browser fallback.
+// Sprint 995 — added AbortController so stopServerTts() cancels in-flight fetches,
+//              preventing two concurrent fetch completions from both creating Audio elements.
+//              Aborted calls return { source: 'silent', reason: 'cancelled' } without
+//              falling through to browser TTS — cancelled speech produces silence, not a
+//              second voice.
 
 import {
   fallbackBrowserRate,
@@ -13,6 +18,8 @@ import {
 } from '@/lib/donna/donnaVoiceConfig'
 
 let activeAudioEl: HTMLAudioElement | null = null
+// Sprint 995 — AbortController for any in-flight /api/donna/tts fetch
+let activeFetchController: AbortController | null = null
 
 export interface ServerTtsResult {
   ok: boolean
@@ -51,7 +58,11 @@ export async function speakWithServerTts(
   onStatus?: (status: ServerTtsStatus) => void,
 ): Promise<ServerTtsResult> {
   onStatus?.('starting')
-  stopServerTts()
+  stopServerTts() // Sprint 995: also aborts any in-flight fetch
+
+  // Sprint 995 — one AbortController per call; stopServerTts() will abort it
+  const controller = new AbortController()
+  activeFetchController = controller
 
   // ── Path 1: Server TTS (OpenAI gpt-4o-mini-tts + marin) ─────────────────────
   try {
@@ -59,7 +70,11 @@ export async function speakWithServerTts(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
+      signal: controller.signal, // Sprint 995: allow mid-flight cancellation
     })
+
+    // Sprint 995: fetch completed normally — clear the controller reference
+    activeFetchController = null
 
     if (res.ok) {
       const contentType = res.headers.get('Content-Type') ?? ''
@@ -102,10 +117,18 @@ export async function speakWithServerTts(
       console.warn('[DonnaTTS] Server TTS failed:', reason)
     }
   } catch (err) {
+    // Sprint 995: AbortError means stopServerTts() cancelled this call — return
+    // silent immediately. Do NOT fall through to browser TTS: cancelled speech
+    // produces silence, not a browser-voice substitute.
+    if (err instanceof Error && err.name === 'AbortError') {
+      activeFetchController = null
+      return { ok: false, source: 'silent', reason: 'cancelled' }
+    }
+    activeFetchController = null
     console.warn('[DonnaTTS] Server TTS fetch error:', err instanceof Error ? err.message : String(err))
   }
 
-  // ── Path 2: Browser TTS (fallback) ──────────────────────────────────────────
+  // ── Path 2: Browser TTS (fallback — server unavailable or returned non-audio) ─
   return browserTtsFallback(text, onStatus)
 }
 
@@ -142,6 +165,11 @@ function browserTtsFallback(
 }
 
 export function stopServerTts() {
+  // Sprint 995: abort any in-flight fetch before clearing the audio element
+  if (activeFetchController) {
+    activeFetchController.abort()
+    activeFetchController = null
+  }
   if (activeAudioEl) {
     try { activeAudioEl.pause(); activeAudioEl.src = '' } catch { /* ignore */ }
     activeAudioEl = null

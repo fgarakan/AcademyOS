@@ -4,8 +4,14 @@
 // Browser Speech Synthesis API wrapper for DONNA spoken prompts.
 // Optional — always has a mute/off state. Text fallback always shown.
 // No package installs. No DB. No external sends.
+//
+// Sprint 995 — routed through the canonical donnaPremiumVoiceRuntime so this hook
+// can never produce a second, competing voice alongside speakDonna(). The mute state
+// is preserved: when muted, no audio is produced. When unmuted, the same TTS chain
+// (server TTS → browser fallback) is used as all other DONNA speech.
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { speakDonna as speakDonnaPremium, stopDonna } from '@/lib/donna/voice/donnaPremiumVoiceRuntime'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,12 +26,6 @@ export interface UseSpeechOutputReturn {
   toggleMute: () => void
 }
 
-// ── Availability check ────────────────────────────────────────────────────────
-
-function isSpeechSynthesisAvailable(): boolean {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window
-}
-
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useSpeechOutput(defaultMuted = false): UseSpeechOutputReturn {
@@ -34,37 +34,27 @@ export function useSpeechOutput(defaultMuted = false): UseSpeechOutputReturn {
   const availableRef = useRef(false)
 
   useEffect(() => {
-    const available = isSpeechSynthesisAvailable()
-    availableRef.current = available
-    setStatus(available ? (defaultMuted ? 'muted' : 'idle') : 'unavailable')
+    // Available on any client — speakDonnaPremium handles environment checks internally
+    availableRef.current = typeof window !== 'undefined'
+    setStatus(availableRef.current ? (defaultMuted ? 'muted' : 'idle') : 'unavailable')
   }, [defaultMuted])
 
   const speak = useCallback(
     (text: string) => {
       if (!availableRef.current || isMuted || !text.trim()) return
-
-      // Cancel any ongoing speech before starting new
-      window.speechSynthesis.cancel()
-
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      utterance.rate = 0.95
-      utterance.pitch = 1.0
-      utterance.volume = 0.9
-
-      utterance.onstart = () => setStatus('speaking')
-      utterance.onend = () => setStatus('idle')
-      utterance.onerror = () => setStatus('idle')
-
       setStatus('speaking')
-      window.speechSynthesis.speak(utterance)
+      void speakDonnaPremium(text, {
+        onStatus: (s) => {
+          if (s === 'done' || s === 'error') setStatus('idle')
+        },
+      })
     },
     [isMuted],
   )
 
   const stop = useCallback(() => {
     if (!availableRef.current) return
-    window.speechSynthesis.cancel()
+    stopDonna()
     setStatus(prev => (prev === 'speaking' ? 'idle' : prev))
   }, [])
 
@@ -72,7 +62,7 @@ export function useSpeechOutput(defaultMuted = false): UseSpeechOutputReturn {
     setIsMuted(prev => {
       const next = !prev
       if (next && availableRef.current) {
-        window.speechSynthesis.cancel()
+        stopDonna()
       }
       setStatus(prev2 => {
         if (!availableRef.current) return prev2

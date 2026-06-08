@@ -2637,6 +2637,13 @@ export function DonnaVoiceReadyShell({
           sourceNote: 'DONNA Goal Session',
         }
         setTimeout(() => {
+          // Sprint 995: pre-mark before setMessages so the messages useEffect
+          // (which also calls speakDonnaPremium) sees this ID as already spoken
+          // and skips it — prevents the same response being spoken twice.
+          if (goalResult.shouldSpeak && goalResult.spokenResponse) {
+            lastSpokenIdRef.current = goalMsg.id
+            speakDonnaPremium(goalResult.spokenResponse).catch(() => {})
+          }
           setMessages(prev => [...prev, goalMsg])
           setIsTyping(false)
           recordTurn(trimmed, goalResult.response, { confidence: 'high' })
@@ -2660,9 +2667,6 @@ export function DonnaVoiceReadyShell({
               draftType:  goalResult.draftType,
               answers:    goalResult.answers ?? {},
             })
-          }
-          if (goalResult.shouldSpeak && goalResult.spokenResponse) {
-            speakDonnaPremium(goalResult.spokenResponse).catch(() => {})
           }
         }, 400)
         return
@@ -2711,12 +2715,15 @@ export function DonnaVoiceReadyShell({
           followUp:    brainResult.followUpQuestion ?? undefined,
         }
         setTimeout(() => {
+          // Sprint 995: pre-mark before setMessages so the messages useEffect
+          // skips this ID — prevents the same response being spoken twice.
+          if (brainResult.shouldSpeak && brainResult.spokenResponse) {
+            lastSpokenIdRef.current = brainMsg.id
+            speakDonnaPremium(brainResult.spokenResponse).catch(() => {})
+          }
           setMessages(prev => [...prev, brainMsg])
           setIsTyping(false)
           recordTurn(trimmed, brainMsg.text, { confidence: brainMsg.confidence })
-          if (brainResult.shouldSpeak && brainResult.spokenResponse) {
-            speakDonnaPremium(brainResult.spokenResponse).catch(() => {})
-          }
         }, 400)
         return
       }

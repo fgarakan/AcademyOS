@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 995–1024A — DONNA Single Voice Runtime V1
+
+**Eliminated dual DONNA voice. All speech now serializes through one canonical runtime with AbortController and version guard. No workflow logic changed. No UI redesigned. TypeScript clean.**
+
+- Fixed `src/components/assistant/donnaServerTtsClient.ts` — added `AbortController` per call; `stopServerTts()` now aborts in-flight fetches; `AbortError` returns `{ source: 'silent', reason: 'cancelled' }` without falling through to browser TTS — the most recent call always wins
+- Fixed `src/lib/donna/voice/donnaPremiumVoiceRuntime.ts` — added `_speakVersion` module counter; `speakDonna()` discards async results from superseded calls (`reason: 'superseded'`); cancelled calls (`reason: 'cancelled'`) short-circuit without browser fallback
+- Fixed `src/components/donna/DonnaVoiceReadyShell.tsx` — pre-mark `lastSpokenIdRef.current = msg.id` before `setMessages` in Goal Session and DONNA Brain bridge handlers; the messages `useEffect` sees the ID as already spoken and skips it; explicit `speakDonnaPremium` call moved before `setMessages` so only one TTS call fires per response (not two)
+- Fixed `src/lib/donna/useSpeechOutput.ts` — routed `speak()` through `speakDonnaPremium` and `stop()` through `stopDonna()`; eliminates second independent `window.speechSynthesis` path
+- Created `docs/qa/DONNA_SINGLE_VOICE_RUNTIME_995.md` — full audit of all DONNA speech entry points, root cause documentation, canonical runtime diagram, 7-point certification checklist
+
+---
+
 ## 2026-06-07 — Mega Sprint 965–994 — DONNA Capability Certification System V1
 
 **Baseline capability scorecard established across 5 dimensions with evidence-backed scoring. Every score tied to a specific sprint doc. PASS / PARTIAL / FAIL per dimension with confidence levels. Before/after deltas, 6 ranked blockers, next sprint recommendation. No code touched.**

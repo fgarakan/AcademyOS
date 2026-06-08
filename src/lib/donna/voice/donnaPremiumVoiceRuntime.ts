@@ -41,6 +41,12 @@ export interface SpeakDonnaResult {
   reason?: string
 }
 
+// ── Global speak version — Sprint 995 duplicate-speech guard ─────────────────
+// Incremented on every speakDonna() call. Any in-flight call whose version no
+// longer matches the current value is superseded and discards its result.
+// This is belt-and-suspenders on top of the AbortController in donnaServerTtsClient.
+let _speakVersion = 0
+
 // ── Stop any current DONNA speech ─────────────────────────────────────────────
 
 /** Stop any DONNA speech currently in progress — both server and browser paths. */
@@ -65,6 +71,10 @@ export function stopDonna(): void {
  *   Use only when explicitly in fallback context (e.g. no OPENAI_API_KEY configured).
  *
  * Returns SpeakDonnaResult so callers can show the correct status label.
+ *
+ * Sprint 995: version guard — if a newer speakDonna() call supersedes this one
+ * (e.g. two components call simultaneously), the older call returns 'silent'
+ * without producing audio. Only the most recent call ever plays.
  */
 export async function speakDonna(
   text: string,
@@ -76,15 +86,30 @@ export async function speakDonna(
     return { ok: false, mode: 'silent', reason: 'empty_text' }
   }
 
-  // Always stop current speech before starting new
+  // Cancel any current speech (also aborts in-flight server fetch via AbortController)
   stopDonna()
 
+  // Sprint 995: claim a version slot — a newer caller will increment this past myVersion
+  const myVersion = ++_speakVersion
+
   if (mode === 'browser') {
-    return speakBrowserFallback(text, onStatus)
+    const r = await speakBrowserFallback(text, onStatus)
+    if (_speakVersion !== myVersion) return { ok: false, mode: 'silent', reason: 'superseded' }
+    return r
   }
 
   // Premium path: server TTS → browser fallback
   const result = await speakWithServerTts(text, onStatus)
+
+  // Sprint 995: discard result if a newer call has taken over
+  if (_speakVersion !== myVersion) {
+    return { ok: false, mode: 'silent', reason: 'superseded' }
+  }
+
+  // Cancelled by AbortController — return silent, no fallback
+  if (result.reason === 'cancelled') {
+    return { ok: false, mode: 'silent', reason: 'cancelled' }
+  }
 
   if (result.source === 'server') {
     return { ok: result.ok, mode: 'premium', voice: result.voice, reason: 'server_tts' }
