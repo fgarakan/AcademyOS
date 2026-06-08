@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1085–1114 — DONNA Player Creation Completion V1
+
+**First DONNA workflow to reach 8/8 execution layers. Player creation now flows end-to-end: DONNA asks questions → fields pre-fill visibly → director confirms → player created → completion summary → navigate to onboarding. TypeScript clean.**
+
+- Updated `src/app/director/players/new/NewPlayerForm.tsx` — converted all inputs to controlled state; added `onPageStatePatch` listener for `player_onboarding_completion` (splitFullName into first/last + toIsoDate for age/DOB + "Set by DONNA" lime sparkle badges on pre-filled labels); added `onGoalSessionCompleted` listener that calls `buildWorkflowExecutionPlan` and shows DONNA review banner; DONNA confirm path calls `createPlayerDonnaAction`, builds `WorkflowVerificationResult` + `WorkflowCompletionSummary`, shows success banner, navigates to onboarding after 2s; standard form submit path unchanged
+- Created `src/app/director/players/new/createPlayerDonnaAction.ts` — server action for DONNA path; accepts structured `{ firstName, lastName, dateOfBirth, notes, planId }` instead of FormData; returns `{ ok, playerId, redirectTo, error }` without redirecting; identical auth + RLS checks as `createPlayerAction`; audit log with `source: 'ui'`, `plan_id` for traceability; player created as `status: pending_placement`
+- Created `docs/architecture/DONNA_PLAYER_CREATION_COMPLETION_1085.md` — full flow diagram, files, name splitting, age→DOB conversion, field wiring scope, guarantees
+- Created `docs/qa/DONNA_PLAYER_CREATION_CERTIFICATION_1085.md` — 8 certification scenarios: full flow, standard path (no regression), director edits, age number, age ISO date, partial session cancel, server error, single name
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Workflow Completion 40→52; COO Readiness 61→63 (D7: 4→6); composite 69→72; sprint 1085 impact recorded; BLOCKER 1 updated (4 workflows remain); next sprint 1115 (coach creation)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1055–1084 — DONNA Workflow Execution Engine V1
 
 **One canonical execution layer for all DONNA-guided workflows. Pure TypeScript. No page wiring yet — defines the contract that all subsequent page sprints depend on. TypeScript clean.**

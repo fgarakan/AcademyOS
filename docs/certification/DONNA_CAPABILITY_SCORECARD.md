@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1055 (Mega Sprint 1055–1084)
+**Version:** 1085 (Mega Sprint 1085–1114)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **61/100** | 60 | 61 | MEDIUM | 995C |
+| COO Readiness | **63/100** | 61 | 63 | MEDIUM | 1085 |
 | Conversational Readiness | **64/100** | 62 | 64 | MEDIUM | 995C |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
-| Workflow Completion | **40/100** | — | 40 | HIGH | 934C |
+| Workflow Completion | **52/100** | 40 | 52 | HIGH | 1085 |
 
-**Composite score: 69/100** (unweighted average)
+**Composite score: 72/100** (unweighted average)
 
 ---
 
@@ -96,11 +96,11 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 | 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
 | 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
 | 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 4/10 | 0 | FAIL |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
 | 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
 | 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
 | 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | **+2** total | PARTIAL |
-| | **Total** | **55/100** | **60/100** | **61/100** | **+1** (995C) | |
+| | **Total** | **55/100** | **60/100** | **63/100** | **+2** (1085) | |
 
 ### D1 change rationale (5→8)
 Sprint 935 (`docs/architecture/DONNA_DAILY_COO_BRIEFING_935.md`) wired a 5-section COO brief to the director home page. Brief renders on every login without Brian opening DONNA. Covers all 7 brief dimensions with action routes. Missing data is disclosed. This directly addresses the audit finding: "Brief infrastructure is built. The surface delivery is passive. A proactive COO comes to you." Score raised to 8 (not 10) because: brief is not personalized to session context; no badge or notification on approach; top 3 actions are deterministic, not intelligent.
@@ -109,8 +109,8 @@ Sprint 935 (`docs/architecture/DONNA_DAILY_COO_BRIEFING_935.md`) wired a 5-secti
 Sprint 935: DONNA now proactively surfaces a structured brief — one of the two main behavioral COO gaps. Score raised from 5 to 6.
 Sprint 995C: Voice coherence certified — exactly one DONNA voice runtime confirmed. Two simultaneous voice sources (one from server TTS and one from browser TTS bypasses) would undermine the COO persona. All speech now routes through a single global lock. Score raised from 6 to 7. Not higher because: 5/6 workflows still don't fill forms; session memory is still tab-bound; two surfaces still diverge on goal sessions.
 
-### D7 worst dimension — FAIL
-Player creation page (`/director/players`) has no `onPageStatePatch` listener. DONNA can run the 6-step Q&A loop but the form stays blank. Coach/group assignment requires entity ID resolution (not just text). This is the highest-frequency director action post-setup. **Fix in Sprint 936.**
+### D7 — player creation now PARTIAL (was FAIL)
+Sprint 1085 wired the player creation page. DONNA now fills first_name, last_name, and date_of_birth fields visibly. Director confirms via review banner. Player is created and director is navigated to onboarding. Coach/group/level are collected by DONNA but not wired to the onboarding form (shown in banner only). Score rises from 4/10 to 6/10. Not 10/10 because: level, coach, group collected but not auto-applied to onboarding; no DONNA confirmation in the sidebar stream. **COO Readiness D7: 4 → 6.**
 
 ### Confidence: MEDIUM
 Scores are judgment-based (1–10 scale) derived from code review and feature testing. Not derived from automated tests.
@@ -228,7 +228,7 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | Workflow | Q&A Loop | Page Wiring | Draft Submission | Overall |
 |---|---|---|---|---|
 | `template_builder_completion` | PASS | **PASS** (Sprint 934C) | FAIL (no trigger) | PARTIAL |
-| `player_onboarding_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
+| `player_onboarding_completion` | PASS | **PASS** (Sprint 1085) | **PASS** (Sprint 1085) | **PARTIAL** (level/coach/group shown in banner only) |
 | `academy_setup_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
 | `curriculum_builder_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
 | `assessment_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
@@ -241,12 +241,12 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | Q&A session loop (all 6 workflows) | 6/6 PASS | Goal Session Cert 934 — Scenarios A–F all pass criteria checked |
 | Session persistence (tab-level) | 6/6 PASS | sessionStorage 4h TTL verified across navigation |
 | Session persistence (cross-tab) | 0/6 FAIL | sessionStorage clears on tab close — no Supabase-backed sessions |
-| Page state sync (template only) | 1/6 PASS | Page State Sync Cert 934 — Scenarios 1–6 pass |
-| "Set by DONNA" indicators | 1/6 PASS | Template create page — `templateName` and `level` fields |
-| Draft submitted to DB from session | 0/6 FAIL | No workflow triggers a DB save via goal session completion event |
+| Page state sync | 2/6 PASS | Sprint 934C: template; Sprint 1085: player creation (name split + DOB conversion + "Set by DONNA" badges) |
+| "Set by DONNA" indicators | 2/6 PASS | Template create page + player creation page (first_name, date_of_birth) |
+| Draft submitted to DB from session | 1/6 PASS | Player creation: `createPlayerDonnaAction` triggered on director confirm; audit log includes planId |
 
 ### Score derivation
-Q&A loop: 6/6 pass = full credit on loop layer (30%). Page wiring: 1/6 = 17% credit on wiring layer (30%). Draft submission: 0/6 = no credit (40%). Weighted: (30 × 1.0) + (30 × 0.17) + (40 × 0) ≈ 35. Add 5 for session persistence within tab. **Score: 40/100.**
+Q&A loop: 6/6 pass = full credit on loop layer (30%). Page wiring: 2/6 = 33% credit on wiring layer (30%). Draft submission: 1/6 = 17% credit on submission layer (40%). Weighted: (30 × 1.0) + (30 × 0.33) + (40 × 0.17) ≈ 47. Add 5 for session persistence within tab. **Score: 52/100.**
 
 ### Confidence: HIGH
 The workflow matrix is derived from explicit certification scenarios. Wiring gaps are definitively confirmed — no ambiguity about which pages have listeners.
@@ -260,12 +260,13 @@ Update when any workflow gains page wiring, draft submission is wired to a goal 
 
 Listed by impact severity. Each blocker cites its evidence source.
 
-### BLOCKER 1 — Five workflows have no page wiring
+### BLOCKER 1 — Four workflows have no page wiring (player creation resolved)
 **Impact:** Brian completes 6 DONNA Q&A steps, but the form stays blank. He types everything again.
 **Evidence:** Workflow matrix above; D4–D7 in COO Readiness Audit 935
-**Workflows affected:** player_onboarding, academy_setup, curriculum_builder, assessment, parent_update
-**Fix path:** One sprint per workflow to add `onPageStatePatch` listener. Player creation is highest-frequency → Sprint 936 (recommended).
-**Severity:** HIGH
+**Workflows still affected:** academy_setup, curriculum_builder, assessment, parent_update
+**Resolved:** player_onboarding — Sprint 1085 added full page wiring, server action, and completion summary.
+**Fix path:** Sprint 1115 (coach creation), 1145 (template completion), then assessment and parent update.
+**Severity:** HIGH (4 workflows remaining)
 
 ### BLOCKER 2 — Session state is tab-bound
 **Impact:** Brian starts player onboarding, closes the tab for lunch, reopens — DONNA has forgotten all 4 steps answered.
@@ -310,6 +311,35 @@ Listed by impact severity. Each blocker cites its evidence source.
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1085 — DONNA Player Creation Completion V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Workflow Completion | 40/100 | **52/100** | **+12** |
+| COO Readiness | 61/100 | **63/100** | **+2** (D7: 4→6) |
+| Conversational Readiness | 64/100 | 64/100 | 0 |
+| Atomic Loop Completion | 92/100 | 92/100 | 0 |
+| Director Question Readiness | 88/100 | 88/100 | 0 |
+
+**Composite: 69 → 72 (+3)**
+
+**What changed:**
+- `NewPlayerForm.tsx` — converted to controlled inputs; added `onPageStatePatch` listener (splitFullName + toIsoDate + "Set by DONNA" badges); added `onGoalSessionCompleted` listener (`buildWorkflowExecutionPlan` → DONNA review banner); DONNA confirm path calls `createPlayerDonnaAction`, builds verification + completion summary, navigates to onboarding
+- `createPlayerDonnaAction.ts` — new server action for DONNA path; accepts structured params; returns `{ ok, playerId, redirectTo }` instead of redirecting; audit log includes `plan_id` for traceability
+- First 8/8 layer workflow certified: player creation now complete from Q&A → confirm → create → verify → summary → navigate
+
+**What didn't change:**
+- Standard form submit path unchanged (no regression)
+- `createPlayerAction.ts` unchanged (still used by standard path)
+- DONNA completion message not yet pushed to sidebar conversation stream (known gap)
+- Level, coach, group, parent collected but not wired to onboarding wizard (shown in banner only)
+
+**Files created/modified:** `NewPlayerForm.tsx`, `createPlayerDonnaAction.ts`, architecture + certification docs
+
+---
 
 ### Sprint 1055 — DONNA Workflow Execution Engine V1
 
@@ -432,13 +462,11 @@ Listed by impact severity. Each blocker cites its evidence source.
 
 ## 9. Next highest-leverage sprint
 
-### Recommended: Sprint 1085 — DONNA Player Creation Completion V1
+### Recommended: Sprint 1115 — DONNA Coach Creation Completion V1
 
-**Rationale:** Player creation is the highest-frequency director action post-setup. The execution engine is now built. Player creation page (`/director/players/new/`) has a production-ready server action (`createPlayerAction`). This sprint wires the full lifecycle: `onGoalSessionCompleted` → `buildWorkflowExecutionPlan` → review banner → `buildWorkflowDraftPayload` → `createPlayerAction` → `buildWorkflowVerificationResult` → `buildWorkflowCompletionSummary` → DONNA message.
+**Rationale:** Coach creation is the next highest-frequency post-setup action. The audit confirmed no `coach_creation_completion` workflow exists. This sprint creates the registry entry (2-step flow: email + role), wires the coaches page, and creates a DONNA coach invite action. The coach invite model (email only) is simpler than player creation — no name split, no DOB conversion.
 
-**Expected impact:** Workflow Completion rises from 40/100 to ~52/100. COO Readiness D7 rises from 4/10 to 7/10.
-
-**Key challenge:** `createPlayerAction` expects `first_name` + `last_name` separately; DONNA collects `player_name` (full name). Name splitting required in the page listener.
+**Expected impact:** Workflow Completion rises from 52/100 to ~58/100. COO Readiness D7 stays at 6/10 (coach is D-adjacent, not D7 specifically).
 
 ---
 
