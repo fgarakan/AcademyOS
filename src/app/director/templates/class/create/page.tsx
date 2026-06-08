@@ -4,7 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info, Eye, Loader2 } from 'lucide-react'
 import { saveClassTemplateDraftFromWizardAction } from '@/lib/actions/templateDraftAction'
-import { onPageStatePatch } from '@/lib/donna/pageSync/donnaPageSyncEvents'
+import { onPageStatePatch, onGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
+import {
+  buildWorkflowExecutionPlan,
+  buildWorkflowDraftPayload,
+  buildWorkflowVerificationResult,
+  buildWorkflowCompletionSummary,
+  type WorkflowExecutionPlan,
+  type WorkflowCompletionSummary,
+} from '@/lib/donna/workflows/donnaWorkflowExecutionEngine'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import {
   CURRICULUM_LEVEL_PREVIEWS,
@@ -81,6 +89,10 @@ export default function CreateClassTemplatePage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'schema_missing'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [donnaSyncedFields, setDonnaSyncedFields] = useState<Set<string>>(new Set())
+  const [donnaPlan,         setDonnaPlan]         = useState<WorkflowExecutionPlan | null>(null)
+  const [donnaSubmitting,   setDonnaSubmitting]   = useState(false)
+  const [donnaError,        setDonnaError]        = useState<string | null>(null)
+  const [donnaCompletion,   setDonnaCompletion]   = useState<WorkflowCompletionSummary | null>(null)
 
   useEffect(() => {
     return onPageStatePatch(patch => {
@@ -97,6 +109,14 @@ export default function CreateClassTemplatePage() {
           setSelectedGoal(patch.value)
           break
       }
+    })
+  }, [])
+
+  useEffect(() => {
+    return onGoalSessionCompleted(detail => {
+      if (detail.workflowId !== 'template_builder_completion') return
+      const plan = buildWorkflowExecutionPlan(detail)
+      if (plan) setDonnaPlan(plan)
     })
   }, [])
 
@@ -154,6 +174,155 @@ export default function CreateClassTemplatePage() {
     })
   }
 
+  function parseDurationToMinutes(raw: string): number {
+    const n = parseInt(raw.replace(/[^0-9]/g, ''), 10)
+    return isNaN(n) ? 60 : n
+  }
+
+  function parseBlockStructure(raw: string): Block[] {
+    const typeMap: Record<string, string> = {
+      'warm up': 'warm_up', 'warmup': 'warm_up', 'warm-up': 'warm_up',
+      'technical': 'technical', 'skill': 'technical', 'skills': 'technical',
+      'tactical': 'tactical', 'tactics': 'tactical',
+      'physical': 'physical', 'fitness': 'physical',
+      'match play': 'match_play', 'match_play': 'match_play',
+      'games': 'match_play', 'game': 'match_play', 'competition': 'match_play',
+      'cool down': 'cool_down', 'cool-down': 'cool_down', 'cooldown': 'cool_down',
+    }
+    const parts = raw.split(/[,;/]/).map(s => s.trim().toLowerCase()).filter(Boolean)
+    if (parts.length === 0) {
+      return [{ id: 'donna-0', type: 'warm_up', title: 'Warm-Up Block', durationMin: 15 }]
+    }
+    return parts.map((part, i) => {
+      const mappedType = typeMap[part] ?? 'technical'
+      const typeInfo = BLOCK_TYPES.find(b => b.id === mappedType)
+      return {
+        id: `donna-${i}`,
+        type: mappedType,
+        title: (typeInfo?.label ?? part) + ' Block',
+        durationMin: (mappedType === 'warm_up' || mappedType === 'cool_down') ? 10 : 20,
+      }
+    })
+  }
+
+  function parseDrillsList(raw: string): string[] {
+    return raw.split(/[,;]/).map(s => s.trim()).filter(Boolean).slice(0, 5)
+  }
+
+  async function handleDonnaConfirm() {
+    if (!donnaPlan) return
+    const payload = buildWorkflowDraftPayload(donnaPlan)
+    if (!payload) return
+
+    setDonnaSubmitting(true)
+    setDonnaError(null)
+
+    const ans = payload.answers
+    const parsedBlocks = parseBlockStructure(ans['block_structure'] ?? '')
+    const drillsList = parseDrillsList(ans['key_drills'] ?? '')
+
+    const blocksForAction = parsedBlocks.map(b => ({
+      type: b.type,
+      title: b.title,
+      durationMin: b.durationMin,
+      drills: (b.type === 'technical' || b.type === 'tactical') ? drillsList : [],
+    }))
+
+    const result = await saveClassTemplateDraftFromWizardAction({
+      curriculumLevel: ans['target_level'] ?? selectedLevel,
+      templateGoal:    ans['session_focus'] ?? selectedGoal,
+      templateName:    ans['template_purpose'] || undefined,
+      blocks:          blocksForAction,
+    })
+
+    const submitResult = {
+      ok:         result.success,
+      entityId:   result.reviewRequestId ?? null,
+      entityType: 'template',
+      redirectTo: '/director/templates',
+      error:      result.error ?? null,
+    }
+
+    const verification = buildWorkflowVerificationResult(submitResult, ans['template_purpose'] ?? 'Template')
+
+    if (verification.verified) {
+      const summary = buildWorkflowCompletionSummary('template_builder_completion', verification, ans)
+      setDonnaCompletion(summary)
+      setDonnaPlan(null)
+    } else {
+      setDonnaError(verification.failureReason ?? result.error ?? 'Failed to save template draft.')
+    }
+    setDonnaSubmitting(false)
+  }
+
+  function handleDonnaDismiss() {
+    setDonnaPlan(null)
+    setDonnaError(null)
+  }
+
+  function renderDonnaBanner() {
+    if (donnaCompletion) {
+      return (
+        <div className="rounded-xl border border-status-green/30 bg-status-green/5 p-4 space-y-2 mb-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
+            <p className="text-sm font-semibold text-status-green">Template draft submitted</p>
+          </div>
+          <p className="text-xs text-text-secondary leading-relaxed">{donnaCompletion.donnaMessage}</p>
+        </div>
+      )
+    }
+
+    if (!donnaPlan) return null
+
+    const filledFields = donnaPlan.fields.filter(f => f.filled)
+
+    return (
+      <div className="rounded-xl border border-lime/25 bg-lime/5 overflow-hidden mb-4">
+        <div className="px-4 py-3 border-b border-lime/15 flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+          <p className="text-xs font-semibold text-lime">DONNA collected these answers</p>
+        </div>
+        <div className="px-4 py-3 space-y-2">
+          {filledFields.map(field => (
+            <div key={field.fieldId} className="flex items-start gap-2">
+              <ChevronRight className="w-3 h-3 text-lime shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <span className="text-xs text-text-muted">{field.displayLabel}: </span>
+                <span className="text-xs text-text-primary">{field.value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        {donnaError && (
+          <div className="px-4 py-2 border-t border-status-red/20 flex items-center gap-2">
+            <AlertCircle className="w-3.5 h-3.5 text-status-red shrink-0" />
+            <p className="text-xs text-status-red">{donnaError}</p>
+          </div>
+        )}
+        <div className="px-4 py-3 border-t border-lime/15 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDonnaConfirm}
+            disabled={!donnaPlan.readyToSubmit || donnaSubmitting}
+            className="btn-lime text-xs px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            {donnaSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {donnaSubmitting ? 'Saving…' : 'Confirm & Save Template Draft'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDonnaDismiss}
+            disabled={donnaSubmitting}
+            className="btn-ghost text-xs px-3 py-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   async function handleSaveDraft() {
     setSaveStatus('saving')
     setSaveError(null)
@@ -202,6 +371,9 @@ export default function CreateClassTemplatePage() {
           <h1 className="page-title">Create Class Template</h1>
           <p className="page-subtitle">Build a reusable session structure step by step.</p>
         </div>
+
+        {/* DONNA review banner */}
+        {renderDonnaBanner()}
 
         {/* Template name */}
         <div className="space-y-1.5">

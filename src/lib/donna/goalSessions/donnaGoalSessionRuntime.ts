@@ -150,8 +150,9 @@ const WORKFLOW_DRAFT_TYPE: Record<GuidedWorkflowId, string> = {
   player_onboarding_completion:  'player_profile_draft',
   assessment_completion:         'assessment_draft',
   parent_update_completion:      'parent_update_draft',
-  template_builder_completion:   'class_template_draft',
-  coach_creation_completion:     'coach_invite_draft',
+  template_builder_completion:           'class_template_draft',
+  coach_creation_completion:             'coach_invite_draft',
+  fitness_template_builder_completion:   'fitness_template_draft',
 }
 
 // ── Main runtime ───────────────────────────────────────────────────────────────

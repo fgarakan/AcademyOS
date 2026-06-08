@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1145–1174 — DONNA Template Creation Completion V1
+
+**Third and fourth DONNA workflows to reach 8/8 execution layers. Class template creation now fully wired — DONNA collects 6 answers, parses block structure and drills, calls saveClassTemplateDraftFromWizardAction, shows completion summary. Fitness template is a new workflow (4 steps) wired from scratch. TypeScript clean.**
+
+- Updated `src/app/director/templates/class/create/page.tsx` — added `onGoalSessionCompleted` listener for `template_builder_completion`; DONNA state (plan, submitting, error, completion); `parseDurationToMinutes`, `parseBlockStructure`, `parseDrillsList` helpers; `handleDonnaConfirm` builds Block[] from `block_structure` text, attaches `key_drills` to first technical block, calls `saveClassTemplateDraftFromWizardAction`, builds verification + summary; `renderDonnaBanner` above template name; standard wizard path unchanged
+- Updated `src/app/director/templates/fitness/create/page.tsx` — full DONNA wiring (none existed before): `onPageStatePatch` listener for `fitness_template_builder_completion` (level, goal via `normaliseFitnessGoal`, load, durationMin); `onGoalSessionCompleted` listener; `buildFitnessBlocksFromGoal` generates 3-block structure (movement + main + recovery) from goal type and duration; `handleDonnaConfirm` calls `saveFitnessTemplateDraftFromWizardAction`; standard path unchanged
+- Updated `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — added `fitness_template_builder_completion` (4 required steps: fitness_level, fitness_goal, fitness_load, fitness_duration) with trigger phrases
+- Updated `src/lib/donna/guidedCompletion/guidedCompletionStepRunner.ts` — added exhaustive `case 'fitness_template_builder_completion':` to `buildActions`
+- Updated `src/lib/donna/pageSync/donnaPageStateSync.ts` — added fitness field map (4 fields: level, goal, load, duration)
+- Updated `src/lib/donna/workflows/donnaWorkflowExecutionEngine.ts` — added fitness to WORKFLOW_META, WORKFLOW_DRAFT_TYPE, completion message case
+- Updated `src/lib/donna/goalSessions/donnaGoalSessionRuntime.ts` — added fitness to WORKFLOW_DRAFT_TYPE
+- Created `docs/architecture/DONNA_TEMPLATE_CREATION_COMPLETION_1145.md` — both flows, parsing tables, guarantees
+- Created `docs/qa/DONNA_TEMPLATE_CREATION_CERTIFICATION_1145.md` — 7 certification scenarios
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Workflow Completion 58→70; COO Readiness 63→66 (D6: 7→9, D10: 7→8); composite 73→76; sprint 1145 impact; next sprint 1175 (certification)
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1115–1144 — DONNA Coach Creation Completion V1
 
 **Second DONNA workflow to reach 8/8 execution layers. Coach invite now flows end-to-end: DONNA asks email + role → fields pre-fill with "Set by DONNA" badges → director confirms → inviteCoachAction called → completion summary shown. No new server action needed — DONNA path reuses inviteCoachAction directly. TypeScript clean.**

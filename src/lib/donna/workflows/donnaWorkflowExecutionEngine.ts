@@ -230,6 +230,12 @@ const WORKFLOW_META: Record<GuidedWorkflowId, WorkflowMeta> = {
     nextAction:  'View coaches',
     nextRoute:   '/director/coaches',
   },
+  fitness_template_builder_completion: {
+    entityType:  'fitness_template',
+    entityLabel: 'Fitness Template',
+    nextAction:  'View templates',
+    nextRoute:   '/director/templates/fitness',
+  },
 }
 
 // ── ID generator ───────────────────────────────────────────────────────────────
@@ -398,13 +404,14 @@ export function buildWorkflowCompletionSummary(
 // ── Completion message builder ─────────────────────────────────────────────────
 
 const WORKFLOW_DRAFT_TYPE: Record<GuidedWorkflowId, string> = {
-  player_onboarding_completion:  'player_profile_draft',
-  template_builder_completion:   'class_template_draft',
-  assessment_completion:         'assessment_draft',
-  parent_update_completion:      'parent_update_draft',
-  curriculum_builder_completion: 'curriculum_level_draft',
-  academy_setup_completion:      'academy_setup_draft',
-  coach_creation_completion:     'coach_invite_draft',
+  player_onboarding_completion:          'player_profile_draft',
+  template_builder_completion:           'class_template_draft',
+  assessment_completion:                 'assessment_draft',
+  parent_update_completion:              'parent_update_draft',
+  curriculum_builder_completion:         'curriculum_level_draft',
+  academy_setup_completion:              'academy_setup_draft',
+  coach_creation_completion:             'coach_invite_draft',
+  fitness_template_builder_completion:   'fitness_template_draft',
 }
 
 function buildCompletionMessage(
@@ -446,6 +453,11 @@ function buildCompletionMessage(
       const role  = answers['coach_role'] ?? 'coach'
       const roleLabel = role.toLowerCase().includes('head') ? 'Head Coach' : 'Coach'
       return `**${email} has been linked as ${roleLabel}.** They can now log in and access the coach portal.`
+    }
+    case 'fitness_template_builder_completion': {
+      const level = answers['fitness_level'] ?? entityLabel
+      const goal  = answers['fitness_goal'] ?? 'fitness'
+      return `**Fitness template saved.** "${goal}" template for ${level} is in the review queue. Approve it to make it available for coaching sessions.`
     }
     default:
       return `**Done.** ${entityLabel} has been saved successfully.`

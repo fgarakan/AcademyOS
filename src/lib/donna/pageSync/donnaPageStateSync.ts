@@ -118,6 +118,13 @@ const WORKFLOW_FIELD_MAPS: Record<string, Record<string, FieldMapEntry>> = {
     coach_role:  { pageFieldId: 'role',  displayLabel: 'Coach Role' },
   },
 
+  fitness_template_builder_completion: {
+    fitness_level:    { pageFieldId: 'level',    displayLabel: 'Curriculum Level' },
+    fitness_goal:     { pageFieldId: 'goal',     displayLabel: 'Fitness Goal' },
+    fitness_load:     { pageFieldId: 'load',     displayLabel: 'Load Level' },
+    fitness_duration: { pageFieldId: 'duration', displayLabel: 'Session Duration' },
+  },
+
 }
 
 // ── Factory ────────────────────────────────────────────────────────────────────

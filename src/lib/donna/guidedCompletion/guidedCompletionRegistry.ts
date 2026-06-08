@@ -20,6 +20,7 @@ export type GuidedWorkflowId =
   | 'parent_update_completion'
   | 'template_builder_completion'
   | 'coach_creation_completion'
+  | 'fitness_template_builder_completion'
 
 // ── Step ─────────────────────────────────────────────────────────────────────
 
@@ -689,6 +690,74 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
       'grant access to coach portal',
     ],
     openingMessage: "Let's add a coach. I'll ask 2 quick questions — then you confirm.\n\nStep 1 of 2:",
+  },
+
+  // ── 8. Fitness Template Builder ───────────────────────────────────────────
+  {
+    id: 'fitness_template_builder_completion',
+    label: 'Fitness Template Builder',
+    endGoal: 'Define a fitness template — curriculum level, fitness goal, load, and duration — ready for director review.',
+    triggerPhrases: [
+      'build a fitness template',
+      'create a fitness template',
+      'help me build a fitness template',
+      'fitness template builder',
+      'new fitness template',
+      'guide me through fitness template',
+      'let\'s build a fitness template',
+      'add a fitness template',
+    ],
+    pageRoutes: [
+      '/director/templates/fitness',
+      '/director/templates',
+    ],
+    requiredSteps: [
+      {
+        stepId: 'fitness_level',
+        order: 1,
+        question: 'Which curriculum level is this fitness template designed for?',
+        fieldId: 'fitness_level',
+        hint: 'Examples: "Red Ball 1", "Orange Ball 2", "Green Ball". Links the template to the curriculum structure.',
+        required: true,
+      },
+      {
+        stepId: 'fitness_goal',
+        order: 2,
+        question: 'What is the fitness goal? (speed & agility / strength & power / mobility / endurance / coordination)',
+        fieldId: 'fitness_goal',
+        hint: 'This determines which exercise blocks are suggested.',
+        required: true,
+      },
+      {
+        stepId: 'fitness_load',
+        order: 3,
+        question: 'What load level should this session be? (light / moderate / high)',
+        fieldId: 'fitness_load',
+        hint: '"light" for younger players or recovery days. "high" for competitive-stage athletes.',
+        required: true,
+      },
+      {
+        stepId: 'fitness_duration',
+        order: 4,
+        question: 'How long is this fitness session? (15 / 20 / 30 / 45 minutes)',
+        fieldId: 'fitness_duration',
+        hint: 'Most on-court fitness blocks run 15–30 minutes.',
+        required: true,
+      },
+    ],
+    optionalSteps: [],
+    completionCriteria: 'All 4 required fields answered. Fitness template draft ready for director review.',
+    safeActions: [
+      'collect fitness template parameters',
+      'suggest exercise blocks for the chosen goal',
+      'build a fitness draft for review',
+    ],
+    approvalGatedActions: [
+      'save fitness template to the database',
+      'publish template to coaches',
+      'assign template to sessions',
+    ],
+    openingMessage: "Let's build a fitness template. I'll ask 4 quick questions — then you review.\n\nStep 1 of 4:",
   },
 ]
 

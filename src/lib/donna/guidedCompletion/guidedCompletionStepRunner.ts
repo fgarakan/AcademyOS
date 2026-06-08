@@ -284,6 +284,12 @@ function buildActions(workflowId: GuidedWorkflowId): CompletionAction[] {
         { label: 'Edit a field',          requiresApproval: false, note: 'Change any answer.' },
         { label: 'Link coach to academy', requiresApproval: true,  note: 'Links the coach account and grants portal access.' },
       ]
+    case 'fitness_template_builder_completion':
+      return [
+        { label: 'Review fitness template draft', requiresApproval: false, note: 'Check level, goal, load, and duration before saving.' },
+        { label: 'Edit a field',                  requiresApproval: false, note: 'Change any answer.' },
+        { label: 'Save fitness template draft',   requiresApproval: true,  note: 'Saves fitness draft for director review before use.' },
+      ]
   }
 }
 

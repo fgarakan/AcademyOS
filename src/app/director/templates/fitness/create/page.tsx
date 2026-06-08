@@ -1,9 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap, Eye, Loader2 } from 'lucide-react'
 import { saveFitnessTemplateDraftFromWizardAction } from '@/lib/actions/templateDraftAction'
+import { onPageStatePatch, onGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
+import {
+  buildWorkflowExecutionPlan,
+  buildWorkflowDraftPayload,
+  buildWorkflowVerificationResult,
+  buildWorkflowCompletionSummary,
+  type WorkflowExecutionPlan,
+  type WorkflowCompletionSummary,
+} from '@/lib/donna/workflows/donnaWorkflowExecutionEngine'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview, getCurriculumLevelPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
@@ -60,6 +69,181 @@ export default function CreateFitnessTemplatePage() {
   const [expandedBlockId, setExpandedBlockId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'schema_missing'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [donnaSyncedFields, setDonnaSyncedFields] = useState<Set<string>>(new Set())
+  const [donnaPlan,         setDonnaPlan]         = useState<WorkflowExecutionPlan | null>(null)
+  const [donnaSubmitting,   setDonnaSubmitting]   = useState(false)
+  const [donnaError,        setDonnaError]        = useState<string | null>(null)
+  const [donnaCompletion,   setDonnaCompletion]   = useState<WorkflowCompletionSummary | null>(null)
+
+  useEffect(() => {
+    return onPageStatePatch(patch => {
+      if (patch.workflowId !== 'fitness_template_builder_completion') return
+      setDonnaSyncedFields(prev => {
+        const next = new Set(prev)
+        next.add(patch.fieldId)
+        return next
+      })
+      if (patch.fieldId === 'level') {
+        setSelectedLevel(patch.value)
+      } else if (patch.fieldId === 'goal') {
+        const goalId = normaliseFitnessGoal(patch.value)
+        if (goalId) setSelectedGoal(goalId)
+      } else if (patch.fieldId === 'load') {
+        const l = patch.value.toLowerCase().trim()
+        if (l === 'light' || l === 'moderate' || l === 'high') setLoad(l.charAt(0).toUpperCase() + l.slice(1))
+      } else if (patch.fieldId === 'duration') {
+        const n = parseInt(patch.value.replace(/[^0-9]/g, ''), 10)
+        if (!isNaN(n) && n > 0) setDurationMin(n)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    return onGoalSessionCompleted(detail => {
+      if (detail.workflowId !== 'fitness_template_builder_completion') return
+      const plan = buildWorkflowExecutionPlan(detail)
+      if (plan) setDonnaPlan(plan)
+    })
+  }, [])
+
+  function normaliseFitnessGoal(raw: string): string {
+    const lower = raw.toLowerCase()
+    if (lower.includes('speed') || lower.includes('agility')) return 'speed_agility'
+    if (lower.includes('strength') || lower.includes('power')) return 'strength_power'
+    if (lower.includes('mobility') || lower.includes('flex')) return 'mobility_flexibility'
+    if (lower.includes('endurance') || lower.includes('stamina')) return 'endurance'
+    if (lower.includes('coord')) return 'coordination'
+    return raw.toLowerCase().replace(/\s+/g, '_')
+  }
+
+  function buildFitnessBlocksFromGoal(goalId: string, totalMin: number) {
+    const goalToMainType: Record<string, string> = {
+      'speed_agility':        'speed',
+      'strength_power':       'strength',
+      'mobility_flexibility': 'mobility',
+      'endurance':            'coordination',
+      'coordination':         'coordination',
+    }
+    const main = goalToMainType[goalId] ?? 'movement'
+    const warmUp = Math.max(5, Math.round(totalMin * 0.2))
+    const cool   = Math.max(5, Math.round(totalMin * 0.15))
+    const body   = Math.max(5, totalMin - warmUp - cool)
+    return [
+      { type: 'movement',           durationMin: warmUp, exercises: [] },
+      { type: main,                 durationMin: body,   exercises: [] },
+      { type: 'recovery_cool_down', durationMin: cool,   exercises: [] },
+    ]
+  }
+
+  async function handleDonnaConfirm() {
+    if (!donnaPlan) return
+    const payload = buildWorkflowDraftPayload(donnaPlan)
+    if (!payload) return
+
+    setDonnaSubmitting(true)
+    setDonnaError(null)
+
+    const ans = payload.answers
+    const goalId    = normaliseFitnessGoal(ans['fitness_goal'] ?? selectedGoal)
+    const goalInfo  = FITNESS_GOALS.find(g => g.id === goalId)
+    const levelVal  = ans['fitness_level'] ?? selectedLevel
+    const loadVal   = ans['fitness_load'] ?? load
+    const durVal    = parseInt((ans['fitness_duration'] ?? String(durationMin)).replace(/[^0-9]/g, ''), 10) || durationMin
+    const blocks    = buildFitnessBlocksFromGoal(goalId, durVal)
+
+    const result = await saveFitnessTemplateDraftFromWizardAction({
+      curriculumLevel:  levelVal,
+      fitnessGoalId:    goalId,
+      fitnessGoalLabel: goalInfo?.label ?? goalId,
+      load:             loadVal,
+      durationMin:      durVal,
+      blocks,
+    })
+
+    const submitResult = {
+      ok:         result.success,
+      entityId:   result.reviewRequestId ?? null,
+      entityType: 'fitness_template',
+      redirectTo: '/director/templates/fitness',
+      error:      result.error ?? null,
+    }
+
+    const verification = buildWorkflowVerificationResult(submitResult, ans['fitness_goal'] ?? 'Fitness Template')
+
+    if (verification.verified) {
+      const summary = buildWorkflowCompletionSummary('fitness_template_builder_completion', verification, ans)
+      setDonnaCompletion(summary)
+      setDonnaPlan(null)
+    } else {
+      setDonnaError(verification.failureReason ?? result.error ?? 'Failed to save fitness template draft.')
+    }
+    setDonnaSubmitting(false)
+  }
+
+  function handleDonnaDismiss() {
+    setDonnaPlan(null)
+    setDonnaError(null)
+  }
+
+  function renderDonnaBanner() {
+    if (donnaCompletion) {
+      return (
+        <div className="rounded-xl border border-status-green/30 bg-status-green/5 p-4 space-y-2 mb-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
+            <p className="text-sm font-semibold text-status-green">Fitness template draft submitted</p>
+          </div>
+          <p className="text-xs text-text-secondary leading-relaxed">{donnaCompletion.donnaMessage}</p>
+        </div>
+      )
+    }
+    if (!donnaPlan) return null
+    const filledFields = donnaPlan.fields.filter(f => f.filled)
+    return (
+      <div className="rounded-xl border border-lime/25 bg-lime/5 overflow-hidden mb-4">
+        <div className="px-4 py-3 border-b border-lime/15 flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+          <p className="text-xs font-semibold text-lime">DONNA collected these answers</p>
+        </div>
+        <div className="px-4 py-3 space-y-2">
+          {filledFields.map(field => (
+            <div key={field.fieldId} className="flex items-start gap-2">
+              <Zap className="w-3 h-3 text-lime shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <span className="text-xs text-text-muted">{field.displayLabel}: </span>
+                <span className="text-xs text-text-primary">{field.value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        {donnaError && (
+          <div className="px-4 py-2 border-t border-status-red/20 flex items-center gap-2">
+            <AlertCircle className="w-3.5 h-3.5 text-status-red shrink-0" />
+            <p className="text-xs text-status-red">{donnaError}</p>
+          </div>
+        )}
+        <div className="px-4 py-3 border-t border-lime/15 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDonnaConfirm}
+            disabled={!donnaPlan.readyToSubmit || donnaSubmitting}
+            className="btn-lime text-xs px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            {donnaSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {donnaSubmitting ? 'Saving…' : 'Confirm & Save Fitness Draft'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDonnaDismiss}
+            disabled={donnaSubmitting}
+            className="btn-ghost text-xs px-3 py-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   function addBlock(type: FitnessBlockType) {
     if (fitnessBlocks.find(b => b.type === type)) return
@@ -157,6 +341,9 @@ export default function CreateFitnessTemplatePage() {
           <h1 className="page-title">Create Fitness Template</h1>
           <p className="page-subtitle">Build a physical training block step by step.</p>
         </div>
+
+        {/* DONNA review banner */}
+        {renderDonnaBanner()}
 
         {/* Review notice */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-border bg-surface-raised text-[11px] text-text-secondary">
