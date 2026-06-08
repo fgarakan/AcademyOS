@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1025–1054 — DONNA Workflow Completion Audit V1
+
+**Comprehensive baseline audit of all 8 DONNA-supported workflows across all 8 execution layers. No features built. Every gap documented. Highest-ROI build order established.**
+
+- Created `docs/audits/DONNA_WORKFLOW_COMPLETION_AUDIT_1025.md` — 8-workflow × 8-layer audit matrix; per-workflow detail with evidence citations; 8 shared blockers ranked by severity; 4 duplicate system pairs; ROI-ordered build sequence; canonical execution architecture recommendation
+- Audit findings: average execution score 17/64 (27%) across creation workflows; only Template Creation has any page sync wiring (5.5/8 layers); zero workflows trigger a server action from DONNA session completion; Coach Creation has no registry entry (architecture decision required)
+- Key shared blocker confirmed: `donna:goal-session-completed` dispatched by DonnaVoiceReadyShell for all workflows but consumed by zero pages — the single root cause of all Workflow Completion failures
+- Build ROI order: Player Creation (1st) → Template completion (2nd) → Assessment (3rd) → Parent Update (4th) → Curriculum (5th) → Academy Setup (6th) → Coach Creation (7th) → Review Queue (8th)
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — version 1025; sprint 1025 impact recorded; next sprint recommendation updated to Sprint 1055 — Workflow Execution Engine V1
+- TypeScript: no code touched — audit only
+
+---
+
 ## 2026-06-08 — Mega Sprint 995–1024C — DONNA Voice Certification V3
 
 **Final voice certification sprint. Zero active browser TTS bypass paths confirmed. DirectorInterviewAssistant was the last component with a direct `window.speechSynthesis.speak()` implementation — its 100-line browser TTS helper `speakAssistant()` replaced with a thin `speakDonnaPremium` wrapper. Dead code (`speakAssistantText` in DonnaAssistantButton — no remaining callers after V2) deleted. Dev-only `testBrowserVoice()` routed through canonical runtime. Comprehensive bypass search confirms 0 active calls. TypeScript clean.**

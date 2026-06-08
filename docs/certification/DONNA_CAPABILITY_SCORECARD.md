@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 995C (Mega Sprint 995–1024C)
+**Version:** 1025 (Mega Sprint 1025–1054)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -311,6 +311,38 @@ Listed by impact severity. Each blocker cites its evidence source.
 
 ## 8. Last sprint impact
 
+### Sprint 1025 — DONNA Workflow Completion Audit V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Workflow Completion | 40/100 | 40/100 | 0 (audit only — no features built) |
+| COO Readiness | 61/100 | 61/100 | 0 |
+| Conversational Readiness | 64/100 | 64/100 | 0 |
+| Atomic Loop Completion | 92/100 | 92/100 | 0 |
+| Director Question Readiness | 88/100 | 88/100 | 0 |
+
+**What changed:**
+- Created `docs/audits/DONNA_WORKFLOW_COMPLETION_AUDIT_1025.md` — comprehensive 8-workflow × 8-layer audit
+- Scored all 8 workflows across: Conversation, Missing info, Navigation, Page sync, Draft creation, Submit/save, Confirmation, Verification
+- Identified 8 shared blockers; mapped 4 duplicate system pairs; ranked workflows by build ROI
+- Confirmed current state: average execution score 17/64 (27%) across creation workflows
+
+**Key findings:**
+- Only 1/7 creation workflows (Template) has any page state sync wiring
+- Zero workflows trigger a server action from DONNA goal session completion
+- Coach creation has no registry entry — architecture decision required
+- All workflows share the same post-session gap: `goal_session_complete` dispatched, nothing consumes it
+
+**What didn't change:**
+- No code written — audit only
+- Workflow Completion score unchanged (40/100 — audit findings reinforce the existing score; do not lower it)
+
+**Files created:** `docs/audits/DONNA_WORKFLOW_COMPLETION_AUDIT_1025.md`
+
+---
+
 ### Sprint 995C — DONNA Voice Certification V3
 
 **Capability changes:**
@@ -371,7 +403,17 @@ Listed by impact severity. Each blocker cites its evidence source.
 
 ## 9. Next highest-leverage sprint
 
-### Recommended: Sprint 936 — Player Creation Page Wiring
+### Recommended: Sprint 1055 — DONNA Workflow Execution Engine V1
+
+**Rationale:** The Workflow Completion Audit (Sprint 1025) confirmed that all 7 creation workflows share the same post-session gap: `donna:goal-session-completed` is dispatched but never consumed. A single canonical execution engine (`donnaWorkflowExecutionEngine.ts`) will define the types and lifecycle that all subsequent page-wiring sprints depend on. Building it first prevents each page sprint from inventing its own types.
+
+**Expected impact:** No score change (pure TypeScript). Unblocks Sprints 1085, 1115, 1145.
+
+**Then:** Sprint 1085 — Player Creation Completion V1 (first workflow to reach 8/8 layers).
+
+---
+
+### Previous recommendation: Sprint 936 — Player Creation Page Wiring
 
 **Rationale:** Player creation (`player_onboarding_completion`) is the highest-frequency director action after initial setup. The infrastructure is complete:
 - Registry: 6 steps defined, trigger phrases set
