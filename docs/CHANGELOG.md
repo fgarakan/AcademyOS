@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-08 — Mega Sprint 1175–1204 — DONNA Workflow Completion Certification V1
+
+**Final certification sprint. Assessment and parent update workflows wired via proposed_actions pipeline. Workflow Completion reaches 80/100. 6 of 8 workflows now trigger draft submission from DONNA goal session completion. Architecture: both new routes use submitDonnaActionDraft → proposed_actions → director review queue — DONNA never directly mutates. TypeScript clean.**
+
+- Updated `src/app/director/players/[playerId]/_components/AssessmentStudioForm.tsx` — added `onGoalSessionCompleted` listener for `assessment_completion`; DONNA state (plan, submitting, error, completion); `handleDonnaAssessmentConfirm` calls `submitDonnaActionDraft({ targetModule: 'assessment_draft_v1', proposedPayload: { playerId, ...answers } })`; review banner + confirm button rendered above assessment form; `buildWorkflowVerificationResult` + `buildWorkflowCompletionSummary`; standard form path unchanged
+- Updated `src/app/director/players/[playerId]/InitiateParentUpdateButton.tsx` — extended with `onGoalSessionCompleted` for `parent_update_completion`; DONNA state; `handleDonnaParentUpdateConfirm` calls `submitDonnaActionDraft({ targetModule: 'parent_update_draft_v1', proposedPayload: { playerId, ...answers } })`; review banner + confirm path; standard "Draft parent update" button path unchanged; added `playerFirstName` prop
+- Created `docs/qa/DONNA_WORKFLOW_COMPLETION_CERTIFICATION_1175.md` — full 8-workflow certification matrix, 4 scenarios, final layer completion table, score derivation, COO Readiness update
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — Workflow Completion 70→80; COO Readiness 66→67 (D10: 8→9); composite 76→78; sprint 1175 impact recorded; remaining gaps documented
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1145–1174 — DONNA Template Creation Completion V1
 
 **Third and fourth DONNA workflows to reach 8/8 execution layers. Class template creation now fully wired — DONNA collects 6 answers, parses block structure and drills, calls saveClassTemplateDraftFromWizardAction, shows completion summary. Fitness template is a new workflow (4 steps) wired from scratch. TypeScript clean.**

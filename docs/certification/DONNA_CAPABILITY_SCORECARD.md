@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1145 (Mega Sprint 1145–1174)
+**Version:** 1175 (Mega Sprint 1175–1204)
 **Last updated:** 2026-06-08
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **66/100** | 63 | 66 | MEDIUM | 1145 |
+| COO Readiness | **67/100** | 66 | 67 | MEDIUM | 1175 |
 | Conversational Readiness | **64/100** | 62 | 64 | MEDIUM | 995C |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
-| Workflow Completion | **70/100** | 58 | 70 | HIGH | 1145 |
+| Workflow Completion | **80/100** | 70 | 80 | HIGH | 1175 |
 
-**Composite score: 76/100** (unweighted average)
+**Composite score: 78/100** (unweighted average)
 
 ---
 
@@ -99,8 +99,8 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 | 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
 | 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 0 | PARTIAL |
 | 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | **8/10** | **+1** (Sprint 1145) | PARTIAL |
-| | **Total** | **55/100** | **60/100** | **63/100** | **66/100** | **+3** (1145) | |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | **9/10** | **+2** total | PARTIAL → PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **+4** (1145+1175) | |
 
 ### D1 change rationale (5→8)
 Sprint 935 (`docs/architecture/DONNA_DAILY_COO_BRIEFING_935.md`) wired a 5-section COO brief to the director home page. Brief renders on every login without Brian opening DONNA. Covers all 7 brief dimensions with action routes. Missing data is disclosed. This directly addresses the audit finding: "Brief infrastructure is built. The surface delivery is passive. A proactive COO comes to you." Score raised to 8 (not 10) because: brief is not personalized to session context; no badge or notification on approach; top 3 actions are deterministic, not intelligent.
@@ -233,22 +233,22 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | `fitness_template_builder_completion` | PASS | **PASS** (Sprint 1145) | **PASS** (Sprint 1145) | **PASS** (8/8 layers) |
 | `academy_setup_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
 | `curriculum_builder_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
-| `assessment_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
-| `parent_update_completion` | PASS | FAIL (not wired) | FAIL | FAIL |
+| `assessment_completion` | PASS | PARTIAL (no pre-fill yet) | **PASS** (Sprint 1175) | **PARTIAL** |
+| `parent_update_completion` | PASS | PARTIAL (no pre-fill yet) | **PASS** (Sprint 1175) | **PARTIAL** |
 
 ### Certification results
 
 | Layer | Certified | Evidence |
 |---|---|---|
-| Q&A session loop (all 8 workflows) | 8/8 PASS | Goal Session Cert 934 — Scenarios A–F; Sprint 1115: coach; Sprint 1145: fitness workflow |
+| Q&A session loop (all 8 workflows) | 8/8 PASS | Goal Session Cert 934 — Scenarios A–F; 1115: coach; 1145: fitness; 1175: assessment + parent_update Q&A already existed |
 | Session persistence (tab-level) | 8/8 PASS | sessionStorage 4h TTL verified across navigation |
 | Session persistence (cross-tab) | 0/8 FAIL | sessionStorage clears on tab close — no Supabase-backed sessions |
-| Page state sync | 4/8 PASS | Sprint 934C: template; Sprint 1085: player; Sprint 1115: coach; Sprint 1145: fitness |
-| "Set by DONNA" indicators | 4/8 PASS | Template + player + coach + fitness pages all show lime sparkle badges |
-| Draft submitted to DB from session | 4/8 PASS | Player: `createPlayerDonnaAction`; Coach: `inviteCoachAction`; Class template: `saveClassTemplateDraftFromWizardAction`; Fitness: `saveFitnessTemplateDraftFromWizardAction` |
+| Page state sync (pre-fill) | 4/8 PASS | Sprint 934C: template; Sprint 1085: player; Sprint 1115: coach; Sprint 1145: fitness |
+| Draft submitted to DB from session | 6/8 PASS | Player: `createPlayerDonnaAction`; Coach: `inviteCoachAction`; Class template + Fitness: `save*WizardAction`; Assessment + Parent update: `submitDonnaActionDraft` → proposed_actions |
+| "Set by DONNA" indicators | 4/8 PASS | Template + player + coach + fitness pages show lime sparkle badges |
 
 ### Score derivation
-Q&A loop: 8/8 = full credit on loop layer (30%). Page wiring: 4/8 = 50% credit on wiring layer (30%). Draft submission: 4/8 = 50% credit on submission layer (40%). Weighted: (30 × 1.0) + (30 × 0.50) + (40 × 0.50) = 30 + 15 + 20 = 65. Add 5 for session persistence within tab. **Score: 70/100.**
+Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 30 × 0.50 = 15 points. Draft submission: 6/8 = 75% → 40 × 0.75 = 30 points. Subtotal: 75. Add 5 for session persistence. **Score: 80/100.**
 
 ### Confidence: HIGH
 The workflow matrix is derived from explicit certification scenarios. Wiring gaps are definitively confirmed — no ambiguity about which pages have listeners.
@@ -316,6 +316,34 @@ Listed by impact severity. Each blocker cites its evidence source.
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1175 — DONNA Workflow Completion Certification V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Workflow Completion | 70/100 | **80/100** | **+10** |
+| COO Readiness | 66/100 | **67/100** | **+1** (D10: 8→9) |
+| Conversational Readiness | 64/100 | 64/100 | 0 |
+| Atomic Loop Completion | 92/100 | 92/100 | 0 |
+| Director Question Readiness | 88/100 | 88/100 | 0 |
+
+**Composite: 76 → 78 (+2)**
+
+**What changed:**
+- `AssessmentStudioForm.tsx` — added `onGoalSessionCompleted` for `assessment_completion`; DONNA state (plan, submitting, error, completion); `handleDonnaAssessmentConfirm` calls `submitDonnaActionDraft` with assessment answers + playerId → proposed_action in review queue; banner rendered above assessment form; standard form path unchanged
+- `InitiateParentUpdateButton.tsx` — extended with `onGoalSessionCompleted` for `parent_update_completion`; DONNA state; `handleDonnaParentUpdateConfirm` calls `submitDonnaActionDraft` with parent update answers → proposed_action; standard "Draft parent update" button path unchanged; added `playerFirstName` prop for display
+- Draft submission now: 6/8 workflows fully triggered from DONNA goal session completion
+- Architecture: both routes through `proposed_actions` pipeline (DONNA proposes → director approves → system executes — never bypassed)
+
+**Remaining gaps:**
+- `assessment_completion` and `parent_update_completion`: no `onPageStatePatch` pre-fill (fields not pre-populated from DONNA answers before confirmation)
+- `academy_setup_completion` and `curriculum_builder_completion`: still 0/8 (no page wiring, no draft submission)
+- Session storage is still tab-bound (BLOCKER 2)
+- Brain "explain why" coverage still 5/10 (BLOCKER 6)
+
+---
 
 ### Sprint 1145 — DONNA Template Creation Completion V1
 
@@ -533,11 +561,17 @@ Listed by impact severity. Each blocker cites its evidence source.
 
 ## 9. Next highest-leverage sprint
 
-### Recommended: Sprint 1175 — DONNA Workflow Completion Certification V1
+### Next: Workflow Completion Dimension Completion V2
 
-**Rationale:** 4 workflows are now 8/8 certified (player, coach, class template, fitness template). Sprint 1175 should: (1) wire assessment and parent_update completion pages, (2) re-audit all 8 dimensions, and (3) record the final Workflow Completion score. Composite expected to approach 80/100.
+**Rationale:** 6/8 workflows now have draft submission wired. The two remaining (academy_setup, curriculum_builder) require dedicated setup/builder pages. Page sync pre-fill for assessment + parent_update would also increase scores. The next meaningful sprint is assessment/parent_update page sync (add `onPageStatePatch` listeners) which would bring those two to near-full certification.
 
-**Expected impact:** Workflow Completion rises from 70/100 to ~82/100. Composite: 76 → ~80.
+**Expected impact:** Workflow Completion rises from 80/100 to ~88/100 with assessment+parent_update page sync added.
+
+---
+
+### Previous recommendation: Sprint 1175 — DONNA Workflow Completion Certification V1 (DONE)
+
+**Completed impact:** Workflow Completion 70→80. COO Readiness 66→67 (D10: 8→9). Composite 76→78.
 
 ---
 
