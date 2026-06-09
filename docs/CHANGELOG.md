@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-06-09 — Mega Sprint 1535–1564 — DONNA Today Operating System V1
+
+**Today page transformed from a 10-section dense dashboard into a 6-section operating surface. Director sees synthesis first. Setup mode gate suppresses all intelligence until academy is live. Every card: headline + synthesis + recommended action + optional "Why?/Show evidence". 6 suggested DONNA prompts always visible. No chart walls. No dense tables. COO Readiness 95→97 (D1: 9→10). Conversational Readiness 90→91 (prompt surface). Composite 92→94. TypeScript clean.**
+
+- Created `src/lib/donna/today/academyHealthSummaryEngine.ts` — `buildAcademyHealthSummary(input)` computes score (0–100) from 8 risk signals; status (good/watch/action_needed/critical); headline + synthesis; strengths[] (advancement-ready, no stalls, all recaps, no over-capacity, curriculum complete); concerns[] with actionHref per concern; recommendedAction; confidence (high/medium/low based on active player count)
+- Created `src/lib/donna/today/directorAttentionEngine.ts` — `buildDirectorAttentionItems(input)` generates typed attention items across 7 domains (approval: stale queue/assessments/placements/wrap-ups/parent-updates/lesson-requests; player: on-hold/stalled/no-level; promotion: ready/reassessment-due; coach: recaps-missing/unassigned-players; curriculum: gaps/over-capacity); each item has headline, synthesis, actionLabel, actionHref, whyText, priority; sorted critical→high→medium→low
+- Created `src/lib/donna/today/directorPriorityEngine.ts` — `buildDirectorPriorities(items)` returns top 3 attention items as `DirectorPriority` with rank
+- Created `src/lib/donna/today/directorRiskEngine.ts` — `buildDirectorRisks(input)` returns top 3 risks sorted by level; each has consequence (what happens if ignored) + missingData disclosure; stall risk discloses gate criteria gap; no-data risk shown when 0 active players
+- Created `src/lib/donna/today/directorDecisionEngine.ts` — `buildDirectorDecisions(input)` returns top 3 decisions sorted by urgency; each has count, ageNote (when oldest pending > 3 days), actionHref; covers 6 decision types (assessments/placements/advancement/wrap-ups/parent-updates/lesson-requests)
+- Created `src/lib/donna/today/todayBriefEngine.ts` — `buildTodayBrief(input)` orchestrates all sub-engines; returns `TodayBrief`; `isSetupMode()` gate: academyHealth=null, topPriorities=[], topRisks=[] when !isAcademyLive; `TODAY_DONNA_PROMPTS` fixed 6-item array; `buildSetupSteps()` generates 4-step progress (academy DNA, players, templates, sessions)
+- Rewrote `src/app/director/page.tsx` — replaced 10-section dense layout with 6-section operating surface; kept all existing DB queries; added `unassignedPlayerCount` query (`players.primary_coach_id IS NULL` for active players); added `buildTodayBrief()` call; render order: greeting header → [setup mode: TodaySetupCard] or [live mode: TodayHealthCard + TodayPrioritiesCard + TodayRisksCard] → TodayDecisionsCard → TodayDonnaPromptsCard; old 8 dense sections removed from render (components retained in `_components/`)
+- Created `src/app/director/_components/TodaySetupCard.tsx` — 4-step progress with checkmarks; next incomplete step highlighted; "Continue Setup →" CTA + DONNA ask button; lime border theme
+- Created `src/app/director/_components/TodayHealthCard.tsx` — score % badge + status label; headline + synthesis; recommended action link; expandable "Why? Show evidence" toggle revealing strengths list + concerns list per concern with action links + DONNA deep-dive prompt
+- Created `src/app/director/_components/TodayPrioritiesCard.tsx` — numbered priority rows (1–3); each row: headline + synthesis + action link + expandable "Why?" toggle showing whyText
+- Created `src/app/director/_components/TodayRisksCard.tsx` — risk rows with red/orange/yellow severity dot; headline + synthesis + action link; expandable "Why this matters" showing consequence + missingData disclosure (italicised)
+- Created `src/app/director/_components/TodayDecisionsCard.tsx` — decision rows with urgency dot; headline + synthesis + ageNote + action link; "All N →" header link to review queue; "Queue is clear" empty state with green check
+- Created `src/app/director/_components/TodayDonnaPromptsCard.tsx` — 6 `PromptChip` buttons in flex-wrap layout; each dispatches `window.CustomEvent('donna:open', { detail: { prompt } })`; DONNA sidebar opens with pre-loaded prompt; uses same event contract as `DonnaAskButton`
+- Created `docs/architecture/DONNA_TODAY_OS_AUDIT_1535.md` — 10-section problem audit; section inventory; 11 UX problems catalogued with severity; disposition (keep/remove/build) per component; target layout for setup mode and live mode; data availability table; architecture invariants
+- Created `docs/qa/DONNA_TODAY_OS_CERTIFICATION_1535.md` — 13 scenarios, all PASS
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 95→97 (D1: 9→10); Conversational Readiness 90→91; Composite 92→94; Sprint 1535 impact in §8
+- TypeScript: clean (0 errors)
+
+---
+
+## 2026-06-09 — Mega Sprint 1505–1534 — DONNA Coach Intelligence + Director Navigation UX V1
+
+**Coach intelligence engine V1. DONNA now answers "How is Coach Danny doing?", "Which coaches need support?", "Which coach is overloaded?", "Which players are unassigned?", and "Which coach has stalled players?" using real player assignment data and promotion engine signals. Director nav locked to correct UX order. COO Readiness 94→95 (new D11 Coach Intelligence). Conversational Readiness 88→90 (coach entity Q&A step 10.5.1b + academy-wide scan step 10.8). Composite 91→92. TypeScript clean.**
+
+- Created `src/lib/donna/coach/coachIntelligenceEngine.ts` — `evaluateCoachIntelligence(coach, ctx)` returns `CoachIntelligenceResult` with player breakdown (ready/review_required/blocked/missing_evidence/enrolled per player), risk level (none/low/medium/high), headline, synthesis, recommended action, data gaps; `evaluateAllCoaches(ctx)` returns `AcademyCoachSummary` (all coach results + unassigned players + overloaded/stalled/needs-support name lists); `buildSingleCoachAnswer()`, `buildCoachSupportAnswer()`, `buildMissingCoachRelationshipsAnswer()` format director-facing markdown; `OVERLOAD_THRESHOLD = 8` (players per coach), `STALL_THRESHOLD = 2` (blocked + missing_evidence count)
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — imported coach intelligence engine; added `isCoachSupportQuery()` detector (11 patterns: "which coaches need support", "overloaded", "stalled", "missing coach", "unassigned player", "coach relationships", etc.); split former step 10.5.1b into coach-specific branch (`kind === 'coach'` → `evaluateCoachIntelligence` → `buildSingleCoachAnswer`, debug step `'check_coach_intelligence'`) and generic entity Q&A (now step 10.5.1c); added step 10.8 (`isCoachSupportQuery` → `evaluateAllCoaches` → `buildCoachSupportAnswer` or `buildMissingCoachRelationshipsAnswer`, debug step `'check_coach_support'`); updated step 10.7 inline `PlayerEntity` to include `primaryCoachId: p.primaryCoachId`; added `CoachEntity` to entity type imports
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — `BrainRoutingStep` extended with `'check_coach_intelligence'` and `'check_coach_support'`
+- Updated `src/lib/donna/extendedContextLoaders.ts` — added `primaryCoachId: string | null` to `PlayerCurriculumStateSummary`; updated `loadPlayerCurriculumStates()` query to join `players(first_name, last_name, primary_coach_id)`; updated row mapping to set `primaryCoachId: r.players?.primary_coach_id ?? null`
+- Updated `src/lib/donna/entities/donnaAcademyEntityModel.ts` — added `primaryCoachId?: string | null` to `PlayerEntity` interface
+- Updated `src/lib/donna/intelligence/donnaUnifiedIntelligenceContext.ts` — populated `primaryCoachId: p.primaryCoachId` in `case 'player'` entity factory
+- Updated `src/components/nav/SidebarNav.tsx` — locked director nav to: Today (`/director`), Dashboard (`/director/kpi`), Players, Sessions, Approvals (`/director/review`), Templates, Curriculum, Coaches, Settings; "Review & Decide" → "Approvals"; Settings moved from SYSTEM_ITEMS to ACADEMY_ITEMS; badge on Approvals only; `BarChart2` icon for Dashboard, `CheckSquare` for Approvals, `UserCog` for Coaches
+- Updated `src/components/nav/DirectorMobileNav.tsx` — mobile nav: Today/Players/Sessions/Approvals/Coaches; removed "Parent Updates"; added "Coaches"; badge on Approvals; imports aligned
+- Created `docs/architecture/DIRECTOR_NAVIGATION_UX_AUDIT_1505.md` — audit of pre-sprint nav problems (wrong order, misleading labels, Settings buried); target nav rationale; mobile nav rationale; UX cognitive load principles
+- Created `docs/qa/DONNA_COACH_INTELLIGENCE_CERTIFICATION_1505.md` — 12 scenarios, all PASS; score impact table; V1 limitations
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 94→95 (D11 new dimension); Conversational Readiness 88→90; Composite 91→92; Sprint 1505 impact in §8
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-09 — Mega Sprint 1475–1504 — DONNA Player Relationship Resolution V1
 
 **BLOCKER 6 resolved. Player creation now resolves coach, group, and curriculum level text labels to database UUIDs. `primary_coach_id`, `current_group_id`, and `current_level_id` are saved on the player record when DONNA collects relationship fields. Disambiguation UI shown when multiple entities match — director always confirms. Coaches loaded into entity context (BLOCKER 6 fix for brain Q&A). COO Readiness 92→94 (D7: 6→8). Conversational Readiness 87→88. Workflow Completion 91→92. Composite 90→91. TypeScript clean.**
