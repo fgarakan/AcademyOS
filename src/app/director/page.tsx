@@ -677,7 +677,7 @@ export default async function DirectorDashboard() {
       />
 
       {/* Section 1b — DONNA COO Daily Brief */}
-      <DonnaCOODailyBriefPanel brief={cooDaily} />
+      <DonnaCOODailyBriefPanel brief={cooDaily} academyHealthReport={academyHealthReport} />
 
       {/* Section 2 — Immediate Attention */}
       <ImmediateAttentionFeed items={attentionQueue.items} />

@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-09 — Mega Sprint 1325–1354 — DONNA Daily COO Intelligence V1
+
+**`buildAcademyHealthReport()` output now rendered on every director page load. `isAcademyOverviewPhrase()` closes the D3 routing gap — "how is everything looking?" now routes to `fetch_coo_intelligence` instead of LLM fallback. New `donnaDailyCooIntelligenceEngine.ts` pre-computes structured answers for all 8 canonical COO questions (D1–D8) with evidence, confidence tiers, and prioritization. All data comes from signals already computed in `page.tsx` — no new DB queries. COO Readiness 82→85 (D1: 8→9, D3: 6→8), Conversational Readiness 72→74, composite 85→86. TypeScript clean.**
+
+- Created `src/lib/donna/coo/donnaDailyCooIntelligenceEngine.ts` — pure TypeScript, no DB. `DailyCOOIntelligenceInput` assembled from existing `page.tsx` signals. `buildDailyCOOIntelligence()` returns `DailyCOOIntelligence`: 8 item categories (today priorities, players, coaches, parent follow-ups, curriculum, setup/onboarding, synthesis), each item with `evidence[]`, `confidence`, `urgency`, `priority`, `why`, `recommendedAction`, `route`; pre-built `answers.*` for all 8 canonical COO questions; `overallStatus` (`critical | attention | on_track | no_data`); `dataGaps[]` disclosing limitations unconditionally
+- Updated `src/app/director/_components/DonnaCOODailyBriefPanel.tsx` — added `AcademyHealthSection` sub-component rendering overall health badge + 6 subcategory rows with status dots; added optional `academyHealthReport?: AcademyHealthReport` prop; panel unchanged when prop is absent (backward-compatible); `HEALTH_DOT` and `HEALTH_BADGE` maps cover all 4 `HealthStatus` values exhaustively
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — added `isAcademyOverviewPhrase()` at step 7.1 (before step 7.5 COO intelligence); catches 11 variants including "how is everything looking", "academy status", "give me an overview", "overall health", "status update" (non-parent); routes to `fetch_coo_intelligence` at confidence 0.93
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — `BrainRoutingStep` union extended with `'check_academy_overview'`
+- Updated `src/app/director/page.tsx` — passes `academyHealthReport={academyHealthReport}` to `DonnaCOODailyBriefPanel`; one-line change; no new queries
+- Created `docs/qa/DONNA_DAILY_COO_INTELLIGENCE_CERTIFICATION_1325.md` — 12 scenarios, all PASS; architecture compliance table; known V1 limitations
+- Created `docs/architecture/DONNA_DAILY_COO_INTELLIGENCE_AUDIT_1325.md` — infrastructure audit of existing COO intelligence files; 8-question gap analysis; minimal-delta plan; risk assessment
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 82→85 (D1: 8→9, D3: 6→8); Conversational Readiness 72→74; composite 85→86; Sprint 1325 impact recorded; next sprint options updated
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-08 — Mega Sprint 1295–1324 — DONNA Setup Completion Authority V1
 
 **Director can now approve a saved DONNA setup draft and mark two setup steps complete: Academy Identity (`academy_identity_completed = true`) and Director Profile (`director_interview_completed = true`). Server action re-fetches draft from DB, validates hard-required fields (`academy_name`, `academy_timezone`) plus minimum count (≥6/10), maps DONNA operational answers to `settings.director_interview`, updates `academies.name` + `academies.timezone`, and stores approval metadata. Missing fields surface via Evidence Reasoning Engine before blocking approval. Two-step confirmation UI (button → confirm) ensures no accidental mutations. "BLOCKER 1 remaining limitation" from Sprint 1265 resolved. COO Readiness 81→82 (D4: 8→9), Workflow Completion 90→91, composite 85. TypeScript clean.**

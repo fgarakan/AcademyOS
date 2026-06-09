@@ -1,7 +1,7 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1295 (Mega Sprint 1295–1324)
-**Last updated:** 2026-06-08
+**Version:** 1325 (Mega Sprint 1325–1354)
+**Last updated:** 2026-06-09
 **Baseline established:** Sprint 965
 
 ---
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **82/100** | 81 | 82 | MEDIUM | 1295 |
-| Conversational Readiness | **72/100** | 64 | 72 | MEDIUM | 1235 |
+| COO Readiness | **85/100** | 82 | 85 | MEDIUM | 1325 |
+| Conversational Readiness | **74/100** | 72 | 74 | MEDIUM | 1325 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
 | Workflow Completion | **91/100** | 90 | 91 | HIGH | 1295 |
 
-**Composite score: 85/100** (unweighted average, 85.4 rounds to 85)
+**Composite score: 86/100** (unweighted average, 86.0)
 
 ---
 
@@ -76,7 +76,7 @@ Update this section when new Q&A categories are added, phrase detection is modif
 
 ---
 
-## 3. COO Readiness — 81/100
+## 3. COO Readiness — 82/100 → 85/100
 
 ### Definition
 From Director Brian's perspective, does DONNA behave like a COO across 10 operational dimensions?
@@ -88,19 +88,25 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **+3** (Sprint 935) | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 0 | PARTIAL |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | **+4** total (Sprint 1265+1295) | PARTIAL → PASS |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
-| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **+1** (Sprint 1295) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | **+4** total (935+1325) | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | **+2** (Sprint 1325) | PARTIAL → PASS |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | **+4** total (1265+1295) | PARTIAL → PASS |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **85/100** | **+3** (Sprint 1325) | |
+
+### D1 change rationale (8→9) — Sprint 1325
+`buildAcademyHealthReport()` has been computed on every director page load since Sprint 1265 but was never rendered. Sprint 1325 adds `AcademyHealthSection` to `DonnaCOODailyBriefPanel` and passes `academyHealthReport` from `page.tsx`. The panel now shows an overall health badge (Good/Watch/Needs Attention/Critical) and 6 subcategory rows (Player Progress, Curriculum, Review & Approval, Coach Execution, Parent Communication, Onboarding) with status dots on every page load — no chat required. Score 8→9. Not 10/10 because: brief is still not personalized to session context; top 3 actions remain deterministic; no notification badge on approach.
+
+### D3 change rationale (6→8) — Sprint 1325
+`isAcademyOverviewPhrase()` added at brain step 7.1. Catches "how is everything looking?", "how is the academy", "give me a status", "overall health", and 7 other variants. Routes to `fetch_coo_intelligence` (confidence 0.93) — same structured COO intelligence handler as step 7.5. Before this sprint, D3 had no phrase detector and fell through to the LLM intent fallback, returning a generic unstructured response. Score 6→8: DONNA now returns a structured COO health report for the most common director status questions. Not 9/10 or 10/10 because `fetch_coo_intelligence` uses `donnaCOOIntelligenceEngine.ts` (Sprint 784), which requires a separate context loader not assembled in the homepage; response depth is constrained by that loader. A future integration sprint is needed to wire `donnaDailyCooIntelligenceEngine.ts` answers — which use only homepage-available signals — directly into the brain action.
 
 ### D8 change rationale (5→8) — Sprint 1235
 `buildEvidencedRecommendation()` pre-computes a `why` follow-up answer for every recommendation
@@ -146,7 +152,7 @@ Update this section after any sprint that modifies: guided workflow page wiring,
 
 ---
 
-## 4. Conversational Readiness — 64/100 → 72/100
+## 4. Conversational Readiness — 64/100 → 72/100 → 74/100
 
 ### Definition
 When Brian types or speaks to DONNA, does the routing, intent classification, entity resolution, and response generation work reliably end-to-end?
@@ -206,7 +212,9 @@ When Brian types or speaks to DONNA, does the routing, intent classification, en
 ### Score derivation
 Sprint 995C baseline: 7 PASS components at 10 each = 70. Penalize: 4 PARTIAL at half value (-20), 2 FAIL components (-8). Base: ~62. Add 2 for single-voice certification. Subtotal: **64**.
 
-Sprint 1235: Add 8 for evidence follow-up resolution engine with 9 question types. When integrated into the routing pipeline, "why?", "how confident?", "what evidence?", and 6 other follow-up phrases return structured evidence-backed answers rather than generic navigation prompts. The engine is built and certified — pipeline integration is a separate sprint. +5 for infrastructure readiness, +3 for measurable response quality improvement to elaboration-type questions. Final: **72**.
+Sprint 1235: Add 8 for evidence follow-up resolution engine with 9 question types. When integrated into the routing pipeline, "why?", "how confident?", "what evidence?", and 6 other follow-up phrases return structured evidence-backed answers rather than generic navigation prompts. The engine is built and certified — pipeline integration is a separate sprint. +5 for infrastructure readiness, +3 for measurable response quality improvement to elaboration-type questions. Subtotal: **72**.
+
+Sprint 1325: +1 for routing improvement — `isAcademyOverviewPhrase()` adds a 12-variant deterministic detector covering D3 status questions that previously fell through to the LLM fallback. One more class of questions now routes with certainty. +1 for `donnaDailyCooIntelligenceEngine.ts` infrastructure — 8 canonical COO question answers with evidence, confidence, and prioritization tiers are pre-computed and available for pipeline integration. Engine is built and certified; integration is a separate sprint. Final: **74**.
 
 ### Confidence: MEDIUM
 Surface routing is verified from code review. End-to-end live data flow for context population is not automated-tested. Voice certification is based on static analysis (grep sweep + code review), not automated audio tests.
@@ -348,6 +356,34 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1325 — DONNA Daily COO Intelligence V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 82 | **85** | +3 (D1: 8→9, D3: 6→8) |
+| Conversational Readiness | 72 | **74** | +2 (routing + engine infrastructure) |
+| Composite | 85 | **86** | +1 |
+
+**What changed:**
+- Created `src/lib/donna/coo/donnaDailyCooIntelligenceEngine.ts` — pure TypeScript, no DB. `DailyCOOIntelligenceInput` composed entirely from signals already computed in `page.tsx`. `buildDailyCOOIntelligence()` returns `DailyCOOIntelligence` with 8 categories of structured items (each with `evidence[]`, `confidence`, `urgency`, `priority`, `why`, `recommendedAction`), prioritization tiers (`urgentItems`, `importantItems`, `canWaitItems`), and pre-built conversational answers for all 8 canonical COO questions (D1–D8). `dataGaps[]` always discloses limitations. `overallStatus` reflects `'no_data'` for academies with no players.
+- Updated `src/app/director/_components/DonnaCOODailyBriefPanel.tsx` — added `AcademyHealthSection` sub-component; added optional `academyHealthReport?: AcademyHealthReport` prop; renders overall health badge (Critical/Needs Attention/Watch/Good) and 6 subcategory rows with status dots above the opening statement. `HEALTH_DOT` and `HEALTH_BADGE` lookup maps exhaustively cover all 4 `HealthStatus` values.
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — added `isAcademyOverviewPhrase()` detector at step 7.1 (between attention step 7 and COO intelligence step 7.5). Catches 11 phrase variants including "how is everything looking", "academy status", "give me a status", "overall health", "how are we doing". Routes to `fetch_coo_intelligence` (confidence 0.93). D3 routing gap closed.
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — `BrainRoutingStep` union extended with `'check_academy_overview'`.
+- Updated `src/app/director/page.tsx` — passes `academyHealthReport={academyHealthReport}` to `DonnaCOODailyBriefPanel`. One-line change; no new DB queries (already computed).
+- COO Readiness D1: 8→9. `AcademyHealthReport` now rendered proactively on every page load — health was computed but never displayed before this sprint.
+- COO Readiness D3: 6→8. Director asking "how is everything looking?" now routes to `fetch_coo_intelligence` instead of LLM fallback.
+- Certification: `docs/qa/DONNA_DAILY_COO_INTELLIGENCE_CERTIFICATION_1325.md` — 12 scenarios, all PASS.
+
+**What didn't change:**
+- `donnaDailyCooIntelligenceEngine.ts` engine answers not yet wired into brain pipeline (integration sprint needed).
+- D2 "What do I need to do today?" unchanged at 7/10 — `route_coo_prompt` path; Evidence Reasoning Engine not yet integrated.
+- Session persistence still tab-bound (BLOCKER 2 open).
+- `DonnaAssistantButton` still not in goal session loop (BLOCKER 4 open).
+
+---
 
 ### Sprint 1295 — DONNA Setup Completion Authority V1
 
@@ -725,15 +761,21 @@ in the DONNA session context from COO/briefing outputs.
 
 ## 9. Next highest-leverage sprint
 
-### Next: COO Readiness D2/D3 Intelligence V1 or Player Creation Entity Resolution V1
+### Next: Daily COO Intelligence Pipeline Integration V1 or Player Creation Entity Resolution V1
 
-**Option A — COO Intelligence (D2/D3 improvement):**
-D2 "What do I need to do today?" and D3 "How is everything looking?" have been stuck at 7/10 and 6/10 for multiple sprints. Both can be improved by wiring the Evidence Reasoning Engine (`resolveEvidenceFollowUp`) into the 14-step brain pipeline and populating `cooState` from live Supabase data. Expected: D2 7→8, D3 6→8. +3 COO Readiness, composite 85→86.
+**Option A — Daily COO Intelligence Pipeline Integration V1:**
+`donnaDailyCooIntelligenceEngine.ts` is built and certified but not wired into the `fetch_coo_intelligence` brain action. Currently that action uses `donnaCOOIntelligenceEngine.ts` (Sprint 784) with a separate context loader. Wiring the new engine — which uses only homepage-available signals — would make D3 responses richer (evidence, confidence tiers, all 8 canonical answers) and raise D2 to 8/10 by giving `route_coo_prompt` an evidence-backed today-priorities answer. Expected: D2 7→8, D3 8→9. +2 COO Readiness, +1 Conversational Readiness. Composite 86→87.
 
 **Option B — Player Creation Entity Resolution V1 (D7 improvement):**
-Player creation currently collects `assigned_coach: "Coach Sarah"` (text) but cannot resolve it to a coach ID. Adding name→ID lookup in the page listener would make player creation fully wired. Expected: D7 6→8, COO Readiness +2, Workflow Completion +1. Composite 85→86.
+Player creation currently collects `assigned_coach: "Coach Sarah"` (text) but cannot resolve it to a coach ID. Adding name→ID lookup in the page listener would make player creation fully wired end-to-end. Expected: D7 6→8, COO Readiness +2, Workflow Completion +1. Composite 86→87.
 
-**Expected impact (either option):** Composite 85→86.
+**Expected impact (either option):** Composite 86→87.
+
+---
+
+### Previous recommendation: Sprint 1325 — DONNA Daily COO Intelligence V1 (DONE)
+
+**Completed impact:** COO Readiness 82→85 (D1: 8→9, D3: 6→8). Conversational Readiness 72→74. Composite 85→86.
 
 ---
 

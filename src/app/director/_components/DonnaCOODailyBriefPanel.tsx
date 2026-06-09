@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { Sparkles, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react'
 import type { COODailyBrief, COOBriefSection, COOBriefItem, COOBriefUrgency } from '@/lib/donna/dailyBrief/donnaDailyCOOAggregator'
+import type { AcademyHealthReport } from '@/lib/donna/intelligence/academyHealthBrief'
+import type { HealthStatus } from '@/lib/donna/intelligence/academyHealthBrief'
 
 // ── Urgency styling ────────────────────────────────────────────────────────────
 
@@ -9,6 +11,54 @@ const URGENCY_DOT: Record<COOBriefUrgency, string> = {
   high:     'bg-status-orange',
   medium:   'bg-yellow-400',
   low:      'bg-text-muted',
+}
+
+// ── Health status styling ──────────────────────────────────────────────────────
+
+const HEALTH_DOT: Record<HealthStatus, string> = {
+  critical:      'bg-status-red',
+  action_needed: 'bg-status-orange',
+  watch:         'bg-yellow-400',
+  good:          'bg-status-green',
+}
+
+const HEALTH_BADGE: Record<HealthStatus, { label: string; classes: string }> = {
+  critical:      { label: 'Critical', classes: 'bg-status-red/10 border-status-red/20 text-status-red' },
+  action_needed: { label: 'Needs Attention', classes: 'bg-status-orange/10 border-status-orange/20 text-status-orange' },
+  watch:         { label: 'Watch', classes: 'bg-yellow-400/10 border-yellow-400/20 text-yellow-400' },
+  good:          { label: 'Good', classes: 'bg-status-green/10 border-status-green/20 text-status-green' },
+}
+
+// ── Academy health section ─────────────────────────────────────────────────────
+
+function AcademyHealthSection({ report }: { report: AcademyHealthReport }) {
+  const badge = HEALTH_BADGE[report.overallStatus]
+  return (
+    <div className="px-4 py-3 border-b border-border space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="label-xs">Academy Health</p>
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badge.classes}`}>
+          {badge.label}
+        </span>
+      </div>
+      <div className="space-y-1">
+        {report.sections.map(section => (
+          <div key={section.id} className="flex items-start gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-[5px] ${HEALTH_DOT[section.status]}`} />
+            <p className="text-[11px] text-text-secondary leading-snug flex-1 min-w-0">
+              <span className="text-text-muted">{section.label}: </span>
+              {section.summary}
+            </p>
+          </div>
+        ))}
+      </div>
+      {report.topRecommendation && (
+        <p className="text-[11px] text-lime leading-snug">
+          → {report.topRecommendation}
+        </p>
+      )}
+    </div>
+  )
 }
 
 const STATUS_BADGE: Record<COODailyBrief['overallStatus'], { label: string; classes: string }> = {
@@ -96,9 +146,10 @@ function Top3Actions({ actions }: { actions: COOBriefItem[] }) {
 
 interface Props {
   brief: COODailyBrief
+  academyHealthReport?: AcademyHealthReport
 }
 
-export function DonnaCOODailyBriefPanel({ brief }: Props) {
+export function DonnaCOODailyBriefPanel({ brief, academyHealthReport }: Props) {
   const badge = STATUS_BADGE[brief.overallStatus]
   const borderClass = brief.overallStatus === 'critical'
     ? 'border-status-red/20'
@@ -126,6 +177,9 @@ export function DonnaCOODailyBriefPanel({ brief }: Props) {
           {badge.label}
         </span>
       </div>
+
+      {/* Academy Health section */}
+      {academyHealthReport && <AcademyHealthSection report={academyHealthReport} />}
 
       {/* Opening statement */}
       <div className="px-4 pt-3 pb-2">

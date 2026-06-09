@@ -17,6 +17,7 @@ export type BrainRoutingStep =
   | 'check_daily_brief'
   | 'check_review_queue'
   | 'check_attention'
+  | 'check_academy_overview'
   | 'check_coo_intelligence'
   | 'check_disambiguation'
   | 'check_relationship_intelligence'

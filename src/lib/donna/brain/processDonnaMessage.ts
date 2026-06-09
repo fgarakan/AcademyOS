@@ -199,12 +199,33 @@ function isAttentionPhrase(lower: string): boolean {
   )
 }
 
+// Mega Sprint 1325–1354 — Academy overview phrase detector
+// Catches D3 "How is everything looking?" and related status questions.
+// Runs between isAttentionPhrase (step 7) and isCOOIntelligencePhrase (step 7.5).
+// Routes to fetch_coo_intelligence — same action as step 7.5 — to return the
+// full structured health report rather than a generic intent-classified response.
+function isAcademyOverviewPhrase(lower: string): boolean {
+  if (lower.includes('how is everything looking')) return true
+  if (lower.includes('how are things looking'))    return true
+  if (lower.includes('how is the academy'))        return true
+  if (lower.includes('how are we doing'))          return true
+  if (lower.includes('give me a status'))          return true
+  if (lower.includes('give me an overview'))       return true
+  if (lower.includes('academy overview'))          return true
+  if (lower.includes('academy status'))            return true
+  if (lower.includes('overall health'))            return true
+  if (lower.includes('status update') && !lower.includes('parent')) return true
+  if (lower.includes('how is everything') && lower.length < 40)     return true
+  return false
+}
+
 // Mega Sprint 784–813 — COO intelligence phrase detector
 // Catches specific COO-dimension questions that are NOT already handled by:
 //   - detectTodayGuidanceQuestion (today guidance)
 //   - matchesDailyBriefIntent (daily brief)
 //   - isReviewQueuePhrase (review queue / decisions waiting)
 //   - isAttentionPhrase (what needs attention)
+//   - isAcademyOverviewPhrase (academy health / status overview)
 function isCOOIntelligencePhrase(lower: string): boolean {
   // Program health
   if (lower.includes('over capacity') || lower.includes('under capacity')) return true
@@ -478,6 +499,15 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     finalizeLog(debugLog, 'check_attention', 'fetch_attention')
     emitDebugLog(debugLog)
     return makeResult('fetch_attention', { confidence: 0.90 }, debugLog)
+  }
+
+  // ── Step 7.1: Academy overview — "How is everything looking?" ───────────────
+  // Catches D3 status/health overview questions not handled by attention or brief.
+  // Routes to fetch_coo_intelligence to return full structured health data.
+  if (isAcademyOverviewPhrase(lower)) {
+    finalizeLog(debugLog, 'check_academy_overview', 'fetch_coo_intelligence')
+    emitDebugLog(debugLog)
+    return makeResult('fetch_coo_intelligence', { confidence: 0.93 }, debugLog)
   }
 
   // ── Step 7.5: COO intelligence — specific dimension questions ────────────────
