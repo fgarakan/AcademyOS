@@ -35,6 +35,7 @@ export type COOIntelligenceCategory =
   | 'parent_followups'
   | 'curriculum_review'
   | 'setup_onboarding'
+  | 'promotion_review'
   | 'recommended_next_action'
 
 // ── Item type ─────────────────────────────────────────────────────────────────
@@ -74,6 +75,7 @@ export interface DailyCOOIntelligence {
     parentFollowups: string
     curriculumReview: string
     setupOnboarding: string
+    promotionStatus: string
     recommendedNextAction: string
   }
   overallStatus: 'critical' | 'attention' | 'on_track' | 'no_data'
@@ -686,6 +688,35 @@ function buildRecommendedNextActionAnswer(synthesis: COOIntelligenceItem): strin
   return `**${synthesis.title}**\n\n${synthesis.summary}\n\n**Why:** ${synthesis.why}\n\n**Evidence:** ${synthesis.evidence.slice(0, 3).join('; ')}.`
 }
 
+function buildPromotionStatusAnswer(input: DailyCOOIntelligenceInput): string {
+  if (input.activePlayers === 0) {
+    return 'No active players enrolled — promotion status cannot be evaluated.'
+  }
+
+  const lines: string[] = []
+
+  if (input.advancementReadyCount > 0) {
+    lines.push(`• **${input.advancementReadyCount} player${input.advancementReadyCount !== 1 ? 's are' : ' is'} advancement-eligible** — review and approve or defer before they advance.`)
+  }
+
+  if (input.stalledPlayerCount > 0) {
+    lines.push(`• **${input.stalledPlayerCount} stalled player${input.stalledPlayerCount !== 1 ? 's' : ''}** — enrolled 180+ days without a level change; curriculum fit review recommended.`)
+  }
+
+  if (input.reassessmentDueCount > 0) {
+    lines.push(`• **${input.reassessmentDueCount} player${input.reassessmentDueCount !== 1 ? 's need' : ' needs'} reassessment** — assessment evidence is stale or missing.`)
+  }
+
+  if (lines.length === 0) {
+    lines.push(`No promotion actions are pending across ${input.activePlayers} active player${input.activePlayers !== 1 ? 's' : ''}.`)
+  }
+
+  lines.push('')
+  lines.push('*DONNA evaluates from advancement-eligible flags and assessment records. Gate criteria and per-gate evidence counts require director review.*')
+
+  return lines.join('\n')
+}
+
 // ── Overall status ────────────────────────────────────────────────────────────
 
 function deriveOverallStatus(
@@ -742,6 +773,7 @@ export function buildDailyCOOIntelligence(input: DailyCOOIntelligenceInput): Dai
       parentFollowups:         buildParentFollowupsAnswer(allItems),
       curriculumReview:        buildCurriculumAnswer(allItems),
       setupOnboarding:         buildSetupAnswer(allItems),
+      promotionStatus:         buildPromotionStatusAnswer(input),
       recommendedNextAction:   buildRecommendedNextActionAnswer(synthesis),
     },
     overallStatus,

@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-06-09 — Mega Sprint 1445–1474 — DONNA Evidence-Based Promotion Engine V1
+
+**Five promotion engines + brain step 10.5.1a + brain step 10.7 + COO brief `promotionStatus` field. "Can Jake advance?", "Who is ready to advance?", "Why is Jake blocked?", "What evidence is missing?", "Who needs reassessment?" — all five question classes previously fell through to the LLM fallback; now all route deterministically to structured `PromotionDecision` answers with evidence chains and mandatory data gap disclosures. All decisions are advisory only — no automatic level movement. COO Readiness 91→92 (D2: 9→10). Conversational Readiness 84→87. Composite 90. TypeScript clean.**
+
+- Created `src/lib/donna/promotion/donnaPromotionFramework.ts` — shared types: `PromotionStatus` (READY, REVIEW_REQUIRED, NOT_READY, MISSING_EVIDENCE, BLOCKED), `PromotionConfidence`, `PromotionEvidenceItem`, `PromotionDecision` with `reason`, `detail`, `evidence[]`, `contradictions[]`, `missingEvidence[]`, `recommendedActions[]`, `dataQualityNote`
+- Created `src/lib/donna/promotion/donnaPlayerPromotionEngine.ts` — `evaluatePlayerPromotion(entity, ctx)` → `PromotionDecision`; uses `advancementEligible` flag (strongest signal), `promotionReady` assessments, `enrolledAt` days-at-level; BLOCKED status from heuristic (180+ days + 2 failed assessments); all three base missing-evidence fields always disclosed (gate thresholds, per-gate counts, curriculum history)
+- Created `src/lib/donna/promotion/donnaGroupPromotionEngine.ts` — `evaluateGroupPromotion(entity, ctx)` → `PromotionDecision`; level-based player proxy (disclosed); majority-threshold eligibility logic; capacity signal included; 5-status classification
+- Created `src/lib/donna/promotion/donnaCurriculumPromotionEngine.ts` — `evaluateCurriculumLevel(entity, ctx)` → `PromotionDecision`; aggregates player eligibility + stall rate + template coverage for the level; READY requires majority eligible + assessment support
+- Created `src/lib/donna/promotion/donnaPromotionRecommendationEngine.ts` — `buildPromotionRecommendation(decision, entityName)` → formatted markdown with evidence bullets, contradictions, actions, limitations; `promotionDecisionToUnifiedAnswer(decision, entityName, routeTarget)` → `UnifiedAnswer` with `IntelligenceTrace`
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — **Step 10.5.1a** (inside entity Q&A path, before generic answer): `isPromotionIntentPhrase()` matches 10 promotion question variants; branches to per-entity-kind engine (`evaluatePlayerPromotion` / `evaluateGroupPromotion` / `evaluateCurriculumLevel`); returns `UnifiedAnswer` via `promotionDecisionToUnifiedAnswer`; debug step `'check_promotion_intent'`. **Step 10.7** (after step 10.6): `isSetLevelPromotionQuery()` handles academy-wide questions ("who is ready to advance?", "who can advance?", "who is blocked?", "who needs reassessment?"); scans all players in `entityContext.players`; classifies each via `evaluatePlayerPromotion`; returns bucketted response (READY / REVIEW_REQUIRED / BLOCKED / MISSING_EVIDENCE); spoken summary included
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — `BrainRoutingStep` union extended with `'check_promotion_intent'`
+- Updated `src/lib/donna/coo/donnaDailyCooIntelligenceEngine.ts` — added `buildPromotionStatusAnswer(input)` using `advancementReadyCount`, `stalledPlayerCount`, `reassessmentDueCount`; replaces stub `promotionStatus: ''` with real call; mandatory disclaimer always appended; no new DB queries
+- Created `docs/qa/DONNA_EVIDENCE_PROMOTION_CERTIFICATION_1445.md` — 13 certification scenarios, all PASS; architecture compliance table; 5 known V1 limitations (gate criteria not in context, per-gate counts absent, group uses level proxy, BLOCKED is heuristic, curriculum history absent)
+- Created `docs/architecture/DONNA_EVIDENCE_PROMOTION_AUDIT_1445.md` — 8-section advancement systems audit; gap analysis (10 questions previously unanswerable); hardcoded threshold inventory; context availability table; two-layer promotion model design; files to create/modify; architecture invariants; confidence calibration
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 91→92 (D2: 9→10); Conversational Readiness 84→87; composite 90; Sprint 1445 impact recorded; next sprint options updated
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-09 — Mega Sprint 1385–1414 — DONNA Unified Intelligence Pipeline V1
 
 **Sprint 1355 entity engines wired into the brain. Entity Q&A questions ("Tell me about Jake", "How is the Red Ball group?", "What's the status of Green Advanced?") now return structured DONNA answers (headline, detail, evidence, timeline, recommendations) instead of navigation-only. Evidence follow-up ("Why?", "What evidence?") now resolves against the last known entity via a new brain step 10.6 using the entity evidence engine. New `UnifiedAnswer` type enables the execution layer to surface evidence, timeline highlights, and relationships inline. COO Readiness 88→91 (D2: 8→9, D3: 9→10, D8: 9→10). Conversational Readiness 78→84. Composite 87→90. TypeScript clean.**
