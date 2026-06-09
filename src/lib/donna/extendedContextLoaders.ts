@@ -1,8 +1,10 @@
 // Sprint 742B — Extended Context Loaders V1
 // Sprint 742C — Added currentLevelDisplayName (join with curriculum_levels) to PlayerCurriculumStateSummary;
 //               added curriculumLevelId to TemplateSummary for UUID-based coverage gap matching.
-// Lightweight read-only loaders for player_curriculum_states, assessments, groups, templates.
-// No migrations required. All tables have academy_id RLS scoping.
+// Mega Sprint 1475–1504 — Added CoachContextSummary, CurriculumLevelContextSummary,
+//               loadCoachesSummary(), loadCurriculumLevelsSummary() for player relationship resolution.
+// Lightweight read-only loaders for player_curriculum_states, assessments, groups, templates, coaches, curriculum_levels.
+// No migrations required. All tables have academy_id RLS scoping (curriculum_levels is global, authenticated-read RLS).
 // All loaders fail safely — any error returns insufficient_data, never throws.
 // rawDb pattern (db as any) used for tables with deep Supabase type inference to prevent TS2589.
 
@@ -38,6 +40,22 @@ export interface GroupSummary {
   maxPlayers: number | null
 }
 
+export interface CoachContextSummary {
+  coachId: string
+  displayName: string
+  firstName: string
+  lastName: string
+  role: 'head_coach' | 'coach' | 'assistant_coach'
+}
+
+export interface CurriculumLevelContextSummary {
+  id: string
+  displayName: string
+  stage: string
+  levelNumber: number
+  sortOrder: number
+}
+
 export interface TemplateSummary {
   templateId: string
   name: string
@@ -68,6 +86,18 @@ export interface AssessmentResult {
 
 export interface GroupResult {
   summaries: GroupSummary[]
+  totalCount: number
+  fieldStatus: COOFieldStatus
+}
+
+export interface CoachContextResult {
+  summaries: CoachContextSummary[]
+  totalCount: number
+  fieldStatus: COOFieldStatus
+}
+
+export interface CurriculumLevelContextResult {
+  summaries: CurriculumLevelContextSummary[]
   totalCount: number
   fieldStatus: COOFieldStatus
 }
@@ -312,5 +342,96 @@ export async function loadTemplatesSummary(
       activeCount: 0,
       fieldStatus: 'insufficient_data',
     }
+  }
+}
+
+// ── 5. Coach context loader ────────────────────────────────────────────────────
+// Reads academy_memberships (head_coach + coach roles) + profiles (display_name).
+// Used by the entity context (BLOCKER 6 fix) and player creation resolution.
+// profiles.display_name is split into firstName/lastName for the resolver.
+
+export async function loadCoachesSummary(
+  db: DB,
+  academyId: string,
+): Promise<CoachContextResult> {
+  try {
+    const { data: memberships } = await db
+      .from('academy_memberships')
+      .select('profile_id, role')
+      .eq('academy_id', academyId)
+      .eq('is_active', true)
+      .in('role', ['head_coach', 'coach'])
+
+    const coachIds = (memberships ?? []).map(m => m.profile_id)
+    if (coachIds.length === 0) {
+      return { summaries: [], totalCount: 0, fieldStatus: 'insufficient_data' }
+    }
+
+    const { data: profiles } = await db
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', coachIds)
+
+    const roleMap = new Map<string, string>()
+    for (const m of memberships ?? []) {
+      roleMap.set(m.profile_id, m.role)
+    }
+
+    const summaries: CoachContextSummary[] = (profiles ?? []).map(p => {
+      const parts     = (p.display_name ?? '').trim().split(/\s+/)
+      const firstName = parts[0] ?? ''
+      const lastName  = parts.length > 1 ? parts[parts.length - 1] : ''
+      const role      = (roleMap.get(p.id) ?? 'coach') as CoachContextSummary['role']
+      return { coachId: p.id, displayName: p.display_name ?? '', firstName, lastName, role }
+    })
+
+    return {
+      summaries,
+      totalCount: summaries.length,
+      fieldStatus: summaries.length > 0 ? 'live' : 'insufficient_data',
+    }
+  } catch {
+    return { summaries: [], totalCount: 0, fieldStatus: 'insufficient_data' }
+  }
+}
+
+// ── 6. Curriculum level context loader ────────────────────────────────────────
+// Reads curriculum_levels — global table (no academy_id), authenticated-read RLS.
+// Used by player creation resolution to map display names to UUIDs.
+// rawDb used because curriculum_levels has complex FK inference (TS2589 risk).
+
+export async function loadCurriculumLevelsSummary(
+  db: DB,
+): Promise<CurriculumLevelContextResult> {
+  try {
+    const rawDb = db as any
+    const { data } = await rawDb
+      .from('curriculum_levels')
+      .select('id, display_name, stage, level_number, sort_order')
+      .order('sort_order', { ascending: true })
+
+    const rows = (data ?? []) as Array<{
+      id: string
+      display_name: string
+      stage: string
+      level_number: number
+      sort_order: number
+    }>
+
+    const summaries: CurriculumLevelContextSummary[] = rows.map(r => ({
+      id:          r.id,
+      displayName: r.display_name,
+      stage:       r.stage,
+      levelNumber: r.level_number,
+      sortOrder:   r.sort_order,
+    }))
+
+    return {
+      summaries,
+      totalCount: summaries.length,
+      fieldStatus: summaries.length > 0 ? 'live' : 'insufficient_data',
+    }
+  } catch {
+    return { summaries: [], totalCount: 0, fieldStatus: 'insufficient_data' }
   }
 }

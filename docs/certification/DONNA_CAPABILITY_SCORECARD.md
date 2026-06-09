@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1445 (Mega Sprint 1445–1474)
+**Version:** 1475 (Mega Sprint 1475–1504)
 **Last updated:** 2026-06-09
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **92/100** | 91 | 92 | MEDIUM | 1445 |
-| Conversational Readiness | **87/100** | 84 | 87 | MEDIUM | 1445 |
+| COO Readiness | **94/100** | 92 | 94 | MEDIUM | 1475 |
+| Conversational Readiness | **88/100** | 87 | 88 | MEDIUM | 1475 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
-| Workflow Completion | **91/100** | 90 | 91 | HIGH | 1295 |
+| Workflow Completion | **92/100** | 91 | 92 | HIGH | 1475 |
 
-**Composite score: 90/100** (unweighted average, 90.0)
+**Composite score: 91/100** (unweighted average, 90.8)
 
 ---
 
@@ -76,7 +76,7 @@ Update this section when new Q&A categories are added, phrase detection is modif
 
 ---
 
-## 3. COO Readiness — 82/100 → 85/100 → 88/100 → 91/100 → 92/100
+## 3. COO Readiness — 82/100 → 85/100 → 88/100 → 91/100 → 92/100 → 94/100
 
 ### Definition
 From Director Brian's perspective, does DONNA behave like a COO across 10 operational dimensions?
@@ -88,19 +88,22 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Post-1355 | Post-1385 | Post-1445 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 8/10 | 9/10 | **10/10** | **+3** total (1355+1385+1445) | PARTIAL → PASS |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | 9/10 | 10/10 | 10/10 | **+4** total | PASS |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | 9/10 | 10/10 | 10/10 | **+5** total | PARTIAL → PASS |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
-| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **85/100** | **88/100** | **91/100** | **92/100** | **+1** (Sprint 1445) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Post-1355 | Post-1385 | Post-1445 | Post-1475 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 8/10 | 9/10 | **10/10** | 10/10 | **+3** total | PARTIAL → PASS |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | 9/10 | 10/10 | 10/10 | 10/10 | **+4** total | PASS |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | **+4** total (1085+1475) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | 9/10 | 10/10 | 10/10 | 10/10 | **+5** total | PARTIAL → PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **85/100** | **88/100** | **91/100** | **92/100** | **94/100** | **+2** (Sprint 1475) | |
+
+### D7 change rationale (6→8) — Sprint 1475
+`createPlayerDonnaAction` now resolves `assigned_coach`, `assigned_group`, and `recommended_level` text labels from the DONNA workflow plan into database UUIDs via `donnaPlayerAssignmentResolver`. The server action loads coaches (`loadCoachesSummary`), groups (`loadGroupsSummary`), and curriculum levels (`loadCurriculumLevelsSummary`) from the DB, runs matching against each, and saves `primary_coach_id`, `current_group_id`, and `current_level_id` on the player record when resolution is unambiguous. When multiple entities match (e.g., two coaches share a first name), `disambiguationRequired` is returned and the DONNA review banner shows a disambiguation panel — the director picks from the matched options before the player is created. Original text labels, resolved IDs, resolution method, confidence, and any warnings are all written to `audit_logs`. Score 6→8: players are now created with real relationship data, not just name/DOB. Not 9/10 because: secondary coach not supported (no `secondary_coach_id` in schema); group assignment at creation bypasses the `onboardingPlacementAction` draft/approval flow; curriculum level match depends on `display_name` alignment in DB; DONNA does not yet confirm resolved assignments in the sidebar stream before the director sees the review banner.
 
 ### D2 change rationale (9→10) — Sprint 1445
 Brain step 10.5.1a intercepts promotion-intent phrases for any resolved entity. When the director asks "Can Jake advance?", "Why is Jake blocked?", "What evidence is missing for Jake?", or "Is the Red Ball group ready to advance?", DONNA calls `evaluatePlayerPromotion()` / `evaluateGroupPromotion()` / `evaluateCurriculumLevel()` and returns a structured `PromotionDecision` as a `UnifiedAnswer`. All five `PromotionStatus` values (READY, REVIEW_REQUIRED, NOT_READY, MISSING_EVIDENCE, BLOCKED) are handled with evidence chains, contradiction lists, recommended actions, and mandatory data gap disclosures. Previously these questions fell through to `route_coo_prompt` (LLM fallback). Score 9→10: DONNA can now definitively answer entity-specific "what do I need to do today?" for the most common director question class — player promotion decisions. Not blocked from 10/10 because: set-level scan ("Who is ready to advance?") is also wired (step 10.7), covering both entity and set-level promotion question shapes.
@@ -173,7 +176,7 @@ Update this section after any sprint that modifies: guided workflow page wiring,
 
 ---
 
-## 4. Conversational Readiness — 64/100 → 72/100 → 74/100 → 78/100 → 84/100 → 87/100
+## 4. Conversational Readiness — 64/100 → 72/100 → 74/100 → 78/100 → 84/100 → 87/100 → 88/100
 
 ### Definition
 When Brian types or speaks to DONNA, does the routing, intent classification, entity resolution, and response generation work reliably end-to-end?
@@ -243,6 +246,8 @@ Sprint 1385: +3 for entity Q&A pipeline wired into brain — Step 10.5.1 interce
 
 Sprint 1445: +2 for `isPromotionIntentPhrase()` — new deterministic detector covers 5 question classes previously unhandled ("Can Jake advance?", "Who is ready for promotion?", "Why is Jake blocked?", "What evidence is missing?", "Who needs reassessment?"). Brain step 10.5.1a fires inside entity Q&A path; step 10.7 handles set-level scans. All 5 question shapes return structured `UnifiedAnswer` from the promotion engines rather than falling to LLM fallback. +1 for set-level promotion scan at step 10.7 — "Who is ready to advance?" now scans all players, classifies each by PromotionStatus, and returns a categorised response (READY / REVIEW_REQUIRED / BLOCKED / MISSING_EVIDENCE buckets). Previously this question had no answer path. Final: **87**.
 
+Sprint 1475: +1 for BLOCKER 6 fix — coaches are now loaded into `AcademyEntityContext` via `loadCoachesSummary()` wired into `fetchEntityContextAction()` and `buildEntityContext()`. `ctx.coaches` is no longer always empty. When Brian asks "How is Coach Sarah doing?", "Who is Coach Sarah's best player?", or "Tell me about the head coach", the entity resolver `resolveCoaches()` now has real data to match against instead of returning null. Previously all coach entity Q&A fell through to LLM fallback with no entity. One more entity kind now fully resolvable in brain conversations. Final: **88**.
+
 ### Confidence: MEDIUM
 Surface routing is verified from code review. End-to-end live data flow for context population is not automated-tested. Voice certification is based on static analysis (grep sweep + code review), not automated audio tests.
 
@@ -283,7 +288,7 @@ Update when new director questions are added, phrase detection is modified, or l
 
 ---
 
-## 6. Workflow Completion — 90/100
+## 6. Workflow Completion — 91/100 → 92/100
 
 ### Definition
 When Brian uses DONNA to complete a multi-step workflow (add player, create template, etc.), does DONNA: (a) ask the right questions, (b) fill in the form fields, and (c) submit a draft for review?
@@ -300,7 +305,7 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | Workflow | Q&A Loop | Page Wiring | Draft Submission | Overall |
 |---|---|---|---|---|
 | `template_builder_completion` | PASS | **PASS** (Sprint 934C) | **PASS** (Sprint 1145) | **PASS** (8/8 layers) |
-| `player_onboarding_completion` | PASS | **PASS** (Sprint 1085) | **PASS** (Sprint 1085) | **PARTIAL** (level/coach/group shown in banner only) |
+| `player_onboarding_completion` | PASS | **PASS** (Sprint 1085) | **PASS** (Sprint 1085) | **PASS** (Sprint 1475 — coach/group/level IDs resolved and saved) |
 | `coach_creation_completion` | PASS | **PASS** (Sprint 1115) | **PASS** (Sprint 1115) | **PASS** (8/8 layers) |
 | `fitness_template_builder_completion` | PASS | **PASS** (Sprint 1145) | **PASS** (Sprint 1145) | **PASS** (8/8 layers) |
 | `academy_setup_completion` | PASS | **PASS** (Sprint 1265) | **PASS** (Sprint 1265) | **PASS** (8/8 layers — no form pre-fill; banner is primary UI) |
@@ -320,7 +325,7 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | "Set by DONNA" indicators | 4/8 PASS | Template + player + coach + fitness pages show lime sparkle badges |
 
 ### Score derivation
-Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. Add 1 for academy_setup approval closing the setup completion flag gap. **Score: 91/100.** (Not 100/100: review banner shows truncated question text not friendly labels; player creation level/coach/group remain banner-only; session storage still tab-bound.)
+Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. Add 1 for academy_setup approval closing the setup completion flag gap. Add 1 for player creation relationship wiring — coach/group/level IDs now saved, BLOCKER 6 resolved. **Score: 92/100.** (Not 100/100: review banner shows truncated question text not friendly labels; player creation secondary coach not saveable (schema gap); group assignment at creation bypasses draft flow; session storage still tab-bound.)
 
 ### Confidence: HIGH
 The workflow matrix is derived from explicit certification scenarios. Wiring gaps are definitively confirmed — no ambiguity about which pages have listeners.
@@ -374,15 +379,41 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 **Fix path:** Once field testing confirms zero second-voice incidents, restore both fallback functions. Instructions in `docs/qa/DONNA_VOICE_FORENSIC_AUDIT_995.md` — "To Re-enable Browser Fallback."
 **Severity:** MEDIUM (only affects deployments without OPENAI_API_KEY)
 
-### BLOCKER 6 (renumbered) — Player creation needs entity ID resolution
-**Impact:** `player_onboarding_completion` collects `assigned_coach: "Coach Sarah"` (text), but the player creation form needs a coach ID. Text→ID resolution not built.
-**Evidence:** COO Readiness Audit 935 — Dimension 7 gap analysis
-**Fix path:** Add a lookup step in the page listener that resolves coach/group names to IDs from the academy context.
-**Severity:** MEDIUM (blocks player creation wiring from being fully useful)
+### BLOCKER 6 (renumbered) — ~~Player creation needs entity ID resolution~~ — **RESOLVED Sprint 1475**
+**Status:** RESOLVED. `donnaPlayerAssignmentResolver` wired into `createPlayerDonnaAction`. Coach/group/level text resolved to UUIDs; disambiguation UI shown for ambiguous matches; director always confirms ambiguity; resolved IDs saved on player record with full audit trail.
+**Remaining V1 limitations:** Secondary coach not in schema (no `secondary_coach_id`); group assignment bypasses placement draft flow; curriculum level depends on DB `display_name` alignment. COO D7: 6→8.
 
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1475 — DONNA Player Relationship Resolution V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 92 | **94** | +2 (D7: 6→8) |
+| Conversational Readiness | 87 | **88** | +1 (coaches in entity context) |
+| Workflow Completion | 91 | **92** | +1 (player creation now saves IDs) |
+| Composite | 90 | **91** | +1 |
+
+**What changed:**
+- Created `src/lib/donna/playerCreation/donnaPlayerAssignmentResolver.ts` — `resolvePlayerAssignments(input, ctx)` resolves free-text coach/group/level labels to database UUIDs; `matchCoach()` (exact display name, "Coach [Name]" prefix, first/last name token), `matchGroup()` (exact + token match), `matchCurriculumLevel()` (display name + token match against DB); returns `{ primaryCoachId, currentGroupId, currentLevelId, displayLabels, ambiguousFields, unresolvedFields, warnings }`.
+- Updated `src/lib/donna/extendedContextLoaders.ts` — added `CoachContextSummary`, `CurriculumLevelContextSummary`, `CoachContextResult`, `CurriculumLevelContextResult` types; added `loadCoachesSummary(db, academyId)` (queries `academy_memberships` + `profiles`); added `loadCurriculumLevelsSummary(db)` (queries `curriculum_levels`, global table).
+- Updated `src/lib/donna/entity/donnaEntityContextLoader.ts` — added `coaches: CoachContextSummary[]` to `EntityContextSlice`; updated `buildEntityContext()` to populate `coaches` instead of always returning `[]`. **BLOCKER 6 fix.**
+- Updated `src/app/director/_actions/donnaEntityContextAction.ts` — added `loadCoachesSummary()` to the parallel load; passes `coachesResult.summaries` to `buildEntityContext()`.
+- Updated `src/app/director/players/new/createPlayerDonnaAction.ts` — extended params with `assignedCoachText`, `assignedGroupText`, `recommendedLevelText` (text labels from plan) and `primaryCoachIdOverride`, `currentGroupIdOverride`, `currentLevelIdOverride` (explicit IDs from disambiguation); loads coaches/groups/levels; runs `resolvePlayerAssignments()`; returns `disambiguationRequired` if ambiguous (player NOT created); inserts with `primary_coach_id`, `current_group_id`, `current_level_id` when clean; audit log includes original text, resolved IDs, and warnings.
+- Updated `src/app/director/players/new/NewPlayerForm.tsx` — extracts `assigned_coach`, `assigned_group`, `recommended_level` from `payload.answers`; passes to action; if `disambiguationRequired` → shows disambiguation panel in banner with radio selectors per ambiguous field; director picks → action re-called with explicit ID overrides.
+
+**What didn't change:**
+- All Sprint 1445 promotion engine files — untouched.
+- Brain pipeline steps — untouched.
+- Standard NewPlayerForm submit path — untouched.
+- `onboardingPlacementAction` — untouched; still the correct path for post-creation group placement via placement draft flow.
+- BLOCKER 2, 3, 4, 7 — still open.
+
+---
 
 ### Sprint 1445 — DONNA Evidence-Based Promotion Engine V1
 

@@ -11,6 +11,7 @@ import {
   loadGroupsSummary,
   loadTemplatesSummary,
   loadAssessmentsSummary,
+  loadCoachesSummary,
 } from '@/lib/donna/extendedContextLoaders'
 import { buildEntityContext } from '@/lib/donna/entity/donnaEntityContextLoader'
 import type { AcademyEntityContext } from '@/lib/donna/entity/donnaEntityResolver'
@@ -38,12 +39,13 @@ export async function fetchEntityContextAction(): Promise<AcademyEntityContext |
     if (!academyId) return null
 
     // Load all entity kinds in parallel — all RLS-scoped to academyId
-    const [playersResult, groupsResult, templatesResult, assessmentsResult] =
+    const [playersResult, groupsResult, templatesResult, assessmentsResult, coachesResult] =
       await Promise.all([
         loadPlayerCurriculumStates(supabase, academyId),
         loadGroupsSummary(supabase, academyId),
         loadTemplatesSummary(supabase, academyId),
         loadAssessmentsSummary(supabase, academyId),
+        loadCoachesSummary(supabase, academyId),
       ])
 
     return buildEntityContext({
@@ -51,6 +53,7 @@ export async function fetchEntityContextAction(): Promise<AcademyEntityContext |
       groups:      groupsResult.summaries,
       templates:   templatesResult.summaries,
       assessments: assessmentsResult.summaries,
+      coaches:     coachesResult.summaries,
     })
   } catch {
     return null
