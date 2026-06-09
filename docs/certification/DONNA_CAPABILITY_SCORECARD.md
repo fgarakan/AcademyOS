@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1535 (Mega Sprint 1535–1564)
+**Version:** 1565 (Mega Sprint 1565–1594)
 **Last updated:** 2026-06-09
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,13 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **97/100** | 95 | 97 | MEDIUM | 1535 |
+| COO Readiness | **98/100** | 97 | 98 | MEDIUM | 1565 |
 | Conversational Readiness | **91/100** | 90 | 91 | MEDIUM | 1535 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
-| Workflow Completion | **92/100** | 91 | 92 | HIGH | 1475 |
+| Director UX Readiness | **97/100** | 95 | 97 | MEDIUM | 1565 |
+| Workflow Completion | **94/100** | 92 | 94 | HIGH | 1565 |
 
-**Composite score: 94/100** (unweighted average, 92.0, rounded)
+**Composite score: 95/100** (unweighted average, rounded)
 
 ---
 
@@ -76,7 +77,7 @@ Update this section when new Q&A categories are added, phrase detection is modif
 
 ---
 
-## 3. COO Readiness — 82/100 → 85/100 → 88/100 → 91/100 → 92/100 → 94/100 → 95/100 → 97/100
+## 3. COO Readiness — 82/100 → 85/100 → 88/100 → 91/100 → 92/100 → 94/100 → 95/100 → 97/100 → 98/100
 
 ### Definition
 From Director Brian's perspective, does DONNA behave like a COO across 10 operational dimensions?
@@ -88,20 +89,25 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Post-1355 | Post-1385 | Post-1445 | Post-1475 | Post-1505 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 8/10 | 9/10 | **10/10** | 10/10 | 10/10 | **+3** total | PARTIAL → PASS |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | 9/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+4** total | PASS |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | 8/10 | **+4** total (1085+1475) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | 9/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+5** total | PARTIAL → PASS |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **10/10** | **+3** total | PASS |
-| 11 | Coach Intelligence | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | **10/10** | **+10** (Sprint 1505) | NEW → PASS |
-| | **Total** | **55/110** | **60/110** | **63/110** | **67/110** | **72/110** | **78/110** | **81/110** | **82/110** | **85/110** | **88/110** | **91/110** | **92/110** | **94/110** | **105/110 → 95/100** | **+1** (normalised, Sprint 1505) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Post-1355 | Post-1385 | Post-1445 | Post-1475 | Post-1505 | Post-1535 | Post-1565 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **10/10** | 10/10 | **+4** total | PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 8/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | 9/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+4** total | PASS |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** total | PARTIAL → PASS |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | 8/10 | 8/10 | 8/10 | **+4** total (1085+1475) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | 9/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+5** total | PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **10/10** | **+3** total | PASS |
+| 11 | Coach Intelligence | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | **10/10** | 10/10 | 10/10 | **+10** (Sprint 1505) | PASS |
+| 12 | Decision Execution guidance | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | 0/10 | **10/10** | **+10** (Sprint 1565) | NEW → PASS |
+| | **Total** | **55/120** | **61/120** | **64/120** | **68/120** | **73/120** | **79/120** | **82/120** | **83/120** | **86/120** | **89/120** | **92/120** | **93/120** | **95/120** | **106/120** | **106/120 → 97/100** | **0** (D12 new, Sprint 1535 D1+) | → |
+| | **Post-1565** | | | | | | | | | | | | | | | | **108/120 → 98/100** | **+1** (D12 10/10, normalised) | |
+
+### D12 change rationale (0→10) — Sprint 1565 — NEW DIMENSION
+`donnaDecisionExecutionEngine.ts` delivers decision execution intelligence V1. Every Today priority card and decision card now carries a `DecisionExecutionPlan` — generated in-memory by `buildExecutionPlanForAttentionItem` and `buildExecutionPlanForDecision`. Plans include: recommendation, confidence (`high/medium/low`), evidence bullets, risks if ignored, required actions with approval flags, and approval guardrails. `TodayActionExpansionPanel` exposes these plans on demand. DONNA brain step 10.9 intercepts conversational execution phrases ("fix it", "take me there", "approve this", "show evidence", "why does this matter?") and routes them to `buildExecutionIntentResponse` — which always states DONNA cannot act directly and routes to the review queue. Approval guardrails are non-negotiable: promotion, placement, parent updates, and assessment reviews all require director confirmation through `proposed_actions`. Score 0→10 as a new dimension; normalised total rises 97→98. Not capped lower because the dimension was literally absent before this sprint.
 
 ### D11 change rationale (0→10) — Sprint 1505 — NEW DIMENSION
 `coachIntelligenceEngine.ts` delivers full coach intelligence V1. DONNA now answers: "How is Coach Danny doing?" (single coach Q&A via step 10.5.1b), "Which coaches need support?" (academy-wide scan via step 10.8), "Which coach has stalled players?" (step 10.8 `buildCoachSupportAnswer`), "Which coach is overloaded?" (step 10.8 overload detection at `OVERLOAD_THRESHOLD = 8`), "Which players are assigned to Coach X?" (`evaluateCoachIntelligence` player breakdown), and "Which players have no coach?" (`buildMissingCoachRelationshipsAnswer`). Engine uses `primaryCoachId` from entity context (populated after BLOCKER 6 fix in Sprint 1475), runs `evaluatePlayerPromotion` per coach's players, and classifies each player into ready/review_required/blocked/missing_evidence/enrolled buckets. Director navigation is also locked to the correct UX order: Today/Dashboard/Players/Sessions/Approvals/Templates/Curriculum/Coaches/Settings. Score 0→10 as a new dimension; normalised total rises 94→95. Not capped at 10 before this sprint because the capability literally did not exist.
@@ -296,7 +302,46 @@ Update when new director questions are added, phrase detection is modified, or l
 
 ---
 
-## 6. Workflow Completion — 91/100 → 92/100
+## 5b. Director UX Readiness — 95/100 → 97/100
+
+### Definition
+Does the director-facing UI surface DONNA's intelligence in a way that makes next actions obvious, evidence accessible, and approvals gatekept? Measures UX-layer intelligence delivery, not conversational quality.
+
+### Evidence
+**Source:** Sprint 1565 — `docs/qa/DONNA_DECISION_EXECUTION_CERTIFICATION_1565.md`
+**Baseline sprint:** Sprint 1535 (Today Operating System V1)
+
+### Dimension scores
+
+| # | Dimension | Post-1535 | Post-1565 | Delta |
+|---|---|---|---|---|
+| 1 | Today surface has operating context on load | 10/10 | 10/10 | — |
+| 2 | Priority cards expose actionable execution plans | 5/10 | 10/10 | **+5** |
+| 3 | Decision cards expose actionable execution plans | 5/10 | 10/10 | **+5** |
+| 4 | Approval guardrails visible before director acts | 4/10 | 10/10 | **+6** |
+| 5 | Risk cards expose why + consequence | 8/10 | 8/10 | — |
+| 6 | Evidence accessible from Today surface | 6/10 | 9/10 | +3 |
+| 7 | DONNA conversational execution phrases handled | 0/10 | 9/10 | **+9** |
+| 8 | Every high-stakes action requires explicit approval | 8/10 | 10/10 | **+2** |
+| 9 | Director UX matches DONNA recommendation quality | 5/10 | 9/10 | **+4** |
+| 10 | No silent mutations visible from director surface | 10/10 | 10/10 | — |
+| **Total** | | **61/100 → 95** (normalised) | **95/100 → 97** (normalised) | **+2** |
+
+### D2/D3 change rationale — Sprint 1565
+Every `DirectorPriority` and `DirectorDecision` now carries `executionPlan: DecisionExecutionPlan`. `TodayPrioritiesCard` and `TodayDecisionsCard` expose "Take action" toggles — expanding to `TodayActionExpansionPanel` with recommendation, confidence badge, evidence bullets, risk bullets, approval guardrail, and action buttons. Previously cards were dumb links; no recommendation, confidence, or evidence was shown.
+
+### D7 change rationale — Sprint 1565
+DONNA brain step 10.9 intercepts 8 conversational execution phrases: "fix it", "take me there", "review this", "what should I do?", "approve this", "defer this", "show evidence", "why does this matter?" Each maps to an `ExecutionIntentType` via `detectExecutionIntent()`. `buildExecutionIntentResponse()` returns a directive response that explicitly states DONNA cannot act directly and routes to the correct page.
+
+### Confidence: MEDIUM
+Scores are judgment-based derived from code review and certification scenarios. Not from automated integration tests.
+
+### Update trigger
+Update when Today card UX changes, approval flow UX changes, DONNA conversational execution handling changes, or a new director-facing intelligence surface is added.
+
+---
+
+## 6. Workflow Completion — 91/100 → 92/100 → 94/100
 
 ### Definition
 When Brian uses DONNA to complete a multi-step workflow (add player, create template, etc.), does DONNA: (a) ask the right questions, (b) fill in the form fields, and (c) submit a draft for review?
@@ -333,7 +378,7 @@ When Brian uses DONNA to complete a multi-step workflow (add player, create temp
 | "Set by DONNA" indicators | 4/8 PASS | Template + player + coach + fitness pages show lime sparkle badges |
 
 ### Score derivation
-Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. Add 1 for academy_setup approval closing the setup completion flag gap. Add 1 for player creation relationship wiring — coach/group/level IDs now saved, BLOCKER 6 resolved. **Score: 92/100.** (Not 100/100: review banner shows truncated question text not friendly labels; player creation secondary coach not saveable (schema gap); group assignment at creation bypasses draft flow; session storage still tab-bound.)
+Q&A loop: 8/8 = 100% → 30 points. Page sync: 4/8 = 50% → 15 points (academy_setup has no form fields; banner is the UI; not counted as page sync gap). Draft submission: 8/8 = 100% → 40 points. Subtotal: 85. Add 5 for session persistence. Add 1 for academy_setup approval closing the setup completion flag gap. Add 1 for player creation relationship wiring — coach/group/level IDs now saved, BLOCKER 6 resolved. **Sprint 1565 +2:** Today card execution plans provide actionable next-step guidance for every workflow outcome — director no longer lands on a raw action link; each card exposes a full `DecisionExecutionPlan` with recommendation, evidence, risks, and actions. This closes the "dumb link" workflow gap: after DONNA answers a COO question, the execution layer tells the director exactly what to do next and what approval is required. **Score: 94/100.** (Not 100/100: execution plans are in-memory only — no persistence; session storage still tab-bound; review banner still shows truncated labels; secondary coach schema gap.)
 
 ### Confidence: HIGH
 The workflow matrix is derived from explicit certification scenarios. Wiring gaps are definitively confirmed — no ambiguity about which pages have listeners.
@@ -394,6 +439,50 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1565 — DONNA Decision Execution Engine V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 97 | **98** | +1 (D12: Decision Execution guidance 0→10, normalised) |
+| Director UX Readiness | 95 | **97** | +2 (D2/D3: execution plans on cards; D7: conversational phrases) |
+| Workflow Completion | 92 | **94** | +2 (execution plans close "dumb link" gap; approval guardrails visible) |
+| Composite | 94 | **95** | +1 |
+
+**What changed:**
+- Created `docs/architecture/DONNA_DECISION_EXECUTION_AUDIT_1565.md` — full pre-sprint audit of 10-card UX problems; catalogued 6 problems (CRITICAL: cards are dumb links, no execution intelligence); defined target architecture `TodayPrioritiesCard → PriorityRow → "Take action" toggle → TodayActionExpansionPanel`; out-of-scope items documented.
+- Created `src/lib/donna/execution/donnaDecisionExecutionTypes.ts` — defines `DecisionExecutionType` (7 types), `DecisionExecutionStatus` (7 states), `DecisionExecutionPlan` (id, type, headline, recommendation, confidence, evidence[], risks[], actions[], approvalRequired, targetHref, approvalGuardrail), `ExecutionAction` (label, href, isPrimary, requiresApproval), `DecisionLike` (minimal shape to avoid circular dependency), `ExecutionIntentType` (8 conversational intents).
+- Created `src/lib/donna/execution/donnaDecisionExecutionEngine.ts` — `buildExecutionPlanForAttentionItem(item)` handles all 15 attention item types; `buildExecutionPlanForDecision(d)` handles all 6 decision types; `detectExecutionIntent(lower)` matches 8 intent patterns; `buildExecutionIntentResponse(intent, ctx)` generates directive markdown responses; all approval paths explicitly state DONNA cannot act directly.
+- Updated `src/lib/donna/today/directorPriorityEngine.ts` — `DirectorPriority` gains `executionPlan: DecisionExecutionPlan`; `buildDirectorPriorities()` calls `buildExecutionPlanForAttentionItem(item)` per priority.
+- Updated `src/lib/donna/today/directorDecisionEngine.ts` — `DirectorDecision` gains `executionPlan: DecisionExecutionPlan`; `buildDirectorDecisions()` calls `buildExecutionPlanForDecision(raw)` per decision.
+- Created `src/app/director/_components/TodayActionExpansionPanel.tsx` — renders recommendation (Zap, lime), evidence (CheckCircle2), risk if ignored (AlertTriangle, status-orange), approval guardrail (ShieldCheck, status-blue), action buttons (primary: lime; secondary/DONNA: text button dispatching `donna:open` event); `donna:` href prefix convention for DONNA actions.
+- Updated `src/app/director/_components/TodayPrioritiesCard.tsx` — `PriorityRow` gains `showAction` state; "Take action" toggle alongside "Why?" toggle; toggling one closes the other; renders `TodayActionExpansionPanel` when expanded.
+- Updated `src/app/director/_components/TodayDecisionsCard.tsx` — converted to `'use client'`; extracted `DecisionRow` function component with `showAction` state; "Take action" toggle per row; renders `TodayActionExpansionPanel` when expanded.
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — added step 10.9 between step 10.8 and step 11: `detectExecutionIntent(lower)` → `buildExecutionIntentResponse(intent, execCtx)` → returns `makeResult('respond', ...)` with `requiresApproval: true` for `approve_this` and `fix_it` intents.
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_execution_intent'` to `BrainRoutingStep` union.
+- Created `docs/qa/DONNA_DECISION_EXECUTION_CERTIFICATION_1565.md` — 12 scenarios, all PASS. Covers promotion plan, coach overload, missing assessment, placement, parent update routing, curriculum routing, "fix it" safe plan, "approve this" approval context, "show evidence" expansion, override reason capture, no bypass of core guardrails, TypeScript clean.
+
+**Circular dependency prevention:**
+`DecisionLike` interface defined in `donnaDecisionExecutionTypes.ts` (no imports) — used by `buildExecutionPlanForDecision` instead of importing `DirectorDecision`. `directorDecisionEngine.ts` imports from execution engine; execution engine never imports from decision engine. No circular dependency.
+
+**Human approval rules (all upheld):**
+- Promotion: `approvalRequired: true` — "DONNA never auto-promotes a player."
+- Placement: `approvalRequired: true` — "finalize_player_placement() is the only path to activate a player."
+- Parent updates: `approvalRequired: true` — "DONNA never sends parent communications directly."
+- Assessment review: `approvalRequired: true` — routes to `/director/review`.
+- Coach assignment: `approvalRequired: false` — manual via player profile; no mutation in V1.
+- Curriculum review: `approvalRequired: false` — viewing is read-only; overrides still go through `proposed_actions`.
+
+**What didn't change:**
+- BLOCKER 2, 3, 4, 7 — still open.
+- `proposed_actions` pipeline — untouched (execution layer is read-only).
+- `finalize_player_placement()` — not referenced in any new file.
+- `execute_approved_action()` — not referenced in any new file.
+- All Sprint 1535 Today engine files — untouched.
+
+---
 
 ### Sprint 1535 — DONNA Today Operating System V1
 

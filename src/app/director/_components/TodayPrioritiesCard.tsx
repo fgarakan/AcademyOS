@@ -4,16 +4,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react'
 import type { DirectorPriority } from '@/lib/donna/today/directorPriorityEngine'
+import { TodayActionExpansionPanel } from './TodayActionExpansionPanel'
 
 interface Props {
   priorities: DirectorPriority[]
 }
 
 function PriorityRow({ priority, index }: { priority: DirectorPriority; index: number }) {
-  const [showWhy, setShowWhy] = useState(false)
+  const [showWhy, setShowWhy]    = useState(false)
+  const [showAction, setShowAction] = useState(false)
 
   return (
-    <div className="py-3 space-y-1.5 border-b border-border/50 last:border-none">
+    <div className="py-3 space-y-1 border-b border-border/50 last:border-none">
       <div className="flex items-start gap-3">
         <span className="font-mono text-[11px] font-bold text-text-muted shrink-0 w-4 text-center pt-0.5">
           {index + 1}
@@ -34,19 +36,34 @@ function PriorityRow({ priority, index }: { priority: DirectorPriority; index: n
         </Link>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowWhy(v => !v)}
-        className="ml-7 flex items-center gap-1 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
-      >
-        {showWhy ? 'Hide' : 'Why?'}
-        {showWhy ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-      </button>
+      {/* Toggle row */}
+      <div className="ml-7 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => { setShowWhy(v => !v); if (showAction) setShowAction(false) }}
+          className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+        >
+          {showWhy ? 'Hide' : 'Why?'}
+          {showWhy ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setShowAction(v => !v); if (showWhy) setShowWhy(false) }}
+          className="flex items-center gap-1 text-[10px] font-semibold text-lime/70 hover:text-lime transition-colors"
+        >
+          {showAction ? 'Hide' : 'Take action'}
+          {showAction ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
+      </div>
 
       {showWhy && (
         <p className="ml-7 text-[11px] text-text-muted leading-relaxed">
           {priority.whyText}
         </p>
+      )}
+
+      {showAction && (
+        <TodayActionExpansionPanel plan={priority.executionPlan} />
       )}
     </div>
   )

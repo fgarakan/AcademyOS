@@ -92,11 +92,23 @@ import { retrieveKnowledgeContext, formatKnowledgeForResponse } from './donnaKno
 import { buildUnifiedContext } from '@/lib/donna/intelligence/donnaUnifiedIntelligenceContext'
 import { buildUnifiedAnswer } from '@/lib/donna/intelligence/donnaUnifiedAnswerBuilder'
 import type { UnifiedAnswer } from '@/lib/donna/intelligence/donnaUnifiedAnswerBuilder'
-import type { PlayerEntity, GroupEntity, CurriculumLevelEntity } from '@/lib/donna/entities/donnaAcademyEntityModel'
+import type { PlayerEntity, GroupEntity, CurriculumLevelEntity, CoachEntity } from '@/lib/donna/entities/donnaAcademyEntityModel'
 import { evaluatePlayerPromotion } from '@/lib/donna/promotion/donnaPlayerPromotionEngine'
 import { evaluateGroupPromotion } from '@/lib/donna/promotion/donnaGroupPromotionEngine'
 import { evaluateCurriculumLevel } from '@/lib/donna/promotion/donnaCurriculumPromotionEngine'
 import { promotionDecisionToUnifiedAnswer } from '@/lib/donna/promotion/donnaPromotionRecommendationEngine'
+import {
+  evaluateCoachIntelligence,
+  evaluateAllCoaches,
+  buildSingleCoachAnswer,
+  buildCoachSupportAnswer,
+  buildMissingCoachRelationshipsAnswer,
+} from '@/lib/donna/coach/coachIntelligenceEngine'
+import {
+  detectExecutionIntent,
+  buildExecutionIntentResponse,
+} from '@/lib/donna/execution/donnaDecisionExecutionEngine'
+import type { ExecutionIntentContext } from '@/lib/donna/execution/donnaDecisionExecutionEngine'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -296,6 +308,20 @@ function isPromotionIntentPhrase(lower: string): boolean {
   if (/who needs (?:re)?assessment/.test(lower)) return true
   if (/advancement.*(ready|eligible|status)/.test(lower)) return true
   if (/ready.*(advance|promot)/.test(lower)) return true
+  return false
+}
+
+function isCoachSupportQuery(lower: string): boolean {
+  if (lower.includes('which coach') && lower.includes('support'))    return true
+  if (lower.includes('coach') && lower.includes('overloaded'))       return true
+  if (lower.includes('coach') && lower.includes('stalled'))          return true
+  if (lower.includes('coach') && lower.includes('most promotion'))   return true
+  if (lower.includes('coach') && lower.includes('missing'))          return true
+  if (lower.includes('coach relationships'))                          return true
+  if (lower.includes('missing coach'))                               return true
+  if (lower.includes('unassigned player'))                           return true
+  if (lower.includes('no coach'))                                    return true
+  if (/which coach(es)? (need|has|have|is|are)/.test(lower))        return true
   return false
 }
 
@@ -775,7 +801,22 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
                   }, debugLog)
                 }
               }
-              // ── Step 10.5.1b: Generic entity Q&A ─────────────────────────────
+              // ── Step 10.5.1b: Coach entity Q&A ───────────────────────────────
+              if (uCtx.entity.kind === 'coach' && entityContext !== null) {
+                logStep(debugLog, 'check_coach_intelligence')
+                const coachResult = evaluateCoachIntelligence(uCtx.entity as CoachEntity, entityContext)
+                const coachAnswer = buildSingleCoachAnswer(coachResult)
+                finalizeLog(debugLog, 'check_coach_intelligence', 'respond')
+                emitDebugLog(debugLog)
+                return makeResult('respond', {
+                  response:         coachAnswer,
+                  spokenResponse:   coachResult.headline,
+                  resolvedEntityV2: entity,
+                  confidence:       entity.confidence,
+                }, debugLog)
+              }
+
+              // ── Step 10.5.1c: Generic entity Q&A ─────────────────────────────
               const uAnswer = buildUnifiedAnswer(uCtx)
               logStep(debugLog, 'check_entity_qa')
               finalizeLog(debugLog, 'check_entity_qa', 'respond')
@@ -890,6 +931,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
         advancementEligible:     p.advancementEligible,
         enrolledAt:              p.enrolledAt,
         lastEvaluatedAt:         p.lastEvaluatedAt,
+        primaryCoachId:          p.primaryCoachId,
       }
       const decision = evaluatePlayerPromotion(pEntity, entityContext)
       if (decision.status === 'READY')            readyNames.push(p.playerName)
@@ -931,6 +973,62 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       response:       lines.join('\n'),
       spokenResponse: spoken,
       confidence:     0.85,
+    }, debugLog)
+  }
+
+  // ── Step 10.8: Academy-wide coach scan ──────────────────────────────────────
+  // Handles "which coaches need support?", "which coach is overloaded?",
+  // "which coach has stalled players?", "coach relationships missing?"
+  // Runs when no specific entity was resolved but message is a coach support query.
+  logStep(debugLog, 'check_coach_support')
+  if (entityContext !== null && isCoachSupportQuery(lower) && (entityContext.coaches ?? []).length > 0) {
+    const summary = evaluateAllCoaches(entityContext)
+    let coachAnswer: string
+    if (lower.includes('missing') || lower.includes('unassigned') || lower.includes('no coach')) {
+      coachAnswer = buildMissingCoachRelationshipsAnswer(summary)
+    } else {
+      coachAnswer = buildCoachSupportAnswer(summary)
+    }
+    const spokenParts: string[] = []
+    if (summary.needsSupportNames.length > 0) {
+      spokenParts.push(`${summary.needsSupportNames.join(', ')} need${summary.needsSupportNames.length === 1 ? 's' : ''} support`)
+    }
+    if (summary.missingCoachPlayers > 0) {
+      spokenParts.push(`${summary.missingCoachPlayers} player${summary.missingCoachPlayers > 1 ? 's are' : ' is'} unassigned`)
+    }
+    const spoken = spokenParts.length > 0 ? spokenParts.join('. ') + '.' : 'All coaches appear to be in good standing.'
+    finalizeLog(debugLog, 'check_coach_support', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:       coachAnswer,
+      spokenResponse: spoken,
+      confidence:     0.87,
+    }, debugLog)
+  }
+
+  // ── Step 10.9: Execution intent detection ────────────────────────────────────
+  // Detects conversational execution phrases: "fix it", "take me there",
+  // "approve this", "defer this", "show evidence", "why does this matter".
+  // Responds with a safe, approval-gated plan — DONNA never mutates through this path.
+  logStep(debugLog, 'check_execution_intent')
+  const executionIntent = detectExecutionIntent(lower)
+  if (executionIntent !== null) {
+    const hasPending = (input.pendingReviews ?? 0) > 0
+    const execCtx: ExecutionIntentContext = {
+      topPriorityHref:    hasPending ? '/director/review' : null,
+      topPriorityLabel:   hasPending ? 'Review queue' : null,
+      hasPendingReviews:  hasPending,
+      topEvidenceBullets: [],
+      topRiskBullets:     [],
+    }
+    const execResponse = buildExecutionIntentResponse(executionIntent, execCtx)
+    finalizeLog(debugLog, 'check_execution_intent', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:        execResponse,
+      spokenResponse:  execResponse.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*/g, ''),
+      confidence:      0.90,
+      requiresApproval: executionIntent === 'approve_this' || executionIntent === 'fix_it',
     }, debugLog)
   }
 
