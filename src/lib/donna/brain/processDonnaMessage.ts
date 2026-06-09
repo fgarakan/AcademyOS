@@ -89,6 +89,14 @@ import {
 } from './donnaBrainDebugLog'
 import type { BrainDecisionLog } from './donnaBrainDebugLog'
 import { retrieveKnowledgeContext, formatKnowledgeForResponse } from './donnaKnowledgeContextAdapter'
+import { buildUnifiedContext } from '@/lib/donna/intelligence/donnaUnifiedIntelligenceContext'
+import { buildUnifiedAnswer } from '@/lib/donna/intelligence/donnaUnifiedAnswerBuilder'
+import type { UnifiedAnswer } from '@/lib/donna/intelligence/donnaUnifiedAnswerBuilder'
+import type { PlayerEntity, GroupEntity, CurriculumLevelEntity } from '@/lib/donna/entities/donnaAcademyEntityModel'
+import { evaluatePlayerPromotion } from '@/lib/donna/promotion/donnaPlayerPromotionEngine'
+import { evaluateGroupPromotion } from '@/lib/donna/promotion/donnaGroupPromotionEngine'
+import { evaluateCurriculumLevel } from '@/lib/donna/promotion/donnaCurriculumPromotionEngine'
+import { promotionDecisionToUnifiedAnswer } from '@/lib/donna/promotion/donnaPromotionRecommendationEngine'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -177,6 +185,8 @@ export interface DonnaMessageResult {
   limitations: string | null
   /** V2 resolved entity (entity intelligence path) */
   resolvedEntityV2: ResolvedEntityV2 | null
+  /** Unified intelligence answer (entity Q&A and evidence follow-up paths) */
+  unifiedAnswer: UnifiedAnswer | null
   /** Disambiguation question to show director when entity matches multiple candidates */
   disambiguationQuestion: DisambiguationQuestion | null
   /** Dev-only decision log */
@@ -265,6 +275,38 @@ function isCOOIntelligencePhrase(lower: string): boolean {
   return false
 }
 
+function isEvidenceFollowUpPhrase(lower: string): boolean {
+  if (lower === 'why' || lower === 'why?') return true
+  if (lower.includes('what evidence') || lower.includes('evidence for') || lower.includes('evidence on')) return true
+  if (lower.includes('how confident') || lower.includes('how sure')) return true
+  if (lower.includes("what's missing") || lower.includes('what is missing') || lower.includes('data gaps')) return true
+  if (lower.includes('tell me more') || lower.includes('more detail') || lower.includes('more information')) return true
+  if (lower.includes('why flagged') || lower.includes('why is that')) return true
+  if (lower.includes('what data') && lower.includes('have')) return true
+  return false
+}
+
+function isPromotionIntentPhrase(lower: string): boolean {
+  if (/\b(advance|level up|move up|promote)\b/.test(lower) && /\b(can|ready|able|eligible)\b/.test(lower)) return true
+  if (/\bpromotion\b/.test(lower)) return true
+  if (/\b(blocking|blocked|stall|stalled)\b/.test(lower)) return true
+  if (/who is ready/.test(lower) || /who'?s ready/.test(lower)) return true
+  if (/who can advance/.test(lower) || /who can move up/.test(lower)) return true
+  if (/who is blocked/.test(lower) || /who'?s blocked/.test(lower)) return true
+  if (/who needs (?:re)?assessment/.test(lower)) return true
+  if (/advancement.*(ready|eligible|status)/.test(lower)) return true
+  if (/ready.*(advance|promot)/.test(lower)) return true
+  return false
+}
+
+function isSetLevelPromotionQuery(lower: string): boolean {
+  if (/who is ready/.test(lower) || /who'?s ready/.test(lower)) return true
+  if (/who can advance/.test(lower) || /who can move up/.test(lower)) return true
+  if (/who is blocked/.test(lower) || /who'?s blocked/.test(lower)) return true
+  if (/who needs (?:re)?assessment/.test(lower)) return true
+  return false
+}
+
 function isReviewQueuePhrase(lower: string): boolean {
   return (
     lower.includes('show review queue') ||
@@ -308,6 +350,7 @@ function makeResult(
     requiresApproval: partial.requiresApproval ?? false,
     limitations: partial.limitations ?? null,
     resolvedEntityV2: partial.resolvedEntityV2 ?? null,
+    unifiedAnswer: partial.unifiedAnswer ?? null,
     disambiguationQuestion: partial.disambiguationQuestion ?? null,
     debugLog,
   }
@@ -694,6 +737,59 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
         if (resolveResult.entity !== null) {
           const entity = resolveResult.entity
 
+          // ── Step 10.5.1: Entity Q&A — unified intelligence pipeline ──────────
+          // When intent is 'query', 'status', or 'improve', DONNA answers the
+          // question using the Sprint 1355 engines instead of navigating.
+          if (
+            entity.confidence >= CONFIDENCE_ACT_THRESHOLD &&
+            entityContext !== null &&
+            (entityIntent.kind === 'query' || entityIntent.kind === 'status' || entityIntent.kind === 'improve')
+          ) {
+            const uCtx = buildUnifiedContext(entity, entityContext)
+            if (uCtx !== null) {
+              // ── Step 10.5.1a: Promotion intent — branch to promotion engine ──
+              // When the message is a promotion query ("Can Jake advance?", "Why is Jake blocked?"),
+              // use the appropriate promotion engine instead of the generic entity Q&A path.
+              if (isPromotionIntentPhrase(lower)) {
+                logStep(debugLog, 'check_promotion_intent')
+                let pAnswer: UnifiedAnswer | null = null
+                if (uCtx.entity.kind === 'player') {
+                  const pDecision = evaluatePlayerPromotion(uCtx.entity as PlayerEntity, entityContext)
+                  pAnswer = promotionDecisionToUnifiedAnswer(pDecision, uCtx.entity.displayName, uCtx.routeTarget)
+                } else if (uCtx.entity.kind === 'group') {
+                  const gDecision = evaluateGroupPromotion(uCtx.entity as GroupEntity, entityContext)
+                  pAnswer = promotionDecisionToUnifiedAnswer(gDecision, uCtx.entity.displayName, uCtx.routeTarget)
+                } else if (uCtx.entity.kind === 'curriculum_level') {
+                  const cDecision = evaluateCurriculumLevel(uCtx.entity as CurriculumLevelEntity, entityContext)
+                  pAnswer = promotionDecisionToUnifiedAnswer(cDecision, uCtx.entity.displayName, uCtx.routeTarget)
+                }
+                if (pAnswer !== null) {
+                  finalizeLog(debugLog, 'check_promotion_intent', 'respond')
+                  emitDebugLog(debugLog)
+                  return makeResult('respond', {
+                    response:         pAnswer.detail,
+                    spokenResponse:   pAnswer.headline,
+                    resolvedEntityV2: entity,
+                    confidence:       entity.confidence,
+                    unifiedAnswer:    pAnswer,
+                  }, debugLog)
+                }
+              }
+              // ── Step 10.5.1b: Generic entity Q&A ─────────────────────────────
+              const uAnswer = buildUnifiedAnswer(uCtx)
+              logStep(debugLog, 'check_entity_qa')
+              finalizeLog(debugLog, 'check_entity_qa', 'respond')
+              emitDebugLog(debugLog)
+              return makeResult('respond', {
+                response:         uAnswer.detail,
+                spokenResponse:   uAnswer.headline,
+                resolvedEntityV2: entity,
+                confidence:       entity.confidence,
+                unifiedAnswer:    uAnswer,
+              }, debugLog)
+            }
+          }
+
           if (entity.confidence >= CONFIDENCE_ACT_THRESHOLD) {
             const navResponse = buildEntityNavigationResponse(entity, entityIntent)
             if (navResponse.shouldNavigate) {
@@ -734,6 +830,108 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
         // noEntityFound — fall through to existing routing
       }
     }
+  }
+
+  // ── Step 10.6: Evidence follow-up ────────────────────────────────────────────
+  // Detects short follow-up phrases ("why?", "what evidence?", "tell me more") and
+  // re-resolves the last-known entity from goal memory to answer with evidence detail.
+  // Silently falls through when entityContext is absent or no prior entity is known.
+  logStep(debugLog, 'check_evidence_followup')
+  if (entityContext !== null && isEvidenceFollowUpPhrase(lower) && goalMemory?.lastRelevantEntity) {
+    const followUpResolve = resolveEntityWithContext(goalMemory.lastRelevantEntity, entityContext, route, {})
+    if (followUpResolve.entity !== null && followUpResolve.entity.confidence >= 0.50) {
+      const followUpUCtx = buildUnifiedContext(followUpResolve.entity, entityContext)
+      if (followUpUCtx !== null) {
+        const chain = followUpUCtx.evidenceChain
+        const lines: string[] = [
+          `Here's what I know about **${followUpResolve.entity.displayName}**:`,
+          '',
+          ...chain.lines.map(l => `• ${l}`),
+        ]
+        if (chain.dataGaps.length > 0) {
+          lines.push('', '**Missing data:**')
+          chain.dataGaps.forEach(g => lines.push(`• ${g}`))
+        }
+        const uAnswer = buildUnifiedAnswer(followUpUCtx)
+        finalizeLog(debugLog, 'check_evidence_followup', 'respond')
+        emitDebugLog(debugLog)
+        return makeResult('respond', {
+          response:         lines.join('\n'),
+          spokenResponse:   `Evidence for ${followUpResolve.entity.displayName}: ${chain.lines[0] ?? 'No evidence available.'}`,
+          resolvedEntityV2: followUpResolve.entity,
+          confidence:       followUpResolve.entity.confidence,
+          unifiedAnswer:    uAnswer,
+        }, debugLog)
+      }
+    }
+  }
+
+  // ── Step 10.7: Set-level promotion query ─────────────────────────────────────
+  // Handles "Who is ready to advance?" and similar queries that scan ALL players
+  // rather than a single entity. Runs when no specific entity was resolved but
+  // the message is a promotion intent phrase directed at the whole academy.
+  // Silently falls through when entityContext is absent or has no players.
+  logStep(debugLog, 'check_promotion_intent')
+  if (entityContext !== null && isSetLevelPromotionQuery(lower) && entityContext.players.length > 0) {
+    const readyNames:    string[] = []
+    const reviewNames:   string[] = []
+    const blockedNames:  string[] = []
+    const missingNames:  string[] = []
+
+    for (const p of entityContext.players) {
+      const pEntity: PlayerEntity = {
+        kind:                    'player',
+        id:                      p.playerId,
+        displayName:             p.playerName,
+        confidence:              1.0,
+        lastUpdatedAt:           null,
+        currentLevelId:          p.currentLevelId,
+        currentLevelDisplayName: p.currentLevelDisplayName,
+        advancementEligible:     p.advancementEligible,
+        enrolledAt:              p.enrolledAt,
+        lastEvaluatedAt:         p.lastEvaluatedAt,
+      }
+      const decision = evaluatePlayerPromotion(pEntity, entityContext)
+      if (decision.status === 'READY')            readyNames.push(p.playerName)
+      else if (decision.status === 'REVIEW_REQUIRED') reviewNames.push(p.playerName)
+      else if (decision.status === 'BLOCKED')     blockedNames.push(p.playerName)
+      else if (decision.status === 'MISSING_EVIDENCE') missingNames.push(p.playerName)
+    }
+
+    const total = entityContext.players.length
+    const lines: string[] = ['**Promotion status — all players**', '']
+
+    if (readyNames.length > 0) {
+      lines.push(`**Ready to advance (${readyNames.length}):** ${readyNames.join(', ')}`)
+    }
+    if (reviewNames.length > 0) {
+      lines.push(`**Eligible — review needed (${reviewNames.length}):** ${reviewNames.join(', ')}`)
+    }
+    if (blockedNames.length > 0) {
+      lines.push(`**Possible stall — review needed (${blockedNames.length}):** ${blockedNames.join(', ')}`)
+    }
+    if (missingNames.length > 0) {
+      lines.push(`**Missing evidence (${missingNames.length}):** ${missingNames.join(', ')}`)
+    }
+    if (readyNames.length === 0 && reviewNames.length === 0 && blockedNames.length === 0) {
+      lines.push(`No players are currently advancement-eligible. ${total} players are enrolled — ${missingNames.length} need assessments.`)
+    }
+
+    lines.push('')
+    lines.push('*DONNA evaluates from available context signals. Gate criteria details require director review.*')
+
+    const totalCandidates = readyNames.length + reviewNames.length
+    const spoken = totalCandidates > 0
+      ? `${readyNames.length} player${readyNames.length !== 1 ? 's are' : ' is'} ready to advance, ${reviewNames.length} need review.`
+      : `No players are currently advancement-eligible across ${total} active players.`
+
+    finalizeLog(debugLog, 'check_promotion_intent', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:       lines.join('\n'),
+      spokenResponse: spoken,
+      confidence:     0.85,
+    }, debugLog)
   }
 
   // ── Step 11: Goal resolution ─────────────────────────────────────────────────
