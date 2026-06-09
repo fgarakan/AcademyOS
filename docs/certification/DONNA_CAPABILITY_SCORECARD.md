@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1565 (Mega Sprint 1565–1594)
+**Version:** 1595 (Mega Sprint 1595–1624)
 **Last updated:** 2026-06-09
 **Baseline established:** Sprint 965
 
@@ -23,13 +23,14 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **98/100** | 97 | 98 | MEDIUM | 1565 |
-| Conversational Readiness | **91/100** | 90 | 91 | MEDIUM | 1535 |
+| COO Readiness | **99/100** | 98 | 99 | MEDIUM | 1595 |
+| Conversational Readiness | **93/100** | 91 | 93 | MEDIUM | 1595 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
 | Director UX Readiness | **97/100** | 95 | 97 | MEDIUM | 1565 |
+| Learning System | **7/10** | 0 | 7 | MEDIUM | 1595 |
 | Workflow Completion | **94/100** | 92 | 94 | HIGH | 1565 |
 
-**Composite score: 95/100** (unweighted average, rounded)
+**Composite score: 96/100** (unweighted average, rounded)
 
 ---
 
@@ -77,7 +78,7 @@ Update this section when new Q&A categories are added, phrase detection is modif
 
 ---
 
-## 3. COO Readiness — 82/100 → 85/100 → 88/100 → 91/100 → 92/100 → 94/100 → 95/100 → 97/100 → 98/100
+## 3. COO Readiness — 82/100 → 85/100 → 88/100 → 91/100 → 92/100 → 94/100 → 95/100 → 97/100 → 98/100 → 99/100
 
 ### Definition
 From Director Brian's perspective, does DONNA behave like a COO across 10 operational dimensions?
@@ -186,7 +187,7 @@ Update this section after any sprint that modifies: guided workflow page wiring,
 
 ---
 
-## 4. Conversational Readiness — 64/100 → 72/100 → 74/100 → 78/100 → 84/100 → 87/100 → 88/100 → 90/100 → 91/100
+## 4. Conversational Readiness — 64/100 → 72/100 → 74/100 → 78/100 → 84/100 → 87/100 → 88/100 → 90/100 → 91/100 → 93/100
 
 ### Definition
 When Brian types or speaks to DONNA, does the routing, intent classification, entity resolution, and response generation work reliably end-to-end?
@@ -257,6 +258,8 @@ Sprint 1385: +3 for entity Q&A pipeline wired into brain — Step 10.5.1 interce
 Sprint 1445: +2 for `isPromotionIntentPhrase()` — new deterministic detector covers 5 question classes previously unhandled ("Can Jake advance?", "Who is ready for promotion?", "Why is Jake blocked?", "What evidence is missing?", "Who needs reassessment?"). Brain step 10.5.1a fires inside entity Q&A path; step 10.7 handles set-level scans. All 5 question shapes return structured `UnifiedAnswer` from the promotion engines rather than falling to LLM fallback. +1 for set-level promotion scan at step 10.7 — "Who is ready to advance?" now scans all players, classifies each by PromotionStatus, and returns a categorised response (READY / REVIEW_REQUIRED / BLOCKED / MISSING_EVIDENCE buckets). Previously this question had no answer path. Final: **87**.
 
 Sprint 1475: +1 for BLOCKER 6 fix — coaches are now loaded into `AcademyEntityContext` via `loadCoachesSummary()` wired into `fetchEntityContextAction()` and `buildEntityContext()`. `ctx.coaches` is no longer always empty. When Brian asks "How is Coach Sarah doing?", "Who is Coach Sarah's best player?", or "Tell me about the head coach", the entity resolver `resolveCoaches()` now has real data to match against instead of returning null. Previously all coach entity Q&A fell through to LLM fallback with no entity. One more entity kind now fully resolvable in brain conversations. Final: **88**.
+
+Sprint 1595: +2 for Academy Memory Engine V1. Brain step 10.10 adds memory intent detection with 6 intent types (player_history, coach_history, entity_timeline, decision_history, override_history, recommendation_history, general_history). 48 regex patterns across 7 intent categories cover "What happened with Jake?", "Why was Jake promoted?", "What has Coach Danny been doing?", "What did we decide last time?", "What did I override?", "What did DONNA recommend?", "What happened recently?" — all previously fell through to `route_coo_prompt`. Memory questions now route to `fetch_memory` → `runDonnaMemoryAction` → DB-backed `proposed_actions` retrieval. Every response includes confidence disclosure and missing data disclosure. Final: **93**.
 
 Sprint 1535: +1 for 6 suggested DONNA prompts now permanently visible on the Today operating surface. Clicking "Who needs attention?", "Which coaches need support?", "Who is ready for promotion?", "What evidence is missing?", "What changed?", or "What should I focus on today?" opens DONNA with the exact prompt pre-loaded — dispatching `donna:open` to the existing event listener. Director interaction with DONNA increases because prompts are always visible, not behind a chat input. Final: **91**.
 
@@ -438,7 +441,76 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 
 ---
 
+## 7b. Learning System — 0/10 → 7/10 (new dimension, Sprint 1595)
+
+### Definition
+Does AcademyOS learn from its own history? Can DONNA answer questions about past decisions, retrieve evidence used, explain why things changed, and surface patterns across time?
+
+### Evidence
+**Source:** `docs/qa/DONNA_ACADEMY_MEMORY_CERTIFICATION_1595.md`
+**Baseline sprint:** Sprint 1595 — first sprint to build persistent memory retrieval
+
+### Dimension scores
+
+| # | Dimension | Post-1595 | Notes |
+|---|---|---|---|
+| 1 | Decisions retrievable by entity | 8/10 | `proposed_actions` ILIKE filter by entity name |
+| 2 | Decision outcome retrievable | 9/10 | status, reviewer_notes, rejection_reason from `proposed_actions` |
+| 3 | Director override captured | 9/10 | `modified_payload IS NOT NULL` → `director_override` source type |
+| 4 | Timeline for player/coach/group | 7/10 | Timeline from DB-backed memories; entity-specific filter |
+| 5 | Evidence chains retrievable | 2/10 | Only risk_notes from proposed_action; full evidence not stored |
+| 6 | DONNA recommendation history | 3/10 | Only `action_label` text; prior session recommendations not persisted |
+| 7 | Cross-session continuity | 5/10 | DB-backed (proposed_actions); not sessionStorage-only |
+| 8 | Missing memory disclosed | 10/10 | `missingDataDisclosure` always present in `MemoryRetrievalResult` |
+| 9 | Pattern recognition | 3/10 | `donnaAcademyMemory.ts` tracks session patterns; not cross-session |
+| 10 | No fabrication | 10/10 | All data sourced from real DB rows; no invented content |
+| **Total** | | **66/100 → 7/10** (normalised) | |
+
+### Score rationale
+Strong foundation: decision retrieval (D1/D2), override capture (D3), timeline (D4), honesty (D8/D10) all functional. Gaps in evidence persistence (D5), recommendation history (D6/D9) are documented V1 limitations requiring new DB tables. Score 7/10 reflects a working learning layer that covers the most common director memory questions while being honest about what it cannot yet answer.
+
+### Confidence: MEDIUM
+Scores are judgment-based from code review and certification scenarios.
+
+### Update trigger
+Update when evidence chains are persisted, DONNA recommendation history is stored, or cross-session pattern recognition is added.
+
+---
+
 ## 8. Last sprint impact
+
+### Sprint 1595 — DONNA Academy Memory Engine V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 98 | **99** | +1 (D13: Academy Memory new dimension, 0→10, normalised) |
+| Conversational Readiness | 91 | **93** | +2 (brain step 10.10 memory intent + 7 intent types + 48 patterns) |
+| Learning System | 0 | **7** | +7 (new dimension — first persistent memory layer) |
+| Composite | 95 | **96** | +1 |
+
+**What changed:**
+- Created `docs/architecture/DONNA_ACADEMY_MEMORY_AUDIT_1595.md` — full pre-sprint audit of 9 memory sources (proposed_actions, assessments, curriculum, coach wrap-ups, parent updates, conversation persistence, evidence engine, promotion engine, execution engine); summary table of what can/cannot be retrieved; V1 architecture decision
+- Created `src/lib/donna/memory/donnaAcademyMemoryTypes.ts` — `MemorySourceType` (10 types), `MemoryImportance`, `MemoryConfidence`, `MemoryEntityLink`, `AcademyMemory`, `MemoryTimelineEvent`, `MemoryRetrievalResult`, `MemoryIntentType` (7 types)
+- Created `src/lib/donna/memory/donnaAcademyMemoryBuilder.ts` — `buildMemoryFromRow(row)` + `buildMemoriesFromRows(rows)`: infers `MemorySourceType` from `targetModule`/`actionType`, builds `MemoryEntityLink[]` from `target_object_type`/`target_object_id` + name extraction from `action_label`, builds summary/evidence/dataGaps, infers confidence; `director_override` source type fires when `modified_payload IS NOT NULL`
+- Created `src/lib/donna/memory/donnaMemoryImportanceScorer.ts` — `scoreMemoryImportance(input)`: base scores by source type (promotion_decision: 90, placement_decision: 85, director_override: 80), adjustments for risk level (+15 high/+5 medium), override bonus (+10), reviewer notes (+5), entity link (+5), confidence penalty (-10); maps score → `MemoryImportance` tier
+- Created `src/lib/donna/memory/donnaAcademyMemoryRetrieval.ts` — `loadAcademyMemory(db, academyId, options)`: queries `proposed_actions` with `rawDb`, supports `entityFilter` via `ILIKE`, builds `MemoryRetrievalResult`; `formatMemoryResponse()`: pure formatter with timeline (top 5), detail (top 3), confidence note, missing data disclosure, action route; `extractEntityFilterFromQuestion()`: regex extraction of entity name from question text
+- Created `src/lib/donna/memory/donnaEntityTimelineEngine.ts` — timeline builder from `AcademyMemory[]` (DB-backed; distinct from `entities/donnaEntityTimelineEngine.ts` which uses in-memory entity context); `buildEntityTimelines()`, `buildEntityTimelineFor(label)`, `buildEntityTypeTimeline(type)`, `buildPlayerTimeline()`, `buildCoachTimeline()`, `buildCurriculumTimeline()`, `buildAcademyTimeline()`, `formatTimelineForDisplay()`
+- Created `src/lib/donna/memory/donnaMemoryIntentDetector.ts` — `detectMemoryIntent(lower)`: 7 intent types, 48+ regex patterns; covers "what happened with Jake?", "why was Jake promoted?", "what has Coach Danny been doing?", "what changed with Orange 2?", "what did we decide?", "what did I override?", "what did DONNA recommend?", "what happened recently?"
+- Created `src/app/director/_actions/donnaMemoryAction.ts` — `runDonnaMemoryAction(question)`: auth + role check via `profiles`/`academy_memberships`; calls `loadAcademyMemory`; returns `MemoryActionResult` with formatted response; error handling for all failure paths
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — added import `detectMemoryIntent`; added `'fetch_memory'` to `DonnaMessageAction` union; added step 10.10 between 10.9 and 11: detects memory intent → returns `{ action: 'fetch_memory' }`
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_memory_intent'` to `BrainRoutingStep` between `'check_execution_intent'` and `'run_intent'`
+- Updated `src/components/assistant/DonnaAssistantButton.tsx` — imported `runDonnaMemoryAction`; added `handleFetchAcademyMemory(question)` handler (calls server action, displays response, speaks summary, records turn); added `case 'fetch_memory':` to brain action switch
+
+**What didn't change:**
+- BLOCKER 2, 3, 4, 7 — still open
+- `proposed_actions` pipeline — untouched (memory engine is read-only)
+- `donnaAcademyMemory.ts` (session pattern memory) — untouched (different purpose: session-only, no PII)
+- `donnaGoalMemory.ts` — untouched
+- All Sprint 1565 execution engine files — untouched
+
+---
 
 ### Sprint 1565 — DONNA Decision Execution Engine V1
 

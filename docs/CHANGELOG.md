@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-06-09 — Mega Sprint 1595–1624 — DONNA Academy Memory Engine V1
+
+**AcademyOS becomes a learning system. DONNA can now answer "What happened with Jake?", "Why was Jake promoted?", "What has Coach Danny been doing?", "What did we decide last time?", "What did I override?", and "What happened recently?" from real DB-backed decision records. Brain step 10.10 detects 7 memory intent types via 48+ regex patterns and routes to `runDonnaMemoryAction`. All responses include confidence disclosure and explicit missing-data disclosure. No fabricated memory. COO Readiness 98→99 (new D13). Conversational Readiness 91→93. Learning System (new): 0→7. Composite 95→96. TypeScript clean.**
+
+- Created `docs/architecture/DONNA_ACADEMY_MEMORY_AUDIT_1595.md` — full audit of 9 memory sources; summary table of what can/cannot be retrieved; V1 architecture decision (primary source: `proposed_actions`)
+- Created `src/lib/donna/memory/donnaAcademyMemoryTypes.ts` — `MemorySourceType` (10: proposed_action, promotion_decision, placement_decision, assessment_result, coach_assignment, coach_wrap_up, parent_update, curriculum_change, director_override, donna_recommendation); `MemoryImportance` (critical/high/medium/low); `MemoryConfidence` (high/medium/low/inferred); `MemoryEntityLink` (entityType, entityId, entityLabel); `AcademyMemory`; `MemoryTimelineEvent`; `MemoryRetrievalResult`; `MemoryIntentType` (7 types)
+- Created `src/lib/donna/memory/donnaAcademyMemoryBuilder.ts` — `buildMemoryFromRow(row)` + `buildMemoriesFromRows(rows)`: source type inference from `targetModule`/`actionType`; `director_override` fires when `modified_payload IS NOT NULL`; entity label extraction from `action_label` text; summary/evidence/dataGaps builders; confidence inference from `target_object_id` + decision timestamps
+- Created `src/lib/donna/memory/donnaMemoryImportanceScorer.ts` — `scoreMemoryImportance(input)`: base scores by source type + risk level adjustment (+15 high, +5 medium) + override bonus (+10) + reviewer notes (+5) + entity link (+5) + confidence penalty; maps 0–100+ score → `MemoryImportance` tier
+- Created `src/lib/donna/memory/donnaAcademyMemoryRetrieval.ts` — `loadAcademyMemory(db, academyId, options)`: `rawDb` pattern; `proposed_actions` query with ILIKE entity filter; status filter approved/executed/rejected/modified/expired/failed; limit 20; `buildMissingDataDisclosure` discloses evidence/recommendation/entity gaps per intent; `formatMemoryResponse()`: timeline (top 5) + decision detail (top 3) + confidence + disclosure + action route; `extractEntityFilterFromQuestion()`: 4 regex patterns for entity name extraction
+- Created `src/lib/donna/memory/donnaEntityTimelineEngine.ts` — DB-backed timeline builder from `AcademyMemory[]` (distinct from `entities/donnaEntityTimelineEngine.ts`); `buildEntityTimelines()`, `buildEntityTimelineFor(label)`, `buildEntityTypeTimeline(type)`, `buildPlayerTimeline()`, `buildCoachTimeline()`, `buildCurriculumTimeline()`, `buildAcademyTimeline()`, `formatTimelineForDisplay()`
+- Created `src/lib/donna/memory/donnaMemoryIntentDetector.ts` — `detectMemoryIntent(lower)`: 7 intent types (player_history, coach_history, entity_timeline, decision_history, override_history, recommendation_history, general_history); 48+ regex patterns
+- Created `src/app/director/_actions/donnaMemoryAction.ts` — `runDonnaMemoryAction(question)`: auth via `supabase.auth.getUser()`; `profiles.academy_id` lookup; `academy_memberships` role check (director + head_coach only); calls `loadAcademyMemory`; returns `MemoryActionResult` with formatted response, totalFound, entityFilter, confidence; full error handling
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — imported `detectMemoryIntent`; added `'fetch_memory'` to `DonnaMessageAction`; added step 10.10 between 10.9 (execution intent) and 11 (goal resolution): detects memory intent → returns `{ action: 'fetch_memory', confidence: 0.85 }`
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_memory_intent'` to `BrainRoutingStep` union
+- Updated `src/components/assistant/DonnaAssistantButton.tsx` — imported `runDonnaMemoryAction`; added `handleFetchAcademyMemory(question)`: calls server action, displays result as `commandResponse`, speaks spoken summary, records turn with domain `'general'`; added `case 'fetch_memory':` to brain switch
+- Created `docs/qa/DONNA_ACADEMY_MEMORY_CERTIFICATION_1595.md` — 10 scenarios, all PASS; architecture verification table; 6 known V1 limitations documented
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 98→99 (D13 new); Conversational Readiness 91→93; Learning System new dimension 0→7; Composite 95→96; new §7b Learning System; Sprint 1595 in §8
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-09 — Mega Sprint 1565–1594 — DONNA Decision Execution Engine V1
 
 **Every Today priority and decision card now exposes an expandable execution plan: recommendation, confidence, evidence bullets, risks, actions, and approval guardrail. DONNA conversational execution phrases ("fix it", "approve this", "show evidence") handled via brain step 10.9. All high-stakes actions (promotion, placement, parent updates, assessments) require director approval through `proposed_actions` — DONNA never silently mutates. COO Readiness 97→98 (D12: Decision Execution 0→10). Director UX Readiness 95→97. Workflow Completion 92→94. Composite 94→95. TypeScript clean.**

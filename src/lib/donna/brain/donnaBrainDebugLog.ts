@@ -28,6 +28,7 @@ export type BrainRoutingStep =
   | 'check_coach_intelligence'
   | 'check_coach_support'
   | 'check_execution_intent'
+  | 'check_memory_intent'
   | 'run_intent'
   | 'run_entity'
   | 'run_goal'

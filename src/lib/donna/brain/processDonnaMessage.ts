@@ -109,6 +109,7 @@ import {
   buildExecutionIntentResponse,
 } from '@/lib/donna/execution/donnaDecisionExecutionEngine'
 import type { ExecutionIntentContext } from '@/lib/donna/execution/donnaDecisionExecutionEngine'
+import { detectMemoryIntent } from '@/lib/donna/memory/donnaMemoryIntentDetector'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,7 @@ export type DonnaMessageAction =
   | 'fetch_brief'              // Trigger handleFetchDailyBrief
   | 'open_review'              // Trigger handleOpenReviewQueue
   | 'fetch_coo_intelligence'   // COO-specific question → runDonnaCOOIntelligenceAction
+  | 'fetch_memory'             // Memory question → runDonnaMemoryAction
   | 'route_coo_prompt'         // Complex COO question → existing handleDonnaCooPrompt chain
   | 'god_mode'                 // Route to LLM God Mode
 
@@ -1029,6 +1031,23 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       spokenResponse:  execResponse.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*/g, ''),
       confidence:      0.90,
       requiresApproval: executionIntent === 'approve_this' || executionIntent === 'fix_it',
+    }, debugLog)
+  }
+
+  // ── Step 10.10: Memory intent detection ─────────────────────────────────────
+  // Detects academy memory questions: "What happened with Jake?", "Why was Jake promoted?",
+  // "What has Coach Danny been doing?", "What did we decide last time?", etc.
+  // Returns fetch_memory — DonnaAssistantButton calls runDonnaMemoryAction(question).
+  // DONNA never fabricates memory — all answers come from real proposed_actions records.
+  logStep(debugLog, 'check_memory_intent')
+  const memoryIntent = detectMemoryIntent(lower)
+  if (memoryIntent !== null) {
+    finalizeLog(debugLog, 'check_memory_intent', 'fetch_memory')
+    emitDebugLog(debugLog)
+    return makeResult('fetch_memory', {
+      response: 'Looking up academy history…',
+      spokenResponse: 'Looking up academy history.',
+      confidence: 0.85,
     }, debugLog)
   }
 

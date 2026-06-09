@@ -321,6 +321,8 @@ import type { DonnaResponseRole } from '@/lib/donna/brain/donnaRoleResponsePolic
 import { recordConversationTurn } from '@/lib/donna/brain/donnaConversationState'
 import { getCurrentGoalState, updateLastEntity } from '@/lib/donna/memory/donnaGoalMemory'
 import type { EntityType } from '@/lib/donna/entities/donnaEntityResolver'
+// Mega Sprint 1595–1624 — DONNA Academy Memory Engine V1
+import { runDonnaMemoryAction } from '@/app/director/_actions/donnaMemoryAction'
 
 // Sprint 2321 — DONNA Entity Execution Integration V1
 import type { AcademyEntityContext } from '@/lib/donna/entity/donnaEntityResolver'
@@ -2510,6 +2512,34 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
   }
 
+  // Mega Sprint 1595 — Academy Memory: retrieve and display decision history
+  async function handleFetchAcademyMemory(question: string) {
+    try {
+      const result = await runDonnaMemoryAction(question)
+      if (result.ok) {
+        setCommandResponse({ message: result.formatted, type: 'info', label: 'Academy Memory' })
+        setCooThread(prev => [...prev.slice(-4), { user: question, donna: result.formatted, type: 'info' as const }])
+        speakDonna(result.totalFound > 0
+          ? `Found ${result.totalFound} decision record${result.totalFound !== 1 ? 's' : ''}${result.entityFilter ? ` for ${result.entityFilter}` : ''}.`
+          : 'No decision history found for that query.')
+        recordPrompt(question)
+        recordSummary(result.formatted)
+        recordTurn(question, result.formatted, { domain: 'general' })
+      } else {
+        const errMsg = result.error === 'unauthorized'
+          ? 'Academy memory is available to directors and head coaches only.'
+          : result.error === 'role_denied'
+            ? result.formatted
+            : 'Memory retrieval is unavailable right now. Try again shortly.'
+        setCommandResponse({ message: errMsg, type: 'honest', label: 'Academy Memory' })
+      }
+    } catch {
+      setCommandResponse({ message: 'Memory retrieval failed. Try again shortly.', type: 'honest', label: 'Academy Memory' })
+    } finally {
+      setIsProcessingCommand(false)
+    }
+  }
+
   // Sprint 789 — Build a natural 1–2 sentence spoken summary of the daily brief.
   // Used to auto-narrate when the brief loads. No player names, no raw content — structural metadata only.
   function buildBriefVoiceSummary(brief: import('@/components/assistant/donnaDailyBrief').DailyBrief): string {
@@ -4001,6 +4031,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         recordSignal('command_issued')
         break
       }
+
+      case 'fetch_memory':
+        // Mega Sprint 1595–1624 — Academy Memory: retrieve decision history
+        void handleFetchAcademyMemory(text)
+        recordSignal('command_issued')
+        break
 
       case 'fetch_coo_intelligence': {
         // Mega Sprint 784–813 — COO intelligence: evidence + confidence + recommended action
