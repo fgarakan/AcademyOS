@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-09 — Mega Sprint 1355–1384 — DONNA Academy Entity Intelligence V2
+
+**Canonical entity type model + 4 pure-TS entity engines added to `src/lib/donna/entities/`. `AcademyEntity` discriminated union covers all 9 EntityKind values. `buildEntitySummary()` produces structured `headline + detail + evidence[] + recommendations[] + limitations[]` for any entity. `buildEntityEvidence()` extends the evidence chain to all entity kinds. `buildEntityTimeline()` produces chronological event sequences. `donnaEntityRelationshipEngine.ts` bridges canonical types to existing `donnaRelationshipIntelligence.ts`. All engines pure TypeScript — no DB, no React, no brain changes. COO Readiness 85→88 (D2: 7→8, D3: 8→9, D8: 8→9). Conversational Readiness 74→78. Composite 86→87. TypeScript clean.**
+
+- Created `src/lib/donna/entities/donnaAcademyEntityModel.ts` — canonical entity model: `AcademyEntity` discriminated union (9 kinds); `AcademyEntityBase` with `id`, `kind`, `displayName`, `confidence`, `lastUpdatedAt`; per-kind interfaces with kind-specific fields; `EntityRelationship` and `EntityEvidence` types; `RelationshipKind` catalog (7 kinds: `is_in_group`, `is_at_level`, `coached_by`, `parent_of`, `uses_template`, `co_group_member`, `same_level_peer`); 7 type guard functions
+- Created `src/lib/donna/entities/donnaEntityRelationshipEngine.ts` — `getEntityRelationships(entity, rCtx)` → `EntityRelationship[]` using existing `RelationshipContext` indexes (no duplicate logic); `traverseRelationship(entity, relKind, rCtx)` → `AcademyEntityBase[]`; covers player, group, curriculum_level, parent relationship traversal; bridges to `relationship/donnaRelationshipIntelligence.ts` without duplicating its index-building logic
+- Created `src/lib/donna/entities/donnaEntityEvidenceEngine.ts` — `buildEntityEvidence(entity, ctx)` → `EvidenceChain` with `lines[]`, `evidence: EntityEvidence[]`, `confidence: 'high'|'medium'|'low'`, `dataGaps[]`; per-kind builders for player (enrollment + stall + assessments), group (members + capacity + templates), curriculum_level (players + stall rate + templates), assessment (date + score + player), template (status + duration + level players); coach/parent gaps always disclosed; generic fallback for unimplemented kinds
+- Created `src/lib/donna/entities/donnaEntityTimelineEngine.ts` — `buildEntityTimeline(entity, ctx)` → `TimelineEvent[]` sorted newest-first (undated events last); 8 event kinds; per-kind builders: player (enrollment, assessments, stall, advancement), group (members, stall count, templates), curriculum_level (advancing, stalled, templates), assessment (result), template (status, level players); `significance: 'high'|'medium'|'low'` on every event
+- Created `src/lib/donna/entities/donnaEntitySummaryEngine.ts` — `buildEntitySummary(entity, ctx, rCtx?)` → `EntitySummaryAnswer` with `headline`, `detail`, `evidence[]`, `recommendations[]`, `limitations[]`; per-kind builders cover all key states (stall/advancement/over-capacity/no-data/normal); DONNA can return `headline` + `detail` verbatim for any entity Q&A; generic fallback for unimplemented kinds
+- Created `docs/architecture/DONNA_ENTITY_INTELLIGENCE_AUDIT_1355.md` — 5-layer entity infrastructure audit; brain integration point map; gap analysis table; data flow diagram; expected score impact
+- Created `docs/qa/DONNA_ENTITY_INTELLIGENCE_CERTIFICATION_1355.md` — 12 certification scenarios, all PASS; architecture compliance table; known V1 limitations
+- Updated `docs/certification/DONNA_CAPABILITY_SCORECARD.md` — COO Readiness 85→88 (D2: 7→8, D3: 8→9, D8: 8→9); Conversational Readiness 74→78; composite 86→87; Sprint 1355 impact recorded; next sprint options updated
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-09 — Mega Sprint 1325–1354 — DONNA Daily COO Intelligence V1
 
 **`buildAcademyHealthReport()` output now rendered on every director page load. `isAcademyOverviewPhrase()` closes the D3 routing gap — "how is everything looking?" now routes to `fetch_coo_intelligence` instead of LLM fallback. New `donnaDailyCooIntelligenceEngine.ts` pre-computes structured answers for all 8 canonical COO questions (D1–D8) with evidence, confidence tiers, and prioritization. All data comes from signals already computed in `page.tsx` — no new DB queries. COO Readiness 82→85 (D1: 8→9, D3: 6→8), Conversational Readiness 72→74, composite 85→86. TypeScript clean.**

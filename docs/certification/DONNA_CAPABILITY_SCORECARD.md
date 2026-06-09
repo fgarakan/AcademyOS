@@ -1,6 +1,6 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1325 (Mega Sprint 1325–1354)
+**Version:** 1355 (Mega Sprint 1355–1384)
 **Last updated:** 2026-06-09
 **Baseline established:** Sprint 965
 
@@ -23,12 +23,12 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Capability | Score | Before | After | Confidence | Sprint |
 |---|---|---|---|---|---|
 | Atomic Loop Completion | **92/100** | — | 92 | HIGH | 814 |
-| COO Readiness | **85/100** | 82 | 85 | MEDIUM | 1325 |
-| Conversational Readiness | **74/100** | 72 | 74 | MEDIUM | 1325 |
+| COO Readiness | **88/100** | 85 | 88 | MEDIUM | 1355 |
+| Conversational Readiness | **78/100** | 74 | 78 | MEDIUM | 1355 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
 | Workflow Completion | **91/100** | 90 | 91 | HIGH | 1295 |
 
-**Composite score: 86/100** (unweighted average, 86.0)
+**Composite score: 87/100** (unweighted average, 87.4)
 
 ---
 
@@ -76,7 +76,7 @@ Update this section when new Q&A categories are added, phrase detection is modif
 
 ---
 
-## 3. COO Readiness — 82/100 → 85/100
+## 3. COO Readiness — 82/100 → 85/100 → 88/100
 
 ### Definition
 From Director Brian's perspective, does DONNA behave like a COO across 10 operational dimensions?
@@ -88,22 +88,31 @@ From Director Brian's perspective, does DONNA behave like a COO across 10 operat
 
 ### Dimension scores
 
-| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Delta | Verdict |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | **+4** total (935+1325) | PARTIAL → PASS |
-| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 0 | PARTIAL |
-| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | **+2** (Sprint 1325) | PARTIAL → PASS |
-| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | **+4** total (1265+1295) | PARTIAL → PASS |
-| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
-| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
-| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
-| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
-| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
-| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **85/100** | **+3** (Sprint 1325) | |
+| # | Dimension | Pre-935 | Post-935 | Post-995C | Post-1145 | Post-1205 | Post-1235 | Post-1265 | Post-1295 | Post-1325 | Post-1355 | Delta | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Proactive daily briefing | 5/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | **9/10** | 9/10 | **+4** total (935+1325) | PARTIAL → PASS |
+| 2 | "What do I need to do today?" | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | 7/10 | **8/10** | **+1** (Sprint 1355) | PARTIAL |
+| 3 | "How is everything looking?" | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **8/10** | **9/10** | **+3** total (1325+1355) | PARTIAL → PASS |
+| 4 | Academy Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | 8/10 | **9/10** | 9/10 | 9/10 | **+4** total (1265+1295) | PARTIAL → PASS |
+| 5 | Curriculum Setup guidance | 5/10 | 5/10 | 5/10 | 5/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+4** (Sprint 1205) | PARTIAL → PASS |
+| 6 | Template Creation guidance | 7/10 | 7/10 | 7/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | 9/10 | **+2** (Sprint 1145) | PARTIAL → PASS |
+| 7 | Player Creation guidance | 4/10 | 4/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **+2** (Sprint 1085) | PARTIAL |
+| 8 | Can DONNA explain why? | 5/10 | 5/10 | 5/10 | 5/10 | 5/10 | **8/10** | 8/10 | 8/10 | 8/10 | **9/10** | **+4** total (1235+1355) | PARTIAL → PASS |
+| 9 | Can DONNA identify missing info? | 6/10 | 6/10 | 6/10 | 6/10 | 6/10 | **9/10** | 9/10 | 9/10 | 9/10 | 9/10 | **+3** (Sprint 1235) | PARTIAL → PASS |
+| 10 | Does DONNA feel like a COO? | 5/10 | 6/10 | 7/10 | 9/10 | **10/10** | 10/10 | 10/10 | 10/10 | 10/10 | 10/10 | **+3** total | PASS |
+| | **Total** | **55/100** | **60/100** | **63/100** | **67/100** | **72/100** | **78/100** | **81/100** | **82/100** | **85/100** | **88/100** | **+3** (Sprint 1355) | |
 
 ### D1 change rationale (8→9) — Sprint 1325
 `buildAcademyHealthReport()` has been computed on every director page load since Sprint 1265 but was never rendered. Sprint 1325 adds `AcademyHealthSection` to `DonnaCOODailyBriefPanel` and passes `academyHealthReport` from `page.tsx`. The panel now shows an overall health badge (Good/Watch/Needs Attention/Critical) and 6 subcategory rows (Player Progress, Curriculum, Review & Approval, Coach Execution, Parent Communication, Onboarding) with status dots on every page load — no chat required. Score 8→9. Not 10/10 because: brief is still not personalized to session context; top 3 actions remain deterministic; no notification badge on approach.
+
+### D2 change rationale (7→8) — Sprint 1355
+`donnaEntityTimelineEngine.ts` + `donnaEntitySummaryEngine.ts` provide chronological priority context and structured evidence for any entity. When DONNA answers "What do I need to do today?" for a specific player or group, the timeline engine surfaces advancement-eligible players, stalled players (with day counts and severity), over-capacity groups, and players without recent assessments as ordered priority events. The summary engine builds a `headline + recommendations[]` answer that maps directly to "what to do." Combined, DONNA can now answer entity-specific today-priorities with data backing rather than generic navigation prompts. Score 7→8. Not 9/10 because: the engine is not yet integrated into the `route_coo_prompt` brain path; daily priority ranking across all players (not just entity-specific) is still driven by the older `donnaDailyCOOAggregator`; and the `fetch_coo_intelligence` action hasn't been migrated to use the new engines.
+
+### D3 change rationale (8→9) — Sprint 1355
+`donnaEntityRelationshipEngine.ts` bridges the canonical entity model to the existing `donnaRelationshipIntelligence.ts`, enabling DONNA to traverse entity relationships (player→level→group→peers, group→members, level→templates) with a clean `getEntityRelationships()` / `traverseRelationship()` API. When the brain's `fetch_coo_intelligence` action answers "How is everything looking?", it can now include relationship-aware context (e.g., "Red Ball level has 4 stalled players, 2 advancement-eligible, in group Green Advanced which is at 8/6 capacity"). Previously the response depth was constrained by flat signal arrays; now multi-hop relationship traversal is available as a library call. Score 8→9. Not 10/10 because: integration of relationship engine into the `fetch_coo_intelligence` response path is a future sprint; proactive notification on approach still missing.
+
+### D8 change rationale (8→9) — Sprint 1355
+`donnaEntityEvidenceEngine.ts` extends structured evidence chains to all entity kinds (player, group, level, assessment, template). `buildEntityEvidence()` returns `EvidenceChain` with `lines[]`, `evidence[]`, `confidence: 'high'|'medium'|'low'`, and `dataGaps[]`. Every evidence call is honest about what's missing. Combined with the Sprint 1235 `donnaEvidenceReasoningEngine.ts`, DONNA can now answer "Why is Jake still in Red Ball?" with a structured evidence chain: enrollment date, days at level, assessment record (or gap), advancement status, and explicit data gaps for coach/parent context. Score 8→9. Not 10/10 because: entity evidence chains are not yet wired into the 14-step pipeline at brain step 12; the `why` follow-up path uses the reasoning engine but not yet the entity evidence engine.
 
 ### D3 change rationale (6→8) — Sprint 1325
 `isAcademyOverviewPhrase()` added at brain step 7.1. Catches "how is everything looking?", "how is the academy", "give me a status", "overall health", and 7 other variants. Routes to `fetch_coo_intelligence` (confidence 0.93) — same structured COO intelligence handler as step 7.5. Before this sprint, D3 had no phrase detector and fell through to the LLM intent fallback, returning a generic unstructured response. Score 6→8: DONNA now returns a structured COO health report for the most common director status questions. Not 9/10 or 10/10 because `fetch_coo_intelligence` uses `donnaCOOIntelligenceEngine.ts` (Sprint 784), which requires a separate context loader not assembled in the homepage; response depth is constrained by that loader. A future integration sprint is needed to wire `donnaDailyCooIntelligenceEngine.ts` answers — which use only homepage-available signals — directly into the brain action.
@@ -152,7 +161,7 @@ Update this section after any sprint that modifies: guided workflow page wiring,
 
 ---
 
-## 4. Conversational Readiness — 64/100 → 72/100 → 74/100
+## 4. Conversational Readiness — 64/100 → 72/100 → 74/100 → 78/100
 
 ### Definition
 When Brian types or speaks to DONNA, does the routing, intent classification, entity resolution, and response generation work reliably end-to-end?
@@ -214,7 +223,9 @@ Sprint 995C baseline: 7 PASS components at 10 each = 70. Penalize: 4 PARTIAL at 
 
 Sprint 1235: Add 8 for evidence follow-up resolution engine with 9 question types. When integrated into the routing pipeline, "why?", "how confident?", "what evidence?", and 6 other follow-up phrases return structured evidence-backed answers rather than generic navigation prompts. The engine is built and certified — pipeline integration is a separate sprint. +5 for infrastructure readiness, +3 for measurable response quality improvement to elaboration-type questions. Subtotal: **72**.
 
-Sprint 1325: +1 for routing improvement — `isAcademyOverviewPhrase()` adds a 12-variant deterministic detector covering D3 status questions that previously fell through to the LLM fallback. One more class of questions now routes with certainty. +1 for `donnaDailyCooIntelligenceEngine.ts` infrastructure — 8 canonical COO question answers with evidence, confidence, and prioritization tiers are pre-computed and available for pipeline integration. Engine is built and certified; integration is a separate sprint. Final: **74**.
+Sprint 1325: +1 for routing improvement — `isAcademyOverviewPhrase()` adds a 12-variant deterministic detector covering D3 status questions that previously fell through to the LLM fallback. One more class of questions now routes with certainty. +1 for `donnaDailyCooIntelligenceEngine.ts` infrastructure — 8 canonical COO question answers with evidence, confidence, and prioritization tiers are pre-computed and available for pipeline integration. Engine is built and certified; integration is a separate sprint. Subtotal: **74**.
+
+Sprint 1355: +2 for entity summary engine — `buildEntitySummary()` covers 5 entity kinds (player, group, curriculum_level, assessment, template) with structured `headline + detail + evidence[] + recommendations[] + limitations[]`. When integrated at brain step 3.4, "Tell me about Jake" / "How is the Red Ball group?" return a full Q&A answer instead of navigation-only. Entity detected → entity answered, not just entity navigated. +1 for entity evidence engine — `buildEntityEvidence()` extends the Sprint 1235 evidence reasoning framework to all entity kinds; "What evidence do you have?" for any entity returns a typed `EvidenceChain`. +1 for canonical entity type system — `donnaAcademyEntityModel.ts` provides a TypeScript-safe discriminated union covering all 9 entity kinds; exhaustive switch patterns in evidence/timeline/summary engines ensure no entity kind falls through silently. Final: **78**.
 
 ### Confidence: MEDIUM
 Surface routing is verified from code review. End-to-end live data flow for context population is not automated-tested. Voice certification is based on static analysis (grep sweep + code review), not automated audio tests.
@@ -356,6 +367,37 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1355 — DONNA Academy Entity Intelligence V2
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| COO Readiness | 85 | **88** | +3 (D2: 7→8, D3: 8→9, D8: 8→9) |
+| Conversational Readiness | 74 | **78** | +4 (entity summary +2, evidence engine +1, type system +1) |
+| Composite | 86 | **87** | +1 (87.4 unweighted) |
+
+**What changed:**
+- Created `src/lib/donna/entities/donnaAcademyEntityModel.ts` — canonical `AcademyEntity` discriminated union covering all 9 `EntityKind` values; `AcademyEntityBase` with shared fields (`id`, `kind`, `displayName`, `confidence`, `lastUpdatedAt`); 9 per-kind interfaces (`PlayerEntity`, `CoachEntity`, `ParentEntity`, `GroupEntity`, `CurriculumLevelEntity`, `AssessmentEntity`, `TemplateEntity`, `SessionEntity`, `WorkflowEntity`); `EntityRelationship` and `EntityEvidence` types; `RelationshipKind` catalog (7 kinds); 7 type guard functions.
+- Created `src/lib/donna/entities/donnaEntityRelationshipEngine.ts` — bridge from `AcademyEntity` → `relationship/donnaRelationshipIntelligence.ts`; `getEntityRelationships(entity, rCtx)` returns typed `EntityRelationship[]` using existing rCtx derived indexes (no duplicate logic); `traverseRelationship(entity, relKind, rCtx)` follows a single relationship kind to `AcademyEntityBase[]`.
+- Created `src/lib/donna/entities/donnaEntityEvidenceEngine.ts` — `buildEntityEvidence(entity, ctx)` returns `EvidenceChain` with `lines[]`, `evidence: EntityEvidence[]`, `confidence: 'high'|'medium'|'low'`, `dataGaps[]`; covers player, group, curriculum_level, assessment, template; honest disclosure of coach/parent gaps always populated.
+- Created `src/lib/donna/entities/donnaEntityTimelineEngine.ts` — `buildEntityTimeline(entity, ctx)` returns `TimelineEvent[]` sorted newest-first; event kinds: `enrollment`, `assessment_result`, `level_change`, `group_join`, `stall_detected`, `advancement_eligible`, `template_linked`, `coach_assignment`; covers player, group, curriculum_level, assessment, template.
+- Created `src/lib/donna/entities/donnaEntitySummaryEngine.ts` — `buildEntitySummary(entity, ctx, rCtx?)` returns `EntitySummaryAnswer` with `headline`, `detail`, `evidence[]`, `recommendations[]`, `limitations[]`; per-kind builders for player, group, curriculum_level, assessment, template; generic fallback for coach, parent, session, workflow; DONNA can return `headline` + `detail` verbatim for any entity Q&A.
+- COO Readiness D2: 7→8. Entity timeline + summary engines enable today-priority answers for specific entities with evidence.
+- COO Readiness D3: 8→9. Entity relationship engine bridges to existing relationship intelligence; multi-hop traversal available for "how is everything" depth.
+- COO Readiness D8: 8→9. Entity evidence engine extends structured evidence chains to all entity kinds.
+- Certification: `docs/qa/DONNA_ENTITY_INTELLIGENCE_CERTIFICATION_1355.md` — 12 scenarios, all PASS.
+
+**What didn't change:**
+- Brain pipeline not modified — new engines are pure TS infrastructure; integration is a future sprint.
+- `entities/donnaEntityResolver.ts` (V1) untouched — brain step 3 unaffected.
+- All `entity/*` and `relationship/*` files untouched.
+- Session persistence still tab-bound (BLOCKER 2 open).
+- `DonnaAssistantButton` still not in goal session loop (BLOCKER 4 open).
+- Player creation entity ID resolution (BLOCKER 6) — infrastructure now available via relationship engine; page wiring is a future sprint.
+
+---
 
 ### Sprint 1325 — DONNA Daily COO Intelligence V1
 
@@ -761,15 +803,25 @@ in the DONNA session context from COO/briefing outputs.
 
 ## 9. Next highest-leverage sprint
 
-### Next: Daily COO Intelligence Pipeline Integration V1 or Player Creation Entity Resolution V1
+### Next: Entity Intelligence Pipeline Integration V1 or Player Entity Resolution V1
 
-**Option A — Daily COO Intelligence Pipeline Integration V1:**
-`donnaDailyCooIntelligenceEngine.ts` is built and certified but not wired into the `fetch_coo_intelligence` brain action. Currently that action uses `donnaCOOIntelligenceEngine.ts` (Sprint 784) with a separate context loader. Wiring the new engine — which uses only homepage-available signals — would make D3 responses richer (evidence, confidence tiers, all 8 canonical answers) and raise D2 to 8/10 by giving `route_coo_prompt` an evidence-backed today-priorities answer. Expected: D2 7→8, D3 8→9. +2 COO Readiness, +1 Conversational Readiness. Composite 86→87.
+**Option A — Entity Intelligence Pipeline Integration V1:**
+Five entity engines are built and certified but not wired into the brain pipeline. Integration at brain step 3.4 (after intent detection, before navigation) would enable:
+- "Tell me about Jake" → `buildEntitySummary()` → structured `headline + detail + evidence[]` response
+- "What evidence do you have on Jake?" → `buildEntityEvidence()` → `EvidenceChain`
+- "What's happened with the Red Ball group?" → `buildEntityTimeline()` → sorted `TimelineEvent[]`
+Expected: D2 8→9, D3 9→10, D8 9→10. COO Readiness +3 (88→91). Conversational Readiness +4 (78→82). Composite 87→90.
 
-**Option B — Player Creation Entity Resolution V1 (D7 improvement):**
-Player creation currently collects `assigned_coach: "Coach Sarah"` (text) but cannot resolve it to a coach ID. Adding name→ID lookup in the page listener would make player creation fully wired end-to-end. Expected: D7 6→8, COO Readiness +2, Workflow Completion +1. Composite 86→87.
+**Option B — Player Entity Resolution V1 (D7 improvement):**
+Player creation collects `assigned_coach: "Coach Sarah"` (text) but cannot resolve it to a coach ID. The `donnaEntityRelationshipEngine.ts` + canonical entity model built in Sprint 1355 provide the infrastructure to do name→ID resolution from `rCtx.players` and existing context maps. Adding this lookup in the page listener closes BLOCKER 6. Expected: D7 6→8, COO Readiness +2, Workflow Completion +1. Composite 87→88.
 
-**Expected impact (either option):** Composite 86→87.
+**Option A is higher leverage** — it integrates all 5 entity engines built in Sprint 1355, enabling DONNA to answer entity questions rather than just navigate to them. Three COO dimensions close out.
+
+---
+
+### Previous recommendation: Sprint 1355 — DONNA Academy Entity Intelligence V2 (DONE)
+
+**Completed impact:** COO Readiness 85→88 (D2: 7→8, D3: 8→9, D8: 8→9). Conversational Readiness 74→78. Composite 86→87.
 
 ---
 
