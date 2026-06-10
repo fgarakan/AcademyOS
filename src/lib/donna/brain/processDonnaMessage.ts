@@ -110,6 +110,7 @@ import {
 } from '@/lib/donna/execution/donnaDecisionExecutionEngine'
 import type { ExecutionIntentContext } from '@/lib/donna/execution/donnaDecisionExecutionEngine'
 import { detectMemoryIntent } from '@/lib/donna/memory/donnaMemoryIntentDetector'
+import { isMemoryLearningPhrase } from '@/lib/donna/learning/donnaLearningAnswerBuilder'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -152,6 +153,7 @@ export type DonnaMessageAction =
   | 'open_review'              // Trigger handleOpenReviewQueue
   | 'fetch_coo_intelligence'   // COO-specific question → runDonnaCOOIntelligenceAction
   | 'fetch_memory'             // Memory question → runDonnaMemoryAction
+  | 'fetch_learning'           // Memory-based learning → runDonnaMemoryLearningAction
   | 'route_coo_prompt'         // Complex COO question → existing handleDonnaCooPrompt chain
   | 'god_mode'                 // Route to LLM God Mode
 
@@ -1047,6 +1049,23 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     return makeResult('fetch_memory', {
       response: 'Looking up academy history…',
       spokenResponse: 'Looking up academy history.',
+      confidence: 0.85,
+    }, debugLog)
+  }
+
+  // ── Step 10.11: Memory-based learning intent ──────────────────────────────────
+  // Detects pattern/trend/lesson questions sourced from AcademyMemory[].
+  // Distinct from the Sprint 1761 learning path (DirectorDonnaContext) — these
+  // questions ask DONNA to analyse its memory for patterns and derive director lessons.
+  // Examples: "what trends do you see in our history?", "what lessons have you drawn?"
+  // Returns fetch_learning — caller loads memories then runs donnaAcademyLearningEngine.
+  logStep(debugLog, 'check_learning_intent')
+  if (isMemoryLearningPhrase(lower)) {
+    finalizeLog(debugLog, 'check_learning_intent', 'fetch_learning')
+    emitDebugLog(debugLog)
+    return makeResult('fetch_learning', {
+      response: 'Analysing academy learning patterns…',
+      spokenResponse: 'Analysing academy learning patterns.',
       confidence: 0.85,
     }, debugLog)
   }

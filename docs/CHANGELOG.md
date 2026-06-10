@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-06-10 — Mega Sprint 1625–1654 — DONNA Academy Learning Engine V1
+
+**DONNA's memory becomes learning. The academy's decision history is now analysed for patterns, trends, lessons, and director recommendations. Output structure: Patterns · Trends · Lessons · Recommendations · Confidence · Limitations. Brain step 10.11 detects memory-learning phrases and routes to `fetch_learning`. All learning is frequency-based — no causation inference. Pure TypeScript. TypeScript clean.**
+
+- Created `docs/architecture/DONNA_ACADEMY_LEARNING_AUDIT_1625.md` — full audit of all 10 memory sources; pattern detection table (8 patterns, min thresholds, confidence ceilings); trend detection table (5 trends); 8 known V1 limitations; future version roadmap; brain integration point documented
+- Created `src/lib/donna/learning/donnaAcademyLearningTypes.ts` — `SignalType` (10), `PatternType` (8), `TrendType` (5), `TrendDirection`, `LearningConfidence` (high/medium/low/insufficient), `MemoryLearningSignal`, `PatternDetectionResult`, `TrendDetectionResult`, `ExtractedLesson`, `DirectorRecommendation`, `MemoryLearningReport`
+- Created `src/lib/donna/learning/donnaLearningSignalExtractor.ts` — `extractLearningSignals(memories)`: maps `MemorySourceType` → `SignalType`; `groupSignalsByType()`: groups into `SignalGroup` map; `signalsInLastDays(signals, days)`: window filter for cluster/burst detection
+- Created `src/lib/donna/learning/donnaPatternDetectionEngine.ts` — `detectPatterns(signals, memories)`: 8 pattern detectors (promotion_cluster 21d window; rejection_repeat headline scan; override_frequency; assessment_gap ratio; curriculum_change_burst; coach_assignment_churn; parent_update_gap ratio; placement_velocity); all thresholds enforced; no causation claims
+- Created `src/lib/donna/learning/donnaTrendDetectionEngine.ts` — `detectTrends(memories)`: 5 trend detectors (decision_velocity, override_rate, parent_update_cadence, curriculum_change_rate, promotion_rate); early/late window split; 1.5× ratio threshold for direction; stable trends with insufficient evidence suppressed
+- Created `src/lib/donna/learning/donnaLearningConfidenceEngine.ts` — `scorePatternConfidence()`, `scoreTrendConfidence()`, `scoreLessonConfidence()`, `scoreReportConfidence()`, `buildLearningLimitations()`: enforces min 5 records for any signal, 10 for medium; never inflates confidence
+- Created `src/lib/donna/learning/donnaLessonExtractionEngine.ts` — `extractLessons(patterns, trends)`: pattern→lesson (8 lesson types) + trend→lesson (4 lesson types, stable direction suppressed); `buildRecommendations(lessons)`: `LESSON_ACTION_MAP` with 14 entries, headline matching, destination routes, priority; sorted high→medium→low; all insufficient-confidence inputs suppressed; no causation claims anywhere
+- Created `src/lib/donna/learning/donnaAcademyLearningEngine.ts` — `buildMemoryLearningReport(memories)`: orchestrates signals→patterns→trends→lessons→recommendations→confidence→limitations; `formatMemoryLearningReportAsMessage(report)`: renders Patterns·Trends·Lessons·Recommendations·Confidence·Limitations with directional arrows
+- Created `src/lib/donna/learning/donnaLearningAnswerBuilder.ts` — `isMemoryLearningPhrase(input)`: 26 phrases targeting memory-based pattern/trend/lesson queries (distinct from `learningCommandRouter.ts`); `buildMemoryLearningAnswer(question, memories)`: returns `MemoryLearningAnswerResult` with message, confidence, destination; empty memory handled with explicit insufficient disclosure
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — imported `isMemoryLearningPhrase`; added `'fetch_learning'` to `DonnaMessageAction`; added step 10.11 after 10.10 (memory) before 11 (goal resolution): detects memory-learning phrases → returns `{ action: 'fetch_learning', confidence: 0.85 }`
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_learning_intent'` to `BrainRoutingStep` union
+- Created `docs/qa/DONNA_ACADEMY_LEARNING_CERTIFICATION_1625.md` — 18 checks, all PASS; output structure validation; V1 limitations documented
+- TypeScript: clean (0 errors)
+
+---
+
 ## 2026-06-09 — Mega Sprint 1595–1624 — DONNA Academy Memory Engine V1
 
 **AcademyOS becomes a learning system. DONNA can now answer "What happened with Jake?", "Why was Jake promoted?", "What has Coach Danny been doing?", "What did we decide last time?", "What did I override?", and "What happened recently?" from real DB-backed decision records. Brain step 10.10 detects 7 memory intent types via 48+ regex patterns and routes to `runDonnaMemoryAction`. All responses include confidence disclosure and explicit missing-data disclosure. No fabricated memory. COO Readiness 98→99 (new D13). Conversational Readiness 91→93. Learning System (new): 0→7. Composite 95→96. TypeScript clean.**
