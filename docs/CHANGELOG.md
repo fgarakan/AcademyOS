@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-06-10 — Mega Sprint 1715A — Academy Onboarding Final Product Lock V1
+
+**Design lock only. No code. No UI. No database changes. Produces the final onboarding specification that Sprint 1715B will implement. Core outcome: 23+ questions across 7 phases reduced to 10 director decisions across 4 phases (~10 min). Stage weighting resolved (confirm-or-swap defaults, not 28 sliders). Curriculum starting point resolved (required, AcademyOS vs Import). DONNA conversation capability fully specified. "Meet Your Academy" launch moment copy written. All 8 certification checks pass.**
+
+- Created `docs/architecture/ACADEMY_ONBOARDING_QUESTION_AUDIT_FINAL.md` — full audit of every question from all onboarding versions (23+); 3-criteria test for each (behavior change / impossible to infer / long-term value); stage weighting resolution (confirm-or-swap replaces 28 sliders; 2-priority-per-stage UX; DONNA defaults by model; weight formula); curriculum starting point resolution (required; AcademyOS vs Import; Partner disabled); 10 locked director decisions; 13 removed questions with reasons; 9 deferred settings with post-launch locations
+- Created `docs/architecture/DONNA_ONBOARDING_CONVERSATION_PACK.md` — full conversational spec for all 10 questions and 4 phases; exact DONNA dialogue for all question types (why, what changes, skip, change later, what does this mean for coaches/parents/movement/curriculum); 10 required conversation capabilities per section; DONNA voice rules (no filler, show consequences, short sentences); anti-patterns documented
+- Created `docs/architecture/ACADEMY_ONBOARDING_FINAL_SPEC.md` — implementation source of truth: 4-phase flow (Your Academy / Your Program / Your Team / Launch Review); all 10 questions with exact options and mappings; model inference table (Q2 × Q3 → 16 combinations); stage weight defaults by model × stage; advancement approval → level gate strictness mapping; parent transparency → 5 portal flags bundle; inferred coaching style by model; inferred defaults (assessment cadence / coach comm / parent tone); complete `academy_dna` schema; setup mode condition and suppression rules; setup progress steps with `/onboarding` hrefs; "Meet Your Academy" exact screen copy; what Launch writes atomically; all open questions with V1 decisions
+- Created `docs/qa/ACADEMY_ONBOARDING_PRODUCT_LOCK_CERTIFICATION.md` — 8 certification checks, all PASS: every question changes behavior / every question survived audit / stage weighting finalized / curriculum starting point finalized / DONNA conversation requirements finalized / launch review finalized / final flow locked / ready for implementation
+
+---
+
+## 2026-06-10 — Mega Sprint 1685–1714 — Academy Onboarding Seam Audit V1
+
+**Audit-only sprint. No code changes. Maps all four onboarding surfaces, identifies 11 seams, scores current state 4/10, and produces the full 10/10 blueprint with 7-phase unified flow, classification model, pathway weighting, player movement edge cases, and complete system connection maps.**
+
+- Created `docs/architecture/ACADEMY_ONBOARDING_SEAM_AUDIT_1685.md` — complete audit of all 4 surfaces; 11 seam gaps; completeness score 4/10; build order; 15 source files audited
+- Created `docs/architecture/ACADEMY_ONBOARDING_10_10_BLUEPRINT_1685.md` — full 10/10 design spec: 7-phase unified flow; Academy Classification Model (5 types × full defaultProfile); Pathway Weighting Model; 7 Player Movement Edge Cases; Curriculum/Template/Coach/Parent connection maps; Today page setup/live mode spec; Launch review spec; closes all 11 seams
+- Created `docs/architecture/ACADEMY_ONBOARDING_PRODUCT_REVIEW_1685.md` — rigorous product challenge of the blueprint: Phase 0 eliminated; model picker replaced with 2 behavioral inference questions; coaching style picker replaced with DONNA assertion + edit; dev priority stack (10-option ranked list) replaced with 1 forced-choice question; Phase 4 eliminated (session blueprint is DONNA's output, not a director question); parent visibility toggles (5) replaced with 1 transparency level; Academy Classification self-classification bias identified; spectrum model flagged as V2 recommendation; final flow: 4 phases, 8 director decisions, ~5 minutes, equivalent or richer model depth than original 7-phase 19-question design
+
+---
+
 ## 2026-06-10 — Mega Sprint 1655–1684 — DONNA Insight & Perspective Shift Engine V1
 
 **DONNA's learning becomes insight. The academy's patterns are now interrogated for what the director may not be seeing: blind spots, contradictions, alternative explanations, perspective shifts, and hidden opportunities. Output structure: Blind Spots · Contradictions · Alt Explanations · Perspective Shifts · Opportunities · Investigations · Confidence · Limitations. The memory bridge closes the self-improving loop: Insight → Investigation → Memory. Brain step 10.12 detects insight phrases and routes to `fetch_insight`. Both evidence strength and confidence are disclosed on every insight — orthogonal dimensions. Pure TypeScript. TypeScript clean.**
