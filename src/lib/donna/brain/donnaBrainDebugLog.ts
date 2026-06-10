@@ -30,6 +30,7 @@ export type BrainRoutingStep =
   | 'check_execution_intent'
   | 'check_memory_intent'
   | 'check_learning_intent'
+  | 'check_insight_intent'
   | 'run_intent'
   | 'run_entity'
   | 'run_goal'

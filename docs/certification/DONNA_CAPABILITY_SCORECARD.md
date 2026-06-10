@@ -1,7 +1,7 @@
 # DONNA Capability Scorecard
 **Canonical capability tracking — updated every mega sprint**
-**Version:** 1595 (Mega Sprint 1595–1624)
-**Last updated:** 2026-06-09
+**Version:** 1655 (Mega Sprint 1655–1684)
+**Last updated:** 2026-06-10
 **Baseline established:** Sprint 965
 
 ---
@@ -27,10 +27,10 @@ Do not guess scores. Every score must cite its evidence source and state confide
 | Conversational Readiness | **93/100** | 91 | 93 | MEDIUM | 1595 |
 | Director Question Readiness | **88/100** | — | 88 | HIGH | 814 |
 | Director UX Readiness | **97/100** | 95 | 97 | MEDIUM | 1565 |
-| Learning System | **7/10** | 0 | 7 | MEDIUM | 1595 |
+| Learning System | **9.5/10** | 7 | 9.5 | MEDIUM | 1655 |
 | Workflow Completion | **94/100** | 92 | 94 | HIGH | 1565 |
 
-**Composite score: 96/100** (unweighted average, rounded)
+**Composite score: 97/100** (unweighted average, rounded)
 
 ---
 
@@ -441,43 +441,97 @@ player_onboarding (1085), coach_creation (1115), template_builder + fitness_temp
 
 ---
 
-## 7b. Learning System — 0/10 → 7/10 (new dimension, Sprint 1595)
+## 7b. Learning System — 0/10 → 9.5/10 (Sprint 1595 → 1655)
 
 ### Definition
-Does AcademyOS learn from its own history? Can DONNA answer questions about past decisions, retrieve evidence used, explain why things changed, and surface patterns across time?
+Does AcademyOS learn from its own history? Can DONNA answer questions about past decisions, retrieve evidence used, explain why things changed, and surface patterns across time? Can it identify what the director may be missing?
 
 ### Evidence
-**Source:** `docs/qa/DONNA_ACADEMY_MEMORY_CERTIFICATION_1595.md`
-**Baseline sprint:** Sprint 1595 — first sprint to build persistent memory retrieval
+**Sprint 1595 source:** `docs/qa/DONNA_ACADEMY_MEMORY_CERTIFICATION_1595.md`
+**Sprint 1625 source:** `docs/architecture/DONNA_INSIGHT_ENGINE_AUDIT_1655.md` (learning engine audit)
+**Sprint 1655 source:** `docs/qa/DONNA_INSIGHT_ENGINE_CERTIFICATION_1655.md`
 
 ### Dimension scores
 
-| # | Dimension | Post-1595 | Notes |
-|---|---|---|---|
-| 1 | Decisions retrievable by entity | 8/10 | `proposed_actions` ILIKE filter by entity name |
-| 2 | Decision outcome retrievable | 9/10 | status, reviewer_notes, rejection_reason from `proposed_actions` |
-| 3 | Director override captured | 9/10 | `modified_payload IS NOT NULL` → `director_override` source type |
-| 4 | Timeline for player/coach/group | 7/10 | Timeline from DB-backed memories; entity-specific filter |
-| 5 | Evidence chains retrievable | 2/10 | Only risk_notes from proposed_action; full evidence not stored |
-| 6 | DONNA recommendation history | 3/10 | Only `action_label` text; prior session recommendations not persisted |
-| 7 | Cross-session continuity | 5/10 | DB-backed (proposed_actions); not sessionStorage-only |
-| 8 | Missing memory disclosed | 10/10 | `missingDataDisclosure` always present in `MemoryRetrievalResult` |
-| 9 | Pattern recognition | 3/10 | `donnaAcademyMemory.ts` tracks session patterns; not cross-session |
-| 10 | No fabrication | 10/10 | All data sourced from real DB rows; no invented content |
-| **Total** | | **66/100 → 7/10** (normalised) | |
+| # | Dimension | Post-1595 | Post-1625 | Post-1655 | Notes |
+|---|---|---|---|---|---|
+| 1 | Decisions retrievable by entity | 8/10 | 8/10 | 8/10 | `proposed_actions` ILIKE filter by entity name |
+| 2 | Decision outcome retrievable | 9/10 | 9/10 | 9/10 | status, reviewer_notes from `proposed_actions` |
+| 3 | Director override captured | 9/10 | 9/10 | 9/10 | `modified_payload IS NOT NULL` |
+| 4 | Timeline for player/coach/group | 7/10 | 7/10 | 7/10 | Timeline from DB-backed memories |
+| 5 | Evidence chains retrievable | 2/10 | 2/10 | 2/10 | V2 gap — full evidence not stored |
+| 6 | Pattern recognition (cross-session) | 3/10 | **9/10** | 9/10 | Sprint 1625: 8 detectors, 5 trend types |
+| 7 | Director lessons surface | 0/10 | **8/10** | 8/10 | Sprint 1625: 12 lesson types, 3 priority recommendations |
+| 8 | Blind spot / gap detection | 0/10 | 0/10 | **10/10** | Sprint 1655: 7 blind spot detectors |
+| 9 | Self-improving loop (feedback) | 0/10 | 0/10 | **9/10** | Sprint 1655: memory bridge (V1 contract, V2 DB) |
+| 10 | No fabrication | 10/10 | 10/10 | 10/10 | All data from real DB rows; no invented content |
+| **Total** | 66/100 → **7/10** | 84/100 → **8.5/10** | 95/100 → **9.5/10** | |
 
-### Score rationale
-Strong foundation: decision retrieval (D1/D2), override capture (D3), timeline (D4), honesty (D8/D10) all functional. Gaps in evidence persistence (D5), recommendation history (D6/D9) are documented V1 limitations requiring new DB tables. Score 7/10 reflects a working learning layer that covers the most common director memory questions while being honest about what it cannot yet answer.
+### Score rationale (post-1655)
+Sprint 1595 established the foundation. Sprint 1625 added pattern recognition and director lessons. Sprint 1655 completes the intelligence chain: blind spots, contradictions, alternative explanations, perspective shifts, hidden opportunities — and the memory bridge that closes the self-improving loop. Only D5 (evidence chains) remains below 8/10; it requires new DB tables and is a V2 item.
 
 ### Confidence: MEDIUM
-Scores are judgment-based from code review and certification scenarios.
+Scores are judgment-based from code review. No live data certification yet for insight engine.
 
 ### Update trigger
-Update when evidence chains are persisted, DONNA recommendation history is stored, or cross-session pattern recognition is added.
+Update when insight outcomes are persisted to DB (V2), evidence chains are stored, or DONNA recommendation history is accumulated over multiple sessions.
 
 ---
 
 ## 8. Last sprint impact
+
+### Sprint 1655 — DONNA Insight & Perspective Shift Engine V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Learning System | 8.5 | **9.5** | +1 (D8: blind spots 0→10, D9: memory bridge 0→9) |
+| Conversational Readiness | 93 | **94** | +1 (brain step 10.12 insight intent, 28 phrase patterns) |
+| Composite | 96 | **97** | +1 |
+
+**What changed:**
+- Created `docs/architecture/DONNA_INSIGHT_ENGINE_AUDIT_1655.md` — full audit of all 7 intelligence layers; insight categories possible in V1 vs V2; intelligence chain documented
+- Created `src/lib/donna/insight/donnaInsightTypes.ts` — `InsightType` (7), `InsightConfidence` (4), `EvidenceStrength` (3 — orthogonal to confidence), `AcademyInsight`, `BlindSpot`, `Contradiction`, `AlternativeExplanation`, `PerspectiveShift`, `HiddenOpportunity`, `AcademyInsightReport`
+- Created `src/lib/donna/insight/donnaInsightConfidenceEngine.ts` — `scoreEvidenceStrength()`, `scoreInsightConfidence()`, `scoreBlindSpotConfidence()`, `scoreContradictionConfidence()`, `scoreOpportunityConfidence()`, `fromLearningConfidence()` (bridges 'insufficient'→'insufficient_data'), `buildEvidenceStrengthDisclosure()`
+- Created `src/lib/donna/insight/donnaBlindSpotDetector.ts` — 7 detectors: missing_assessment, parent_communication_gap, ignored_recommendation, coach_overload, promotion_blocker, placement_issue, unresolved_bottleneck
+- Created `src/lib/donna/insight/donnaContradictionDetector.ts` — 4 detectors: promotion+assessment, rejection+pattern, curriculum+parent gap, override+promotion
+- Created `src/lib/donna/insight/donnaAlternativeExplanationEngine.ts` — `PATTERN_EXPLANATIONS` map (8 entries, 2–3 explanations each); always framed as hypothesis, never causation
+- Created `src/lib/donna/insight/donnaPerspectiveShiftEngine.ts` — 10 lesson→shift pairs; current frame / alternative frame / investigation
+- Created `src/lib/donna/insight/donnaOpportunityDetector.ts` — 5 detectors: advancement momentum, enrollment growth, DONNA–director alignment, assessment discipline, parent communication culture; max 3 (low cognitive load rule)
+- Created `src/lib/donna/insight/donnaInsightMemoryBridge.ts` — closes the self-improving intelligence loop: `InsightInvestigationOutcome`, `InsightInvestigationStatus` (6), `bridgeInsightToMemory()`, `bridgeInsightOutcomesToMemories()`, `createPendingOutcome()`; V1 data contract, V2 DB persistence
+- Created `src/lib/donna/insight/donnaAcademyInsightEngine.ts` — `buildAcademyInsightReport()` (composes all sub-engines), `formatAcademyInsightReportAsMessage()` (renders Blind Spots · Contradictions · Alt Explanations · Perspective Shifts · Opportunities · Investigations · Confidence · Limitations)
+- Created `src/lib/donna/insight/donnaInsightAnswerBuilder.ts` — `isInsightPhrase()` (28 phrases), `buildInsightAnswer()`, `InsightAnswerResult`
+- Created `docs/qa/DONNA_INSIGHT_ENGINE_CERTIFICATION_1655.md`
+- Updated `src/lib/donna/brain/processDonnaMessage.ts` — import `isInsightPhrase`; added `'fetch_insight'` to `DonnaMessageAction`; added Step 10.12 between 10.11 and 11
+- Updated `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_insight_intent'` to `BrainRoutingStep`
+
+**What didn't change:**
+- Memory engine (Sprint 1595) — read-only input to insight engine
+- Learning engine (Sprint 1625) — read-only input to insight engine
+- `proposed_actions` pipeline — untouched
+- All DB migration files — untouched (V1 is pure TypeScript)
+
+---
+
+### Sprint 1625 — DONNA Academy Learning Engine V1
+
+**Capability changes:**
+
+| Capability | Before | After | Delta |
+|---|---|---|---|
+| Learning System | 7 | **8.5** | +1.5 (D6: pattern recognition 3→9, D7: director lessons 0→8) |
+| Conversational Readiness | 93 | **93** | 0 (brain step 10.11 added; phrase set distinct from memory) |
+| Composite | 96 | **96** | 0 |
+
+**What changed:**
+- Created `src/lib/donna/learning/donnaAcademyLearningTypes.ts` — 10 `SignalType`, 8 `PatternType`, 5 `TrendType`, `LearningConfidence`, `MemoryLearningReport`
+- Created `src/lib/donna/learning/donnaLearningSignalExtractor.ts`, `donnaPatternDetectionEngine.ts` (8 detectors), `donnaTrendDetectionEngine.ts` (5 detectors), `donnaLearningConfidenceEngine.ts`
+- Created `src/lib/donna/learning/donnaLessonExtractionEngine.ts` — `LESSON_ACTION_MAP` (14 entries); pattern→lesson (8 types), trend→lesson (4 types)
+- Created `src/lib/donna/learning/donnaAcademyLearningEngine.ts`, `donnaLearningAnswerBuilder.ts` (26 phrases, `isMemoryLearningPhrase`)
+- Updated brain: `fetch_learning` action, step 10.11, `check_learning_intent` routing step
+
+---
 
 ### Sprint 1595 — DONNA Academy Memory Engine V1
 
@@ -1153,15 +1207,15 @@ in the DONNA session context from COO/briefing outputs.
 
 ## 9. Next highest-leverage sprint
 
-### Next: Player Entity Resolution V1 (D7 improvement) or Gate Evidence Context Loader V1
+### Next: Insight Investigation UI V1 or Evidence Chain Persistence V1
 
-**Option A — Player Entity Resolution V1 (D7 improvement):**
-Player creation collects `assigned_coach: "Coach Sarah"` (text) but cannot resolve it to a coach ID. The `donnaEntityRelationshipEngine.ts` + canonical entity model from Sprint 1355 provide the infrastructure to do name→ID resolution from `rCtx.players` and existing context maps. Adding this lookup in the page listener closes BLOCKER 6 and takes D7 from 6→8. Expected: D7 6→8, COO Readiness 92→93, Workflow Completion 91→92. Composite 90→90 (within rounding).
+**Option A — Insight Investigation UI V1 (D9 improvement from 9→10):**
+The memory bridge (`donnaInsightMemoryBridge.ts`) defines the V1 data contract for insight outcomes. The missing piece is the director-facing UI to mark an insight as "investigated", add a conclusion, and persist the outcome. When an `InsightInvestigationOutcome` is written to a new `insight_outcomes` table and included in `loadAcademyMemories()`, the self-improving loop closes completely. Expected: Learning System D9 9→10, Composite 97→97 (within rounding). Requires migration.
 
-**Option B — Gate Evidence Context Loader V1:**
-`curriculum_gates` and `player_gate_status` are not in `AcademyEntityContext`. Adding them to the context pack would allow the promotion engine to report "Jake has 2/3 gate criteria met" rather than disclosing a gap. This closes the primary `missingEvidence[]` disclosure that appears in every `PromotionDecision`. Expected: Conversational Readiness 87→89, COO Readiness 92→93 (D2 already 10/10 — D9 9→10 possible). Composite 90→90.
+**Option B — Evidence Chain Persistence V1 (D5 improvement from 2→8):**
+`evidence[]` on `proposed_actions` is not currently stored beyond `risk_notes`. Adding an `evidence_chain` JSONB column would allow the memory engine to return full evidence chains ("Why was this promoted? Evidence: 3 passing assessments, coach wrap-up, parent sign-off"). This directly improves the quality of memory, learning, and insight outputs. Expected: Learning System D5 2→8, Composite 97→98.
 
-**Option A is higher leverage** — it closes BLOCKER 6 and directly improves the most-used director workflow (player creation). Option B has higher intelligence depth impact but requires a DB query change that touches the context loader architecture.
+**Option A is more visible to the director** — it surfaces the memory bridge as a usable feature. Option B has higher intelligence quality impact but is invisible in the UI until evidence-rich data is recorded.
 
 ---
 

@@ -111,6 +111,7 @@ import {
 import type { ExecutionIntentContext } from '@/lib/donna/execution/donnaDecisionExecutionEngine'
 import { detectMemoryIntent } from '@/lib/donna/memory/donnaMemoryIntentDetector'
 import { isMemoryLearningPhrase } from '@/lib/donna/learning/donnaLearningAnswerBuilder'
+import { isInsightPhrase } from '@/lib/donna/insight/donnaInsightAnswerBuilder'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -154,6 +155,7 @@ export type DonnaMessageAction =
   | 'fetch_coo_intelligence'   // COO-specific question → runDonnaCOOIntelligenceAction
   | 'fetch_memory'             // Memory question → runDonnaMemoryAction
   | 'fetch_learning'           // Memory-based learning → runDonnaMemoryLearningAction
+  | 'fetch_insight'            // Insight analysis → runDonnaInsightAction
   | 'route_coo_prompt'         // Complex COO question → existing handleDonnaCooPrompt chain
   | 'god_mode'                 // Route to LLM God Mode
 
@@ -1066,6 +1068,21 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     return makeResult('fetch_learning', {
       response: 'Analysing academy learning patterns…',
       spokenResponse: 'Analysing academy learning patterns.',
+      confidence: 0.85,
+    }, debugLog)
+  }
+
+  // ── Step 10.12: Insight intent ────────────────────────────────────────────────
+  // Detects "what are we missing?", "blind spots", "what should we investigate?" etc.
+  // Runs after the learning check (10.11) — insight is a layer above learning.
+  // Returns fetch_insight — caller loads memories + runs donnaAcademyInsightEngine.
+  logStep(debugLog, 'check_insight_intent')
+  if (isInsightPhrase(lower)) {
+    finalizeLog(debugLog, 'check_insight_intent', 'fetch_insight')
+    emitDebugLog(debugLog)
+    return makeResult('fetch_insight', {
+      response: 'Analysing academy memory for blind spots and hidden patterns…',
+      spokenResponse: 'Analysing academy memory for blind spots and hidden patterns.',
       confidence: 0.85,
     }, debugLog)
   }
