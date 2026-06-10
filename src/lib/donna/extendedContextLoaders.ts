@@ -21,6 +21,7 @@ export interface PlayerCurriculumStateSummary {
   advancementEligible: boolean
   enrolledAt: string
   lastEvaluatedAt: string | null
+  primaryCoachId: string | null            // Mega Sprint 1505: joined from players.primary_coach_id for coach intelligence
 }
 
 export interface AssessmentSummary {
@@ -132,7 +133,7 @@ export async function loadPlayerCurriculumStates(
     const { data, count } = await rawDb
       .from('player_curriculum_states')
       .select(
-        'player_id, current_level_id, advancement_eligible, enrolled_at, last_evaluated_at, curriculum_levels(display_name), players(first_name, last_name)',
+        'player_id, current_level_id, advancement_eligible, enrolled_at, last_evaluated_at, curriculum_levels(display_name), players(first_name, last_name, primary_coach_id)',
         { count: 'exact' },
       )
       .eq('academy_id', academyId)
@@ -146,7 +147,7 @@ export async function loadPlayerCurriculumStates(
       enrolled_at: string
       last_evaluated_at: string | null
       curriculum_levels: { display_name: string } | null
-      players: { first_name: string | null; last_name: string | null } | null
+      players: { first_name: string | null; last_name: string | null; primary_coach_id: string | null } | null
     }>
 
     const summaries: PlayerCurriculumStateSummary[] = rows.map(r => ({
@@ -157,6 +158,7 @@ export async function loadPlayerCurriculumStates(
       advancementEligible: r.advancement_eligible,
       enrolledAt: r.enrolled_at,
       lastEvaluatedAt: r.last_evaluated_at,
+      primaryCoachId: r.players?.primary_coach_id ?? null,
     }))
 
     const advancementEligibleCount = summaries.filter(s => s.advancementEligible).length

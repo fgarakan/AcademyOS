@@ -6,16 +6,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, ClipboardList, Calendar, BookOpen } from 'lucide-react'
+import { Sun, Users, CheckSquare, Calendar, UserCog } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Sprint 1060 — locked IA top-5 for mobile; DONNA is the floating button, not a nav item
+// Mega Sprint 1505 — locked mobile top-5: operating surface + high-frequency actions
 const MOBILE_NAV_ITEMS = [
-  { label: 'Today',     href: '/director',                    icon: LayoutDashboard },
-  { label: 'Approvals', href: '/director/review',             icon: ClipboardList },
-  { label: 'Players',   href: '/director/players',            icon: Users },
-  { label: 'Sessions',  href: '/director/sessions',           icon: Calendar },
-  { label: 'Curriculum',href: '/director/curriculum/builder', icon: BookOpen },
+  { label: 'Today',     href: '/director',          icon: Sun },
+  { label: 'Players',   href: '/director/players',  icon: Users },
+  { label: 'Sessions',  href: '/director/sessions', icon: Calendar },
+  { label: 'Approvals', href: '/director/review',   icon: CheckSquare },
+  { label: 'Coaches',   href: '/director/coaches',  icon: UserCog },
 ]
 
 interface Props {

@@ -73,6 +73,7 @@ export function resolvedEntityToAcademyEntity(
         advancementEligible:     p.advancementEligible,
         enrolledAt:              p.enrolledAt,
         lastEvaluatedAt:         p.lastEvaluatedAt,
+        primaryCoachId:          p.primaryCoachId,
       }
       return entity
     }

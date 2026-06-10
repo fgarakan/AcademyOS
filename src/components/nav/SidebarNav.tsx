@@ -3,30 +3,31 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, Users, BookOpen, Calendar,
-  LogOut, ClipboardList, MessageSquare,
-  LayoutTemplate, Settings, Rocket, BarChart2, UserCog,
+  Sun, Users, BookOpen, Calendar,
+  LogOut, ClipboardList,
+  LayoutTemplate, Settings, Rocket, BarChart2, UserCog, CheckSquare,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
-// Sprint 1060 — locked director IA: 9 primary items in exact order
+// Mega Sprint 1505 — locked director IA: 9 primary items in exact order
+// UX principle: Today = operating surface, Dashboard = visual proof/trends.
+// Director sees only what needs attention. Detail hidden until requested.
 const ACADEMY_ITEMS = [
-  { label: 'Today',          href: '/director',                    icon: LayoutDashboard },
-  { label: 'Review & Decide', href: '/director/review',             icon: ClipboardList },
-  { label: 'Players',        href: '/director/players',            icon: Users },
-  { label: 'Sessions',       href: '/director/sessions',           icon: Calendar },
-  { label: 'Curriculum',     href: '/director/curriculum',         icon: BookOpen },
-  { label: 'Parent Updates', href: '/director/parents',            icon: MessageSquare },
-  { label: 'Academy Health', href: '/director/kpi',                icon: BarChart2 },
-  { label: 'Templates',      href: '/director/templates',          icon: LayoutTemplate },
-  { label: 'Coaches',        href: '/director/coaches',            icon: UserCog },
+  { label: 'Today',      href: '/director',            icon: Sun },
+  { label: 'Dashboard',  href: '/director/kpi',        icon: BarChart2 },
+  { label: 'Players',    href: '/director/players',    icon: Users },
+  { label: 'Sessions',   href: '/director/sessions',   icon: Calendar },
+  { label: 'Approvals',  href: '/director/review',     icon: CheckSquare },
+  { label: 'Templates',  href: '/director/templates',  icon: LayoutTemplate },
+  { label: 'Curriculum', href: '/director/curriculum', icon: BookOpen },
+  { label: 'Coaches',    href: '/director/coaches',    icon: UserCog },
+  { label: 'Settings',   href: '/director/settings',   icon: Settings },
 ]
 
-// DONNA is the persistent floating button — not a sidebar nav item (Sprint 1060)
-// Signals, Today's Academy, Command Center removed from primary nav (Sprint 1060)
+// DONNA is the persistent floating button — not a sidebar nav item
+// Parent Updates accessible via URL but not primary nav (low-frequency director surface)
 const SYSTEM_ITEMS = [
   { label: 'Assessment Template', href: '/director/assessment-template', icon: ClipboardList },
-  { label: 'Settings',            href: '/director/settings',            icon: Settings },
   { label: 'Onboarding',          href: '/director/onboarding',          icon: Rocket },
 ]
 
@@ -157,7 +158,7 @@ export function SidebarNav({
             key={item.href}
             item={item}
             isActive={isActive(item.href)}
-            badge={item.label === 'Review & Decide' ? pendingCount : undefined}
+            badge={item.label === 'Approvals' ? pendingCount : undefined}
           />
         ))}
 

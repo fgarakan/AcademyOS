@@ -60,6 +60,7 @@ export interface PlayerEntity extends AcademyEntityBase {
   advancementEligible:     boolean
   enrolledAt:              string
   lastEvaluatedAt:         string | null
+  primaryCoachId?:         string | null   // Mega Sprint 1505: coach assignment for intelligence engine
 }
 
 export interface CoachEntity extends AcademyEntityBase {
