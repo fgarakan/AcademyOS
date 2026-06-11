@@ -2,6 +2,63 @@
 
 ---
 
+## 2026-06-11 — Mega Sprint 1746–1775 — DONNA Philosophy Memory & Academy Evolution Engine V1
+
+**DONNA becomes a long-term academy intelligence partner.** Learns how the academy thinks, makes decisions, what philosophies emerge over time, and how the academy is evolving. Compares stated onboarding DNA against observed behavioral patterns to detect drift. Surfaces reality overrides when player evidence contradicts stated philosophy. Answers the 10 evolution questions a director would ask when stepping back to assess the academy.
+
+**Intelligence hierarchy enforced throughout:** Reality (player evidence) > Evidence (behavioral patterns) > Memory (decision history) > Philosophy (DNA) > Inference. Lower layers never override higher layers.
+
+**Certification: 37/37 assertions pass across 7 academy archetypes × 3 time horizons. TypeScript clean.**
+
+**Files created:**
+- `src/lib/donna/philosophy/academyPhilosophyMemory.ts` — `PhilosophyMemoryEntry`, `buildPhilosophyMemoryFromBehavior()`, storage helpers; learns preferences from curriculum decisions and director overrides
+- `src/lib/donna/philosophy/academyPreferenceExtractor.ts` — `PreferenceSignal[]` from philosophy memory; weighted model (strong=3, moderate=2, weak=1); score 0–100 centered at 50; direction (rising/falling/stable); `personalizeRecommendation()` for priority adjustment
+- `src/lib/donna/philosophy/academyDecisionPatterns.ts` — `DecisionPatternRecord[]` and `DecisionPatternSummary[]` from curriculum memory + proposed action history; V1 data limitation: curriculum memory records accepted decisions only (rejection history not yet tracked)
+- `src/lib/donna/philosophy/academyIdentityProfile.ts` — `AcademyIdentityProfile` with 10 dimensions, hierarchy-weighted scoring, drift warnings when stated/observed diverge ≥20 points; `RealityOverrideAnalysis[]` when player evidence contradicts philosophy; `DonnaExplanation` for recommendation transparency
+- `src/lib/donna/philosophy/academyEvolutionTimeline.ts` — `AcademyEvolutionTimeline` grouped by month with dominant theme and activity level; `detectPhilosophyDrift()` comparing identity dimensions against DNA; `getRecentEvolutionPhases()`
+- `src/lib/donna/philosophy/academyEvolutionQuestions.ts` — `buildFullEvolutionAnswerSet()` routes all 10 evolution questions through the philosophy layer; each answer includes evidence used, confidence, missing data, recommended action
+- `src/lib/donna/philosophy/philosophyCertification.ts` — certification suite: 7 academy archetypes, global invariants, timeline ordering; 37 assertions; run with `npx tsx src/lib/donna/philosophy/philosophyCertification.ts`
+
+**Architecture:**
+- Storage: `academies.settings` JSONB only — `donna_philosophy_memory[]`, `donna_decision_patterns[]`, `donna_identity_profile`. No new tables. No migrations.
+- Pure TypeScript. No DB calls. No LLM calls. Deterministic — same input always produces same output.
+- Does not duplicate existing infrastructure: `decisionTracking.ts` (Sprint 1761), `academyPhilosophyProfile.ts` (Sprint 1019), `donnaAcademyMemoryTypes.ts`, `CurriculumMemoryEntry`
+- Philosophy drift: severity HIGH if max gap ≥35, MEDIUM if ≥20, LOW otherwise
+- Coach autonomy signal: requires `overrideReason !== null` to generate a signal (prevents false positives from system-generated overrides)
+
+---
+
+## 2026-06-11 — Mega Sprint 1716–1745 — DONNA Curriculum Intelligence Engine V1
+
+**DONNA Intelligence Routing Standard V1 established. Curriculum intent router extended with 11 curriculum intents (6 mutation V1-implemented + 5 read/analysis V2-deferred). DONNA Curriculum Architect panel built: context-first intelligence fusion, 6 modification intents (Add/Modify/Move/Expand/Replace/Remove), 9-field expanded draft object, Curriculum Recommendation Engine from academy DNA + coverage analysis + player evidence. No step wizard — DONNA loads context before responding, infers from academy DNA, level health, and player evidence signals, asks only for what cannot be determined.**
+
+**Player intelligence fully integrated in V1:** `CurriculumIntelligenceContext` loads player counts per level, advancement-eligible counts, and evidence-backed improvement suggestions via `player_evidence_records` (with fallback to `assessments` when migration 083 table is empty). DONNA surfaces player counts, weak domains, and improvement signals in coverage insights. Recommendations prioritise player-evidenced suggestions over DNA-only inference.
+
+**Files created:**
+- `docs/DONNA_INTELLIGENCE_ROUTING_STANDARD.md` — formal routing standard with 7 intelligence layers, routing checklist, curriculum intent map, V1/V2 versioning
+- `src/lib/donna/curriculum/curriculumDraftObject.ts` — `CurriculumModificationIntent`, `CurriculumDraftObject` (9 fields), `mapDraftObjectToCreateInput()`
+- `src/lib/donna/curriculum/curriculumIntelligenceContext.ts` — `CurriculumIntelligenceContext` (+ `PlayerLevelSummary`), `buildCurriculumIntelligenceContext()` server loader with player intelligence
+- `src/lib/donna/curriculum/curriculumArchitect.ts` — `interpretDirectorInput()`, `assembleDraftFromContext()`, `generateArchitectResponse()`, `buildCurriculumRecommendations()` (player-backed recommendations first)
+- `src/lib/donna/curriculum/curriculumMemory.ts` — `CurriculumMemoryEntry`, `buildCurriculumMemoryEntry()`, memory lookup helpers
+- `src/lib/donna/curriculum/curriculumDraftReviewPanel.ts` — `buildReviewSummary()`, `isDraftComplete()`, review field types
+- `src/lib/actions/saveCurriculumDraftAction.ts` — server action dispatching all 6 intents, appends memory entry after save
+- `src/app/director/curriculum/builder/DonnaCurriculumPanel.tsx` — DONNA architect conversation UI (no step counter; context-first; review screen; save flow)
+- `src/app/director/curriculum/builder/CurriculumRecommendationCard.tsx` — 1–3 DNA-driven + player-backed recommendation cards with "Build draft →" trigger
+
+**Files modified:**
+- `src/lib/donna/donnaIntentRouterV1.ts` — added 11 curriculum intents to `DonnaUnifiedIntentType`; approval gate mappings; 11 new regex patterns; routing logic; V1/V2 comments
+- `src/app/director/curriculum/builder/page.tsx` — loads `CurriculumIntelligenceContext` in parallel with explorer data; passes to builder
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — accepts `intelligenceContext` prop; mounts `DonnaCurriculumPanel` + `CurriculumRecommendationCard` above hero card
+
+**Architecture:**
+- No migrations — all 6 intent types map to existing `curriculum_content_items` columns and `academy_curriculum_overrides` table
+- Player intelligence: `player_curriculum_states` → player counts per level; `player_evidence_records` → evidence (fallback to `assessments` when table empty/missing); `analyzeCurriculumImprovements()` per occupied level
+- All paths → `academy_curriculum_overrides` (status: `pending_review`) → director approves → `execute_curriculum_override()`
+- Memory written to `academies.settings.donna_curriculum_memory[]`
+- V2-deferred intents (review/compare/explain/recommend/audit) registered in router, return "coming soon" response
+
+---
+
 ## 2026-06-11 — Sprint 1715E — Onboarding Intelligence Patch
 
 **Three inference fixes: (1) Foundation academy vocabulary expanded — 11 new keywords across `MIX_KW.competitive_juniors` and `FAM_KW.development_enjoyment` so foundation-style text correctly infers `junior_development` at high confidence. (2) Dual-track detection — 8 new keywords in `MIX_KW.mixed`; `inferModelFromText` now returns `hasDualTrackSignals`; `inferAcademyModel` prioritizes `hasAdult → dual_track` over `fitness_fun → recreational` in the mixed branch. (3) Contradiction detection — new `detectOnboardingContradiction()` function; surfaces DONNA "I may be misunderstanding something." warning with 3 resolution options when HP text contradicts recreational config or vice versa. All three certification profiles now score 9/10+. TypeScript: clean.**
