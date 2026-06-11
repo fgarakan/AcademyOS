@@ -21,11 +21,48 @@ Every question changes system behavior. Every question is impossible to infer. E
 
 When implementation details conflict, resolve in this order:
 
-1. **DONNA understanding the academy** — the system must build an accurate model of the academy from the answers given.
-2. **Low cognitive load** — the director should never feel overwhelmed or confused by what they are being asked to do.
-3. **Implementation convenience** — if something is harder to build but produces better DONNA understanding or lower cognitive load, build the harder thing.
+1. **Director clarity** — the screen must never feel like a form or overwhelm the director.
+2. **DONNA understanding** — the system must build an accurate model of the academy from the answers given.
+3. **Engineering elegance** — if something is harder to build but produces better clarity or understanding, build the harder thing.
 
 > Deep system. Simple screen. DONNA handles complexity.
+
+---
+
+## Conversational Design Principles (Req #3 — Sprint 1715B)
+
+Onboarding must feel like a conversation, not a form.
+
+Every phase and every question must include:
+- **DONNA introduction** — why she is asking this
+- **What this changes** — how this answer shapes recommendations
+- **Can be changed later?** — where in Settings to find it post-launch
+- **What if different?** — one sentence on what changes if they answer the other way
+
+Example exchange:
+
+> Director: "Why are you asking this?"
+>
+> DONNA: "Because this changes how I evaluate player development and recommend curriculum adjustments. If you tell me your players are mostly competitive juniors, I'll build a higher-intensity pathway with more competition prep. If you say recreational, I'll focus on engagement and retention."
+
+All DONNA context text is provided by `donnaOnboardingContextPack.ts` — the UI renders it, it does not generate it.
+
+---
+
+## Conversational Memory Requirement (Req #1 — Sprint 1715B)
+
+Every onboarding answer must be stored in a structure that DONNA can reference in later conversation.
+
+Not: "academy_dna exists."
+
+But: DONNA can say:
+- "You told me during onboarding that Fun was the highest priority for Red Ball players."
+- "You told me that technical development comes before competition."
+- "You told me parents should have Transparent visibility."
+
+This is achieved by writing an `onboarding_conversation` block to `academy_dna` at Launch. Each answer is stored as a `donna_quote` — a plain-language statement DONNA can retrieve and use verbatim.
+
+See the `onboarding_conversation` schema in "What Launch Academy Writes" below.
 
 ---
 
@@ -35,7 +72,7 @@ When implementation details conflict, resolve in this order:
 Phase 1 — Your Academy   (~3 min)
 Phase 2 — Your Program   (~5 min)
 Phase 3 — Your Team      (~3 min)
-Phase 4 — Launch Review  (~2 min)
+Phase 4 — Meet Your Academy  (~2 min)
 ```
 
 No orientation slides. No Phase 0. DONNA's competence is the orientation.
@@ -166,6 +203,7 @@ No input. No picker. Informational only. Director customizes individual sessions
 - **Required:** Yes for each active stage; accepting DONNA's default counts as confirmed (1 click)
 - **Shown stages:** Only stages matching Q4 selections. `adult` stage deferred to Settings.
 - **7 categories:** Technique · Tactics · Games · Competition · Movement · Mental · Fun
+- **Constraints:** Director ranks **all 7 categories** — no sliders, no manual percentage entry during onboarding, no top-2-only restriction. Rankings are mandatory; percentage adjustment is optional.
 
 **Interaction per stage:**
 
@@ -178,7 +216,7 @@ No input. No picker. Informational only. Director customizes individual sessions
 
 After confirming or reordering:
 
-> "Here is how I translated your ranking."
+> "Here is how I translated your priorities."
 >
 > Technique 25% · Movement 21% · Fun 18% · Games 14% · Mental 11% · Tactics 7% · Competition 4%
 >
@@ -310,7 +348,7 @@ Compressed decay so no category falls below 6% — every ranked category contrib
 
 ---
 
-## Phase 4 — Launch Review
+## Phase 4 — Meet Your Academy
 
 ### DONNA Opener
 
@@ -334,7 +372,7 @@ All 9 items must be green before "Launch Academy" button activates:
 
 If any item is incomplete, Launch button is disabled. DONNA shows: "[Item name] is not set. [Fix it →] link."
 
-### The "Meet Your Academy" Moment — Exact Screen Copy
+### Meet Your Academy — Exact Screen Copy
 
 ---
 
@@ -344,11 +382,17 @@ If any item is incomplete, Launch button is disabled. DONNA shows: "[Item name] 
 
 ---
 
-**What you run**
+**Academy identity**
 
-[Plain-language description based on Q2 + Q3, e.g.: "Primarily competitive junior players whose families care most about results and clear level progression."]
+[Plain-language description based on Q2, e.g.: "Primarily competitive juniors aiming for tournaments."]
 
 Academy type: **[Inferred model name — e.g., Junior Development Academy]**
+
+---
+
+**What matters most**
+
+Families care most about: **[family priorities plain-language description from Q3, e.g., "Results, rankings, and clear level progression."]**
 
 ---
 
@@ -372,11 +416,11 @@ Players advance when: **[advancement approval plain-language description]**
 
 ---
 
-**Your coaching approach**
+**Coach support style**
 
 **[Coaching style label]** — [One-sentence coaching style description.]
 
-I'll interpret coach session notes through this lens.
+I'll interpret coach wrap-up notes through this lens and surface session insights in their coaching format.
 
 Coaches [role in advancement — e.g., "can recommend player advancement; you'll be notified before any level change takes effect." or "submit wrap-ups; you personally approve every advancement." — based on Q9.]
 
@@ -392,11 +436,13 @@ Active levels: [list of level names]
 
 ---
 
-**Your parents**
+**Parent communication style**
 
 **[Minimal / Standard / Transparent]** visibility.
 
 [One sentence: what parents can see + what they cannot.]
+
+Communication tone: **[inferred parent communication tone — e.g., "Outcome-focused" / "Progress-focused" / "Minimal"]** — [one-sentence description of what this means for parent updates].
 
 ---
 
@@ -406,7 +452,34 @@ Active levels: [list of level names]
 
 ---
 
-*This is your starting model. It improves with every session, every assessment, and every decision. Everything here can be adjusted from Academy Settings.*
+---
+
+**What DONNA now knows**
+
+✓ Academy philosophy — [inferred model description]
+✓ Curriculum model — [AcademyOS built / Import pending]
+✓ Promotion rules — [advancement approval description]
+✓ Parent visibility — [transparency level]
+✓ Session structure — [duration] min, [coaching style approach]
+✓ Stage priorities — [N] stages configured
+
+---
+
+**What I still don't know**
+
+I'll learn these from real data after you launch:
+
+• Coach execution patterns — how your coaches actually run sessions vs the template
+• Parent engagement patterns — how families respond to communications
+• Player progression patterns — where players advance, stall, or need support
+• Session quality patterns — attendance trends, wrap-up completion, observation depth
+• Assessment patterns — how frequently the academy actually assesses vs the cadence I've assumed
+
+*This is expected. DONNA's model improves with every session, every assessment, and every director decision.*
+
+---
+
+*Everything here can be adjusted from Academy Settings.*
 
 ---
 
@@ -471,6 +544,21 @@ Single server action. All writes happen atomically. Nothing is written before th
 
   // Launch metadata
   classification_shown_at_launch: string,  // exact label shown in Meet Your Academy
+
+  // Conversational memory — DONNA retrieves these to quote back in conversation
+  // "You told me during onboarding that Fun was the highest priority for Red Ball players."
+  onboarding_conversation: {
+    version: 'v2',
+    saved_at: string,
+    statements: Array<{
+      key: string,           // 'player_mix' | 'family_priorities' | 'age_groups' | 'stage_priority_red_ball' | etc.
+      question: string,      // The exact question DONNA asked
+      answer_value: string,  // The raw value selected (enum key)
+      answer_label: string,  // The human-readable option label
+      donna_quote: string,   // "You told me that..." — DONNA uses verbatim in conversation
+      affects: string[],     // System behaviors this answer shapes (for context in conversation)
+    }>
+  }
 }
 
 // academies.settings.onboarding
@@ -616,9 +704,9 @@ A plain-language label DONNA generates from the full set of onboarding signals. 
 
 ### When It Is Shown
 
-**Only at Phase 4 (Launch Review)**, as part of the "Meet Your Academy" summary. The director sees the classification for the first time here — as a DONNA output, never as a choice they made.
+**Only at Phase 4 (Meet Your Academy)**, as part of the summary. The director sees the classification for the first time here — as a DONNA output, never as a choice they made.
 
-### Format at Launch Review
+### Format at Meet Your Academy
 
 > "Academy type: **[Classification label]**"
 

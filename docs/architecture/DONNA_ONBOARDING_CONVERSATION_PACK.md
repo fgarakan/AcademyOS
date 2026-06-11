@@ -163,7 +163,7 @@
 > "I need a starting point to give you useful recommendations from day one. Even the AcademyOS baseline takes a few minutes to generate and gets you a working curriculum immediately. That's the better starting position."
 
 **After Q5 (AcademyOS selected):**
-> "Building your curriculum now. I'll have it ready when you reach the Launch Review."
+> "Building your curriculum now. I'll have it ready when you reach Meet Your Academy."
 
 **After Q5 (Import selected):**
 > "Noted. I'll set up your level structure now. After launch, your first step will be the curriculum import — I'll walk you through it."
@@ -397,9 +397,9 @@
 
 ---
 
-## Phase 4 — Launch Review
+## Phase 4 — Meet Your Academy
 
-### DONNA Opens Launch Review
+### DONNA Opens Meet Your Academy
 
 > "Here's what I've built."
 >
@@ -439,11 +439,17 @@ Here is your starting model.
 
 ---
 
-**What you run**
+**Academy identity**
 
-[Player mix description] — primarily serving [player mix label text] whose families care most about [family priorities label text].
+[Player mix description] — primarily serving [player mix label text].
 
 Academy type: **[Inferred model full name]**
+
+---
+
+**What matters most**
+
+Families care most about: **[family priorities plain-language description]**
 
 ---
 
@@ -465,6 +471,16 @@ Players advance when: **[advancement approval description in plain language]**
 
 ---
 
+**Coach support style**
+
+**[Coaching style label]** — [One-sentence coaching style description.]
+
+I'll interpret coach wrap-up notes through this lens and surface session insights in their coaching format.
+
+Coaches [role in advancement — based on advancement approval setting.]
+
+---
+
 **Your curriculum**
 
 [AcademyOS Curriculum — N levels built and ready. / Import My Curriculum — level structure ready; curriculum content pending import.]
@@ -473,9 +489,11 @@ Active levels: [list of level names]
 
 ---
 
-**Your parents**
+**Parent communication style**
 
 [Transparency level] visibility. [One-sentence description of what parents can and cannot see.]
+
+Communication tone: **[inferred parent communication tone]** — [one sentence on what this means for parent updates].
 
 ---
 
@@ -493,7 +511,7 @@ Active levels: [list of level names]
 
 ---
 
-### If Director Has Questions at Launch Review
+### If Director Has Questions at Meet Your Academy
 
 **"What does this mean for my day-to-day?":**
 > "When you add players and run your first sessions, I'll start building a real picture of your academy. The model you set today is the starting point — it shapes how I interpret what I see. Within a few weeks, my recommendations will be based on actual data rather than these setup signals."

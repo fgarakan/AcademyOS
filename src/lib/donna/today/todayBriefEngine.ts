@@ -44,10 +44,17 @@ export const TODAY_DONNA_PROMPTS: DonnaSuggestedPrompt[] = [
   { label: 'What changed?',                  prompt: 'What changed?' },
 ]
 
+const CHALLENGE_PROMPTS: Record<string, DonnaSuggestedPrompt> = {
+  player_advancement:   { label: 'Who is ready to move up?',                              prompt: 'Who is ready to move up?' },
+  coach_accountability: { label: 'Which coaches haven\'t submitted a recap this week?',   prompt: 'Which coaches haven\'t submitted a recap this week?' },
+  parent_communication: { label: 'Which parents haven\'t had an update recently?',        prompt: 'Which parents haven\'t had an update recently?' },
+  curriculum_structure: { label: 'Where are the biggest curriculum gaps right now?',      prompt: 'Where are the biggest curriculum gaps right now?' },
+}
+
 // ── Setup mode detection ──────────────────────────────────────────────────────
 
 export function isSetupMode(input: TodayBriefInput): boolean {
-  return !input.isAcademyLive
+  return !input.hasOnboardingComplete && !input.isAcademyLive
 }
 
 // ── Setup progress ────────────────────────────────────────────────────────────
@@ -63,9 +70,9 @@ export function buildSetupSteps(input: TodayBriefInput): SetupStep[] {
   return [
     {
       label:       'Academy identity set up',
-      complete:    input.hasAcademyDna,
+      complete:    input.hasOnboardingComplete || input.hasAcademyDna,
       actionLabel: 'Set up with DONNA',
-      actionHref:  '/director/setup',
+      actionHref:  '/onboarding',
     },
     {
       label:       'Players added',
@@ -94,6 +101,7 @@ export interface TodayBriefInput {
   // Setup signals
   isAcademyLive:              boolean
   hasAcademyDna:              boolean
+  hasOnboardingComplete:      boolean
   classTemplateCount:         number
   sessionsExist:              boolean
 
@@ -122,20 +130,24 @@ export interface TodayBriefInput {
   // Curriculum signals
   curriculumGapCount:         number
   overCapacityGroupCount:     number
+
+  // Director challenge (from onboarding academy_dna)
+  directorChallenge?:         string
 }
 
 // ── Output ────────────────────────────────────────────────────────────────────
 
 export interface TodayBrief {
-  setupMode:           boolean
-  setupSteps:          SetupStep[]
-  academyHealth:       AcademyHealthSummary | null    // null in setup mode
-  attentionItems:      DirectorAttentionItem[]
-  topPriorities:       DirectorPriority[]
-  topRisks:            DirectorRisk[]
-  decisionsNeeded:     DirectorDecision[]
-  suggestedPrompts:    DonnaSuggestedPrompt[]
-  confidence:          'high' | 'medium' | 'low'
+  setupMode:              boolean
+  setupSteps:             SetupStep[]
+  academyHealth:          AcademyHealthSummary | null    // null in setup mode
+  attentionItems:         DirectorAttentionItem[]
+  topPriorities:          DirectorPriority[]
+  topRisks:               DirectorRisk[]
+  decisionsNeeded:        DirectorDecision[]
+  suggestedPrompts:       DonnaSuggestedPrompt[]
+  directorChallengeFocus: string | null
+  confidence:             'high' | 'medium' | 'low'
 }
 
 // ── Engine ────────────────────────────────────────────────────────────────────
@@ -219,6 +231,18 @@ export function buildTodayBrief(input: TodayBriefInput): TodayBrief {
     input.activePlayers >= 3  ? 'medium' :
                                 'low'
 
+  // Surface challenge-specific prompt first when the director named a focus area
+  const challengePrompt = input.directorChallenge
+    ? CHALLENGE_PROMPTS[input.directorChallenge] ?? null
+    : null
+  const suggestedPrompts = challengePrompt
+    ? [challengePrompt, ...TODAY_DONNA_PROMPTS.filter(p => p.prompt !== challengePrompt.prompt)]
+    : TODAY_DONNA_PROMPTS
+
+  const directorChallengeFocus: string | null = challengePrompt
+    ? challengePrompt.label
+    : null
+
   return {
     setupMode,
     setupSteps,
@@ -227,7 +251,8 @@ export function buildTodayBrief(input: TodayBriefInput): TodayBrief {
     topPriorities:    setupMode ? [] : topPriorities,
     topRisks:         setupMode ? [] : topRisks,
     decisionsNeeded,
-    suggestedPrompts: TODAY_DONNA_PROMPTS,
+    suggestedPrompts,
+    directorChallengeFocus,
     confidence,
   }
 }

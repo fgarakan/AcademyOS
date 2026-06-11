@@ -7,6 +7,49 @@
 
 ---
 
+## Sprint 1715B Design Requirements (applied before implementation)
+
+These five requirements were locked before implementation began. They override any earlier spec decision where there is a conflict.
+
+### Req #1 — Conversational Memory
+Every onboarding answer must be stored so DONNA can quote it back in conversation.
+`academy_dna.onboarding_conversation.statements[]` stores a `donna_quote` per answer:
+> "You told me during onboarding that Fun was the highest priority for Red Ball players."
+> "You told me that technical development comes before competition."
+> "You told me parents should have Transparent visibility."
+See the `onboarding_conversation` schema in `ACADEMY_ONBOARDING_FINAL_SPEC.md`.
+
+### Req #2 — Meet Your Academy: "What I Still Don't Know"
+After all 7 confirmed sections in Phase 4, add:
+**What DONNA now knows** (checkmarks) + **What I still don't know** (bullets).
+- Prevents fake certainty. DONNA must feel honest.
+- What DONNA still needs to learn: coach execution patterns, parent engagement, player progression, session quality, assessment patterns.
+
+### Req #3 — Conversational UX, not form UX
+Every phase and every question must include:
+- DONNA introduction (why she is asking)
+- What this changes (how the answer shapes recommendations)
+- Can be changed later? (where in Settings)
+- What if you answer differently? (one sentence)
+All context text lives in `donnaOnboardingContextPack.ts`. The UI renders it; it never generates it.
+
+### Req #4 — Low Cognitive Load Wins
+Priority order when in conflict: Director clarity → DONNA understanding → Engineering elegance.
+Deep system. Simple screen. DONNA handles complexity.
+
+### Req #5 — Final Review Before Commit
+Before committing Sprint 1715B, produce a complete review covering:
+1. Exact onboarding flow (phase by phase)
+2. Every director decision (all 10)
+3. Every field persisted (full schema)
+4. DONNA context pack structure
+5. Meet Your Academy screen copy
+6. What I Still Don't Know section
+7. Certification results
+Do not commit until reviewed by the director.
+
+---
+
 ## Rule: Every Question Must Justify Its Existence
 
 For each question: if no behavior changes, remove it. If DONNA can infer it, do not ask it.
@@ -111,7 +154,7 @@ Duration question folds into Phase 2 (Your Program). Block picker becomes DONNA'
 
 ---
 
-### Q7.x — Launch Review (Blueprint Phase 7)
+### Q7.x — Meet Your Academy (Blueprint Phase 7)
 
 | Question | Behavior change? | DONNA can infer? | Required? | Move post-launch? | Decision |
 |---|---|---|---|---|---|
@@ -324,7 +367,8 @@ Written to `academies.settings.academy_dna`.
 - **Q5** — Stage priorities *(rank-all per active stage)*
   - DONNA pre-populates a 7-item ranking per stage based on inferred model
   - Director confirms or reorders via drag/chips
-  - DONNA converts ranking → percentages and shows: "Here is how I translated your ranking."
+  - Director ranks **all 7 categories** in order of importance — no sliders, no manual percentage entry, no top-2-only picking
+  - DONNA converts ranking → percentages and shows: "Here is how I translated your priorities."
   - Optional: "Adjust percentages" opens editable fields; must sum to 100%
   - Categories: Technique · Tactics · Games · Competition · Movement · Mental · Fun
 - **Q6** — When a player struggles technically AND tactically, which do you address first? *(radio)*
@@ -363,7 +407,7 @@ DONNA shows what each choice means in plain language before the director chooses
 
 ---
 
-### Phase 4 — Launch Review (~2 min)
+### Phase 4 — Meet Your Academy (~2 min)
 
 **Checklist (required gates before Launch button unlocks):**
 - [ ] Academy name set
@@ -374,6 +418,15 @@ DONNA shows what each choice means in plain language before the director chooses
 - [ ] At least 1 group created
 - [ ] Parent transparency level chosen
 - [ ] Active coach membership exists (director's own counts)
+
+**Meet Your Academy screen — required sections (goal: "DONNA understands my academy"):**
+1. **Academy identity** — what kind of academy this is; inferred model label
+2. **What matters most** — family priorities in plain language (from Q3)
+3. **Curriculum approach** — AcademyOS Curriculum built vs Import pending
+4. **How players move up** — advancement approval rule in plain language
+5. **Parent communication style** — inferred communication tone + visibility level
+6. **Coach support style** — coaching approach label + how DONNA supports coach wrap-ups
+7. **DONNA-generated academy classification** — the classification label DONNA reveals here for the first time
 
 **DONNA summary (output, not input):**
 > "Your [inferred model label] academy is ready. I've built [N] curriculum levels, [duration]-minute sessions using a [coaching style] template, and [transparency level] parent visibility. This is my starting model — it improves with every session."
@@ -391,11 +444,11 @@ DONNA shows what each choice means in plain language before the director chooses
 
 | File | Description |
 |---|---|
-| `src/app/onboarding/page.tsx` | Server component — fetches academy settings + name, renders OnboardingClient |
-| `src/app/onboarding/OnboardingClient.tsx` | Client component — 4-phase wizard; 8 director decisions; DONNA context panel; localStorage draft; model inference logic |
-| `src/app/onboarding/actions.ts` | Server action `saveAcademyOnboarding()` — computes inferred model + pathway weights, writes `academy_dna` + `onboarding_completed_at` to `academies.settings` JSONB |
-| `src/lib/donna/onboarding/donnaOnboardingContextPack.ts` | Pure TS — DONNA context answers for each phase + question (why this matters, how it affects recommendations, can I change this, what if I skip) |
-| `docs/qa/ACADEMY_ONBOARDING_10_10_CERTIFICATION_1715.md` | 15 validation checks |
+| `src/app/onboarding/page.tsx` | Server component — fetches academy settings + name, renders OnboardingClient; redirects to `/director` if `onboarding_completed_at` already set |
+| `src/app/onboarding/OnboardingClient.tsx` | Client component — 4-phase wizard; 10 director decisions; DONNA context panel (why/what changes/can change later/what if different); rank-all stage priorities; Meet Your Academy with "What I Still Don't Know"; Launch calls server action |
+| `src/app/onboarding/actions.ts` | Server action `saveAcademyOnboarding()` — computes inferred model + pathway weights + coaching style + portal rules + defaults; builds `onboarding_conversation` with a `donna_quote` per answer; writes `academy_dna` + `onboarding.onboarding_completed_at` to `academies.settings` JSONB |
+| `src/lib/donna/onboarding/donnaOnboardingContextPack.ts` | Pure TS — per-question conversational context: `whyAsking`, `whatChanges`, `canChangeLater`, `differentAnswer`; `donna_quote` templates per answer option; DONNA phase openers; inference labels; coaching style labels; "What I Still Don't Know" items |
+| `docs/qa/ACADEMY_ONBOARDING_10_10_CERTIFICATION_1715.md` | 15 post-implementation validation checks |
 
 ### Files to Modify
 

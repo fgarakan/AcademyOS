@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { getReassessmentPipeline } from '@/lib/backend/dashboard'
@@ -97,6 +98,15 @@ export default async function DirectorDashboard() {
   // Onboarding settings
   const onboardingSettings = (academy?.settings as Record<string, unknown>) ?? {}
   const hasAcademyDna = typeof onboardingSettings.academy_dna === 'object' && onboardingSettings.academy_dna !== null
+  const hasOnboardingComplete = (
+    typeof onboardingSettings.onboarding === 'object' &&
+    onboardingSettings.onboarding !== null &&
+    typeof (onboardingSettings.onboarding as Record<string, unknown>).onboarding_completed_at === 'string'
+  )
+  const academyDna = onboardingSettings.academy_dna as Record<string, unknown> | undefined
+  const directorChallenge = typeof academyDna?.director_challenge === 'string'
+    ? academyDna.director_challenge
+    : undefined
 
   // Private lesson requests
   const { data: plrData } = await rawDb
@@ -267,10 +277,17 @@ export default async function DirectorDashboard() {
   const totalPendingReviews = pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
+  // Mandatory onboarding gate — redirect new academies that haven't completed setup
+  if (!hasOnboardingComplete && !isAcademyLive) {
+    redirect('/onboarding')
+  }
+
   // ── Today brief ────────────────────────────────────────────────────────────────
   const brief = buildTodayBrief({
     isAcademyLive,
     hasAcademyDna,
+    hasOnboardingComplete,
+    directorChallenge,
     classTemplateCount,
     sessionsExist,
     activePlayers,

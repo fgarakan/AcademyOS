@@ -2,6 +2,93 @@
 
 ---
 
+## 2026-06-11 — Sprint 1715E — Onboarding Intelligence Patch
+
+**Three inference fixes: (1) Foundation academy vocabulary expanded — 11 new keywords across `MIX_KW.competitive_juniors` and `FAM_KW.development_enjoyment` so foundation-style text correctly infers `junior_development` at high confidence. (2) Dual-track detection — 8 new keywords in `MIX_KW.mixed`; `inferModelFromText` now returns `hasDualTrackSignals`; `inferAcademyModel` prioritizes `hasAdult → dual_track` over `fitness_fun → recreational` in the mixed branch. (3) Contradiction detection — new `detectOnboardingContradiction()` function; surfaces DONNA "I may be misunderstanding something." warning with 3 resolution options when HP text contradicts recreational config or vice versa. All three certification profiles now score 9/10+. TypeScript: clean.**
+
+**Files modified:**
+- `src/lib/donna/onboarding/donnaOnboardingContextPack.ts` — expanded `MIX_KW` + `FAM_KW`; added `hasDualTrackSignals` to `inferModelFromText` return; reordered `inferAcademyModel` mixed branch (`hasAdult` before `fitness_fun`); added `detectOnboardingContradiction()`
+- `src/app/onboarding/OnboardingClient.tsx` — imported `detectOnboardingContradiction`; added `contradictionWarning` state; updated `introInferred` state type; updated `handleIntroSubmit` to run contradiction detection synchronously; `InferenceResult` renders dual-track DONNA hint + contradiction 3-option UI
+
+**Certification:**
+- Profile 1 (Foundation-First): `junior_development`, high confidence, no contradiction — ✓ PASS
+- Profile 6 (Dual-Track): `dual_track`, `hasDualTrackSignals=true`, no contradiction — ✓ PASS
+- Profile 7 (Contradiction): all 3 cases fire correctly with DONNA message — ✓ PASS
+- Regression (Pure recreational adult): still returns `recreational` — ✓ PASS
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
+## 2026-06-10 — Sprint 1715D — Onboarding Final Polish
+
+**Removed explicit Player Mix and Family Priorities questions. Both now inferred from intro text only (director adjusts via dropdowns if wrong). Phase 1 reordered: Academy Name → Tell Me About Your Academy → Active Levels → New or Migrating. Priority edge reframed as real-world coaching scenario. Director Challenge wired to drive first dashboard brief. TypeScript: clean.**
+
+**Files modified:**
+- `src/app/onboarding/OnboardingClient.tsx` — Phase 1 reordered (academy name first); Q2 + Q3 card grids removed; intro text always runs inference on submit, graceful fallback with dropdowns when confidence low or null; Phase 4 priority edge question reframed as concrete 5-minute coaching scenario with 3 grounded options
+- `src/lib/donna/onboarding/donnaOnboardingContextPack.ts` — Updated `DONNA_PHASE_OPENERS[1]` and `[4]`; replaced abstract `Q_PRIORITY_EDGE` context with scenario-framed copy; updated `buildOnboardingStatements()` priority_edge question text to match scenario
+- `src/lib/donna/today/todayBriefEngine.ts` — Added `directorChallenge?: string` to `TodayBriefInput`; added `CHALLENGE_PROMPTS` map (4 challenge types → specific prompts); added `directorChallengeFocus: string | null` to `TodayBrief` output; challenge prompt surfaces first in `suggestedPrompts` when set
+- `src/app/director/page.tsx` — Reads `academy_dna.director_challenge` from settings; passes to `buildTodayBrief()`
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
+## 2026-06-10 — Sprint 1715C — Academy Onboarding Simplification Pass
+
+**Product lock simplification: 7 changes across 3 files. Replaced 5 individual stage rankers with single summary table. Added intro text question with DONNA keyword inference. Added setup context question. Added director challenge question. Moved priority edge to Phase 4 as philosophy question. Removed active levels from Phase 2 (derived from Phase 1). Auto-generate training groups from active levels. TypeScript: clean.**
+
+**Files modified:**
+- `src/lib/donna/onboarding/donnaOnboardingContextPack.ts` — Added `SetupContext` + `DirectorChallenge` types, `inferModelFromText()` (keyword matching, no external AI), `DIRECTOR_CHALLENGE_OPTIONS`, `SETUP_CONTEXT_LABELS`, `DONNA_QUESTION_CONTEXT` entries for Q_INTRO / Q_SETUP_CONTEXT / Q_CHALLENGE / Q_PRIORITY_EDGE, updated `buildOnboardingStatements()` to accept `introText?`, `setupContext`, `directorChallenge`
+- `src/app/onboarding/actions.ts` — Added `introText?`, `setupContext`, `directorChallenge` to `OnboardingV2Input`; moved `priorityEdge` to Phase 4 section; removed `activeLevels` input (derived server-side as `ageGroups.filter(g => g !== 'adult')`); updated `buildOnboardingStatements()` call with new fields
+- `src/app/onboarding/OnboardingClient.tsx` — Full rewrite: Phase 1 adds intro text + DONNA inference result + setup context question; Phase 2 replaces 5 StageRankers with `StageSummaryTable` ([This Looks Right] / [Customize] pattern), removes active levels confirmation; Phase 3 auto-generates groups from active levels, adds director challenge question; Phase 4 adds priority edge as philosophy question before launch checklist
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
+## 2026-06-10 — Sprint 1715B — Academy Onboarding V2 Implementation
+
+**Full 4-phase director onboarding wizard. Mandatory before director dashboard access. All 10 director decisions persisted with DONNA conversational memory. TypeScript: clean.**
+
+**Files created:**
+- `src/lib/donna/onboarding/donnaOnboardingContextPack.ts` — Pure TS context pack: all types, label maps, model inference, rank-to-weights, default rankings (5 models × 5 stages), phase openers, per-question DONNA context (Q1–Q10 with whyAsking/whatChanges/canChangeLater/differentAnswer), "What I still don't know" (5 items), `buildOnboardingStatements()` with `donna_quote` per answer
+- `src/app/onboarding/actions.ts` — Server action `saveAcademyOnboarding()`: auth check, director role verify, computes inferred model + coaching style + pathway weights + portal rules, builds full `onboarding_conversation.statements[]`, writes to `academies.settings.academy_dna` + `academies.settings.onboarding` non-destructively
+- `src/app/onboarding/OnboardingClient.tsx` — 4-phase wizard client component: Phase 1 (academy identity, player mix, family priorities, age groups), Phase 2 (active levels, curriculum starting point, stage rank-all priorities with percentage display, priority edge, session duration, advancement approval), Phase 3 (training groups, optional coach invites, parent transparency with portal rules preview), Phase 4 (Meet Your Academy: 7 sections + "What DONNA knows" + "What I still don't know" + Launch button)
+- `docs/qa/ACADEMY_ONBOARDING_10_10_CERTIFICATION_1715.md` — 15 certification checks, all PASS
+
+**Files modified:**
+- `src/app/onboarding/page.tsx` — Replaced V1 shell with V2 server component: auth check, redirect if onboarding already complete, load academy name, render `<OnboardingClient />`
+- `src/lib/donna/today/todayBriefEngine.ts` — Added `hasOnboardingComplete` to `TodayBriefInput`; updated `isSetupMode()` to `!hasOnboardingComplete && !isAcademyLive`; updated setup step href to `/onboarding`
+- `src/app/director/page.tsx` — Added `hasOnboardingComplete` derivation from `settings.onboarding.onboarding_completed_at`; added mandatory redirect to `/onboarding` when `!hasOnboardingComplete && !isAcademyLive`; passes `hasOnboardingComplete` to `buildTodayBrief()`
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
+## 2026-06-10 — Sprint 1715B Pre-Implementation — 5 Design Requirements Applied to Spec
+
+**Spec-only update. No code. Applied before Sprint 1715B implementation begins.**
+
+- Req #1 (Conversational Memory): Added `onboarding_conversation` to `academy_dna` schema — each director answer stored with `donna_quote` field for DONNA conversational retrieval; updated Core Principle section and implementation plan
+- Req #2 (What I Still Don't Know): Added to Phase 4 / Meet Your Academy screen in final spec — "What DONNA now knows" checkmarks + "What I still don't know" bullets (coach execution, parent engagement, player progression, session quality, assessment patterns)
+- Req #3 (Conversational UX): Added Conversational Design Principles section to final spec; updated `donnaOnboardingContextPack.ts` description to include `whyAsking`/`whatChanges`/`canChangeLater`/`differentAnswer`/`donna_quote` per question
+- Req #4 (Low Cognitive Load): Updated priority order in final spec — Director clarity → DONNA understanding → Engineering elegance (supersedes earlier "Implementation convenience" framing)
+- Req #5 (Final Review Before Commit): Documented in implementation plan — 7-item review required before Sprint 1715B commit
+
+---
+
+## 2026-06-10 — Sprint 1715A Amendment — Final Product-Lock Decisions Applied
+
+**Design amendment only. No code. Updates implementation plan, final spec, and DONNA conversation pack to reflect 4 locked product decisions before Sprint 1715B implementation begins.**
+
+- Renamed Phase 4 from "Launch Review" to "Meet Your Academy" throughout all three documents (`ACADEMY_ONBOARDING_IMPLEMENTATION_PLAN_V2_1715.md`, `ACADEMY_ONBOARDING_FINAL_SPEC.md`, `DONNA_ONBOARDING_CONVERSATION_PACK.md`)
+- Stage priorities (Q6): locked to rank-all-7 model — no sliders, no manual percentage entry during ranking, no top-2 restriction; DONNA message updated to "Here is how I translated your priorities." (from "…your ranking"); constraint documented explicitly in both spec and implementation plan
+- Curriculum Starting Point (Q5): confirmed as 3-option radio — AcademyOS Curriculum (Recommended) · Import My Curriculum · Partner Curriculum (Coming Soon, disabled); no "Build Later" option
+- Meet Your Academy screen: 7 required sections locked — Academy identity · What matters most · Curriculum approach · How players move up · Parent communication style · Coach support style · DONNA-generated academy classification; goal: director feels "DONNA understands my academy"
+
+---
+
 ## 2026-06-10 — Mega Sprint 1715A — Academy Onboarding Final Product Lock V1
 
 **Design lock only. No code. No UI. No database changes. Produces the final onboarding specification that Sprint 1715B will implement. Core outcome: 23+ questions across 7 phases reduced to 10 director decisions across 4 phases (~10 min). Stage weighting resolved (confirm-or-swap defaults, not 28 sliders). Curriculum starting point resolved (required, AcademyOS vs Import). DONNA conversation capability fully specified. "Meet Your Academy" launch moment copy written. All 8 certification checks pass.**
