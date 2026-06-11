@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-06-11 — Mega Sprint 1776–1805 — DONNA Academy Operating Partner V1
+
+**DONNA becomes a strategic operating partner.** Fuses philosophy memory with live operational data to produce a synthesised, prioritised director brief. Reality always outranks philosophy. Situation is classified before any priorities are generated. Every priority carries a tradeoff analysis, capacity cost, and explainability record.
+
+**7 architectural guards enforced structurally:** Situation Before Priority • Attention ≠ Priority • Tradeoff Engine • Director Capacity Model (100-unit budget) • Top Three Law (max 3 priorities/alerts/wins, 1 action) • Missing Data Protection • Explainability Required (Guard #7).
+
+**Certification: 119/119 assertions pass across 9 scenarios (Empty Academy, Clean Academy, Coach Execution Gap, Curriculum Gap, Parent Retention Risk, Communication Gap, Philosophy Drift, Heavy Signal Overload 29 signals, Director Capacity Saturation 40 priorities). TypeScript clean.**
+
+**Files created:**
+- `src/lib/donna/operations/academyAttentionEngine.ts` — `OperatingAttentionSignal[]` and `OperatingAttentionReport` from `OperatingPartnerInputs`; 7 domain signal builders; signals are observations only, never priorities (Guard #2)
+- `src/lib/donna/operations/academyAttentionScoring.ts` — `AcademyAttentionScore` from signals; per-domain severity weighting; weighted composite; `whatRaisedScore` / `whatLoweredScore` surface
+- `src/lib/donna/operations/operatingPartnerTradeoffEngine.ts` — `TradeoffAnalysis` per selected priority; deferred actions, opportunity cost, deferral window estimation
+- `src/lib/donna/operations/directorCapacityModel.ts` — `DirectorCapacityBudget`, `estimateCapacityCost()`, `buildCapacityBudget()`; 100-unit attention budget; structurally never over-budget
+- `src/lib/donna/operations/operatingPartnerExplainability.ts` — `PriorityExplanation` tracing reality, memory, and philosophy contribution to every priority (Guard #7)
+- `src/lib/donna/operations/whatShouldIDoTodayEngine.ts` — `TodayPriority` (extends `OperatingPriority` + capacityCost/tradeoff/explanation); situation-gated candidate generation; all 7 guards structurally enforced
+- `src/lib/donna/operations/academyOpportunityEngine.ts` — `OperatingWin[]` (max 3); positive signal detection across players/coaches/curriculum/parents/philosophy
+- `src/lib/donna/operations/academyBottleneckRanking.ts` — `RankedBottleneck[]` across 6 domains; severity-scored; `situationConfirms` flag
+- `src/lib/donna/operations/directorDailyBriefEngine.ts` — `DirectorOperatingBrief` orchestrator; enforces hard limits (max 3 each); `TodayPriority[]` stripped to `OperatingPriority[]` for contract compatibility
+- `src/lib/donna/operations/cooConversationEngine.ts` — 10 COO questions with `COOConversationAnswer`; `answerAllCOOQuestions()` batch function
+- `src/lib/donna/operations/operatingPartnerCertification.ts` — 9 scenarios × 13 assertion groups; 119 assertions; run with `npx tsx src/lib/donna/operations/operatingPartnerCertification.ts`
+
+---
+
 ## 2026-06-11 — Mega Sprint 1746–1775 — DONNA Philosophy Memory & Academy Evolution Engine V1
 
 **DONNA becomes a long-term academy intelligence partner.** Learns how the academy thinks, makes decisions, what philosophies emerge over time, and how the academy is evolving. Compares stated onboarding DNA against observed behavioral patterns to detect drift. Surfaces reality overrides when player evidence contradicts stated philosophy. Answers the 10 evolution questions a director would ask when stepping back to assess the academy.
