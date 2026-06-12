@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 2141–2170 — Director Workflow Consolidation Architecture Package V1
+
+**Mission:** Resolve the architectural decisions that were blocking Director workflow consolidation. No implementation. Decision package only.
+
+**Decisions made:**
+
+1. Template governance model — Direct Save for academy-owned operational objects (Class Templates, Fitness Templates, Sessions). Proposed Actions reserved for global curriculum governance (Global Curriculum, Global Skills, Global Progressions, Global Knowledge). Tree B (`/director/class-templates/*`, `/director/fitness/templates/*`) is canonical. Tree A (`/director/templates/*`) is deprecated.
+
+2. Dashboard architecture — Canonical route is `/director/dashboard`. KPI terminology retired everywhere. Dashboard is primary navigation item #2 (after Today). Dashboard = evidence layer validating Today's recommendations.
+
+3. Navigation standard — 8-item canonical nav: Today, Dashboard, Players, Curriculum, Templates, Coaches, Approvals, Settings.
+
+4. DONNA conversation roadmap — Phase 1: Conversation Memory → Phase 2: Workflow Guidance (foundational capability, general case) → Phase 3: Guided Onboarding (onboarding is one workflow instance).
+
+**Files created:**
+- `docs/architecture/TEMPLATE_ARCHITECTURE_DECISION.md` — governance tiers, canonical route tree, object models, DONNA interaction model
+- `docs/architecture/DIRECTOR_DASHBOARD_ARCHITECTURE.md` — route, nav position, Today vs. Dashboard split, content domains
+- `docs/architecture/DONNA_CONVERSATION_ARCHITECTURE.md` — current state diagnosis, three-phase roadmap, what this is not
+- `docs/audits/NAVIGATION_CONSOLIDATION_REPORT.md` — canonical 8-item nav, SidebarNav before/after, 9 broken link targets, 4 deprecated route redirects
+
+**Deferred to Phase B (awaiting architecture approval — now approved):**
+- Redirect: `/director/today` → `/director`
+- Redirect: `/director/setup` → `/director/onboarding`
+- Redirect: `/director/kpi` → `/director/dashboard`
+- 7 wrong href fixes in DONNA engine files
+- SidebarNav update (8-item canonical nav)
+- New `/director/dashboard` page
+- Tree A template route deprecation
+- Certification TypeScript file
+
+**TypeScript:** No code changes in this sprint.
+
+---
+
 ## 2026-06-12 — Mega Sprint 2111–2140 — DONNA Command Center V2
 
 **"Can the Director complete this without leaving Today?"**
