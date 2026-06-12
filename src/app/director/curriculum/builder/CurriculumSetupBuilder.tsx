@@ -33,6 +33,7 @@ interface Props {
   origin: 'onboarding' | 'builder'
   levels?: CurriculumLevel[]
   intelligenceContext?: CurriculumIntelligenceContext
+  initialMemory?: import('@/lib/donna/curriculum/curriculumEvolutionMemory').EvolutionMemoryEntry[]
 }
 
 const STAGE_COLOR: Record<string, string> = {
@@ -134,7 +135,7 @@ function parseCoachCues(raw: string): string[] {
   return raw.split(/[,;]+/).map(s => s.trim()).filter(Boolean).slice(0, 5)
 }
 
-export function CurriculumSetupBuilder({ levels = [], intelligenceContext }: Props) {
+export function CurriculumSetupBuilder({ levels = [], intelligenceContext, initialMemory = [] }: Props) {
   const router = useRouter()
   const [jumpOpen, setJumpOpen] = useState(false)
 
@@ -357,7 +358,7 @@ export function CurriculumSetupBuilder({ levels = [], intelligenceContext }: Pro
             )}
 
             {intelligenceTab === 'evolution' && (
-              <CurriculumEvolutionPanel intelligenceContext={intelligenceContext} />
+              <CurriculumEvolutionPanel intelligenceContext={intelligenceContext} initialMemory={initialMemory} />
             )}
           </div>
         )}

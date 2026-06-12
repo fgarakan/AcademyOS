@@ -8,6 +8,7 @@ import { DEFAULT_CURRICULUM_SETUP_STATE } from '@/lib/curriculum/curriculumSetup
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumBuilderChangeQueue } from './CurriculumBuilderChangeQueue'
 import { buildCurriculumIntelligenceContext } from '@/lib/donna/curriculum/curriculumIntelligenceContext'
+import type { EvolutionMemoryEntry } from '@/lib/donna/curriculum/curriculumEvolutionMemory'
 
 export default async function CurriculumBuilderPage() {
   const supabase = await getSupabaseServer()
@@ -66,6 +67,10 @@ export default async function CurriculumBuilderPage() {
   const settings = (academy?.settings as Record<string, unknown>) ?? {}
   const rawV2 = (settings.curriculum_setup_v2 as Record<string, unknown>) ?? {}
 
+  const initialMemory: EvolutionMemoryEntry[] = Array.isArray(settings.donna_curriculum_evolution_memory)
+    ? (settings.donna_curriculum_evolution_memory as EvolutionMemoryEntry[])
+    : []
+
   const initialState: CurriculumSetupState = {
     ...DEFAULT_CURRICULUM_SETUP_STATE,
     ...rawV2,
@@ -103,6 +108,7 @@ export default async function CurriculumBuilderPage() {
         origin="builder"
         levels={explorerData.levels}
         intelligenceContext={intelligenceContext}
+        initialMemory={initialMemory}
       />
     </>
   )

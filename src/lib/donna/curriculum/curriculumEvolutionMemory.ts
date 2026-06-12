@@ -110,3 +110,62 @@ export function wasTypeApprovedForLevel(
     m => m.levelId === levelId && m.recommendationType === type && m.decision === 'approved',
   )
 }
+
+// ── Retrieval helpers ─────────────────────────────────────────────────────────
+
+/** All approved entries, newest first */
+export function getApprovedRecommendations(
+  memory: EvolutionMemoryEntry[],
+): EvolutionMemoryEntry[] {
+  return memory
+    .filter(m => m.decision === 'approved')
+    .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt))
+}
+
+/** All dismissed and rejected entries, newest first */
+export function getDismissedRecommendations(
+  memory: EvolutionMemoryEntry[],
+): EvolutionMemoryEntry[] {
+  return memory
+    .filter(m => m.decision === 'dismissed' || m.decision === 'rejected')
+    .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt))
+}
+
+/** All deferred entries (past or future review date), newest first */
+export function getDeferredRecommendations(
+  memory: EvolutionMemoryEntry[],
+): EvolutionMemoryEntry[] {
+  return memory
+    .filter(m => m.decision === 'deferred')
+    .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt))
+}
+
+/** Deferred entries whose reviewDate has passed — should be re-shown to the director */
+export function getRecommendationsDueForReview(
+  memory: EvolutionMemoryEntry[],
+  now = new Date().toISOString(),
+): EvolutionMemoryEntry[] {
+  return memory.filter(
+    m => m.decision === 'deferred' && m.reviewDate !== null && m.reviewDate <= now,
+  )
+}
+
+/** All memory entries for a specific curriculum level, newest first */
+export function getEvolutionHistoryForLevel(
+  memory: EvolutionMemoryEntry[],
+  levelId: string,
+): EvolutionMemoryEntry[] {
+  return memory
+    .filter(m => m.levelId === levelId)
+    .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt))
+}
+
+/** All memory entries for a specific curriculum gate, newest first */
+export function getEvolutionHistoryForGate(
+  memory: EvolutionMemoryEntry[],
+  gateId: string,
+): EvolutionMemoryEntry[] {
+  return memory
+    .filter(m => m.gateId === gateId)
+    .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt))
+}

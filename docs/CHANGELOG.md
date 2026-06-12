@@ -2,6 +2,78 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 1961–1990 — Fable Implementation Phase 1 — Director Operating System V1
+
+**Deep System. Simple Screen. DONNA Is The Interface.**
+
+**Core mission:** Redesigned director experience around decision-making. Today page is now decision-first. Navigation reduced from 9→6 items (desktop) and 5→3 items (mobile). Returning Director Mode activates at 14+ days absence, surfacing What Changed / What Improved / What Matters Now / Recommended First Action. DONNA Command Bar floats at the bottom of every director page with 5 pre-wired questions.
+
+**Director Decision Engine:** Pure aggregation of existing engine outputs — no new intelligence, no new AI calls, no new tables. Maps TodayPriority → DirectorDecision with confidence level (reliable/provisional), decision prompt (binary choice framing), and urgency scale (critical/high/medium/low).
+
+**ReturningDirectorMode:** Activates when `daysSinceLastVisit >= 14` (via `user.last_sign_in_at`). Summarizes the 4 sections a director needs to regain context in under 2 minutes.
+
+**Validation:**
+- TypeScript: clean (0 errors)
+- All 6 certification suites: PASS
+- Director Operating System Certification: ALL PASS (40/40)
+- Production build: exit 0, no prerender errors
+
+**Files created:**
+- `src/lib/donna/operations/directorDecisionEngine.ts` — pure aggregation engine: TodayPriority[] → DirectorDecision[], ReturningDirectorSummary, DirectorDecisionContext
+- `src/app/director/_components/DirectorDecisionCenter.tsx` — decision-framed 3-card panel with confidence badges, urgency labels, binary-choice prompts
+- `src/app/director/_components/ReturningDirectorBanner.tsx` — 4-section returning director context: changed, improved, matters now, recommended action
+- `src/app/director/_components/DonnaCommandBar.tsx` — fixed-position desktop command bar with 5 pre-wired DONNA questions
+- `src/lib/donna/operations/directorOperatingSystemCertification.ts` — 40 assertions across 10 scenarios
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — 9 → 6 primary items (removed Dashboard, Sessions, Templates)
+- `src/components/nav/DirectorMobileNav.tsx` — 5 → 3 items (Today, Players, Approvals)
+- `src/app/director/layout.tsx` — added DonnaCommandBar to director layout
+- `src/app/director/page.tsx` — decision-first rebuild: DirectorDecisionCenter replaces TopThreePrioritiesPanel, ReturningDirectorBanner added, DirectorCapacityMeter and WhatShouldIIgnorePanel removed, WhatChanged moved before WhatCanWait
+- `src/app/director/players/page.tsx` — DONNA intelligence header: 2-sentence summary with needsAttention + advancementReady counts
+- `src/app/director/coaches/page.tsx` — DONNA intelligence summary above coach list
+- `src/app/director/curriculum/page.tsx` — Create / Improve / Review action bar at top of curriculum command center
+- `src/lib/donna/releaseCertification.ts` — added Section 6: Director Operating System Certification
+
+---
+
+## 2026-06-12 — Mega Sprint 1931–1960 — DONNA Evolution Memory Persistence V1
+
+**Director decisions on Evolution recommendations are now persisted. DONNA remembers.**
+
+**Core mission:** Closes the recommendation loop — DONNA recommends → Director decides → System remembers. Dismiss/Defer/Approve buttons in `CurriculumEvolutionPanel` now write to `academies.settings.donna_curriculum_evolution_memory[]`. Memory is loaded server-side on page load and threaded through to the panel. Suppression logic hides recommendations that have been actioned, with deterministic resurfacing on material evidence change.
+
+**Memory storage pattern:** Same as `donna_curriculum_memory[]` — no new table, no migration, JSONB array in existing `academies.settings`. Capped at 100 entries (oldest dropped). Deduplicated by `recommendationId` — only the latest director decision per recommendation is kept.
+
+**Suppression rules:**
+- `dismissed` → hide unless evidenceStrength increases, confidence +15%+, or recommendationType changes
+- `rejected` → same suppression rules as dismissed
+- `deferred` → hide until `reviewDate` passes (14-day default)
+- `approved` → hide (director agreed; don't re-surface as new recommendation)
+
+**No automatic curriculum mutation:** Approval records director agreement only. Curriculum changes still go through the draft → review → approval → save pipeline.
+
+**Validation:**
+- TypeScript: clean (0 errors)
+- Curriculum Architect Certification: ALL PASS (50/50)
+- Curriculum Evolution Certification: ALL PASS (74/74)
+- Command Center Certification: ALL PASS
+- Evolution Memory Certification: ALL PASS (40/40)
+
+**Files created:**
+- `src/lib/actions/saveCurriculumEvolutionDecisionAction.ts` — server action: auth + director-only, reads/writes `donna_curriculum_evolution_memory[]`, deduplicates, caps at 100
+- `src/lib/donna/curriculum/curriculumEvolutionSuppressionFilter.ts` — pure filter: `shouldSuppressRecommendation()`, `filterEvolutionRecommendations()`, `hasMaterialEvidenceChange()`
+- `src/lib/donna/curriculum/curriculumEvolutionMemoryCertification.ts` — 12 scenarios, 40 assertions covering factory, retrieval helpers, suppression logic, material evidence change
+
+**Files modified:**
+- `src/lib/donna/curriculum/curriculumEvolutionMemory.ts` — added 6 retrieval helpers: `getApprovedRecommendations()`, `getDismissedRecommendations()`, `getDeferredRecommendations()`, `getRecommendationsDueForReview()`, `getEvolutionHistoryForLevel()`, `getEvolutionHistoryForGate()`
+- `src/app/director/curriculum/builder/CurriculumEvolutionPanel.tsx` — wired Approve/Dismiss/Later buttons to server action; added `initialMemory` prop; optimistic local state; per-decision feedback toast; suppression filter replaces local dismissed/deferred Sets
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — added `initialMemory` prop and threads it to `CurriculumEvolutionPanel`
+- `src/app/director/curriculum/builder/page.tsx` — extracts `donna_curriculum_evolution_memory` from settings and passes as `initialMemory`
+- `src/lib/donna/releaseCertification.ts` — added Section 5: Evolution Memory Certification
+
+---
+
 ## 2026-06-12 — Sprint 1865A — Production Readiness & Curriculum Evolution Exposure V1
 
 **AcademyOS becomes deployable. Evolution Engine becomes visible.**

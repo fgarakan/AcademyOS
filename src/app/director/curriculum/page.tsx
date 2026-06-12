@@ -334,6 +334,43 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
         <h1 className="page-title">Curriculum Command Center</h1>
       </div>
 
+      {/* ── 1b. Create / Improve / Review action bar ─────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link
+          href="/director/curriculum/builder"
+          className="flex items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 hover:border-lime/30 hover:bg-lime/5 transition-all group"
+        >
+          <Wrench className="w-4 h-4 text-lime shrink-0" />
+          <div>
+            <p className="text-[12px] font-semibold text-text-primary">Create</p>
+            <p className="text-[11px] text-text-muted">Add levels, gates, and content</p>
+          </div>
+          <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime ml-auto transition-colors" />
+        </Link>
+        <Link
+          href="/director/curriculum/builder"
+          className="flex items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 hover:border-lime/30 hover:bg-lime/5 transition-all group"
+        >
+          <Sparkles className="w-4 h-4 text-lime shrink-0" />
+          <div>
+            <p className="text-[12px] font-semibold text-text-primary">Improve</p>
+            <p className="text-[11px] text-text-muted">DONNA evolution recommendations</p>
+          </div>
+          <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime ml-auto transition-colors" />
+        </Link>
+        <Link
+          href="/director/review"
+          className="flex items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 hover:border-lime/30 hover:bg-lime/5 transition-all group"
+        >
+          <CheckCircle2 className="w-4 h-4 text-lime shrink-0" />
+          <div>
+            <p className="text-[12px] font-semibold text-text-primary">Review</p>
+            <p className="text-[11px] text-text-muted">Pending approvals and changes</p>
+          </div>
+          <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime ml-auto transition-colors" />
+        </Link>
+      </div>
+
       {/* ── 2. Nav tabs — Health is the active (current) tab ─────────────── */}
       <div className="flex border-b border-border -mt-2">
         <Link

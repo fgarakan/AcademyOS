@@ -3,24 +3,21 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  Sun, Users, BookOpen, Calendar,
+  Sun, Users, BookOpen,
   LogOut, ClipboardList,
-  LayoutTemplate, Settings, Rocket, BarChart2, UserCog, CheckSquare,
+  Settings, Rocket, UserCog, CheckSquare,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
-// Mega Sprint 1505 — locked director IA: 9 primary items in exact order
-// UX principle: Today = operating surface, Dashboard = visual proof/trends.
-// Director sees only what needs attention. Detail hidden until requested.
+// Mega Sprint 1961 — 6-item director IA: decision-first operating surface.
+// Removed: Dashboard (/kpi), Sessions (/sessions), Templates (/templates).
+// Director sees today + the domains that require decisions.
 const ACADEMY_ITEMS = [
   { label: 'Today',      href: '/director',            icon: Sun },
-  { label: 'Dashboard',  href: '/director/kpi',        icon: BarChart2 },
   { label: 'Players',    href: '/director/players',    icon: Users },
-  { label: 'Sessions',   href: '/director/sessions',   icon: Calendar },
-  { label: 'Approvals',  href: '/director/review',     icon: CheckSquare },
-  { label: 'Templates',  href: '/director/templates',  icon: LayoutTemplate },
   { label: 'Curriculum', href: '/director/curriculum', icon: BookOpen },
   { label: 'Coaches',    href: '/director/coaches',    icon: UserCog },
+  { label: 'Approvals',  href: '/director/review',     icon: CheckSquare },
   { label: 'Settings',   href: '/director/settings',   icon: Settings },
 ]
 

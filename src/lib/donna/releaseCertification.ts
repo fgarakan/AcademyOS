@@ -75,7 +75,19 @@ try {
   console.log('  — commandCenterCertification.ts not found (skipped)')
 }
 
-section('5. Production Build')
+section('5. Evolution Memory Certification')
+run(
+  'curriculumEvolutionMemoryCertification (memory retrieval + suppression filter)',
+  'npx tsx src/lib/donna/curriculum/curriculumEvolutionMemoryCertification.ts',
+)
+
+section('6. Director Operating System Certification')
+run(
+  'directorOperatingSystemCertification (decisions, returning director, nav, command bar)',
+  'npx tsx src/lib/donna/operations/directorOperatingSystemCertification.ts',
+)
+
+section('7. Production Build')
 console.log('  — npm run build must be run manually:')
 console.log('    npm run build')
 console.log('    Expected: exit 0, no prerender errors')

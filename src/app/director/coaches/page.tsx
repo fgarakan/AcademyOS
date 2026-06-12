@@ -91,8 +91,22 @@ export default async function CoachesPage() {
     sessionCount30d: sessionCountMap.get(m.profileId) ?? 0,
   }))
 
-  const headCoaches = coaches.filter(c => c.role === 'head_coach')
+  const headCoaches    = coaches.filter(c => c.role === 'head_coach')
   const regularCoaches = coaches.filter(c => c.role === 'coach')
+
+  const coachesWithSessions = coaches.filter(c => c.sessionCount30d > 0).length
+  const coachesInactive     = coaches.filter(c => c.sessionCount30d === 0).length
+
+  const coachesBrief = (() => {
+    if (coaches.length === 0) return 'No coaches added yet. Invite your coaching team to start tracking session activity.'
+    const sentence1 = coachesWithSessions > 0
+      ? `${coachesWithSessions} of ${coaches.length} coach${coaches.length !== 1 ? 'es have' : ' has'} run sessions in the last 30 days.`
+      : `No coaches have run sessions in the last 30 days.`
+    const sentence2 = coachesInactive > 0
+      ? `${coachesInactive} coach${coachesInactive !== 1 ? 'es have' : ' has'} no recent session activity — follow up or check scheduling.`
+      : `All coaches are active and running sessions.`
+    return `${sentence1} ${sentence2}`
+  })()
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-6">
@@ -106,6 +120,14 @@ export default async function CoachesPage() {
         </div>
         <Users className="w-6 h-6 text-text-muted" />
       </div>
+
+      {/* DONNA intelligence summary */}
+      {coaches.length > 0 && (
+        <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">DONNA</p>
+          <p className="text-[12px] text-text-secondary leading-relaxed">{coachesBrief}</p>
+        </div>
+      )}
 
       {/* Invite form — Sprint 1166-1185 */}
       <InviteCoachForm />

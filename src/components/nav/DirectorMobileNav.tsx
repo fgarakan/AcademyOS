@@ -6,16 +6,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Sun, Users, CheckSquare, Calendar, UserCog } from 'lucide-react'
+import { Sun, Users, CheckSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Mega Sprint 1505 — locked mobile top-5: operating surface + high-frequency actions
+// Mega Sprint 1961 — 3-item mobile nav: today · players · approvals
 const MOBILE_NAV_ITEMS = [
-  { label: 'Today',     href: '/director',          icon: Sun },
-  { label: 'Players',   href: '/director/players',  icon: Users },
-  { label: 'Sessions',  href: '/director/sessions', icon: Calendar },
-  { label: 'Approvals', href: '/director/review',   icon: CheckSquare },
-  { label: 'Coaches',   href: '/director/coaches',  icon: UserCog },
+  { label: 'Today',     href: '/director',         icon: Sun },
+  { label: 'Players',   href: '/director/players', icon: Users },
+  { label: 'Approvals', href: '/director/review',  icon: CheckSquare },
 ]
 
 interface Props {

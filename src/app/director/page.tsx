@@ -13,22 +13,21 @@ import { answerAllCOOQuestions }                   from '@/lib/donna/operations/
 import { buildOperatingPartnerInputs }             from '@/lib/donna/operations/buildOperatingPartnerInputs'
 import {
   buildWaitDecisions,
-  buildIgnoreDecisions,
   buildActionTargets,
   buildWhatChangedResult,
 } from '@/lib/donna/operations/academyChangeEngine'
 import type { OperatingPartnerPhilosophyInputs } from '@/lib/donna/operations/operatingPartnerPhilosophyContract'
 import type { OperatingPartnerOperationalInputs } from '@/lib/donna/operations/operatingPartnerOperationalContract'
+import { buildDirectorDecisionContext }           from '@/lib/donna/operations/directorDecisionEngine'
 
 // ── Command Center components ───────────────────────────────────────────────
 import { AcademySituationBanner }   from './_components/AcademySituationBanner'
 import { DonnaDailyBriefHero }      from './_components/DonnaDailyBriefHero'
-import { DirectorCapacityMeter }    from './_components/DirectorCapacityMeter'
-import { TopThreePrioritiesPanel }  from './_components/TopThreePrioritiesPanel'
+import { DirectorDecisionCenter }   from './_components/DirectorDecisionCenter'
+import { ReturningDirectorBanner }  from './_components/ReturningDirectorBanner'
 import { TopThreeAlertsPanel }      from './_components/TopThreeAlertsPanel'
 import { TopThreeWinsPanel }        from './_components/TopThreeWinsPanel'
 import { WhatCanWaitPanel }         from './_components/WhatCanWaitPanel'
-import { WhatShouldIIgnorePanel }   from './_components/WhatShouldIIgnorePanel'
 import { WhatChangedPanel }         from './_components/WhatChangedPanel'
 import { DonnaCOOPanel }            from './_components/DonnaCOOPanel'
 
@@ -110,6 +109,14 @@ export default async function DirectorCommandCenter() {
   }
 
   const rawDb = supabase as any
+
+  // daysSinceLastVisit uses last_sign_in_at as a proxy for last visit.
+  // Works correctly when the director logs in fresh each time; may read 0
+  // on same-session refreshes. Threshold is 14 days for returning-director mode.
+  const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null
+  const daysSinceLastVisit: number | null = lastSignIn
+    ? Math.floor((Date.now() - lastSignIn.getTime()) / 86_400_000)
+    : null
 
   const { data: profile } = await rawDb
     .from('profiles')
@@ -455,9 +462,17 @@ export default async function DirectorCommandCenter() {
 
   // ── Build UI-layer decision models ────────────────────────────────────────
   const waitDecisions   = buildWaitDecisions(todayResult)
-  const ignoreDecisions = buildIgnoreDecisions(attentionReport.signals, todayResult.whatToIgnore)
   const actionTargets   = buildActionTargets(todayResult.priorities)
   const whatChanged     = buildWhatChangedResult(todayResult.priorities, brief.alerts, brief.wins, 7)
+
+  // ── Director Decision Context ─────────────────────────────────────────────
+  const decisionContext = buildDirectorDecisionContext({
+    todayResult,
+    brief,
+    whatChanged,
+    actionTargets,
+    daysSinceLastVisit,
+  })
 
   // ── Legacy brief (for setup card only) ───────────────────────────────────
   const legacyBrief = buildTodayBrief({
@@ -507,23 +522,25 @@ export default async function DirectorCommandCenter() {
             generatedAt={partnerInputs.generatedAt}
           />
 
-          {/* ── Hero + Capacity ───────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
-            <DonnaDailyBriefHero
-              brief={brief}
-              directorName={directorDisplayName}
-              situation={situation}
-              primaryPriority={primaryPriority}
-              primaryTarget={primaryTarget}
+          {/* ── Returning Director Banner — shown after 14+ day absence ──── */}
+          {decisionContext.returningDirectorMode && decisionContext.returningDirectorSummary && (
+            <ReturningDirectorBanner
+              summary={decisionContext.returningDirectorSummary}
+              daysSinceLastVisit={decisionContext.daysSinceLastVisit!}
             />
-            <DirectorCapacityMeter budget={todayResult.budget} />
-          </div>
+          )}
 
-          {/* ── Top 3 Priorities ─────────────────────────────────────────── */}
-          <TopThreePrioritiesPanel
-            priorities={todayResult.priorities}
-            actionTargets={actionTargets}
+          {/* ── Hero ─────────────────────────────────────────────────────── */}
+          <DonnaDailyBriefHero
+            brief={brief}
+            directorName={directorDisplayName}
+            situation={situation}
+            primaryPriority={primaryPriority}
+            primaryTarget={primaryTarget}
           />
+
+          {/* ── Top 3 Decisions ──────────────────────────────────────────── */}
+          <DirectorDecisionCenter decisions={decisionContext.decisions} />
 
           {/* ── Alerts + Wins ─────────────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -531,12 +548,11 @@ export default async function DirectorCommandCenter() {
             <TopThreeWinsPanel wins={brief.wins} />
           </div>
 
-          {/* ── Decisions ────────────────────────────────────────────────── */}
-          <WhatCanWaitPanel waitDecisions={waitDecisions} />
-          <WhatShouldIIgnorePanel ignoreDecisions={ignoreDecisions} />
-
           {/* ── What Changed ─────────────────────────────────────────────── */}
           <WhatChangedPanel whatChanged={whatChanged} />
+
+          {/* ── What Can Wait ─────────────────────────────────────────────── */}
+          <WhatCanWaitPanel waitDecisions={waitDecisions} />
 
           {/* ── DONNA COO Conversations ───────────────────────────────────── */}
           <DonnaCOOPanel answers={cooAnswers} />

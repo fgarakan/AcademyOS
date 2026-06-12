@@ -109,15 +109,23 @@ export default async function PlayersPage() {
     (p.next_assessment_due && new Date(p.next_assessment_due) < now)
   ).length
 
-  // DONNA UI Constitution brief for players list
-  const activePlayers = players.filter(p => p.player_status === 'active').length
+  const activePlayers      = players.filter(p => p.player_status === 'active').length
+  const needsAttentionCount = players.filter(
+    p => p.player_status === 'on_hold' || p.player_status === 'reassessment_due'
+  ).length
+
+  // Two-sentence DONNA intelligence header: attention first, advancement second.
   const playersBrief = (() => {
     if (players.length === 0) return 'No players yet. Add your first player to start tracking development.'
-    const parts: string[] = [`${activePlayers} active player${activePlayers !== 1 ? 's' : ''}`]
-    if (missingCurriculumCount > 0) parts.push(`${missingCurriculumCount} missing a level`)
-    if (advancementReadyPlayers.length > 0) parts.push(`${advancementReadyPlayers.length} ready for advancement`)
-    if (assessmentDueCount > 0) parts.push(`${assessmentDueCount} with overdue assessment`)
-    return parts.join(' · ') + '.'
+    const sentence1 = needsAttentionCount > 0
+      ? `${needsAttentionCount} player${needsAttentionCount !== 1 ? 's' : ''} need${needsAttentionCount === 1 ? 's' : ''} your attention — ${assessmentDueCount > 0 ? `${assessmentDueCount} with overdue assessments` : 'review their status now'}.`
+      : `${activePlayers} active player${activePlayers !== 1 ? 's' : ''} — no immediate attention required.`
+    const sentence2 = advancementReadyPlayers.length > 0
+      ? `${advancementReadyPlayers.length} player${advancementReadyPlayers.length !== 1 ? 's are' : ' is'} ready to advance — review their readiness before the next session.`
+      : missingCurriculumCount > 0
+        ? `${missingCurriculumCount} player${missingCurriculumCount !== 1 ? 's are' : ' is'} missing a curriculum level — assign them to unlock progress tracking.`
+        : `All players have curriculum levels assigned.`
+    return `${sentence1} ${sentence2}`
   })()
 
   return (

@@ -9,6 +9,7 @@ import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 import { DonnaSessionContextProvider } from '@/components/donna/DonnaSessionContextProvider'
 import { DonnaHighlightBanner } from '@/components/donna/DonnaHighlightBanner'
+import { DonnaCommandBar } from './_components/DonnaCommandBar'
 
 export default async function DirectorLayout({
   children,
@@ -100,6 +101,7 @@ export default async function DirectorLayout({
             {children}
           </FirstRunDeckGate>
         </main>
+        <DonnaCommandBar />
         {academyId && (
           <DonnaAssistantButton
             academyId={academyId}

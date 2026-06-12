@@ -4,11 +4,19 @@ import { Sparkles, ChevronDown, ChevronUp, CheckCircle2, TriangleAlert, Info, Ey
 import type { CurriculumIntelligenceContext } from '@/lib/donna/curriculum/curriculumIntelligenceContext'
 import { runCurriculumEvolution, type EvolutionRecommendation } from '@/lib/donna/curriculum/curriculumEvolutionEngine'
 import { EVIDENCE_STRENGTH_LABEL, RECOMMENDATION_TYPE_LABEL } from '@/lib/donna/curriculum/curriculumEvidenceStrength'
+import {
+  buildEvolutionMemoryEntry,
+  getDeferredRecommendations,
+  type EvolutionMemoryEntry,
+} from '@/lib/donna/curriculum/curriculumEvolutionMemory'
+import { filterEvolutionRecommendations } from '@/lib/donna/curriculum/curriculumEvolutionSuppressionFilter'
+import { saveCurriculumEvolutionDecisionAction } from '@/lib/actions/saveCurriculumEvolutionDecisionAction'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   intelligenceContext: CurriculumIntelligenceContext
+  initialMemory:       EvolutionMemoryEntry[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -34,6 +42,14 @@ function recTypeColor(type: EvolutionRecommendation['recommendationType']): stri
          type === 'REORDER'     ? '#C8FF00' :
          type === 'INVESTIGATE' ? '#AAAAAA' :
          /* MONITOR */            '#555555'
+}
+
+function upsertMemoryEntry(
+  memory: EvolutionMemoryEntry[],
+  entry:  EvolutionMemoryEntry,
+): EvolutionMemoryEntry[] {
+  const without = memory.filter(m => m.recommendationId !== entry.recommendationId)
+  return [...without, entry].slice(-100)
 }
 
 // ── Explanation modal ─────────────────────────────────────────────────────────
@@ -127,14 +143,18 @@ function ExplainWhyModal({
 
 function RecommendationCard({
   rec,
+  saving,
+  onApprove,
   onDismiss,
   onDefer,
 }: {
-  rec: EvolutionRecommendation
-  onDismiss: (id: string) => void
-  onDefer:   (id: string) => void
+  rec:      EvolutionRecommendation
+  saving:   boolean
+  onApprove: (rec: EvolutionRecommendation) => void
+  onDismiss: (rec: EvolutionRecommendation) => void
+  onDefer:   (rec: EvolutionRecommendation) => void
 }) {
-  const [expanded, setExpanded]     = useState(false)
+  const [expanded,    setExpanded]    = useState(false)
   const [showExplain, setShowExplain] = useState(false)
 
   return (
@@ -236,22 +256,28 @@ function RecommendationCard({
             Ask Why
           </button>
           <button
-            onClick={() => onDefer(rec.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-border text-text-secondary hover:border-border transition-colors"
+            onClick={() => onDefer(rec)}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-border text-text-secondary hover:border-border transition-colors disabled:opacity-50"
           >
             <Clock className="w-3.5 h-3.5" />
             Later
           </button>
           <button
-            onClick={() => onDismiss(rec.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-border text-text-muted hover:text-text-secondary transition-colors ml-auto"
+            onClick={() => onDismiss(rec)}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-border text-text-muted hover:text-text-secondary transition-colors ml-auto disabled:opacity-50"
           >
             <X className="w-3.5 h-3.5" />
             Dismiss
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-lime text-base hover:opacity-90 transition-opacity">
+          <button
+            onClick={() => onApprove(rec)}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-lime text-base hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Approve
+            {saving ? 'Saving…' : 'Approve'}
           </button>
         </div>
       </div>
@@ -261,21 +287,67 @@ function RecommendationCard({
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export function CurriculumEvolutionPanel({ intelligenceContext }: Props) {
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  const [deferred,  setDeferred]  = useState<Set<string>>(new Set())
-  const [showAll,   setShowAll]   = useState(false)
+export function CurriculumEvolutionPanel({ intelligenceContext, initialMemory }: Props) {
+  const [localMemory, setLocalMemory] = useState<EvolutionMemoryEntry[]>(initialMemory)
+  const [saving,      setSaving]      = useState<Set<string>>(new Set())
+  const [feedback,    setFeedback]    = useState<string | null>(null)
+  const [showAll,     setShowAll]     = useState(false)
 
-  const report = runCurriculumEvolution(intelligenceContext)
-  const visible = report.recommendations.filter(r => !dismissed.has(r.id) && !deferred.has(r.id))
+  const report  = runCurriculumEvolution(intelligenceContext)
+  const visible = filterEvolutionRecommendations(report.recommendations, localMemory)
   const displayed = showAll ? visible : visible.slice(0, 3)
 
-  function handleDismiss(id: string) {
-    setDismissed(prev => new Set(Array.from(prev).concat(id)))
+  const deferredCount = getDeferredRecommendations(localMemory).length
+
+  function flashFeedback(message: string) {
+    setFeedback(message)
+    setTimeout(() => setFeedback(null), 3500)
   }
 
-  function handleDefer(id: string) {
-    setDeferred(prev => new Set(Array.from(prev).concat(id)))
+  async function handleDecision(
+    rec:      EvolutionRecommendation,
+    decision: 'approved' | 'dismissed' | 'deferred' | 'rejected',
+    deferDays?: number,
+  ) {
+    const entry = buildEvolutionMemoryEntry({
+      recommendationId:   rec.id,
+      title:              rec.title,
+      recommendationType: rec.recommendationType,
+      evidenceStrength:   rec.evidenceStrength,
+      decision,
+      levelId:            rec.affectedLevels[0],
+      gateId:             rec.affectedGates[0],
+      evidence:           rec.evidence,
+      confidence:         rec.confidence,
+      deferDays:          deferDays ?? (decision === 'deferred' ? 14 : undefined),
+    })
+
+    // Optimistic: hide the recommendation immediately
+    setLocalMemory(prev => upsertMemoryEntry(prev, entry))
+    setSaving(prev => new Set(Array.from(prev).concat(rec.id)))
+
+    const result = await saveCurriculumEvolutionDecisionAction({
+      recommendationId:   rec.id,
+      title:              rec.title,
+      recommendationType: rec.recommendationType,
+      evidenceStrength:   rec.evidenceStrength,
+      decision,
+      levelId:            rec.affectedLevels[0],
+      gateId:             rec.affectedGates[0],
+      evidence:           rec.evidence,
+      confidence:         rec.confidence,
+      deferDays,
+    })
+
+    setSaving(prev => new Set(Array.from(prev).filter(id => id !== rec.id)))
+
+    if (result.ok) {
+      flashFeedback(result.message)
+    } else {
+      // Roll back optimistic update on failure
+      setLocalMemory(prev => prev.filter(m => m.id !== entry.id))
+      flashFeedback(`Could not save: ${result.error}`)
+    }
   }
 
   return (
@@ -295,16 +367,20 @@ export function CurriculumEvolutionPanel({ intelligenceContext }: Props) {
           <span className="label-xs">
             {report.dataConfidence}% confidence
           </span>
-          {deferred.size > 0 && (
-            <button
-              onClick={() => setDeferred(new Set())}
-              className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-            >
-              {deferred.size} deferred
-            </button>
+          {deferredCount > 0 && (
+            <span className="text-xs text-text-muted">
+              {deferredCount} deferred
+            </span>
           )}
         </div>
       </div>
+
+      {/* Feedback toast */}
+      {feedback && (
+        <div className="text-xs text-[#30D158] bg-[#30D158]/10 border border-[#30D158]/20 rounded-lg px-3 py-2">
+          {feedback}
+        </div>
+      )}
 
       {/* Health summary */}
       {(report.healthReport.risks.length > 0 || report.healthReport.opportunities.length > 0) && (
@@ -336,8 +412,8 @@ export function CurriculumEvolutionPanel({ intelligenceContext }: Props) {
           <CheckCircle2 className="w-6 h-6 text-[#30D158] mx-auto mb-2" />
           <p className="text-text-secondary text-sm font-medium">No evolution recommendations right now</p>
           <p className="text-text-muted text-xs mt-1">
-            {dismissed.size > 0 || deferred.size > 0
-              ? `${dismissed.size} dismissed, ${deferred.size} deferred`
+            {localMemory.length > 0
+              ? `${localMemory.filter(m => m.decision === 'dismissed').length} dismissed, ${deferredCount} deferred`
               : 'Curriculum is well-aligned with current reality'}
           </p>
         </div>
@@ -347,8 +423,10 @@ export function CurriculumEvolutionPanel({ intelligenceContext }: Props) {
             <RecommendationCard
               key={rec.id}
               rec={rec}
-              onDismiss={handleDismiss}
-              onDefer={handleDefer}
+              saving={saving.has(rec.id)}
+              onApprove={r => handleDecision(r, 'approved')}
+              onDismiss={r => handleDecision(r, 'dismissed')}
+              onDefer={r => handleDecision(r, 'deferred')}
             />
           ))}
 
