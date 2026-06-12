@@ -2,6 +2,58 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 1836–1865 — DONNA Curriculum Architect & Natural Curriculum Editing V1
+
+**DONNA becomes a full curriculum architect.** Gap analysis engine identifies structural imbalances across all levels (missing areas, drill-heavy/game-heavy levels, progression gaps, gate support gaps, over/under-represented content types). Duplicate detection compares new drafts across 5 dimensions (title, purpose, tactical objective, related skill area, stage) using deterministic token-overlap scoring — no LLM calls. Impact preview answers 4 director questions for every draft: Expected Benefit, Possible Risk, Who Is Affected, What To Review Next. Review panel in `DonnaCurriculumPanel` surfaces both duplicate warnings and impact preview before save.
+
+**Certification: 50/50 PASS across 12 scenarios (intent routing, level inference, content type inference, modify/move/replace/remove bypass, cross-stage skip, gate dependency risk, gap analysis structural check, curriculum bloat prevention). TypeScript clean.**
+
+**Files created:**
+- `src/lib/donna/curriculum/curriculumGapAnalysis.ts` — `buildCurriculumGapReport()` pure TS engine; 7 gap types; `priorityLevels` top-3; no DB calls
+- `src/lib/donna/curriculum/curriculumDuplicateDetector.ts` — `checkForDuplicates()` with 5-dimension scoring; token overlap; stage cross-check; `DuplicateRisk` none/possible/likely thresholds 40/65
+- `src/lib/donna/curriculum/curriculumImpactPreview.ts` — `buildImpactPreview()` with 4 sections (Expected Benefit, Possible Risk, Who Is Affected, What To Review Next); severity-coded lines
+- `src/lib/donna/curriculum/curriculumArchitectCertification.ts` — 12 scenarios; 50 assertions; run with `npx tsx src/lib/donna/curriculum/curriculumArchitectCertification.ts`
+
+**Files modified:**
+- `src/lib/donna/curriculum/curriculumDraftObject.ts` — added `setup`, `instructions`, `relatedSkills[]` fields; updated `packDescription()` and `createEmptyDraft()`
+- `src/lib/donna/curriculum/curriculumIntelligenceContext.ts` — extended item query (`id`, `title`, `domain`); added `CurriculumItemSummary[]` and `gapReport: CurriculumGapReport` to context shape; calls `buildCurriculumGapReport()`
+- `src/lib/donna/curriculum/curriculumDraftReviewPanel.ts` — added `setup`, `instructions`, `relatedSkills` to `buildReviewSummary()`
+- `src/lib/donna/curriculum/curriculumArchitect.ts` — fixed `inferLevelFromText()` (3-pass: full name → initials → patterns); fixed `inferContentTypeFromText()` (earliest-position scoring, not first-match)
+- `src/app/director/curriculum/builder/DonnaCurriculumPanel.tsx` — wired `checkForDuplicates()` and `buildImpactPreview()` into review screen; duplicate warning (orange border); impact preview 4-section display with severity colours
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
+## 2026-06-12 — Mega Sprint 1806–1835 — DONNA Command Center & Operating Experience V1
+
+**Director dashboard rebuilt as a live operating command centre.** `director/page.tsx` replaced with server-loaded brief wired to the full DONNA operating partner stack (situation banner, daily brief hero, top-3 priorities, top-3 alerts, top-3 wins, capacity meter, COO panel, "what changed" and "what can wait" panels, explain-why modal). `academyChangeEngine.ts` detects structural changes across players, coaches, curriculum, and parent activity since last session.
+
+**Certification: 180/180 PASS across 15 scenarios. TypeScript clean.**
+
+**Files created:**
+- `src/app/director/_components/AcademySituationBanner.tsx` — situation classification banner with severity colour coding
+- `src/app/director/_components/DonnaDailyBriefHero.tsx` — headline brief hero with DONNA voice and situation context
+- `src/app/director/_components/TopThreePrioritiesPanel.tsx` — top-3 priorities with capacity cost, tradeoff, explain-why trigger
+- `src/app/director/_components/TopThreeAlertsPanel.tsx` — top-3 alerts with domain icon, severity, and urgency
+- `src/app/director/_components/TopThreeWinsPanel.tsx` — top-3 wins with positive framing
+- `src/app/director/_components/DirectorCapacityMeter.tsx` — 100-unit attention budget meter with breakdown
+- `src/app/director/_components/DonnaCOOPanel.tsx` — 10 COO questions with answer display
+- `src/app/director/_components/WhatChangedPanel.tsx` — structural changes since last session
+- `src/app/director/_components/WhatCanWaitPanel.tsx` — deferred actions with deferral window
+- `src/app/director/_components/WhatShouldIIgnorePanel.tsx` — low-priority signals explicitly deprioritised
+- `src/app/director/_components/ExplainWhyModal.tsx` — explains why each priority was selected (Guard #7 explainability)
+- `src/lib/donna/operations/academyChangeEngine.ts` — detects structural changes across 4 domains since last session
+- `src/lib/donna/operations/commandCenterCertification.ts` — 15 scenarios, 180 assertions
+
+**Files modified:**
+- `src/app/director/page.tsx` — full server-component rewrite; loads DONNA brief + change engine; mounts all command centre panels
+- `src/lib/donna/operations/whatShouldIDoTodayEngine.ts` — capacity cost integration, tradeoff engine wiring
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
 ## 2026-06-11 — Mega Sprint 1776–1805 — DONNA Academy Operating Partner V1
 
 **DONNA becomes a strategic operating partner.** Fuses philosophy memory with live operational data to produce a synthesised, prioritised director brief. Reality always outranks philosophy. Situation is classified before any priorities are generated. Every priority carries a tradeoff analysis, capacity cost, and explainability record.

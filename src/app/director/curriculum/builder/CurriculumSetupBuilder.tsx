@@ -6,6 +6,11 @@ import Link from 'next/link'
 import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
+import type { CurriculumIntelligenceContext } from '@/lib/donna/curriculum/curriculumIntelligenceContext'
+import type { CurriculumModificationIntent } from '@/lib/donna/curriculum/curriculumDraftObject'
+import { buildCurriculumRecommendations } from '@/lib/donna/curriculum/curriculumArchitect'
+import { DonnaCurriculumPanel } from './DonnaCurriculumPanel'
+import { CurriculumRecommendationCard } from './CurriculumRecommendationCard'
 import { CurriculumKeyboardHintBar } from '@/components/curriculum/builder/CurriculumKeyboardHintBar'
 import { buildCurriculumGapChip } from '@/lib/donna/curriculumBuilderDonnaContext'
 import { onGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
@@ -26,6 +31,7 @@ interface Props {
   initialState: CurriculumSetupState
   origin: 'onboarding' | 'builder'
   levels?: CurriculumLevel[]
+  intelligenceContext?: CurriculumIntelligenceContext
 }
 
 const STAGE_COLOR: Record<string, string> = {
@@ -127,9 +133,24 @@ function parseCoachCues(raw: string): string[] {
   return raw.split(/[,;]+/).map(s => s.trim()).filter(Boolean).slice(0, 5)
 }
 
-export function CurriculumSetupBuilder({ levels = [] }: Props) {
+export function CurriculumSetupBuilder({ levels = [], intelligenceContext }: Props) {
   const router = useRouter()
   const [jumpOpen, setJumpOpen] = useState(false)
+
+  // Intelligence panel state
+  const [panelLevelId, setPanelLevelId] = useState<string | undefined>(undefined)
+  const [panelIntent, setPanelIntent]   = useState<CurriculumModificationIntent | undefined>(undefined)
+
+  const recommendations = intelligenceContext
+    ? buildCurriculumRecommendations(intelligenceContext)
+    : []
+
+  function handleSelectRecommendation(levelId: string, intent: CurriculumModificationIntent) {
+    setPanelLevelId(levelId)
+    setPanelIntent(intent)
+    // Scroll to panel
+    document.getElementById('donna-curriculum-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
 
   const [donnaPlan,       setDonnaPlan]       = useState<WorkflowExecutionPlan | null>(null)
   const [donnaSubmitting, setDonnaSubmitting] = useState(false)
@@ -288,6 +309,23 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
             Powered by DONNA · Customize your academy's development spine one level at a time
           </p>
         </div>
+
+        {/* ── DONNA Curriculum Architect Panel ─────────── */}
+        {intelligenceContext && (
+          <div id="donna-curriculum-panel" className="mb-6 flex flex-col gap-4">
+            {recommendations.length > 0 && (
+              <CurriculumRecommendationCard
+                recommendations={recommendations}
+                onSelectRecommendation={handleSelectRecommendation}
+              />
+            )}
+            <DonnaCurriculumPanel
+              context={intelligenceContext}
+              initialIntent={panelIntent}
+              initialLevelId={panelLevelId}
+            />
+          </div>
+        )}
 
         {/* ── DONNA Hero Card ───────────────────────────── */}
         <div

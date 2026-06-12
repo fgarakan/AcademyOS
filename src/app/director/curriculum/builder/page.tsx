@@ -7,6 +7,7 @@ import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes
 import { DEFAULT_CURRICULUM_SETUP_STATE } from '@/lib/curriculum/curriculumSetupTypes'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumBuilderChangeQueue } from './CurriculumBuilderChangeQueue'
+import { buildCurriculumIntelligenceContext } from '@/lib/donna/curriculum/curriculumIntelligenceContext'
 
 export default async function CurriculumBuilderPage() {
   const supabase = await getSupabaseServer()
@@ -70,7 +71,10 @@ export default async function CurriculumBuilderPage() {
     ...rawV2,
   }
 
-  const explorerData = await getCurriculumExplorerData(supabase)
+  const [explorerData, intelligenceContext] = await Promise.all([
+    getCurriculumExplorerData(supabase),
+    buildCurriculumIntelligenceContext(rawDb, academyId, settings),
+  ])
 
   return (
     <>
@@ -94,7 +98,12 @@ export default async function CurriculumBuilderPage() {
         </Suspense>
       </div>
 
-      <CurriculumSetupBuilder initialState={initialState} origin="builder" levels={explorerData.levels} />
+      <CurriculumSetupBuilder
+        initialState={initialState}
+        origin="builder"
+        levels={explorerData.levels}
+        intelligenceContext={intelligenceContext}
+      />
     </>
   )
 }

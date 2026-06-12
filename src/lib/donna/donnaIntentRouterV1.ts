@@ -1,4 +1,6 @@
 // Sprint 914.7 — DONNA Intent Router Unification V1
+// Extended: Mega Sprint 1716 — DONNA Curriculum Intelligence Engine V1
+//
 // Bridges the legacy DonnaCommandCategory classifier and the God Mode
 // 34-interceptor pipeline into a single normalized intent classification.
 //
@@ -10,6 +12,20 @@
 // Intent map covers:
 //   - God Mode 34-interceptor patterns (page guide, brief, review, onboarding, curriculum)
 //   - Legacy DonnaCommandCategory domains (attendance, observation, wrap_up, etc.)
+//   - Curriculum mutation intents (1716 — V1 implemented): modify, move, expand, replace, remove
+//   - Curriculum read/analysis intents (deferred — V2 LLM-assisted): review, compare, explain, recommend, audit
+//
+// V1 = Deterministic architect: intent classification and response generation are
+//      pure TypeScript — keyword scoring, pattern matching, context inference.
+//      No LLM calls. Same context always produces the same output.
+//
+// V2 = LLM-assisted architect: deferred. The read/analysis intents (curriculum_review,
+//      curriculum_compare, curriculum_explain, curriculum_recommend, curriculum_audit)
+//      require reasoning over open-ended questions that deterministic logic cannot
+//      reliably answer. V2 routes these intents through an LLM call with the
+//      CurriculumIntelligenceContext as the grounding payload.
+//      Implementation gate: LLM orchestration layer must be production-ready first.
+//
 // Curriculum draft creation remains on its proven existing path.
 
 // ── Unified intent type ────────────────────────────────────────────────────────
@@ -34,6 +50,18 @@ export type DonnaUnifiedIntentType =
   // Curriculum (God Mode 912.8–912.11, 912.15)
   | 'curriculum_draft_create'
   | 'curriculum_draft_follow_up'
+  // Curriculum mutation intents (Mega Sprint 1716 — V1 implemented, deterministic)
+  | 'curriculum_modify'    // Change fields of an existing item
+  | 'curriculum_move'      // Relocate item to a different level
+  | 'curriculum_expand'    // Create a harder or easier variation of an existing item
+  | 'curriculum_replace'   // Remove an existing item and add a replacement
+  | 'curriculum_remove'    // Delete an existing item
+  // Curriculum read/analysis intents (deferred — requires V2 LLM-assisted architect)
+  | 'curriculum_review'    // Review the current state of a level or pathway
+  | 'curriculum_compare'   // Compare two levels, pathways, or time periods
+  | 'curriculum_explain'   // Explain why something is structured as it is
+  | 'curriculum_recommend' // Ask DONNA to recommend curriculum additions or changes
+  | 'curriculum_audit'     // Full curriculum health audit with gap analysis
   // Legacy / coach domains
   | 'attendance'
   | 'coach_observation'
@@ -76,8 +104,18 @@ import { requireDonnaApproval } from '@/lib/donna/donnaApprovalGate'
 
 /** Maps unified intent types → approval gate action categories */
 const INTENT_TO_APPROVAL_CATEGORY: Partial<Record<DonnaUnifiedIntentType, string>> = {
+  // Curriculum — all mutation intents require review_queue
   curriculum_draft_create:    'curriculum_draft_create',
   curriculum_draft_follow_up: 'curriculum_draft_create',
+  curriculum_modify:          'curriculum_edit',
+  curriculum_move:            'curriculum_edit',
+  curriculum_expand:          'curriculum_draft_create',
+  curriculum_replace:         'curriculum_edit',
+  curriculum_remove:          'curriculum_edit',
+  // Read/analysis intents: no approval gate (read-only)
+  // curriculum_review, curriculum_compare, curriculum_explain,
+  // curriculum_recommend, curriculum_audit → null (omitted from map)
+  // Other domains
   parent_draft:               'parent_communication',
   level_readiness:            'level_movement',
   attendance:                 'attendance_exception',
@@ -107,10 +145,22 @@ const PATTERNS = {
   CONTEXT_DEBUG:   /\b(what context do you have|what are you using for context)\b/i,
   RECALL:          /\b(what did we (discuss|talk about)|recap (our|this|the) (donna )?(conversation|chat))\b/i,
   // Curriculum creation (Sprint 912.8–912.11)
-  CURRICULUM_DRILL: /\b(add|create)\b.{0,30}\bdrill\b/i,
-  CURRICULUM_GATE:  /\b(add|create)\b.{0,40}\b(assessment\s+gate|gate)\b/i,
-  CURRICULUM_SKILL: /\b(add|create)\b.{0,30}\bskill\b/i,
-  CURRICULUM_FOLLOW: /\b(same for|also for|do (that |it )?for|change.{0,10}focus.{0,5}to|actually (use|focus\s+on))\b/i,
+  CURRICULUM_DRILL:    /\b(add|create)\b.{0,30}\bdrill\b/i,
+  CURRICULUM_GATE:     /\b(add|create)\b.{0,40}\b(assessment\s+gate|gate)\b/i,
+  CURRICULUM_SKILL:    /\b(add|create)\b.{0,30}\bskill\b/i,
+  CURRICULUM_FOLLOW:   /\b(same for|also for|do (that |it )?for|change.{0,10}focus.{0,5}to|actually (use|focus\s+on))\b/i,
+  // Curriculum mutation intents (Mega Sprint 1716 — V1 deterministic)
+  CURRICULUM_MODIFY:   /\b(change|update|edit|modify)\b.{0,50}\b(skill|drill|item|assessment|content|curriculum|cue|criteria|description|name)\b/i,
+  CURRICULUM_MOVE:     /\b(move|relocate|shift)\b.{0,40}\b(to|into|from|level|ball|red|orange|green|yellow)\b/i,
+  CURRICULUM_EXPAND:   /\b(expand|add\s+(a\s+)?(harder|easier|progression|regression|variation|advanced|beginner)\s+version)\b/i,
+  CURRICULUM_REPLACE:  /\b(replace|swap\s*(out)?)\b.{0,40}\b(with|for)\b/i,
+  CURRICULUM_REMOVE:   /\b(remove|delete|take\s+out|get\s+rid\s+of)\b.{0,40}\b(drill|skill|item|assessment|content|from\s+(the\s+)?curriculum)\b/i,
+  // Curriculum read/analysis intents (deferred — V2 LLM-assisted)
+  CURRICULUM_REVIEW:   /\b(show\s+me|review|what.{0,15}(in|at|for))\b.{0,30}\b(level|curriculum|content|red|orange|green|yellow)\b/i,
+  CURRICULUM_COMPARE:  /\bcompare\b.{0,50}\b(level|pathway|curriculum|ball)\b/i,
+  CURRICULUM_EXPLAIN:  /\b(why\s+(is|does|was|are|were)|explain)\b.{0,40}\b(curriculum|level|item|skill|drill|structure|placed|here)\b/i,
+  CURRICULUM_RECOMMEND: /\b(recommend|suggest|what\s+should\s+i\s+add|what\s+(else\s+)?could\s+i\s+add|what\s+would\s+you\s+(add|suggest))\b.{0,30}\b(curriculum|level|drill|skill|content)\b/i,
+  CURRICULUM_AUDIT:    /\b(audit|curriculum\s+audit|curriculum\s+health|what.{0,20}(gaps?|missing|coverage|lacking))\b/i,
   // Legacy domains
   ATTENDANCE:      /\b(attendance|absent|present|late|mark|who showed|who came)\b/i,
   OBSERVATION:     /\b(observation|observed|noticed|note about|player concern|flag|struggling with)\b/i,
@@ -152,7 +202,25 @@ export function routeDonnaIntentV1(
   if (PATTERNS.ACADEMY_HEALTH.test(t)) return make('academy_health', 'high', false, 'Academy health pattern matched')
   if (PATTERNS.KPI.test(t))           return make('kpi_question', 'high', false, 'KPI pattern matched')
 
-  // ── Curriculum intents (require confirmation) ──────────────────────────────
+  // ── Curriculum read/analysis intents — no approval needed (deferred V2) ───
+  // Checked before mutation intents: audit/recommend/review are read-only even
+  // when phrased as directives ("audit my curriculum").
+
+  if (PATTERNS.CURRICULUM_AUDIT.test(t))     return make('curriculum_audit',     'high',   false, 'Curriculum audit pattern matched')
+  if (PATTERNS.CURRICULUM_RECOMMEND.test(t)) return make('curriculum_recommend', 'high',   false, 'Curriculum recommend pattern matched')
+  if (PATTERNS.CURRICULUM_COMPARE.test(t))   return make('curriculum_compare',   'high',   false, 'Curriculum compare pattern matched')
+  if (PATTERNS.CURRICULUM_EXPLAIN.test(t))   return make('curriculum_explain',   'medium', false, 'Curriculum explain pattern matched')
+  if (PATTERNS.CURRICULUM_REVIEW.test(t))    return make('curriculum_review',    'medium', false, 'Curriculum review pattern matched')
+
+  // ── Curriculum mutation intents (require review_queue approval) ────────────
+
+  if (PATTERNS.CURRICULUM_REMOVE.test(t))  return make('curriculum_remove',  'high', true, 'Curriculum remove pattern matched')
+  if (PATTERNS.CURRICULUM_REPLACE.test(t)) return make('curriculum_replace', 'high', true, 'Curriculum replace pattern matched')
+  if (PATTERNS.CURRICULUM_MOVE.test(t))    return make('curriculum_move',    'high', true, 'Curriculum move pattern matched')
+  if (PATTERNS.CURRICULUM_EXPAND.test(t))  return make('curriculum_expand',  'high', true, 'Curriculum expand pattern matched')
+  if (PATTERNS.CURRICULUM_MODIFY.test(t))  return make('curriculum_modify',  'high', true, 'Curriculum modify pattern matched')
+
+  // ── Curriculum create intents (require confirmation) ──────────────────────
 
   if (PATTERNS.CURRICULUM_FOLLOW.test(t)) return make('curriculum_draft_follow_up', 'high', true, 'Curriculum follow-up pattern matched')
   if (PATTERNS.CURRICULUM_DRILL.test(t))  return make('curriculum_draft_create', 'high', true, 'Drill creation pattern matched')
