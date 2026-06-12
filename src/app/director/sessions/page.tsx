@@ -242,7 +242,7 @@ function SessionStatusPill({ status }: { status: string }) {
     cancelled: 'Cancelled',
   }
   return (
-    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles[status] ?? styles.planned}`}>
+    <span className={`shrink-0 text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles[status] ?? styles.planned}`}>
       {label[status] ?? status}
     </span>
   )

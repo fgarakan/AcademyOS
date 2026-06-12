@@ -53,8 +53,8 @@ const SPINE_STAGES: Array<{
   {
     stageKey: 'yellow_competitive',
     label: 'Yellow Ball',
-    dotClass: 'bg-yellow-400',
-    textClass: 'text-yellow-400',
+    dotClass: 'bg-status-orange',
+    textClass: 'text-status-orange',
     fallbackPurpose: 'Full-court development, match consistency, and competitive preparation.',
   },
   {
@@ -340,7 +340,9 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
       <div>
-        <h1 className="page-title">Curriculum Command Center</h1>
+        <p className="page-eyebrow">Academy Knowledge</p>
+        <h1 className="page-title">Curriculum</h1>
+        <p className="page-subtitle">What your academy teaches, structured by level and stage.</p>
       </div>
 
       {/* ── 1b. Create / Improve / Review action bar ─────────────────────── */}
@@ -351,8 +353,8 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
         >
           <Wrench className="w-4 h-4 text-lime shrink-0" />
           <div>
-            <p className="text-[12px] font-semibold text-text-primary">Create</p>
-            <p className="text-[11px] text-text-muted">Add levels, gates, and content</p>
+            <p className="text-xs font-semibold text-text-primary">Create</p>
+            <p className="text-xs text-text-muted">Add levels, gates, and content</p>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime ml-auto transition-colors" />
         </Link>
@@ -362,8 +364,8 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
         >
           <Sparkles className="w-4 h-4 text-lime shrink-0" />
           <div>
-            <p className="text-[12px] font-semibold text-text-primary">Improve</p>
-            <p className="text-[11px] text-text-muted">DONNA evolution recommendations</p>
+            <p className="text-xs font-semibold text-text-primary">Improve</p>
+            <p className="text-xs text-text-muted">DONNA evolution recommendations</p>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime ml-auto transition-colors" />
         </Link>
@@ -373,8 +375,8 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
         >
           <CheckCircle2 className="w-4 h-4 text-lime shrink-0" />
           <div>
-            <p className="text-[12px] font-semibold text-text-primary">Review</p>
-            <p className="text-[11px] text-text-muted">Pending approvals and changes</p>
+            <p className="text-xs font-semibold text-text-primary">Review</p>
+            <p className="text-xs text-text-muted">Pending approvals and changes</p>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime ml-auto transition-colors" />
         </Link>
@@ -384,19 +386,19 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
       <div className="flex border-b border-border -mt-2">
         <Link
           href="/director/curriculum"
-          className="px-4 py-2 text-[13px] font-semibold text-text-primary border-b-2 border-lime -mb-px"
+          className="px-4 py-2 text-sm font-semibold text-text-primary border-b-2 border-lime -mb-px"
         >
           Health
         </Link>
         <Link
           href="/director/curriculum/builder"
-          className="px-4 py-2 text-[13px] text-text-secondary hover:text-text-primary transition-colors"
+          className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
         >
           Builder
         </Link>
         <Link
           href="/director/curriculum/map"
-          className="px-4 py-2 text-[13px] text-text-secondary hover:text-text-primary transition-colors"
+          className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
         >
           Map
         </Link>
@@ -446,15 +448,15 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
                   : <Circle className="w-4 h-4 text-text-muted shrink-0" />
                 }
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[12px] font-medium ${item.done ? 'text-text-primary' : 'text-text-secondary'}`}>
+                  <p className={`text-xs font-medium ${item.done ? 'text-text-primary' : 'text-text-secondary'}`}>
                     {item.label}
                   </p>
                   {!item.done && (
-                    <p className="text-[11px] text-text-muted">{item.hint}</p>
+                    <p className="text-xs text-text-muted">{item.hint}</p>
                   )}
                 </div>
                 {item.done && (
-                  <span className="shrink-0 text-[10px] uppercase tracking-widest text-status-green font-medium">Done</span>
+                  <span className="shrink-0 text-xs uppercase tracking-widest text-status-green font-medium">Done</span>
                 )}
               </div>
             ))}
@@ -496,9 +498,9 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
                 <div key={stage.label} className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${stage.dotClass}`} />
-                    <p className={`text-[11px] font-semibold ${stage.textClass}`}>{stage.label}</p>
+                    <p className={`text-xs font-semibold ${stage.textClass}`}>{stage.label}</p>
                   </div>
-                  <p className="text-[11px] text-text-muted leading-relaxed">{stage.fallbackPurpose}</p>
+                  <p className="text-xs text-text-muted leading-relaxed">{stage.fallbackPurpose}</p>
                 </div>
               ))}
             </div>
@@ -525,12 +527,12 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
               >
                 <div className="flex items-center gap-2">
                   <Wrench className="w-3.5 h-3.5 text-lime shrink-0" />
-                  <p className="text-[12px] font-semibold text-text-primary">Curriculum Builder</p>
+                  <p className="text-xs font-semibold text-text-primary">Curriculum Builder</p>
                 </div>
-                <p className="text-[11px] text-text-muted leading-relaxed">
+                <p className="text-xs text-text-muted leading-relaxed">
                   Review and customize each level. DONNA guides you one stage at a time.
                 </p>
-                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                <p className="text-xs text-lime flex items-center gap-1 group-hover:underline">
                   Open Builder <ChevronRight className="w-3 h-3" />
                 </p>
               </Link>
@@ -541,12 +543,12 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
               >
                 <div className="flex items-center gap-2">
                   <Map className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                  <p className="text-[12px] font-semibold text-text-primary">Curriculum Map</p>
+                  <p className="text-xs font-semibold text-text-primary">Curriculum Map</p>
                 </div>
-                <p className="text-[11px] text-text-muted leading-relaxed">
+                <p className="text-xs text-text-muted leading-relaxed">
                   Visual overview of all levels, gates, and connections across your academy spine.
                 </p>
-                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                <p className="text-xs text-lime flex items-center gap-1 group-hover:underline">
                   View Map <ChevronRight className="w-3 h-3" />
                 </p>
               </Link>
@@ -557,12 +559,12 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
               >
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                  <p className="text-[12px] font-semibold text-text-primary">Guided Review</p>
+                  <p className="text-xs font-semibold text-text-primary">Guided Review</p>
                 </div>
-                <p className="text-[11px] text-text-muted leading-relaxed">
+                <p className="text-xs text-text-muted leading-relaxed">
                   Let DONNA walk you through incomplete levels and customization priorities.
                 </p>
-                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                <p className="text-xs text-lime flex items-center gap-1 group-hover:underline">
                   Start Guided Review <ChevronRight className="w-3 h-3" />
                 </p>
               </Link>
@@ -573,12 +575,12 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
               >
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                  <p className="text-[12px] font-semibold text-text-primary">Learning Modules</p>
+                  <p className="text-xs font-semibold text-text-primary">Learning Modules</p>
                 </div>
-                <p className="text-[11px] text-text-muted leading-relaxed">
+                <p className="text-xs text-text-muted leading-relaxed">
                   Player-facing learning content connected to each curriculum level and stage.
                 </p>
-                <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                <p className="text-xs text-lime flex items-center gap-1 group-hover:underline">
                   View Modules <ChevronRight className="w-3 h-3" />
                 </p>
               </Link>

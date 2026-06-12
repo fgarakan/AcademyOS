@@ -131,7 +131,7 @@ export default async function FitnessTemplatesPage() {
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">
+            <p className="label-xs">
               {fitnessTemplates.length} fitness template{fitnessTemplates.length !== 1 ? 's' : ''}
             </p>
             <CreateTemplateButton />
@@ -179,7 +179,7 @@ function PageHeader() {
 function StatCard({ label, value, accent = false }: { label: string; value: number; accent?: boolean }) {
   return (
     <div className="bg-surface border border-border rounded-xl p-4">
-      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">{label}</p>
+      <p className="label-xs mb-1">{label}</p>
       <p className={`text-2xl font-mono font-bold ${accent ? 'text-lime' : 'text-text-primary'}`}>
         {value}
       </p>
@@ -220,7 +220,7 @@ function FitnessTemplateCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <p className="font-semibold text-text-primary text-sm truncate">{template.name}</p>
-                <span className="shrink-0 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-lime/20 text-lime/80">
+                <span className="shrink-0 text-xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-lime/20 text-lime/80">
                   {typeLabel}
                 </span>
               </div>
@@ -231,11 +231,11 @@ function FitnessTemplateCard({
 
             <div className="flex items-center gap-3 sm:gap-5 shrink-0 flex-wrap justify-end">
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted">Blocks</p>
+                <p className="label-xs">Blocks</p>
                 <p className="text-base font-mono font-bold text-lime">{blockCount}</p>
               </div>
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercises</p>
+                <p className="label-xs">Exercises</p>
                 <p className="text-base font-mono font-bold text-lime">{exerciseCount}</p>
               </div>
               {template.total_duration_min != null && (
@@ -245,12 +245,12 @@ function FitnessTemplateCard({
                 </div>
               )}
               {isDraft ? (
-                <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-border text-text-secondary">
+                <span className="text-xs uppercase tracking-widest px-2 py-0.5 rounded-full border border-border text-text-secondary">
                   Draft
                 </span>
               ) : (
                 <span className={[
-                  'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
+                  'text-xs uppercase tracking-widest px-2 py-0.5 rounded-full border',
                   template.is_active
                     ? 'border-status-green/50 text-status-green'
                     : 'border-border text-text-muted',

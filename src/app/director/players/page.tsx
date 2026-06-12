@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Upload, Users, UserPlus, Zap, ChevronRight, ClipboardList } from 'lucide-react'
+import { Upload, UserPlus, Zap, ChevronRight } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
@@ -142,14 +142,6 @@ export default async function PlayersPage() {
 
   return (
     <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
-      {/* DONNA UI Constitution brief — Sprint 1123 */}
-      <DonnaScreenBriefStatic
-        brief={playersBrief}
-        primaryActionLabel="Add Player"
-        primaryActionHref="/director/players/new"
-        emphasis={assessmentDueCount > 0 || missingCurriculumCount > 0 ? 'urgent' : 'normal'}
-      />
-
       {/* Sprint 820: data-donna-focus-id on page header for DONNA "player directory" highlight */}
       <div className="flex items-start justify-between gap-4" data-donna-focus-id="player-directory-summary">
         <div>
@@ -166,7 +158,7 @@ export default async function PlayersPage() {
             // Sprint 820: data-donna-focus-id for DONNA "players without levels" highlight
             <Link
               href="/director/curriculum"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-status-orange/30 bg-status-orange/5 text-[11px] text-status-orange hover:bg-status-orange/10 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-status-orange/30 bg-status-orange/5 text-xs text-status-orange hover:bg-status-orange/10 transition-colors"
               data-donna-focus-id="players-missing-level"
             >
               {missingCurriculumCount} without curriculum level
@@ -188,15 +180,16 @@ export default async function PlayersPage() {
             <Upload className="w-4 h-4" />
             Import
           </Link>
-          <Link
-            href="/director/players/onboarding-review"
-            className="btn-ghost flex items-center gap-2 text-sm"
-          >
-            <ClipboardList className="w-4 h-4" />
-            Onboarding
-          </Link>
         </div>
       </div>
+
+      {/* DONNA UI Constitution brief — Sprint 1123 */}
+      <DonnaScreenBriefStatic
+        brief={playersBrief}
+        primaryActionLabel="Add Player"
+        primaryActionHref="/director/players/new"
+        emphasis={assessmentDueCount > 0 || missingCurriculumCount > 0 ? 'urgent' : 'normal'}
+      />
 
       {/* Advancement-ready players — action prompt */}
       {advancementReadyPlayers.length > 0 && (

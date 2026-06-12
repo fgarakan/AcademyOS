@@ -1363,12 +1363,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Coach Wrap-Ups</h3>
                 {pendingWrapUpDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingWrapUpDrafts.length} to review
                   </span>
                 )}
                 {approvedWrapUpDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedWrapUpDrafts.length} ready to apply
                   </span>
                 )}
@@ -1378,7 +1378,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedWrapUpDrafts.length}
                     </span>
                   </div>
@@ -1409,12 +1409,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Attendance Exceptions</h3>
                 {pendingAttendanceDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingAttendanceDrafts.length} to review
                   </span>
                 )}
                 {approvedAttendanceDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedAttendanceDrafts.length} ready to apply
                   </span>
                 )}
@@ -1424,7 +1424,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedAttendanceDrafts.length}
                     </span>
                   </div>
@@ -1454,7 +1454,7 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Placement / New Students</h3>
                 {(pendingPlacementReviews.length + enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + pendingRecommendationDrafts.length) > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingPlacementReviews.length + enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + pendingRecommendationDrafts.length} to review
                   </span>
                 )}
@@ -1475,7 +1475,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Follow-Up Later</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
                       {followUpPlacementReviews.length}
                     </span>
                   </div>
@@ -1500,7 +1500,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Placement Assessments In Progress</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
                       {enrichedAssessmentDrafts.length}
                     </span>
                   </div>
@@ -1516,12 +1516,12 @@ export default async function DirectorReviewQueuePage({
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Placement Recommendations</p>
                     {pendingRecommendationDrafts.length > 0 && (
-                      <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+                      <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
                         {pendingRecommendationDrafts.length} pending
                       </span>
                     )}
                     {approvedRecommendationDrafts.length > 0 && (
-                      <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                         {approvedRecommendationDrafts.length} approved
                       </span>
                     )}
@@ -1541,7 +1541,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Coach Assessment Drafts</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {assessmentStudioDrafts.length} to review
                 </span>
               </div>
@@ -1563,7 +1563,7 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Voice Commands &amp; Captures</h3>
                 {(pendingVoiceIntakeDrafts.length + generalCaptures.length) > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingVoiceIntakeDrafts.length + generalCaptures.length} to review
                   </span>
                 )}
@@ -1573,7 +1573,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Execute</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedVoiceIntakeDrafts.length}
                     </span>
                   </div>
@@ -1605,7 +1605,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Parent Communication Drafts</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {parentCommDrafts.length} to review
                 </span>
               </div>
@@ -1623,7 +1623,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Level Readiness Reviews</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {levelReviewDrafts.length} to review
                 </span>
               </div>
@@ -1658,17 +1658,17 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Player Notes</h3>
                 {pendingObservationDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingObservationDrafts.length} to review
                   </span>
                 )}
                 {clarificationNeededObservationDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {clarificationNeededObservationDrafts.length} needs clarification
                   </span>
                 )}
                 {approvedObservationDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedObservationDrafts.length} ready to apply
                   </span>
                 )}
@@ -1678,7 +1678,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedObservationDrafts.length}
                     </span>
                   </div>
@@ -1704,7 +1704,7 @@ export default async function DirectorReviewQueuePage({
               {clarificationNeededObservationDrafts.length > 0 && (
                 <section className="space-y-3">
                   <p className="label-xs">Needs Clarification</p>
-                  <p className="text-[10px] text-text-muted">Clarification was requested. Review the coach&apos;s note, discuss offline if needed, then approve or reject.</p>
+                  <p className="text-xs text-text-muted">Clarification was requested. Review the coach&apos;s note, discuss offline if needed, then approve or reject.</p>
                   <div className="space-y-4">
                     {clarificationNeededObservationDrafts.map(draft => (
                       <WrapUpObservationDraftCard key={draft.id} draft={draft} />
@@ -1721,12 +1721,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Development Summaries</h3>
                 {pendingSummaryDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingSummaryDrafts.length} to review
                   </span>
                 )}
                 {approvedSummaryDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedSummaryDrafts.length} ready to apply
                   </span>
                 )}
@@ -1736,7 +1736,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedSummaryDrafts.length}
                     </span>
                   </div>
@@ -1766,12 +1766,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Training Priorities</h3>
                 {pendingPriorityDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingPriorityDrafts.length} to review
                   </span>
                 )}
                 {approvedPriorityDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedPriorityDrafts.length} ready to apply
                   </span>
                 )}
@@ -1781,7 +1781,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedPriorityDrafts.length}
                     </span>
                   </div>
@@ -1811,12 +1811,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Level Readiness</h3>
                 {pendingEvidenceDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingEvidenceDrafts.length} to review
                   </span>
                 )}
                 {approvedEvidenceDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedEvidenceDrafts.length} ready to apply
                   </span>
                 )}
@@ -1826,7 +1826,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedEvidenceDrafts.length}
                     </span>
                   </div>
@@ -1872,12 +1872,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Session Recaps</h3>
                 {pendingDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingDrafts.length} to review
                   </span>
                 )}
                 {approvedDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedDrafts.length} ready to apply
                   </span>
                 )}
@@ -1887,7 +1887,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedDrafts.length}
                     </span>
                   </div>
@@ -1916,7 +1916,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Coach Curriculum Suggestions</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-blue/15 text-status-blue border border-status-blue/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-blue/15 text-status-blue border border-status-blue/20 leading-none">
                   {pendingCoachSuggestions.length} unread
                 </span>
               </div>
@@ -1935,12 +1935,12 @@ export default async function DirectorReviewQueuePage({
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Curriculum Suggestions</h3>
                 {pendingCurriculumOverrideDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingCurriculumOverrideDrafts.length} to review
                   </span>
                 )}
                 {approvedCurriculumOverrideDrafts.length > 0 && (
-                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                  <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
                     {approvedCurriculumOverrideDrafts.length} ready to apply
                   </span>
                 )}
@@ -1950,7 +1950,7 @@ export default async function DirectorReviewQueuePage({
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="label-xs">Approved — Ready to Apply</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                       {approvedCurriculumOverrideDrafts.length}
                     </span>
                   </div>
@@ -1995,7 +1995,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Session Recaps — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededDrafts.length}
                 </span>
               </div>
@@ -2012,7 +2012,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Voice Commands — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededVoiceIntakeDrafts.length}
                 </span>
               </div>
@@ -2029,7 +2029,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededWrapUpDrafts.length}
                 </span>
               </div>
@@ -2046,7 +2046,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Player Observations — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededObservationDrafts.length}
                 </span>
               </div>
@@ -2063,7 +2063,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Priority Recommendations — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededPriorityDrafts.length}
                 </span>
               </div>
@@ -2080,7 +2080,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Evidence Links — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededEvidenceDrafts.length}
                 </span>
               </div>
@@ -2097,7 +2097,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Attendance Exceptions — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededAttendanceDrafts.length}
                 </span>
               </div>
@@ -2114,7 +2114,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Curriculum Overrides — Sent Back for Clarification</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededCurriculumOverrideDrafts.length}
                 </span>
               </div>
@@ -2131,7 +2131,7 @@ export default async function DirectorReviewQueuePage({
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Not Approved</h3>
-                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-red/15 text-status-red border border-status-red/20 leading-none">
+                <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-red/15 text-status-red border border-status-red/20 leading-none">
                   {rejectedDrafts.length + rejectedVoiceIntakeDrafts.length + rejectedWrapUpDrafts.length + rejectedObservationDrafts.length + rejectedPriorityDrafts.length + rejectedEvidenceDrafts.length + rejectedAttendanceDrafts.length + rejectedCurriculumOverrideDrafts.length + rejectedSummaryDrafts.length}
                 </span>
               </div>
@@ -2168,7 +2168,7 @@ export default async function DirectorReviewQueuePage({
           )}
 
           <div className="rounded-xl bg-surface-raised border border-border px-4 py-3">
-            <p className="text-[11px] text-text-muted">
+            <p className="text-xs text-text-muted">
               Applied and executed items will be visible in a future update. Approved items ready to apply are in the Needs Approval and Player Updates tabs.
             </p>
           </div>
@@ -2192,12 +2192,12 @@ function TabLabel({
     <span className="flex items-center gap-1.5">
       {label}
       {pending > 0 && (
-        <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+        <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
           {pending}
         </span>
       )}
       {ready > 0 && (
-        <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+        <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
           {ready}
         </span>
       )}

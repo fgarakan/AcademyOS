@@ -257,18 +257,18 @@ export default async function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
-                    <th className="px-4 py-3 text-[11px] uppercase tracking-widest text-text-muted font-semibold w-1/3">
+                    <th className="px-4 py-3 label-xs font-semibold w-1/3">
                       Player
                     </th>
-                    <th className="px-4 py-3 text-[11px] uppercase tracking-widest text-text-muted font-semibold">
+                    <th className="px-4 py-3 label-xs font-semibold">
                       Time in Level{' '}
                       <span className="text-lime/60 normal-case tracking-normal font-normal">live</span>
                     </th>
-                    <th className="px-4 py-3 text-[11px] uppercase tracking-widest text-text-muted font-semibold">
+                    <th className="px-4 py-3 label-xs font-semibold">
                       Absences 30d{' '}
                       <span className="text-text-muted/60 normal-case tracking-normal font-normal">demo</span>
                     </th>
-                    <th className="px-4 py-3 text-[11px] uppercase tracking-widest text-text-muted font-semibold">
+                    <th className="px-4 py-3 label-xs font-semibold">
                       Advancement
                     </th>
                   </tr>
@@ -380,12 +380,12 @@ export default async function DashboardPage() {
                     {player.full_name ?? 'Unnamed Player'}
                   </Link>
                   {advancementEligible ? (
-                    <span className="inline-flex items-center gap-1 text-lime text-[11px] font-semibold shrink-0">
+                    <span className="inline-flex items-center gap-1 text-lime text-xs font-semibold shrink-0">
                       <CheckCircle className="w-3 h-3" />
                       Ready
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-text-muted text-[11px] shrink-0">
+                    <span className="inline-flex items-center gap-1 text-text-muted text-xs shrink-0">
                       <Clock className="w-3 h-3" />
                       In progress
                     </span>

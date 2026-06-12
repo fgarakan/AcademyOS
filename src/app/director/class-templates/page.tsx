@@ -155,21 +155,21 @@ export default async function ClassTemplatesPage() {
       {classTemplates.length > 0 && (
         <div className="flex flex-wrap gap-5 px-4 py-3 rounded-xl bg-surface-raised border border-border">
           <div>
-            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Lesson Plans Applied</p>
+            <p className="label-xs mb-1">Lesson Plans Applied</p>
             <p className="text-sm font-mono font-bold text-lime">
               {templatesWithLessonPlan.length}
               <span className="text-text-muted font-normal text-xs"> / {classTemplates.length}</span>
             </p>
           </div>
           <div>
-            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Curriculum Level Set</p>
+            <p className="label-xs mb-1">Curriculum Level Set</p>
             <p className="text-sm font-mono font-bold text-lime">
               {templatesWithLevel.length}
               <span className="text-text-muted font-normal text-xs"> / {classTemplates.length}</span>
             </p>
           </div>
           <div>
-            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Sessions w/ Curriculum (30d)</p>
+            <p className="label-xs mb-1">Sessions w/ Curriculum (30d)</p>
             <p className="text-sm font-mono font-bold text-lime">{recentCurriculumSessionCount}</p>
           </div>
         </div>
@@ -242,7 +242,7 @@ function TemplateRow({
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-semibold text-text-primary text-sm">{template.name}</p>
                 {curriculumLevelName && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-lime/20 bg-lime/5 text-lime">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded border border-lime/20 bg-lime/5 text-lime">
                     <GraduationCap className="w-2.5 h-2.5" />
                     {curriculumLevelName}
                   </span>
@@ -250,28 +250,28 @@ function TemplateRow({
               </div>
               <div className="flex flex-wrap gap-3 mt-1">
                 {template.track && (
-                  <span className="text-[10px] uppercase tracking-widest text-text-muted">{template.track}</span>
+                  <span className="label-xs">{template.track}</span>
                 )}
                 {airtableIdTag && (
-                  <span className="text-[10px] font-mono text-text-muted">{airtableIdTag}</span>
+                  <span className="text-xs font-mono text-text-muted">{airtableIdTag}</span>
                 )}
                 {importBatchTag && (
-                  <span className="text-[10px] font-mono text-text-muted">{importBatchTag}</span>
+                  <span className="text-xs font-mono text-text-muted">{importBatchTag}</span>
                 )}
               </div>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-5 shrink-0 flex-wrap justify-end">
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted">Blocks</p>
+                <p className="label-xs">Blocks</p>
                 <p className="text-base font-mono font-bold text-lime">{blockCount}</p>
               </div>
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercises</p>
+                <p className="label-xs">Exercises</p>
                 <p className="text-base font-mono font-bold text-lime">{exerciseCount}</p>
               </div>
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum</p>
+                <p className="label-xs">Curriculum</p>
                 <p className={`text-base font-mono font-bold ${curriculumItemCount > 0 ? 'text-lime' : 'text-text-muted'}`}>
                   {curriculumItemCount}
                 </p>
@@ -283,12 +283,12 @@ function TemplateRow({
                 </div>
               )}
               {isDraft ? (
-                <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-border text-text-secondary">
+                <span className="text-xs uppercase tracking-widest px-2 py-0.5 rounded-full border border-border text-text-secondary">
                   Draft
                 </span>
               ) : (
                 <span className={[
-                  'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
+                  'text-xs uppercase tracking-widest px-2 py-0.5 rounded-full border',
                   template.is_active
                     ? 'border-status-green/50 text-status-green'
                     : 'border-border text-text-muted',

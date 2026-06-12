@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 2201–2230 — Fable Platform-Wide Screen Transformation V1
+
+**Mission:** Normalize typography, headers, and design tokens across all director screens. Eliminate hardcoded font sizes, restore `page-eyebrow/title/subtitle` pattern, and apply `label-xs` utility class platform-wide.
+
+**Phase A — Coaches + Curriculum header and color fixes:**
+- `coaches/page.tsx` — added `page-eyebrow/title/subtitle`, removed `max-w-4xl mx-auto`, fixed `text-white` → `text-text-primary`
+- `curriculum/page.tsx` — added `page-eyebrow/title/subtitle`, fixed Yellow Ball stage colors (`bg-yellow-400` → `bg-status-orange`), swept all `text-[11px]/[12px]/[13px]` → `text-xs/text-sm`
+
+**Phase B — Platform-wide typography sweep:**
+- `dashboard/page.tsx` — table headers and mobile cards: `text-[11px] uppercase tracking-widest` → `label-xs`
+- `sessions/page.tsx` — SessionStatusPill: `text-[10px]` → `text-xs`
+- `class-templates/page.tsx` — stat labels, column headers, all badge sizes → `label-xs`/`text-xs`
+- `fitness/templates/page.tsx` — stat labels, column headers, all badge sizes → `label-xs`/`text-xs`
+- `review/page.tsx` — count badges (~20), status badges (~12), inline notes → `text-xs`
+
+**Phase C — Players directory header reorder:**
+- `players/page.tsx` — moved `DonnaScreenBriefStatic` after header (was before), removed Onboarding button, fixed curriculum badge visibility (`hidden sm:inline-flex` → `inline-flex`), removed unused `Users`/`ClipboardList` imports
+
+**Docs created:**
+- `docs/fable/FABLE_PLATFORM_TRANSFORMATION_PLAN.md` — full 15-screen platform audit with tier rankings, per-screen analysis, and transformation sequence
+- `docs/fable/CURRICULUM_BUILDER_TRANSFORMATION_PLAN.md` — Curriculum Builder pre-Phase-D audit: design token violations (20+ inline styles), DONNA entry point overlap, information hierarchy, button reduction plan, token replacement mappings
+
+**Phase D deferred:** `CurriculumSetupBuilder.tsx` token cleanup awaiting plan approval.
+
+**TypeScript:** Clean (0 errors)
+
+---
+
 ## 2026-06-12 — Mega Sprint 2171–2200 — Director Workflow Consolidation Implementation V1
 
 **Mission:** Implement the approved architecture package. One coherent operating system. Multiple generations retired.

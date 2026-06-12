@@ -109,16 +109,14 @@ export default async function CoachesPage() {
   })()
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Coaches</h1>
-          <p className="text-text-secondary text-sm mt-1">
-            {coaches.length} active coach{coaches.length !== 1 ? 'es' : ''}
-          </p>
-        </div>
-        <Users className="w-6 h-6 text-text-muted" />
+      <div>
+        <p className="page-eyebrow">Staff</p>
+        <h1 className="page-title">Coaches</h1>
+        <p className="page-subtitle">
+          {coaches.length} active coach{coaches.length !== 1 ? 'es' : ''} — manage your instruction team.
+        </p>
       </div>
 
       {/* DONNA intelligence summary */}
@@ -160,7 +158,7 @@ export default async function CoachesPage() {
           <CoachList coaches={regularCoaches} />
         </div>
       )}
-    </main>
+    </div>
   )
 }
 
@@ -188,7 +186,7 @@ function CoachList({ coaches }: { coaches: CoachRow[] }) {
               className="flex items-center justify-between gap-4 py-3 px-1 hover:bg-surface-raised -mx-1 px-4 rounded-lg transition-colors group"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-white group-hover:text-lime transition-colors truncate">
+                <p className="text-sm font-medium text-text-primary group-hover:text-lime transition-colors truncate">
                   {coach.name}
                 </p>
                 <div className="flex items-center gap-3 mt-0.5">
