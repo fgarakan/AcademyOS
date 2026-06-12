@@ -41,7 +41,7 @@ export function buildDirectorDailyBriefing(params: {
       label: "Today's sessions",
       value: params.todaySessionCount,
       status: params.todaySessionCount === 0 ? 'no_data' : 'ok',
-      href: '/director/today',
+      href: '/director',
     },
     {
       id: 'missing_recaps',

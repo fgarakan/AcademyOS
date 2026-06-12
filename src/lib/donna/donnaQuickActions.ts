@@ -48,7 +48,7 @@ export const DIRECTOR_QUICK_ACTIONS: DonnaQuickAction[] = [
     role: 'director',
     category: 'safe_read',
     domain: 'academy_health',
-    href: '/director/today',
+    href: '/director',
   },
   {
     id: 'show_pending_reviews',
@@ -66,7 +66,7 @@ export const DIRECTOR_QUICK_ACTIONS: DonnaQuickAction[] = [
     role: 'director',
     category: 'safe_read',
     domain: 'academy_health',
-    href: '/director/donna-coo-demo',
+    href: '/director/attention',
   },
   {
     id: 'inspect_player',
@@ -102,7 +102,7 @@ export const DIRECTOR_QUICK_ACTIONS: DonnaQuickAction[] = [
     role: 'director',
     category: 'safe_read',
     domain: 'academy_health',
-    href: '/director/donna-coo-demo',
+    href: '/director',
   },
 ]
 

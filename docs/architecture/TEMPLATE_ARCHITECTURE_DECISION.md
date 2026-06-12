@@ -41,16 +41,34 @@ becoming canonical across academies.
 
 ## Canonical Route Tree
 
-Tree B is canonical. Tree A (/director/templates/*) is deprecated.
+Implemented in Sprint 2171–2200.
 
-Tree B routes:
-- src/app/director/class-templates/     (Class Templates)
-- src/app/director/fitness/templates/   (Fitness Templates)
+### Templates Hub
 
-Tree A deprecation (Phase B):
-- /director/templates → redirect to /director/class-templates
-- No data migration needed. Tree B writes to the same templates and
-  template_blocks tables as Tree A.
+/director/templates is the canonical entry point for all template operations.
+It is not a redirect — it is a first-class hub page with real template count
+data and navigation to both specialized builders.
+
+Hub surfaces:
+- Class Templates (count + link to builder)
+- Fitness Templates (count + link to builder)
+- Create Template (→ /director/class-templates/new)
+- Generate Session (→ /director/sessions/new)
+
+### Builder Routes (Tree B — canonical)
+
+- /director/class-templates   (src/app/director/class-templates/)
+- /director/fitness/templates (src/app/director/fitness/templates/)
+
+### Tree A Status
+
+The /director/templates/page.tsx has been rewritten as the canonical hub.
+Tree A sub-routes (/director/templates/class/*, /director/templates/fitness/*,
+/director/templates/coach-preview/, etc.) are unreachable from navigation after
+Sprint 2171–2200. Not yet deleted — flagged for cleanup in a future sprint.
+
+No data migration needed. Tree A and Tree B wrote to the same templates and
+template_blocks tables.
 
 ---
 
@@ -80,8 +98,9 @@ Tree A deprecation (Phase B):
 
 DONNA interacts with templates in two modes:
 
-1. Navigation — routes director to class-templates or fitness/templates when
-   template creation intent is detected in the brief or quick actions.
+1. Navigation — routes director to /director/templates (the hub) when template
+   intent is detected in the brief or quick actions. The hub then provides
+   navigation to the specialized builders.
 
 2. Context — surfaces template gaps in DONNA insights (e.g., "This curriculum
    phase has no template assigned").

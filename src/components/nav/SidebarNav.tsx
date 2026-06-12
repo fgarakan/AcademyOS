@@ -4,28 +4,30 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   Sun, Users, BookOpen,
-  LogOut, ClipboardList,
+  LogOut, BarChart2, LayoutTemplate,
   Settings, Rocket, UserCog, CheckSquare,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
-// Mega Sprint 1961 — 6-item director IA: decision-first operating surface.
-// Removed: Dashboard (/kpi), Sessions (/sessions), Templates (/templates).
-// Director sees today + the domains that require decisions.
-const ACADEMY_ITEMS = [
-  { label: 'Today',      href: '/director',            icon: Sun },
-  { label: 'Players',    href: '/director/players',    icon: Users },
-  { label: 'Curriculum', href: '/director/curriculum', icon: BookOpen },
-  { label: 'Coaches',    href: '/director/coaches',    icon: UserCog },
-  { label: 'Approvals',  href: '/director/review',     icon: CheckSquare },
-  { label: 'Settings',   href: '/director/settings',   icon: Settings },
-]
+// Mega Sprint 2171–2200 — 8-item canonical director navigation.
+// Today, Dashboard, Players, Curriculum, Templates, Coaches, Approvals, Settings.
+// Onboarding rendered conditionally below when onboardingIncomplete === true.
+interface NavItemDef {
+  label: string
+  href: string
+  icon: React.ElementType
+  activeOnPaths?: string[]
+}
 
-// DONNA is the persistent floating button — not a sidebar nav item
-// Parent Updates accessible via URL but not primary nav (low-frequency director surface)
-const SYSTEM_ITEMS = [
-  { label: 'Assessment Template', href: '/director/assessment-template', icon: ClipboardList },
-  { label: 'Onboarding',          href: '/director/onboarding',          icon: Rocket },
+const ACADEMY_ITEMS: NavItemDef[] = [
+  { label: 'Today',      href: '/director',               icon: Sun                                                                              },
+  { label: 'Dashboard',  href: '/director/dashboard',     icon: BarChart2                                                                        },
+  { label: 'Players',    href: '/director/players',       icon: Users                                                                            },
+  { label: 'Curriculum', href: '/director/curriculum',    icon: BookOpen                                                                         },
+  { label: 'Templates',  href: '/director/templates',     icon: LayoutTemplate, activeOnPaths: ['/director/class-templates', '/director/fitness/templates'] },
+  { label: 'Coaches',    href: '/director/coaches',       icon: UserCog                                                                          },
+  { label: 'Approvals',  href: '/director/review',        icon: CheckSquare                                                                      },
+  { label: 'Settings',   href: '/director/settings',      icon: Settings                                                                         },
 ]
 
 interface SidebarNavProps {
@@ -154,20 +156,21 @@ export function SidebarNav({
           <NavItem
             key={item.href}
             item={item}
-            isActive={isActive(item.href)}
+            isActive={
+              isActive(item.href) ||
+              (item.activeOnPaths?.some(p => pathname.startsWith(p)) ?? false)
+            }
             badge={item.label === 'Approvals' ? pendingCount : undefined}
           />
         ))}
 
-        <SectionLabel label="System" />
-        {SYSTEM_ITEMS.map(item => (
+        {onboardingIncomplete && (
           <NavItem
-            key={item.href}
-            item={item}
-            isActive={isActive(item.href)}
-            attention={item.href === '/director/onboarding' ? onboardingIncomplete : false}
+            item={{ label: 'Onboarding', href: '/director/onboarding', icon: Rocket }}
+            isActive={isActive('/director/onboarding')}
+            attention={true}
           />
-        ))}
+        )}
 
       </div>
 

@@ -1,92 +1,102 @@
 # Director Navigation Consolidation Report
 Date: June 2026
-Status: DECIDED — Awaiting Phase B implementation
-Sprint: Mega Sprint 2141–2170
+Status: IMPLEMENTED — Sprint 2171–2200
+Sprint: Mega Sprint 2141–2170 (plan) / Mega Sprint 2171–2200 (implementation)
 
 ---
 
-## Canonical Navigation Standard
+## Canonical Navigation Standard — LIVE
 
-| #  | Label      | Route                     | Purpose                         |
-|----|------------|---------------------------|---------------------------------|
-| 1  | Today      | /director                 | DONNA speaks. Director acts.    |
-| 2  | Dashboard  | /director/dashboard       | Evidence layer. Why?            |
-| 3  | Players    | /director/players         | Roster, profiles, placement.    |
-| 4  | Curriculum | /director/curriculum      | What are we teaching?           |
-| 5  | Templates  | /director/class-templates | How are we running it?          |
-| 6  | Coaches    | /director/coaches         | Who is executing?               |
-| 7  | Approvals  | /director/review          | Decisions pending.              |
-| 8  | Settings   | /director/settings        | Configuration.                  |
+| #  | Label      | Route                  | Purpose                         |
+|----|------------|------------------------|---------------------------------|
+| 1  | Today      | /director              | DONNA speaks. Director acts.    |
+| 2  | Dashboard  | /director/dashboard    | Evidence layer. Why?            |
+| 3  | Players    | /director/players      | Roster, profiles, placement.    |
+| 4  | Curriculum | /director/curriculum   | What are we teaching?           |
+| 5  | Templates  | /director/templates    | How are we running it?          |
+| 6  | Coaches    | /director/coaches      | Who is executing?               |
+| 7  | Approvals  | /director/review       | Decisions pending.              |
+| 8  | Settings   | /director/settings     | Configuration.                  |
 
-SYSTEM_ITEMS (Assessment Template, Onboarding): audited and removed or
-integrated into the primary flow in Phase B.
+Templates nav item (item 5) activates on /director/class-templates and
+/director/fitness/templates via activeOnPaths in SidebarNav.tsx.
+
+SYSTEM_ITEMS removed. Onboarding renders conditionally only when
+onboardingIncomplete === true.
 
 ---
 
-## SidebarNav.tsx — Before vs. After
+## SidebarNav.tsx — Before / After
 
-Current ACADEMY_ITEMS:
+Before (6 ACADEMY_ITEMS + 2 SYSTEM_ITEMS):
   Today, Players, Curriculum, Coaches, Approvals, Settings
+  [System] Assessment Template, Onboarding (always visible)
 
-Target ACADEMY_ITEMS:
+After (8 ACADEMY_ITEMS, conditional Onboarding):
   Today, Dashboard, Players, Curriculum, Templates, Coaches, Approvals, Settings
-
-Changes:
-- Add Dashboard as item 2 (route: /director/dashboard)
-- Add Templates as item 5 (route: /director/class-templates)
-- Confirm both routes are live before sidebar change ships
+  [conditional] Onboarding (only when onboardingIncomplete === true)
 
 ---
 
-## Broken Link Fixes — Phase B
+## Href Fixes — All Resolved
 
-| File                            | Current href             | Correct href                | Status   |
-|---------------------------------|--------------------------|-----------------------------|----------|
-| todayBriefEngine.ts (~75)       | /onboarding              | /director/onboarding        | Ready    |
-| todayBriefEngine.ts (~87)       | /director/templates      | /director/class-templates   | Ready ✓  |
-| donnaInsightEngine.ts (154)     | /director/today          | /director                   | Ready    |
-| donnaQuickActions.ts (51)       | /director/today          | /director                   | Ready    |
-| directorBriefing.ts (44)        | /director/today          | /director                   | Ready    |
-| AcademyHealthBreakdown.tsx (251)| /director/today          | /director                   | Ready    |
-| sessions/page.tsx (116)         | /director/today          | /director                   | Ready    |
-| donnaQuickActions.ts (69)       | /director/donna-coo-demo | TBD                         | Deferred |
-| donnaQuickActions.ts (105)      | /director/donna-coo-demo | TBD                         | Deferred |
+| File                             | Was                      | Now                         | Status |
+|----------------------------------|--------------------------|-----------------------------|--------|
+| todayBriefEngine.ts (~75)        | /onboarding              | /director/onboarding        | DONE   |
+| todayBriefEngine.ts (~87)        | /director/templates      | /director/templates         | CORRECT AS-IS — hub exists |
+| donnaInsightEngine.ts (154)      | /director/today          | /director                   | DONE   |
+| donnaQuickActions.ts (51)        | /director/today          | /director                   | DONE   |
+| directorBriefing.ts (44)         | /director/today          | /director                   | DONE   |
+| AcademyHealthBreakdown.tsx (251) | /director/today          | /director                   | DONE   |
+| sessions/page.tsx (116)          | /director/today          | /director                   | DONE   |
+| donnaQuickActions.ts (69)        | /director/donna-coo-demo | /director/attention         | DONE   |
+| donnaQuickActions.ts (105)       | /director/donna-coo-demo | /director                   | DONE   |
+| DONNAPilotDemoNav.tsx (59)       | /director/donna-coo-demo | /director                   | DONE   |
 
-All non-deferred fixes have no remaining blockers. Template arch decision
-resolved todayBriefEngine.ts step 3.
-
----
-
-## Deprecated Routes — Phase B Redirects
-
-| Route                 | Target                    | Notes                           |
-|-----------------------|---------------------------|---------------------------------|
-| /director/today       | /director                 | Legacy demo-aware Today page    |
-| /director/setup       | /director/onboarding      | Legacy 12-step static checklist |
-| /director/kpi         | /director/dashboard       | KPI terminology retired         |
-| /director/templates/* | /director/class-templates | Tree A deprecated               |
+No broken hrefs remain.
 
 ---
 
-## Routes Confirmed Canonical (No Action)
+## Redirects Implemented
 
-| Route                       | Notes                                       |
-|-----------------------------|---------------------------------------------|
-| /director                   | Today — canonical                           |
-| /director/review            | Approvals — canonical                       |
-| /director/attention         | Keep — DONNA routes here correctly          |
-| /director/onboarding        | Director onboarding — canonical             |
-| /director/class-templates   | Class Templates — canonical (Tree B)        |
-| /director/fitness/templates | Fitness Templates — canonical (Tree B)      |
-| /director/players           | Canonical                                   |
-| /director/coaches           | Canonical                                   |
-| /director/curriculum        | Canonical                                   |
-| /director/settings          | Canonical                                   |
+| Route             | Target                   | Notes                           |
+|-------------------|--------------------------|---------------------------------|
+| /director/today   | /director                | Legacy demo-mode Today retired  |
+| /director/setup   | /director/onboarding     | Legacy static checklist retired |
+| /director/kpi     | /director/dashboard      | KPI terminology retired         |
+
+Note: /director/templates was NOT redirected — it was rewritten as the
+canonical Templates Hub. Tree A sub-routes remain on disk but are unreachable
+from navigation.
+
+---
+
+## Routes Confirmed Canonical
+
+| Route                       | Notes                                              |
+|-----------------------------|----------------------------------------------------|
+| /director                   | Today — canonical                                  |
+| /director/dashboard         | Dashboard — canonical (new, replaces /director/kpi)|
+| /director/templates         | Templates Hub — canonical (rewritten from Tree A)  |
+| /director/class-templates   | Class Templates builder — canonical (Tree B)       |
+| /director/fitness/templates | Fitness Templates builder — canonical (Tree B)     |
+| /director/review            | Approvals — canonical                              |
+| /director/attention         | Canonical attention workspace                      |
+| /director/onboarding        | Director onboarding — canonical                    |
+| /director/players           | Canonical                                          |
+| /director/coaches           | Canonical                                          |
+| /director/curriculum        | Canonical                                          |
+| /director/settings          | Canonical                                          |
 
 ---
 
 ## Open After This Sprint
 
-/director/donna-coo-demo dead route (donnaQuickActions.ts lines 69, 105):
-replacement route TBD — deferred until DONNA conversation Phase 1 defines
-the canonical DONNA interaction surface.
+Tree A sub-routes unreachable from navigation:
+  /director/templates/class/*
+  /director/templates/fitness/*
+  /director/templates/coach-preview/
+  /director/templates/donna-suggestions/
+  /director/templates/impact-preview/
+
+These can be deleted in a future cleanup sprint. No data impact.

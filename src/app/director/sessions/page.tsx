@@ -113,7 +113,7 @@ export default async function DirectorSessionsPage() {
           Dashboard
         </Link>
         <Link
-          href="/director/today"
+          href="/director"
           className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-lime transition-colors"
         >
           <Sun className="w-3.5 h-3.5" />

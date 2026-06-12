@@ -56,7 +56,7 @@ const DEFAULT_PILOT_STEPS: PilotDemoStep[] = [
   {
     id: 'coo',
     label: 'COO intelligence',
-    href: '/director/donna-coo-demo',
+    href: '/director',
     description: `Full ${DONNA_PUBLIC_NAME} COO academy view`,
   },
 ]

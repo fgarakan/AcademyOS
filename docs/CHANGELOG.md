@@ -2,6 +2,55 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 2171–2200 — Director Workflow Consolidation Implementation V1
+
+**Mission:** Implement the approved architecture package. One coherent operating system. Multiple generations retired.
+
+**Redirects (3):**
+- `/director/today` → `/director` — legacy 631-line demo-mode-aware page retired
+- `/director/setup` → `/director/onboarding` — legacy 12-step static checklist retired
+- `/director/kpi` → `/director/dashboard` — KPI terminology retired
+
+**New routes (2):**
+- `/director/dashboard` — canonical evidence layer, all content from `/director/kpi`
+- `/director/templates` — canonical Templates Hub, surfaces Class Templates, Fitness Templates, Create Template, Generate Session, links to Tree B builders
+
+**Navigation (1):**
+- `SidebarNav.tsx` — 8-item canonical nav: Today, Dashboard, Players, Curriculum, Templates, Coaches, Approvals, Settings. SYSTEM_ITEMS removed. Onboarding renders conditionally only when `onboardingIncomplete === true`. Templates item activates on `/director/class-templates` and `/director/fitness/templates` via `activeOnPaths`.
+
+**Href fixes (6):**
+- `todayBriefEngine.ts:75` — `/onboarding` → `/director/onboarding`
+- `donnaInsightEngine.ts:154` — `/director/today` → `/director`
+- `donnaQuickActions.ts:51` — `/director/today` → `/director`
+- `directorBriefing.ts:44` — `/director/today` → `/director`
+- `AcademyHealthBreakdown.tsx:251` — `/director/today` → `/director`
+- `sessions/page.tsx:116` — `/director/today` → `/director`
+
+**Dead route resolved:** `donnaQuickActions.ts:69` (`academy_risks`) → `/director/attention`. `donnaQuickActions.ts:105` (`donna_intelligence`) → `/director`. `DONNAPilotDemoNav.tsx:59` (coo item) → `/director`. No dead routes remain.
+
+**Certification:** `DirectorWorkflowConsolidationCertification.ts` — 30/30 checks pass. CONSOLIDATION CERTIFIED.
+
+**TypeScript:** Clean (0 errors)
+
+**Files created:**
+- `src/app/director/dashboard/page.tsx` — canonical dashboard, evidence layer
+- `src/app/director/templates/page.tsx` — canonical Templates Hub (rewrite)
+- `src/lib/donna/DirectorWorkflowConsolidationCertification.ts` — 27-check consolidation certification
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — redirect to /director
+- `src/app/director/setup/page.tsx` — redirect to /director/onboarding
+- `src/app/director/kpi/page.tsx` — redirect to /director/dashboard
+- `src/components/nav/SidebarNav.tsx` — 8-item canonical nav, conditional onboarding, activeOnPaths for Templates
+- `src/lib/donna/today/todayBriefEngine.ts` — setup step 1 href fix
+- `src/lib/donna/donnaInsightEngine.ts` — href fix
+- `src/lib/donna/donnaQuickActions.ts` — href fix
+- `src/lib/donna/briefings/directorBriefing.ts` — href fix
+- `src/app/director/_components/AcademyHealthBreakdown.tsx` — href fix
+- `src/app/director/sessions/page.tsx` — href fix
+
+---
+
 ## 2026-06-12 — Mega Sprint 2141–2170 — Director Workflow Consolidation Architecture Package V1
 
 **Mission:** Resolve the architectural decisions that were blocking Director workflow consolidation. No implementation. Decision package only.

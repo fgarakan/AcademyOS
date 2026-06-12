@@ -151,7 +151,7 @@ function detectLowWrapUpCoverage(ctx: DirectorDonnaContext): DonnaInsight[] {
     confidence: ratio >= 0.75 ? 'high' : 'medium',
     requiresApproval: false,
     safeNextStep: 'Go to Today\'s Academy → check session wrap-up status.',
-    href: '/director/today',
+    href: '/director',
   }]
 }
 

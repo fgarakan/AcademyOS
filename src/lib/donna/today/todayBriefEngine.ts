@@ -72,7 +72,7 @@ export function buildSetupSteps(input: TodayBriefInput): SetupStep[] {
       label:       'Academy identity set up',
       complete:    input.hasOnboardingComplete || input.hasAcademyDna,
       actionLabel: 'Set up with DONNA',
-      actionHref:  '/onboarding',
+      actionHref:  '/director/onboarding',
     },
     {
       label:       'Players added',

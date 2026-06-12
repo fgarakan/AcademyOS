@@ -248,7 +248,7 @@ function buildFocusActions(d: AcademyHealthBadgeProps): FocusAction[] {
     actions.push({
       label: 'View Today\'s Academy',
       detail: 'No urgent actions — check today\'s live session feed',
-      href: '/director/today',
+      href: '/director',
     })
     actions.push({
       label: 'View Coach Recaps',
