@@ -25,6 +25,7 @@ import { buildDraftsFromDecisions, buildWorkQueueSummary } from '@/lib/donna/act
 import { DonnaCommandBrief }        from './_components/DonnaCommandBrief'
 import { DonnaAlertsAndMomentum }   from './_components/DonnaAlertsAndMomentum'
 import { DirectorDecisionCenter }   from './_components/DirectorDecisionCenter'
+import { DonnaQuickActions }        from './_components/DonnaQuickActions'
 import { WhatCanWaitPanel }         from './_components/WhatCanWaitPanel'
 import { WhatChangedPanel }         from './_components/WhatChangedPanel'
 import { DonnaCOOPanel }            from './_components/DonnaCOOPanel'
@@ -625,7 +626,16 @@ export default async function DirectorCommandCenter() {
             daysSinceLastVisit={decisionContext.daysSinceLastVisit}
           />
 
-          {/* ── Top 3 Decisions ──────────────────────────────────────────── */}
+          {/* ── Quick Actions — primary execution surface ─────────────────
+              Positioned above decisions: director acts here first,
+              reads context in decisions below. ──────────────────────── */}
+          <DonnaQuickActions
+            situationType={situation.situationType}
+            workQueuePendingCount={workQueueSummary.totalPending}
+            alertCount={brief.alerts.length}
+          />
+
+          {/* ── Top 3 Decisions — context + why ──────────────────────────── */}
           <DirectorDecisionCenter decisions={decisionContext.decisions} />
 
           {/* ── Alerts + Momentum ─────────────────────────────────────────── */}

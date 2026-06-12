@@ -3,43 +3,57 @@
 import Link from 'next/link'
 import { ChevronRight, CircleDot, AlertCircle, AlertTriangle, Info, Clock } from 'lucide-react'
 import { Card } from '@/components/ui'
-import type { DirectorDecision } from '@/lib/donna/operations/directorDecisionEngine'
+import type { DirectorDecision, DecisionUrgency } from '@/lib/donna/operations/directorDecisionEngine'
+import { DonnaExplainPopover } from './DonnaExplainPopover'
 
 interface Props {
   decisions: DirectorDecision[]
 }
 
-const URGENCY_CONFIG = {
+const URGENCY_CONFIG: Record<DecisionUrgency, {
+  color: string; bg: string; border: string
+  icon: React.ComponentType<{ className?: string }>; label: string
+}> = {
   critical: { color: 'text-status-red',    bg: 'bg-status-red/10',    border: 'border-status-red/30',    icon: AlertCircle,   label: 'Act now' },
   high:     { color: 'text-status-orange', bg: 'bg-status-orange/10', border: 'border-status-orange/30', icon: AlertTriangle, label: 'This week' },
   medium:   { color: 'text-status-blue',   bg: 'bg-status-blue/10',   border: 'border-status-blue/30',   icon: Info,          label: 'This month' },
   low:      { color: 'text-text-muted',    bg: 'bg-surface-raised',   border: 'border-border',            icon: Clock,         label: 'When ready' },
 }
 
-function ConfidenceDot({ confidence }: { confidence: 'reliable' | 'provisional' }) {
-  return (
-    <span className="flex items-center gap-1">
-      <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-          confidence === 'reliable' ? 'bg-status-green' : 'bg-status-orange'
-        }`}
-      />
-      <span className={`text-xs uppercase tracking-widest font-medium ${
-        confidence === 'reliable' ? 'text-status-green' : 'text-status-orange'
-      }`}>
-        {confidence}
-      </span>
-    </span>
-  )
+// ── DONNA reasoning builder ────────────────────────────────────────────────────
+// Constructs operator-readable reasoning from decision metadata.
+// No AI, no new intelligence — synthesises from existing domain + urgency.
+
+function buildDonnaReasoning(decision: DirectorDecision): string {
+  const urgencyPhrase: Record<DecisionUrgency, string> = {
+    critical: 'Acting today prevents this from getting worse.',
+    high:     'Left unaddressed this week, this will compound.',
+    medium:   'Address it before month-end to stay on track.',
+    low:      'This is stable — address it when you have capacity.',
+  }
+  const domainPhrase: Record<string, string> = {
+    players:    'Player development outcomes are directly affected.',
+    coaches:    'Coach effectiveness and accountability depend on this.',
+    curriculum: 'Your curriculum delivery quality is impacted.',
+    parents:    'Parent trust, transparency, and retention are at risk.',
+    system:     'Academy operations are slowed or blocked by this.',
+  }
+  const domain  = domainPhrase[decision.domain] ?? 'Academy performance is affected.'
+  const urgency = urgencyPhrase[decision.urgency]
+  return `${domain} ${urgency}`
 }
+
+// ── Decision card ─────────────────────────────────────────────────────────────
 
 function DecisionCard({ decision }: { decision: DirectorDecision }) {
   const urg = URGENCY_CONFIG[decision.urgency] ?? URGENCY_CONFIG.medium
   const UrgIcon = urg.icon
+  const actionLabel = decision.approvalRequired ? 'Review' : 'Open'
 
   return (
     <div className={`rounded-xl border ${urg.border} bg-surface-raised p-4 space-y-3`}>
-      {/* Rank + urgency + confidence */}
+
+      {/* Header: rank + urgency + evidence count + confidence */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-text-secondary shrink-0">
@@ -50,36 +64,49 @@ function DecisionCard({ decision }: { decision: DirectorDecision }) {
             {urg.label}
           </span>
         </div>
-        <ConfidenceDot confidence={decision.confidence} />
+        <div className="flex items-center gap-2 shrink-0">
+          {decision.evidenceUsed.length > 0 && (
+            <span className="text-xs text-text-secondary">
+              {decision.evidenceUsed.length} signal{decision.evidenceUsed.length !== 1 ? 's' : ''}
+            </span>
+          )}
+          <span className={`flex items-center gap-1 text-xs font-medium ${
+            decision.confidence === 'reliable' ? 'text-status-green' : 'text-status-orange'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              decision.confidence === 'reliable' ? 'bg-status-green' : 'bg-status-orange'
+            }`} />
+            {decision.confidence}
+          </span>
+        </div>
       </div>
 
-      {/* Title */}
+      {/* Decision title — what the director must decide */}
       <p className="text-xl font-semibold text-text-primary leading-snug">
         {decision.title}
       </p>
 
-      {/* First step */}
-      <p className="text-base text-text-secondary leading-snug">
-        {decision.firstStep}
-      </p>
-
-      {/* CTA */}
-      <div className="flex items-center justify-between pt-1">
-        {decision.approvalRequired && (
-          <span className="text-xs uppercase tracking-widest text-status-orange font-medium">
-            Approval required
-          </span>
-        )}
+      {/* Action row: primary CTA + Ask DONNA */}
+      <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
         <Link
           href={decision.actionHref}
-          className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-lime hover:underline min-h-[44px] py-2"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-lime hover:underline min-h-[44px] py-2"
         >
-          Open <ChevronRight className="w-4 h-4" />
+          {actionLabel} <ChevronRight className="w-4 h-4" />
         </Link>
+
+        <DonnaExplainPopover
+          reasoning={buildDonnaReasoning(decision)}
+          recommendedStep={decision.firstStep}
+          evidence={decision.evidenceUsed}
+        />
       </div>
+
     </div>
   )
 }
+
+// ── Section ───────────────────────────────────────────────────────────────────
 
 export function DirectorDecisionCenter({ decisions }: Props) {
   if (decisions.length === 0) {
@@ -87,8 +114,8 @@ export function DirectorDecisionCenter({ decisions }: Props) {
       <Card>
         <div className="p-6 text-center space-y-2">
           <CircleDot className="w-6 h-6 text-text-secondary mx-auto" />
-          <p className="text-text-secondary text-base">No decisions need your attention right now.</p>
-          <p className="text-text-secondary text-sm">DONNA will surface priorities here as they emerge.</p>
+          <p className="text-base text-text-secondary">No decisions need your attention right now.</p>
+          <p className="text-sm text-text-secondary">DONNA will surface priorities here as they emerge.</p>
         </div>
       </Card>
     )
