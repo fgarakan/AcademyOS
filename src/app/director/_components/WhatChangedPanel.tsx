@@ -16,18 +16,18 @@ interface Props {
 const LAST_VISIT_KEY = 'donna_last_visit_at'
 
 function ChangeIcon({ type }: { type: ChangeType }) {
-  if (type === 'positive')  return <TrendingUp  size={13} className="text-status-green flex-shrink-0 mt-0.5" />
-  if (type === 'negative')  return <TrendingDown size={13} className="text-status-red   flex-shrink-0 mt-0.5" />
-  return <Activity size={13} className="text-status-blue flex-shrink-0 mt-0.5" />
+  if (type === 'positive')  return <TrendingUp  size={16} className="text-status-green flex-shrink-0 mt-0.5" />
+  if (type === 'negative')  return <TrendingDown size={16} className="text-status-red   flex-shrink-0 mt-0.5" />
+  return <Activity size={16} className="text-status-blue flex-shrink-0 mt-0.5" />
 }
 
 function ChangeRow({ change }: { change: AcademyChange }) {
   const content = (
-    <div className="flex gap-2.5 p-3 rounded-xl hover:bg-surface-raised/60 transition-colors">
+    <div className="flex gap-3 p-3 rounded-xl hover:bg-surface-raised/60 transition-colors">
       <ChangeIcon type={change.changeType} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-text-primary font-medium leading-snug">{change.headline}</p>
-        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{change.detail}</p>
+        <p className="text-base text-text-primary font-medium leading-snug">{change.headline}</p>
+        <p className="text-sm text-text-secondary mt-1 leading-relaxed">{change.detail}</p>
       </div>
     </div>
   )
@@ -69,16 +69,16 @@ export function WhatChangedPanel({ whatChanged }: Props) {
     <Card className="overflow-hidden">
       <button
         onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center justify-between p-5 text-left hover:bg-surface-raised/50 transition-colors"
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-surface-raised/50 transition-colors min-h-[56px]"
       >
         <div>
-          <p className="text-sm font-semibold text-text-secondary">What Changed Since You Were Last Here</p>
-          <p className="text-xs text-text-muted mt-0.5">Since {lastVisitLabel} — {whatChanged.changes.length} update{whatChanged.changes.length > 1 ? 's' : ''}</p>
+          <p className="text-base font-semibold text-text-primary">What Changed Since You Were Last Here</p>
+          <p className="text-sm text-text-secondary mt-0.5">Since {lastVisitLabel} — {whatChanged.changes.length} update{whatChanged.changes.length > 1 ? 's' : ''}</p>
         </div>
         {expanded ? (
-          <ChevronUp size={14} className="text-text-muted" />
+          <ChevronUp size={16} className="text-text-secondary" />
         ) : (
-          <ChevronDown size={14} className="text-text-muted" />
+          <ChevronDown size={16} className="text-text-secondary" />
         )}
       </button>
 

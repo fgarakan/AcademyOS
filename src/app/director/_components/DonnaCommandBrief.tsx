@@ -107,9 +107,9 @@ function ctaLabel(primaryTarget: DonnaActionTarget | null, summary: ReturningDir
 // ── Change icon (returning director) ─────────────────────────────────────────
 
 function ChangeIcon({ type }: { type: 'positive' | 'negative' | 'attention' }) {
-  if (type === 'positive') return <TrendingUp   className="w-3 h-3 text-status-green shrink-0 mt-0.5" />
-  if (type === 'negative') return <TrendingDown className="w-3 h-3 text-status-red   shrink-0 mt-0.5" />
-  return                          <AlertCircle  className="w-3 h-3 text-status-orange shrink-0 mt-0.5" />
+  if (type === 'positive') return <TrendingUp   className="w-4 h-4 text-status-green shrink-0 mt-0.5" />
+  if (type === 'negative') return <TrendingDown className="w-4 h-4 text-status-red   shrink-0 mt-0.5" />
+  return                          <AlertCircle  className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
 }
 
 function changeTextColor(type: 'positive' | 'negative' | 'attention'): string {
@@ -165,20 +165,20 @@ export function DonnaCommandBrief({
         <div className="flex items-center gap-2 min-w-0">
           {returningDirectorMode ? (
             <>
-              <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
-              <span className="text-[12px] font-semibold text-lime">
+              <Sparkles className="w-4 h-4 text-lime shrink-0" />
+              <span className="text-sm font-semibold text-lime">
                 {daysSinceLastVisit} day{daysSinceLastVisit !== 1 ? 's' : ''} away
               </span>
               <span className="text-border mx-1 hidden sm:block">·</span>
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block ${dotClass}`} />
-              <span className={`text-[11px] font-medium hidden sm:block ${textClass}`}>
+              <span className={`w-2 h-2 rounded-full shrink-0 hidden sm:block ${dotClass}`} />
+              <span className={`text-sm font-medium hidden sm:block ${textClass}`}>
                 {SITUATION_LABELS[situation.situationType]}
               </span>
             </>
           ) : (
             <>
               <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
-              <span className={`text-[12px] font-semibold ${textClass}`}>
+              <span className={`text-sm font-semibold ${textClass}`}>
                 {SITUATION_LABELS[situation.situationType]}
               </span>
             </>
@@ -186,10 +186,10 @@ export function DonnaCommandBrief({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${confidenceCls}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${confidenceCls}`}>
             {confidenceLabel}
           </span>
-          <span className="label-xs text-text-muted hidden md:block">
+          <span className="label-xs text-text-secondary hidden md:block">
             {relativeTime(generatedAt)}
           </span>
         </div>
@@ -199,32 +199,32 @@ export function DonnaCommandBrief({
       {returningDirectorMode && returningDirectorSummary ? (
         <div className="space-y-4">
           {/* Returning greeting */}
-          <p className="text-text-primary text-[15px] leading-relaxed font-medium">
+          <p className="text-text-primary text-2xl leading-snug font-medium">
             Welcome back{directorName ? `, ${directorName.split(' ')[0]}` : ''}.
             {' '}Here is what happened while you were away.
           </p>
 
           {/* Compact change list */}
           {returnItems.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {returnItems.map((item, i) => (
-                <div key={i} className="flex items-start gap-2">
+                <div key={i} className="flex items-start gap-2.5">
                   <ChangeIcon type={item.changeType} />
                   <div className="min-w-0">
                     {item.route ? (
                       <Link
                         href={item.route}
-                        className={`text-[12px] font-medium leading-snug hover:underline ${changeTextColor(item.changeType)}`}
+                        className={`text-base font-medium leading-snug hover:underline ${changeTextColor(item.changeType)}`}
                       >
                         {item.headline}
                       </Link>
                     ) : (
-                      <p className={`text-[12px] font-medium leading-snug ${changeTextColor(item.changeType)}`}>
+                      <p className={`text-base font-medium leading-snug ${changeTextColor(item.changeType)}`}>
                         {item.headline}
                       </p>
                     )}
                     {item.detail && (
-                      <p className="text-[11px] text-text-muted leading-snug mt-0.5">{item.detail}</p>
+                      <p className="text-sm text-text-secondary leading-snug mt-0.5">{item.detail}</p>
                     )}
                   </div>
                 </div>
@@ -234,33 +234,33 @@ export function DonnaCommandBrief({
 
           {/* What matters now */}
           <div className="border-l-2 border-lime/40 pl-3">
-            <p className="label-xs text-lime/70 mb-1">What matters now</p>
-            <p className="text-[13px] font-semibold text-text-primary leading-snug">
+            <p className="text-xs text-lime uppercase tracking-widest font-medium mb-1">What matters now</p>
+            <p className="text-xl font-semibold text-text-primary leading-snug">
               {returningDirectorSummary.whatMattersNow}
             </p>
           </div>
         </div>
       ) : (
         /* Normal greeting */
-        <p className="text-text-primary text-[15px] leading-relaxed font-medium">
+        <p className="text-text-primary text-2xl leading-snug font-medium">
           {buildGreeting(directorName, situation, brief)}
         </p>
       )}
 
       {/* ── Primary CTA ───────────────────────────────────────────────────── */}
       <div className="flex items-center gap-4 flex-wrap pt-1">
-        <Link href={href} className="btn-lime inline-flex items-center gap-2 text-sm">
+        <Link href={href} className="btn-lime inline-flex items-center gap-2 text-base">
           {label}
-          <ArrowRight size={14} />
+          <ArrowRight size={16} />
         </Link>
 
         {workQueuePendingCount > 0 && (
           <Link
             href="/director/review"
-            className="inline-flex items-center gap-1 text-[12px] text-text-muted hover:text-text-secondary transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors min-h-[44px] py-2"
           >
             {workQueuePendingCount} other action{workQueuePendingCount !== 1 ? 's' : ''} pending
-            <ChevronRight size={12} />
+            <ChevronRight size={14} />
           </Link>
         )}
       </div>

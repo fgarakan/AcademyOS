@@ -24,7 +24,7 @@ function ConfidenceDot({ confidence }: { confidence: 'reliable' | 'provisional' 
           confidence === 'reliable' ? 'bg-status-green' : 'bg-status-orange'
         }`}
       />
-      <span className={`text-[10px] uppercase tracking-widest font-medium ${
+      <span className={`text-xs uppercase tracking-widest font-medium ${
         confidence === 'reliable' ? 'text-status-green' : 'text-status-orange'
       }`}>
         {confidence}
@@ -42,11 +42,11 @@ function DecisionCard({ decision }: { decision: DirectorDecision }) {
       {/* Rank + urgency + confidence */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center text-[10px] font-bold text-text-muted shrink-0">
+          <span className="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-text-secondary shrink-0">
             {decision.rank}
           </span>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${urg.bg} ${urg.color}`}>
-            <UrgIcon className="w-2.5 h-2.5" />
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider ${urg.bg} ${urg.color}`}>
+            <UrgIcon className="w-3 h-3" />
             {urg.label}
           </span>
         </div>
@@ -54,27 +54,27 @@ function DecisionCard({ decision }: { decision: DirectorDecision }) {
       </div>
 
       {/* Title */}
-      <p className="text-sm font-semibold text-text-primary leading-snug">
+      <p className="text-xl font-semibold text-text-primary leading-snug">
         {decision.title}
       </p>
 
       {/* First step */}
-      <p className="text-[12px] text-text-muted leading-snug flex-1">
+      <p className="text-base text-text-secondary leading-snug">
         {decision.firstStep}
       </p>
 
       {/* CTA */}
       <div className="flex items-center justify-between pt-1">
         {decision.approvalRequired && (
-          <span className="text-[10px] uppercase tracking-widest text-status-orange font-medium">
+          <span className="text-xs uppercase tracking-widest text-status-orange font-medium">
             Approval required
           </span>
         )}
         <Link
           href={decision.actionHref}
-          className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-lime hover:underline"
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-lime hover:underline min-h-[44px] py-2"
         >
-          Open <ChevronRight className="w-3 h-3" />
+          Open <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
     </div>
@@ -86,9 +86,9 @@ export function DirectorDecisionCenter({ decisions }: Props) {
     return (
       <Card>
         <div className="p-6 text-center space-y-2">
-          <CircleDot className="w-6 h-6 text-text-muted mx-auto" />
-          <p className="text-text-secondary text-sm">No decisions need your attention right now.</p>
-          <p className="text-text-muted text-[11px]">DONNA will surface priorities here as they emerge.</p>
+          <CircleDot className="w-6 h-6 text-text-secondary mx-auto" />
+          <p className="text-text-secondary text-base">No decisions need your attention right now.</p>
+          <p className="text-text-secondary text-sm">DONNA will surface priorities here as they emerge.</p>
         </div>
       </Card>
     )
@@ -98,7 +98,7 @@ export function DirectorDecisionCenter({ decisions }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="label-xs">Top Decisions</p>
-        <p className="text-[10px] text-text-muted">
+        <p className="text-xs text-text-secondary">
           {decisions.length} item{decisions.length !== 1 ? 's' : ''} needing a call
         </p>
       </div>

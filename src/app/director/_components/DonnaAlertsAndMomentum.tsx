@@ -8,22 +8,22 @@ interface Props {
 }
 
 const ALERT_ICON: Record<SituationSeverity, React.ReactNode> = {
-  critical: <AlertCircle  size={13} className="text-status-red    shrink-0 mt-0.5" />,
-  high:     <AlertTriangle size={13} className="text-status-orange shrink-0 mt-0.5" />,
-  medium:   <Info          size={13} className="text-status-blue   shrink-0 mt-0.5" />,
-  low:      <Info          size={13} className="text-text-muted    shrink-0 mt-0.5" />,
+  critical: <AlertCircle  size={16} className="text-status-red    shrink-0 mt-0.5" />,
+  high:     <AlertTriangle size={16} className="text-status-orange shrink-0 mt-0.5" />,
+  medium:   <Info          size={16} className="text-status-blue   shrink-0 mt-0.5" />,
+  low:      <Info          size={16} className="text-text-secondary shrink-0 mt-0.5" />,
 }
 
 const ALERT_SEVERITY_LABEL: Record<SituationSeverity, string> = {
   critical: 'text-status-red',
   high:     'text-status-orange',
   medium:   'text-status-blue',
-  low:      'text-text-muted',
+  low:      'text-text-secondary',
 }
 
 const WIN_CONFIDENCE_CLS: Record<string, string> = {
   reliable:    'text-status-green',
-  provisional: 'text-text-muted',
+  provisional: 'text-text-secondary',
 }
 
 export function DonnaAlertsAndMomentum({ alerts, wins }: Props) {
@@ -33,7 +33,7 @@ export function DonnaAlertsAndMomentum({ alerts, wins }: Props) {
   if (!hasAlerts && !hasWins) {
     return (
       <Card className="px-5 py-4">
-        <p className="text-[12px] text-text-muted">
+        <p className="text-base text-text-secondary">
           No alerts or momentum signals right now. Academy is operating normally.
         </p>
       </Card>
@@ -44,19 +44,19 @@ export function DonnaAlertsAndMomentum({ alerts, wins }: Props) {
     <Card className="divide-y divide-border">
       {/* Alerts section */}
       {hasAlerts && (
-        <div className="px-5 py-4 space-y-3">
+        <div className="px-5 py-4 space-y-4">
           {alerts.map((alert, i) => (
             <div key={i} className="flex items-start gap-3">
               {ALERT_ICON[alert.severity]}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-text-primary leading-snug">
+                <p className="text-base font-medium text-text-primary leading-snug">
                   {alert.headline}
                 </p>
-                <p className="text-[11px] text-text-muted mt-0.5 leading-snug">
+                <p className="text-sm text-text-secondary mt-1 leading-snug">
                   {alert.evidence}
                 </p>
               </div>
-              <span className={`text-[10px] uppercase tracking-widest font-semibold shrink-0 mt-0.5 ${ALERT_SEVERITY_LABEL[alert.severity]}`}>
+              <span className={`text-xs uppercase tracking-widest font-semibold shrink-0 mt-0.5 ${ALERT_SEVERITY_LABEL[alert.severity]}`}>
                 {alert.severity}
               </span>
             </div>
@@ -66,19 +66,19 @@ export function DonnaAlertsAndMomentum({ alerts, wins }: Props) {
 
       {/* Wins section */}
       {hasWins && (
-        <div className="px-5 py-4 space-y-3">
+        <div className="px-5 py-4 space-y-4">
           {wins.map((win, i) => (
             <div key={i} className="flex items-start gap-3">
-              <TrendingUp size={13} className="text-lime shrink-0 mt-0.5" />
+              <TrendingUp size={16} className="text-lime shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-text-primary leading-snug">
+                <p className="text-base font-medium text-text-primary leading-snug">
                   {win.headline}
                 </p>
-                <p className="text-[11px] text-text-muted mt-0.5 leading-snug">
+                <p className="text-sm text-text-secondary mt-1 leading-snug">
                   {win.evidence}
                 </p>
               </div>
-              <span className={`text-[10px] uppercase tracking-widest font-semibold shrink-0 mt-0.5 ${WIN_CONFIDENCE_CLS[win.confidence] ?? 'text-text-muted'}`}>
+              <span className={`text-xs uppercase tracking-widest font-semibold shrink-0 mt-0.5 ${WIN_CONFIDENCE_CLS[win.confidence] ?? 'text-text-secondary'}`}>
                 {win.confidence === 'reliable' ? 'confirmed' : 'est.'}
               </span>
             </div>

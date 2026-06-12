@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-06-12 — Sprint 2081–2110 — Fable Readability & Accessibility System V1
+
+**"Premium does not mean tiny text. Premium means effortless clarity."**
+
+**Core mission:** Audited and remediated all text sizes, contrast values, and touch targets across the four active Today page components. 51 readability deficiencies resolved. All body text now ≥ 16px. All readable content uses `text-text-secondary` (#AAAAAA, 8.4:1) or higher. DONNA voice elevated to `text-2xl` (24px). Decision titles elevated to `text-xl` (20px). Zero instances of `text-text-muted` on readable content.
+
+**Key changes:**
+- `DonnaCommandBrief`: greeting `text-[15px]` → `text-2xl` (24px). Change headlines `text-[12px]` → `text-base` (16px). "What matters now" content `text-[13px]` → `text-xl` (20px). All `text-text-muted` body uses replaced with `text-text-secondary`. Pending link gets `min-h-[44px]` touch target.
+- `DirectorDecisionCenter`: decision title `text-sm` → `text-xl` (20px). First step `text-[12px] text-text-muted` → `text-base text-text-secondary`. "Open" link gets `min-h-[44px]` touch target. Rank/urgency/confidence bumped from 10px to `text-xs`.
+- `DonnaAlertsAndMomentum`: alert and win headlines `text-[13px]` → `text-base` (16px). Evidence `text-[11px] text-text-muted` → `text-sm text-text-secondary`. Icons bumped from size 13 to size 16.
+- `WhatChangedPanel`: panel title `text-sm text-text-secondary` → `text-base text-text-primary`. Change headlines `text-sm` → `text-base`. Detail `text-xs text-text-muted` → `text-sm text-text-secondary`. Icons bumped to size 16.
+
+**Documents created:**
+- `docs/fable/FABLE_READABILITY_AUDIT.md` — full component-by-component audit: 51 deficiencies catalogued across size, contrast, and touch target
+- `docs/fable/FABLE_TYPOGRAPHY_SYSTEM.md` — official type scale: 24px hero, 20px critical, 16px body min, 14px supporting, 12px badges
+- `docs/fable/FABLE_OUTDOOR_VISIBILITY_STANDARD.md` — court-side use standard: sunlight contrast impact, one-handed use, device profiles
+
+**Certification:**
+- `src/lib/donna/FableReadabilityCertification.ts` — 52/52 checks passed: typography, contrast, touch targets, age range (25/40/55/65)
+
+**TypeScript:** Clean (0 errors)
+
+**Files created:**
+- `docs/fable/FABLE_READABILITY_AUDIT.md`
+- `docs/fable/FABLE_TYPOGRAPHY_SYSTEM.md`
+- `docs/fable/FABLE_OUTDOOR_VISIBILITY_STANDARD.md`
+- `src/lib/donna/FableReadabilityCertification.ts`
+
+**Files modified:**
+- `src/app/director/_components/DonnaCommandBrief.tsx`
+- `src/app/director/_components/DirectorDecisionCenter.tsx`
+- `src/app/director/_components/DonnaAlertsAndMomentum.tsx`
+- `src/app/director/_components/WhatChangedPanel.tsx`
+
+---
+
 ## 2026-06-12 — Sprint 2051–2080 — Fable Director UX V1: Today Page
 
 **Deep System. Simple Screen. DONNA Is The Interface.**
