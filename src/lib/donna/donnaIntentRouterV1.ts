@@ -62,6 +62,15 @@ export type DonnaUnifiedIntentType =
   | 'curriculum_explain'   // Explain why something is structured as it is
   | 'curriculum_recommend' // Ask DONNA to recommend curriculum additions or changes
   | 'curriculum_audit'     // Full curriculum health audit with gap analysis
+  // Curriculum evolution intents (Mega Sprint 1866 — V1 deterministic, read-only)
+  | 'curriculum_evolution_what_next'  // What should we improve next?
+  | 'curriculum_evolution_stuck'      // Where are players getting stuck?
+  | 'curriculum_evolution_weakest'    // What curriculum is weakest?
+  | 'curriculum_evolution_drills'     // Which drills are underperforming?
+  | 'curriculum_evolution_gate'       // Which gate should we review?
+  | 'curriculum_evolution_impact'     // What change would have the biggest impact?
+  | 'curriculum_evolution_reality'    // What does reality disagree with?
+  | 'curriculum_evolution_missing'    // What are we missing?
   // Legacy / coach domains
   | 'attendance'
   | 'coach_observation'
@@ -161,6 +170,15 @@ const PATTERNS = {
   CURRICULUM_EXPLAIN:  /\b(why\s+(is|does|was|are|were)|explain)\b.{0,40}\b(curriculum|level|item|skill|drill|structure|placed|here)\b/i,
   CURRICULUM_RECOMMEND: /\b(recommend|suggest|what\s+should\s+i\s+add|what\s+(else\s+)?could\s+i\s+add|what\s+would\s+you\s+(add|suggest))\b.{0,30}\b(curriculum|level|drill|skill|content)\b/i,
   CURRICULUM_AUDIT:    /\b(audit|curriculum\s+audit|curriculum\s+health|what.{0,20}(gaps?|missing|coverage|lacking))\b/i,
+  // Curriculum evolution intents (Mega Sprint 1866 — V1 deterministic, read-only)
+  EVOLUTION_WHAT_NEXT: /\b(what\s+should\s+(we|i)\s+improve\s+(next|first)|what.{0,20}(evolve|evolution|improve|better)\s+(next|first|now)|donna.{0,20}improve)\b/i,
+  EVOLUTION_STUCK:     /\b(where.{0,20}(players?|students?).{0,20}(stuck|not\s+advancing|stagnating|struggling)|who.{0,15}(stuck|not\s+moving|behind)|progression\s+(issue|problem|bottleneck))\b/i,
+  EVOLUTION_WEAKEST:   /\b(what.{0,20}(weakest|worst|poorest|least\s+(effective|developed))\s+(curriculum|content|level|area)|weakest\s+(part|section|level|area))\b/i,
+  EVOLUTION_DRILLS:    /\b(which\s+(drills?|activities|exercises).{0,30}(underperform|not\s+working|ineffective|unused|ignored|low\s+impact)|drill.{0,20}(effectiveness|performance|impact))\b/i,
+  EVOLUTION_GATE:      /\b(which\s+gate.{0,30}(review|problem|issue|failing|bottleneck|hard)|gate.{0,20}(review|effectiveness|health|problem|working))\b/i,
+  EVOLUTION_IMPACT:    /\b(what.{0,30}(biggest|most|highest).{0,20}impact|what\s+(change|addition|improvement).{0,20}(help\s+most|matter\s+most|biggest\s+difference))\b/i,
+  EVOLUTION_REALITY:   /\b(what\s+(does\s+)?reality.{0,20}(disagree|contradict|conflict|mismatch)|where.{0,20}reality.{0,20}(differ|wrong|contradicts?)|reality\s+(override|check|vs\s+curriculum))\b/i,
+  EVOLUTION_MISSING:   /\b(what\s+are\s+we\s+missing|what.{0,20}(not\s+covered|no\s+content|lack\s+of\s+content|curriculum\s+gap)|what\s+don.{0,5}t\s+(we|i)\s+have)\b/i,
   // Legacy domains
   ATTENDANCE:      /\b(attendance|absent|present|late|mark|who showed|who came)\b/i,
   OBSERVATION:     /\b(observation|observed|noticed|note about|player concern|flag|struggling with)\b/i,
@@ -208,6 +226,15 @@ export function routeDonnaIntentV1(
 
   if (PATTERNS.CURRICULUM_AUDIT.test(t))     return make('curriculum_audit',     'high',   false, 'Curriculum audit pattern matched')
   if (PATTERNS.CURRICULUM_RECOMMEND.test(t)) return make('curriculum_recommend', 'high',   false, 'Curriculum recommend pattern matched')
+  // Evolution intents — V1 deterministic, read-only (checked before mutation intents)
+  if (PATTERNS.EVOLUTION_WHAT_NEXT.test(t)) return make('curriculum_evolution_what_next', 'high', false, 'Evolution: what to improve next')
+  if (PATTERNS.EVOLUTION_STUCK.test(t))     return make('curriculum_evolution_stuck',     'high', false, 'Evolution: player stuck detection')
+  if (PATTERNS.EVOLUTION_WEAKEST.test(t))   return make('curriculum_evolution_weakest',   'high', false, 'Evolution: weakest curriculum')
+  if (PATTERNS.EVOLUTION_DRILLS.test(t))    return make('curriculum_evolution_drills',    'high', false, 'Evolution: drill effectiveness')
+  if (PATTERNS.EVOLUTION_GATE.test(t))      return make('curriculum_evolution_gate',      'high', false, 'Evolution: gate review')
+  if (PATTERNS.EVOLUTION_IMPACT.test(t))    return make('curriculum_evolution_impact',    'high', false, 'Evolution: biggest impact change')
+  if (PATTERNS.EVOLUTION_REALITY.test(t))   return make('curriculum_evolution_reality',   'high', false, 'Evolution: reality override check')
+  if (PATTERNS.EVOLUTION_MISSING.test(t))   return make('curriculum_evolution_missing',   'high', false, 'Evolution: missing content')
   if (PATTERNS.CURRICULUM_COMPARE.test(t))   return make('curriculum_compare',   'high',   false, 'Curriculum compare pattern matched')
   if (PATTERNS.CURRICULUM_EXPLAIN.test(t))   return make('curriculum_explain',   'medium', false, 'Curriculum explain pattern matched')
   if (PATTERNS.CURRICULUM_REVIEW.test(t))    return make('curriculum_review',    'medium', false, 'Curriculum review pattern matched')

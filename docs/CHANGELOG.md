@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 1866–1895 — DONNA Curriculum Evolution Engine V1
+
+**DONNA learns to improve curriculum based on reality signals.** Core principle: Reality Always Wins — player outcomes outrank philosophy, DONNA opinion, and original design. New `EvidenceStrength` system (high/medium/low/insufficient) gates all `RecommendationType` actions (CREATE/IMPROVE/REMOVE/MERGE/REORDER/INVESTIGATE/MONITOR). False Positive Prevention: `arePlayerOutcomesExcellent()` suppresses structural gap recommendations when advancement rate ≥40%, evidence is real records, and no weak domains exist. Bottlenecks with excellent outcomes become MONITOR-only at ≤20% confidence. REMOVE is never auto-recommended — always director-initiated.
+
+**Certification: 11 academy archetypes × 13 structural checks including False Positive Academy. TypeScript clean.**
+
+**Files created:**
+- `src/lib/donna/curriculum/curriculumEvidenceStrength.ts` — `EvidenceStrength` / `RecommendationType`; `ALLOWED_TYPES_BY_STRENGTH` gate; `clampRecommendationType()`; `arePlayerOutcomesExcellent()` false-positive gate; `computeEvidenceStrength()`
+- `src/lib/donna/curriculum/curriculumEvolutionMemory.ts` — `EvolutionMemoryEntry`; `buildEvolutionMemoryEntry()`; stored in `academies.settings.donna_curriculum_evolution_memory[]`
+- `src/lib/donna/curriculum/curriculumBottleneckDetector.ts` — `detectBottlenecks()`; 5 bottleneck types; `suppressedByOutcomes` flag; false-positive suppression
+- `src/lib/donna/curriculum/curriculumProgressionAnalyzer.ts` — `analyzeProgression()`; stuck points (rate < 30%); accelerators (rate ≥ 50%); gate effectiveness
+- `src/lib/donna/curriculum/curriculumEffectivenessEngine.ts` — `rateDrillEffectiveness()`; high/medium/low/unknown per item; evidence-gated
+- `src/lib/donna/curriculum/gateEffectivenessEngine.ts` — `evaluateGateHealth()`; 6 statuses (healthy/too_hard/bottleneck/unsupported/bypassed/unknown); outcome suppression
+- `src/lib/donna/curriculum/curriculumHealthEngine.ts` — `evaluateCurriculumHealth()`; strengths / weaknesses / risks / opportunities; no score, no grade
+- `src/lib/donna/curriculum/curriculumRealityOverride.ts` — `detectRealityOverrides()`; 5 override types; philosophy vs reality comparison
+- `src/lib/donna/curriculum/curriculumEvolutionEngine.ts` — master orchestrator; `runCurriculumEvolution()`; `capConfidence()`; deduplication; priority sort
+- `src/app/director/curriculum/builder/CurriculumEvolutionPanel.tsx` — React client component; recommendation cards; ExplainWhyModal; 4 actions (Ask Why / Later / Dismiss / Approve); type badge; evidence strength dot; footer stats
+- `src/lib/donna/curriculum/curriculumEvolutionCertification.ts` — 11 archetypes; 15 scenario blocks; run with `npx tsx src/lib/donna/curriculum/curriculumEvolutionCertification.ts`
+
+**Files modified:**
+- `src/lib/donna/donnaIntentRouterV1.ts` — added 8 evolution conversation intents (curriculum_evolution_what_next through curriculum_evolution_missing)
+
+**TypeScript:** `npx tsc --noEmit` — clean, 0 errors
+
+---
+
 ## 2026-06-12 — Mega Sprint 1836–1865 — DONNA Curriculum Architect & Natural Curriculum Editing V1
 
 **DONNA becomes a full curriculum architect.** Gap analysis engine identifies structural imbalances across all levels (missing areas, drill-heavy/game-heavy levels, progression gaps, gate support gaps, over/under-represented content types). Duplicate detection compares new drafts across 5 dimensions (title, purpose, tactical objective, related skill area, stage) using deterministic token-overlap scoring — no LLM calls. Impact preview answers 4 director questions for every draft: Expected Benefit, Possible Risk, Who Is Affected, What To Review Next. Review panel in `DonnaCurriculumPanel` surfaces both duplicate warnings and impact preview before save.
