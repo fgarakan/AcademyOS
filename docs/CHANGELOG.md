@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 1991–2020 — DONNA Action Execution Layer V1
+
+**DONNA Drafts. Director Approves. System Executes.**
+
+**Core mission:** Closed the gap between DONNA identifying work and DONNA doing work. V1 execution model: DONNA generates action drafts from existing engine outputs → Director sees them in-context on the relevant page → Director clicks Review/Open → navigated to action route → existing approval system handles rest. No new intelligence. No new tables. No migrations. No duplicate approval systems.
+
+**Architecture decisions:**
+- V1 execution = navigation only. `proposed_actions.voice_command_id` is non-nullable FK to `voice_commands` — DONNA-initiated drafts have no voice command, so direct DB writes deferred to V2.
+- In-context surfacing: drafts appear on the domain page where they are relevant. DonnaWorkQueue on Today page aggregates counts + domain links only — not a detail list.
+- Action memory stored in `academies.settings.donna_action_memory[]` — same JSONB array pattern as `donna_curriculum_evolution_memory[]`.
+- Every action draft carries a `DonnaActionTarget` (label, route, routeContext, entityType).
+
+**Validation:**
+- TypeScript: clean (0 errors)
+- All 7 certification suites: PASS
+- Action Execution Certification: 114/114 assertions
+- Production build: pending (run `npm run build`)
+
+**Files created:**
+- `src/lib/donna/actions/donnaActionContract.ts` — DonnaAction, DonnaActionDraft, DonnaWorkQueueSummary types + newDraftId factory
+- `src/lib/donna/actions/donnaActionRegistry.ts` — 10 registered actions with routes, permissions, approval requirements
+- `src/lib/donna/actions/donnaDraftBuilder.ts` — pure builders: from decisions, attention signals, evolution recs, player domain, curriculum domain, work queue aggregation
+- `src/lib/donna/actions/donnaActionMemory.ts` — memory entry CRUD: build, upsert, query helpers (completed, dismissed, pending, byDomain, recent, wasRecentlyCompleted)
+- `src/lib/donna/actions/donnaActionExecutionCertification.ts` — 114 assertions across 13 certification sections
+- `src/lib/actions/saveDonnaActionMemoryAction.ts` — server action: persists action decision to academies.settings.donna_action_memory[], director-only, cap 200
+- `src/app/director/_components/DonnaWorkQueue.tsx` — aggregation summary: domain counts + links, "work queue clear" state
+- `src/app/director/_components/DonnaActionTimeline.tsx` — chronological action history with status icons, relative dates, route links
+- `src/app/director/_components/DonnaDraftCard.tsx` — reusable in-context draft card + DonnaDraftList batch renderer; dismiss calls saveDonnaActionMemoryAction
+
+**Files modified:**
+- `src/app/director/page.tsx` — added action memory extraction, buildDraftsFromDecisions, buildWorkQueueSummary, getRecentActions; renders DonnaWorkQueue + DonnaActionTimeline after DonnaCOOPanel
+- `src/app/director/players/page.tsx` — added buildPlayerDomainDrafts call + DonnaDraftList in-context rendering above player directory
+- `src/app/director/curriculum/page.tsx` — added buildCurriculumDomainDrafts call + DonnaDraftList in-context rendering after DonnaCurriculumBrief
+- `src/lib/donna/releaseCertification.ts` — added Section 7: Action Execution Certification; renamed old Section 7 → Section 8
+
+---
+
 ## 2026-06-12 — Mega Sprint 1961–1990 — Fable Implementation Phase 1 — Director Operating System V1
 
 **Deep System. Simple Screen. DONNA Is The Interface.**

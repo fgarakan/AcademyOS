@@ -17,6 +17,8 @@ import { CurriculumIntelligenceCard } from './_components/CurriculumIntelligence
 import type { ExcludableScoreDimension } from '@/lib/curriculum/coverageModel'
 import { DonnaCurriculumBrief } from './_components/DonnaCurriculumBrief'
 import { CurriculumHealthStrip } from './_components/CurriculumHealthStrip'
+import { buildCurriculumDomainDrafts } from '@/lib/donna/actions/donnaDraftBuilder'
+import { DonnaDraftList } from '../_components/DonnaDraftCard'
 
 // ─── Stage display config ─────────────────────────────────────────────────────
 
@@ -326,6 +328,13 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
     ? 'active'
     : 'draft'
 
+  const incompleteSetupCount = setupItems.filter(i => !i.done).length
+  const curriculumDomainDrafts = buildCurriculumDomainDrafts({
+    hasEvolutionRecommendations: curriculumRanking.priorities.length > 0,
+    versionStatus,
+    incompleteSetupCount,
+  })
+
   return (
     <div className="animate-fade-in p-6 space-y-6">
 
@@ -395,6 +404,9 @@ export default async function DirectorCurriculumPage({ searchParams }: Curriculu
 
       {/* ── 3. DONNA brief — above fold, before data ──────────────────────── */}
       <DonnaCurriculumBrief ranking={curriculumRanking} versionStatus={versionStatus} />
+
+      {/* ── 3b. In-context DONNA action drafts for curriculum domain ────────── */}
+      <DonnaDraftList drafts={curriculumDomainDrafts} label="DONNA Suggested Actions" />
 
       {/* ── 4. DONNA context panel — shown when ?improve=[levelKey] ──────── */}
       {searchParams.improve && academyId && (

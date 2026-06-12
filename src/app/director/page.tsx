@@ -19,9 +19,14 @@ import {
 import type { OperatingPartnerPhilosophyInputs } from '@/lib/donna/operations/operatingPartnerPhilosophyContract'
 import type { OperatingPartnerOperationalInputs } from '@/lib/donna/operations/operatingPartnerOperationalContract'
 import { buildDirectorDecisionContext }           from '@/lib/donna/operations/directorDecisionEngine'
+import { buildDraftsFromDecisions, buildWorkQueueSummary } from '@/lib/donna/actions/donnaDraftBuilder'
+import type { DonnaActionMemoryEntry } from '@/lib/donna/actions/donnaActionMemory'
+import { getRecentActions } from '@/lib/donna/actions/donnaActionMemory'
 
 // ── Command Center components ───────────────────────────────────────────────
-import { AcademySituationBanner }   from './_components/AcademySituationBanner'
+import { AcademySituationBanner }    from './_components/AcademySituationBanner'
+import { DonnaWorkQueue }            from './_components/DonnaWorkQueue'
+import { DonnaActionTimeline }       from './_components/DonnaActionTimeline'
 import { DonnaDailyBriefHero }      from './_components/DonnaDailyBriefHero'
 import { DirectorDecisionCenter }   from './_components/DirectorDecisionCenter'
 import { ReturningDirectorBanner }  from './_components/ReturningDirectorBanner'
@@ -474,6 +479,14 @@ export default async function DirectorCommandCenter() {
     daysSinceLastVisit,
   })
 
+  // ── Action memory + work queue ────────────────────────────────────────────
+  const actionMemory: DonnaActionMemoryEntry[] = Array.isArray(onboardingSettings.donna_action_memory)
+    ? (onboardingSettings.donna_action_memory as DonnaActionMemoryEntry[])
+    : []
+  const actionDrafts     = buildDraftsFromDecisions(decisionContext.decisions)
+  const workQueueSummary = buildWorkQueueSummary(actionDrafts)
+  const recentActions    = getRecentActions(actionMemory, 5)
+
   // ── Legacy brief (for setup card only) ───────────────────────────────────
   const legacyBrief = buildTodayBrief({
     isAcademyLive,
@@ -556,6 +569,12 @@ export default async function DirectorCommandCenter() {
 
           {/* ── DONNA COO Conversations ───────────────────────────────────── */}
           <DonnaCOOPanel answers={cooAnswers} />
+
+          {/* ── DONNA Work Queue ──────────────────────────────────────────── */}
+          <DonnaWorkQueue summary={workQueueSummary} />
+
+          {/* ── Action History Timeline ───────────────────────────────────── */}
+          <DonnaActionTimeline entries={recentActions} />
         </>
       )}
     </div>

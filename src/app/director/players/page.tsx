@@ -5,6 +5,8 @@ import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
 import { DonnaPlayersPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
 import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
+import { buildPlayerDomainDrafts } from '@/lib/donna/actions/donnaDraftBuilder'
+import { DonnaDraftList } from '../_components/DonnaDraftCard'
 
 export interface PlayerCurriculumEntry {
   levelName: string
@@ -114,6 +116,16 @@ export default async function PlayersPage() {
     p => p.player_status === 'on_hold' || p.player_status === 'reassessment_due'
   ).length
 
+  // In-context action drafts for this domain
+  const advancementReadyCount = advancementReadyPlayers.length
+  const onHoldCount = players.filter(p => p.player_status === 'on_hold').length
+  const playerDomainDrafts = buildPlayerDomainDrafts({
+    assessmentDueCount,
+    advancementReadyCount,
+    needsAttentionCount,
+    onHoldCount,
+  })
+
   // Two-sentence DONNA intelligence header: attention first, advancement second.
   const playersBrief = (() => {
     if (players.length === 0) return 'No players yet. Add your first player to start tracking development.'
@@ -211,6 +223,9 @@ export default async function PlayersPage() {
           </div>
         </div>
       )}
+
+      {/* In-context DONNA action drafts for player domain */}
+      <DonnaDraftList drafts={playerDomainDrafts} label="DONNA Suggested Actions" />
 
       {/* DONNA players presence entry point — shown only when actionable signals exist.
           Sprint 1042: hide when roster has no flags; showing "Who needs attention?" with nothing

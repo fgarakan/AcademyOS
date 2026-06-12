@@ -87,7 +87,13 @@ run(
   'npx tsx src/lib/donna/operations/directorOperatingSystemCertification.ts',
 )
 
-section('7. Production Build')
+section('7. Action Execution Certification')
+run(
+  'donnaActionExecutionCertification (registry, drafts, memory, in-context surfacing, V1 model)',
+  'npx tsx src/lib/donna/actions/donnaActionExecutionCertification.ts',
+)
+
+section('8. Production Build')
 console.log('  — npm run build must be run manually:')
 console.log('    npm run build')
 console.log('    Expected: exit 0, no prerender errors')
