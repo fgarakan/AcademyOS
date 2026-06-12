@@ -58,19 +58,13 @@ function DecisionCard({ decision }: { decision: DirectorDecision }) {
         {decision.title}
       </p>
 
-      {/* Decision prompt */}
-      <p className="text-[11px] text-text-muted italic">
-        {decision.decisionPrompt}
+      {/* First step */}
+      <p className="text-[12px] text-text-muted leading-snug flex-1">
+        {decision.firstStep}
       </p>
 
-      {/* First step */}
-      <div className="rounded-lg bg-surface border border-border px-3 py-2">
-        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">First step</p>
-        <p className="text-[12px] text-text-secondary leading-snug">{decision.firstStep}</p>
-      </div>
-
       {/* CTA */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-1">
         {decision.approvalRequired && (
           <span className="text-[10px] uppercase tracking-widest text-status-orange font-medium">
             Approval required
@@ -80,7 +74,7 @@ function DecisionCard({ decision }: { decision: DirectorDecision }) {
           href={decision.actionHref}
           className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-lime hover:underline"
         >
-          Take action <ChevronRight className="w-3 h-3" />
+          Open <ChevronRight className="w-3 h-3" />
         </Link>
       </div>
     </div>

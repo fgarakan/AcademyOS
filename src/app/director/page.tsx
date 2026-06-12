@@ -20,18 +20,11 @@ import type { OperatingPartnerPhilosophyInputs } from '@/lib/donna/operations/op
 import type { OperatingPartnerOperationalInputs } from '@/lib/donna/operations/operatingPartnerOperationalContract'
 import { buildDirectorDecisionContext }           from '@/lib/donna/operations/directorDecisionEngine'
 import { buildDraftsFromDecisions, buildWorkQueueSummary } from '@/lib/donna/actions/donnaDraftBuilder'
-import type { DonnaActionMemoryEntry } from '@/lib/donna/actions/donnaActionMemory'
-import { getRecentActions } from '@/lib/donna/actions/donnaActionMemory'
 
 // ── Command Center components ───────────────────────────────────────────────
-import { AcademySituationBanner }    from './_components/AcademySituationBanner'
-import { DonnaWorkQueue }            from './_components/DonnaWorkQueue'
-import { DonnaActionTimeline }       from './_components/DonnaActionTimeline'
-import { DonnaDailyBriefHero }      from './_components/DonnaDailyBriefHero'
+import { DonnaCommandBrief }        from './_components/DonnaCommandBrief'
+import { DonnaAlertsAndMomentum }   from './_components/DonnaAlertsAndMomentum'
 import { DirectorDecisionCenter }   from './_components/DirectorDecisionCenter'
-import { ReturningDirectorBanner }  from './_components/ReturningDirectorBanner'
-import { TopThreeAlertsPanel }      from './_components/TopThreeAlertsPanel'
-import { TopThreeWinsPanel }        from './_components/TopThreeWinsPanel'
 import { WhatCanWaitPanel }         from './_components/WhatCanWaitPanel'
 import { WhatChangedPanel }         from './_components/WhatChangedPanel'
 import { DonnaCOOPanel }            from './_components/DonnaCOOPanel'
@@ -570,13 +563,9 @@ export default async function DirectorCommandCenter() {
     daysSinceLastVisit,
   })
 
-  // ── Action memory + work queue ────────────────────────────────────────────
-  const actionMemory: DonnaActionMemoryEntry[] = Array.isArray(onboardingSettings.donna_action_memory)
-    ? (onboardingSettings.donna_action_memory as DonnaActionMemoryEntry[])
-    : []
+  // ── Work queue count for hero ─────────────────────────────────────────────
   const actionDrafts     = buildDraftsFromDecisions(decisionContext.decisions)
   const workQueueSummary = buildWorkQueueSummary(actionDrafts)
-  const recentActions    = getRecentActions(actionMemory, 5)
 
   // ── Legacy brief (for setup card only) ───────────────────────────────────
   const legacyBrief = buildTodayBrief({
@@ -620,37 +609,27 @@ export default async function DirectorCommandCenter() {
         <TodaySetupCard steps={legacyBrief.setupSteps} />
       ) : (
         <>
-          {/* ── Academy Weather ───────────────────────────────────────────── */}
-          <AcademySituationBanner
-            situation={situation}
-            generatedAt={partnerInputs.generatedAt}
-          />
-
-          {/* ── Returning Director Banner — shown after 14+ day absence ──── */}
-          {decisionContext.returningDirectorMode && decisionContext.returningDirectorSummary && (
-            <ReturningDirectorBanner
-              summary={decisionContext.returningDirectorSummary}
-              daysSinceLastVisit={decisionContext.daysSinceLastVisit!}
-            />
-          )}
-
-          {/* ── Hero ─────────────────────────────────────────────────────── */}
-          <DonnaDailyBriefHero
+          {/* ── DONNA Command Brief ─────────────────────────────────────────
+              Unified hero: situation + greeting + returning-director context
+              + primary CTA + work queue count link. ───────────────────────── */}
+          <DonnaCommandBrief
             brief={brief}
             directorName={directorDisplayName}
             situation={situation}
+            generatedAt={partnerInputs.generatedAt}
             primaryPriority={primaryPriority}
             primaryTarget={primaryTarget}
+            workQueuePendingCount={workQueueSummary.totalPending}
+            returningDirectorMode={decisionContext.returningDirectorMode}
+            returningDirectorSummary={decisionContext.returningDirectorSummary}
+            daysSinceLastVisit={decisionContext.daysSinceLastVisit}
           />
 
           {/* ── Top 3 Decisions ──────────────────────────────────────────── */}
           <DirectorDecisionCenter decisions={decisionContext.decisions} />
 
-          {/* ── Alerts + Wins ─────────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <TopThreeAlertsPanel alerts={brief.alerts} />
-            <TopThreeWinsPanel wins={brief.wins} />
-          </div>
+          {/* ── Alerts + Momentum ─────────────────────────────────────────── */}
+          <DonnaAlertsAndMomentum alerts={brief.alerts} wins={brief.wins} />
 
           {/* ── What Changed ─────────────────────────────────────────────── */}
           <WhatChangedPanel whatChanged={whatChanged} />
@@ -658,14 +637,16 @@ export default async function DirectorCommandCenter() {
           {/* ── What Can Wait ─────────────────────────────────────────────── */}
           <WhatCanWaitPanel waitDecisions={waitDecisions} />
 
-          {/* ── DONNA COO Conversations ───────────────────────────────────── */}
-          <DonnaCOOPanel answers={cooAnswers} />
-
-          {/* ── DONNA Work Queue ──────────────────────────────────────────── */}
-          <DonnaWorkQueue summary={workQueueSummary} />
-
-          {/* ── Action History Timeline ───────────────────────────────────── */}
-          <DonnaActionTimeline entries={recentActions} />
+          {/* ── DONNA Strategic Questions — collapsed by default ──────────── */}
+          <details className="rounded-xl border border-border overflow-hidden">
+            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-raised/50 transition-colors list-none">
+              <span className="text-sm font-medium text-text-secondary">DONNA — Strategic Questions</span>
+              <span className="label-xs text-text-muted">expand</span>
+            </summary>
+            <div className="border-t border-border">
+              <DonnaCOOPanel answers={cooAnswers} />
+            </div>
+          </details>
         </>
       )}
     </div>

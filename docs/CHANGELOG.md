@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-06-12 — Sprint 2051–2080 — Fable Director UX V1: Today Page
+
+**Deep System. Simple Screen. DONNA Is The Interface.**
+
+**Core mission:** Removed 10-panel visual density from the Today page. DONNA speaks once, clearly. Director sees the hero, 3 decisions, and compact alerts/wins. Everything secondary is collapsed or moved.
+
+**What changed on Today:**
+- Unified hero: `AcademySituationBanner` + `DonnaDailyBriefHero` + `ReturningDirectorBanner` merged into a single `DonnaCommandBrief` server component. Situation lives inside the card. Returning director content folds into the greeting body. No defer button. No ExplainWhy in hero.
+- Decision cards: removed generic `decisionPrompt` (noise), flattened `firstStep` out of its box, "Take action" → "Open", 3-col grid layout preserved.
+- Alerts + Momentum: two separate panels replaced by one `DonnaAlertsAndMomentum` card — alerts above a hairline divider, wins below. No panel headers.
+- COO Panel: wrapped in native `<details>` — collapsed by default. Click to expand.
+- Work queue: count lives as a text link inside the hero. `DonnaWorkQueue` card removed from Today.
+- Action timeline: `DonnaActionTimeline` removed from Today. Component file preserved for future /activity page.
+- What Changed: kept visible (expanded by default). No change.
+
+**Net result:** Today page reduced from 10 panels to 5 surfaces: hero → decisions → alerts/wins → what changed → what can wait.
+
+**TypeScript:** Clean (0 errors)
+
+**Files created:**
+- `src/app/director/_components/DonnaCommandBrief.tsx` — unified hero (server component): situation header, greeting/return content, primary CTA, work queue count link
+- `src/app/director/_components/DonnaAlertsAndMomentum.tsx` — combined alerts + wins, single card with hairline divider
+
+**Files modified:**
+- `src/app/director/page.tsx` — swapped imports, rewired render, removed dead action memory computation
+- `src/app/director/_components/DirectorDecisionCenter.tsx` — removed decisionPrompt, flattened firstStep, "Open" CTA label
+
+---
+
 ## 2026-06-12 — Mega Sprint 2021–2050 — DONNA Signal Activation & Reality Wiring V1
 
 **From assumptions to reality.**
