@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { LoginForm } from './LoginForm'
 
 export default function LoginPage() {
@@ -12,7 +13,10 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold">Academy OS</h1>
           <p className="text-text-secondary text-sm mt-1">Sign in to your academy</p>
         </div>
-        <LoginForm />
+        {/* LoginForm uses useSearchParams() — Suspense boundary required by Next.js 14 */}
+        <Suspense fallback={null}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   )

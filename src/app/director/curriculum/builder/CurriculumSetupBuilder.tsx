@@ -11,6 +11,7 @@ import type { CurriculumModificationIntent } from '@/lib/donna/curriculum/curric
 import { buildCurriculumRecommendations } from '@/lib/donna/curriculum/curriculumArchitect'
 import { DonnaCurriculumPanel } from './DonnaCurriculumPanel'
 import { CurriculumRecommendationCard } from './CurriculumRecommendationCard'
+import { CurriculumEvolutionPanel } from './CurriculumEvolutionPanel'
 import { CurriculumKeyboardHintBar } from '@/components/curriculum/builder/CurriculumKeyboardHintBar'
 import { buildCurriculumGapChip } from '@/lib/donna/curriculumBuilderDonnaContext'
 import { onGoalSessionCompleted } from '@/lib/donna/pageSync/donnaPageSyncEvents'
@@ -140,6 +141,7 @@ export function CurriculumSetupBuilder({ levels = [], intelligenceContext }: Pro
   // Intelligence panel state
   const [panelLevelId, setPanelLevelId] = useState<string | undefined>(undefined)
   const [panelIntent, setPanelIntent]   = useState<CurriculumModificationIntent | undefined>(undefined)
+  const [intelligenceTab, setIntelligenceTab] = useState<'architect' | 'evolution'>('architect')
 
   const recommendations = intelligenceContext
     ? buildCurriculumRecommendations(intelligenceContext)
@@ -310,20 +312,53 @@ export function CurriculumSetupBuilder({ levels = [], intelligenceContext }: Pro
           </p>
         </div>
 
-        {/* ── DONNA Curriculum Architect Panel ─────────── */}
+        {/* ── DONNA Intelligence — Architect | Evolution tabs ──────── */}
         {intelligenceContext && (
-          <div id="donna-curriculum-panel" className="mb-6 flex flex-col gap-4">
-            {recommendations.length > 0 && (
-              <CurriculumRecommendationCard
-                recommendations={recommendations}
-                onSelectRecommendation={handleSelectRecommendation}
-              />
+          <div id="donna-curriculum-panel" className="mb-6">
+            {/* Tab bar */}
+            <div className="flex items-center gap-1 mb-4 border-b border-border pb-0">
+              <button
+                onClick={() => setIntelligenceTab('architect')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px ${
+                  intelligenceTab === 'architect'
+                    ? 'text-lime border-lime'
+                    : 'text-text-muted border-transparent hover:text-text-secondary'
+                }`}
+              >
+                Architect
+              </button>
+              <button
+                onClick={() => setIntelligenceTab('evolution')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px ${
+                  intelligenceTab === 'evolution'
+                    ? 'text-lime border-lime'
+                    : 'text-text-muted border-transparent hover:text-text-secondary'
+                }`}
+              >
+                Evolution
+              </button>
+            </div>
+
+            {/* Tab content */}
+            {intelligenceTab === 'architect' && (
+              <div className="flex flex-col gap-4">
+                {recommendations.length > 0 && (
+                  <CurriculumRecommendationCard
+                    recommendations={recommendations}
+                    onSelectRecommendation={handleSelectRecommendation}
+                  />
+                )}
+                <DonnaCurriculumPanel
+                  context={intelligenceContext}
+                  initialIntent={panelIntent}
+                  initialLevelId={panelLevelId}
+                />
+              </div>
             )}
-            <DonnaCurriculumPanel
-              context={intelligenceContext}
-              initialIntent={panelIntent}
-              initialLevelId={panelLevelId}
-            />
+
+            {intelligenceTab === 'evolution' && (
+              <CurriculumEvolutionPanel intelligenceContext={intelligenceContext} />
+            )}
           </div>
         )}
 

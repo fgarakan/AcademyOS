@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-06-12 — Sprint 1865A — Production Readiness & Curriculum Evolution Exposure V1
+
+**AcademyOS becomes deployable. Evolution Engine becomes visible.**
+
+**Part 1 — `/login` Suspense fix:** `LoginForm` uses `useSearchParams()` — wrapped in `<Suspense fallback={null}>` in `login/page.tsx`. Fixes Next.js 14 prerender error that blocked all production builds.
+
+**Part 2 — Evolution Panel wired:** `CurriculumEvolutionPanel` imported and rendered in `CurriculumSetupBuilder.tsx`. Added `Architect | Evolution` tab toggle above the DONNA panel area. Evolution tab renders the full `CurriculumEvolutionPanel` using the already-loaded `intelligenceContext`. Architect tab preserves existing behavior. No new DB queries.
+
+**Part 3 — Release Certification Standard:** `releaseCertification.ts` runs TypeScript check + all certification suites in sequence. Reports pass/fail with counts. `RELEASE_STANDARD.md` documents the 5 gates that must pass before any sprint is complete.
+
+**Validation:**
+- TypeScript: clean (0 errors)
+- Curriculum Architect Certification: ALL PASS (50/50)
+- Curriculum Evolution Certification: ALL PASS (74/74)
+- Command Center Certification: ALL PASS
+- `npm run build`: exit 0, 101/101 pages, zero prerender errors
+
+**Files created:**
+- `src/lib/donna/releaseCertification.ts` — runnable certification orchestrator; 4 automated checks + manual build gate
+- `docs/RELEASE_STANDARD.md` — 5-gate sprint completion standard; commit protocol; architecture non-negotiables
+
+**Files modified:**
+- `src/app/login/page.tsx` — `<Suspense>` wrapper around `<LoginForm />`
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — Architect | Evolution tab toggle; `CurriculumEvolutionPanel` wired under Evolution tab
+
+---
+
 ## 2026-06-12 — Mega Sprint 1900–1930 — Director Experience Reimagination V1
 
 **Architecture and UX blueprint sprint. No code changes. No new intelligence. No migrations.**
