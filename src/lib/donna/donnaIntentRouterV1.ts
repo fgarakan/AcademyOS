@@ -173,8 +173,8 @@ const PATTERNS = {
   // Curriculum evolution intents (Mega Sprint 1866 — V1 deterministic, read-only)
   EVOLUTION_WHAT_NEXT: /\b(what\s+should\s+(we|i)\s+improve\s+(next|first)|what.{0,20}(evolve|evolution|improve|better)\s+(next|first|now)|donna.{0,20}improve)\b/i,
   EVOLUTION_STUCK:     /\b(where.{0,20}(players?|students?).{0,20}(stuck|not\s+advancing|stagnating|struggling)|who.{0,15}(stuck|not\s+moving|behind)|progression\s+(issue|problem|bottleneck))\b/i,
-  EVOLUTION_WEAKEST:   /\b(what.{0,20}(weakest|worst|poorest|least\s+(effective|developed))\s+(curriculum|content|level|area)|weakest\s+(part|section|level|area))\b/i,
-  EVOLUTION_DRILLS:    /\b(which\s+(drills?|activities|exercises).{0,30}(underperform|not\s+working|ineffective|unused|ignored|low\s+impact)|drill.{0,20}(effectiveness|performance|impact))\b/i,
+  EVOLUTION_WEAKEST:   /\b(what.{0,20}(weakest|worst|poorest|least\s+(effective|developed))\s+(curriculum|content|level|area)|(curriculum|content|level|area).{0,20}(weakest|worst|poorest)|weakest\s+(part|section|level|area))\b/i,
+  EVOLUTION_DRILLS:    /\b(which\s+(drills?|activities|exercises).{0,30}(underperform(ing)?|not\s+working|ineffective|unused|ignored|low\s+impact)|drill.{0,20}(effectiveness|performance|impact))\b/i,
   EVOLUTION_GATE:      /\b(which\s+gate.{0,30}(review|problem|issue|failing|bottleneck|hard)|gate.{0,20}(review|effectiveness|health|problem|working))\b/i,
   EVOLUTION_IMPACT:    /\b(what.{0,30}(biggest|most|highest).{0,20}impact|what\s+(change|addition|improvement).{0,20}(help\s+most|matter\s+most|biggest\s+difference))\b/i,
   EVOLUTION_REALITY:   /\b(what\s+(does\s+)?reality.{0,20}(disagree|contradict|conflict|mismatch)|where.{0,20}reality.{0,20}(differ|wrong|contradicts?)|reality\s+(override|check|vs\s+curriculum))\b/i,
@@ -224,9 +224,8 @@ export function routeDonnaIntentV1(
   // Checked before mutation intents: audit/recommend/review are read-only even
   // when phrased as directives ("audit my curriculum").
 
-  if (PATTERNS.CURRICULUM_AUDIT.test(t))     return make('curriculum_audit',     'high',   false, 'Curriculum audit pattern matched')
-  if (PATTERNS.CURRICULUM_RECOMMEND.test(t)) return make('curriculum_recommend', 'high',   false, 'Curriculum recommend pattern matched')
-  // Evolution intents — V1 deterministic, read-only (checked before mutation intents)
+  // Evolution intents — V1 deterministic, read-only. Must be checked BEFORE curriculum_audit
+  // because CURRICULUM_AUDIT pattern matches "missing" which also appears in evolution phrases.
   if (PATTERNS.EVOLUTION_WHAT_NEXT.test(t)) return make('curriculum_evolution_what_next', 'high', false, 'Evolution: what to improve next')
   if (PATTERNS.EVOLUTION_STUCK.test(t))     return make('curriculum_evolution_stuck',     'high', false, 'Evolution: player stuck detection')
   if (PATTERNS.EVOLUTION_WEAKEST.test(t))   return make('curriculum_evolution_weakest',   'high', false, 'Evolution: weakest curriculum')
@@ -235,6 +234,8 @@ export function routeDonnaIntentV1(
   if (PATTERNS.EVOLUTION_IMPACT.test(t))    return make('curriculum_evolution_impact',    'high', false, 'Evolution: biggest impact change')
   if (PATTERNS.EVOLUTION_REALITY.test(t))   return make('curriculum_evolution_reality',   'high', false, 'Evolution: reality override check')
   if (PATTERNS.EVOLUTION_MISSING.test(t))   return make('curriculum_evolution_missing',   'high', false, 'Evolution: missing content')
+  if (PATTERNS.CURRICULUM_AUDIT.test(t))     return make('curriculum_audit',     'high',   false, 'Curriculum audit pattern matched')
+  if (PATTERNS.CURRICULUM_RECOMMEND.test(t)) return make('curriculum_recommend', 'high',   false, 'Curriculum recommend pattern matched')
   if (PATTERNS.CURRICULUM_COMPARE.test(t))   return make('curriculum_compare',   'high',   false, 'Curriculum compare pattern matched')
   if (PATTERNS.CURRICULUM_EXPLAIN.test(t))   return make('curriculum_explain',   'medium', false, 'Curriculum explain pattern matched')
   if (PATTERNS.CURRICULUM_REVIEW.test(t))    return make('curriculum_review',    'medium', false, 'Curriculum review pattern matched')

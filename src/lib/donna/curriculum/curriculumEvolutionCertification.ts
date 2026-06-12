@@ -222,7 +222,7 @@ scenario('5. Recreational Academy — game-heavy, few assessments')
     academyDna: makeDna('recreational'),
     levels: [RED2, OB1],
     playerByLevel: [
-      makePlayer('red2', 'Red Ball 2', 3, 2, true, 'evidence_records'),
+      makePlayer('red2', 'Red Ball 2', 6, 0, true, 'evidence_records'),
     ],
     curriculumItems: [
       makeItem('r1', 'Fun game 1', 'game', 'red2', 'Red Ball 2', null),
@@ -253,9 +253,12 @@ scenario('5. Recreational Academy — game-heavy, few assessments')
 
 scenario('6. Contradiction Academy — philosophy says one thing, reality another')
 {
+  // GB1 and YB1 have NO content — competitive model with empty advanced pathway
+  const GB1_EMPTY = makeLevel('gb1', 'Green Ball 1',  'green_development',  5)
+  const YB1_EMPTY = makeLevel('yb1', 'Yellow Ball 1', 'yellow_development', 6)
   const ctx = makeCtx({
     academyDna: makeDna('competitive_juniors'),
-    levels: [OB1, OB2, GB1, YB1],
+    levels: [OB1, OB2, GB1_EMPTY, YB1_EMPTY],
     playerByLevel: [
       makePlayer('ob1', 'Orange Ball 1', 8, 1, true, 'evidence_records', ['serve', 'volley']),
     ],

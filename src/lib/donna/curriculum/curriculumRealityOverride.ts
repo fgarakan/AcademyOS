@@ -101,7 +101,7 @@ function detectPhilosophyContradictions(
   // Philosophy: competitive juniors → reality: many empty advanced levels
   if (dna.inferredModel === 'competitive_juniors') {
     const emptyAdvanced = levels.filter(l =>
-      l.isEmpty && (l.stage.includes('green') || l.stage.includes('high')),
+      l.isEmpty && (l.stage.includes('green') || l.stage.includes('yellow') || l.stage.includes('high')),
     )
     if (emptyAdvanced.length >= 2) {
       overrides.push({
