@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 1900–1930 — Director Experience Reimagination V1
+
+**Architecture and UX blueprint sprint. No code changes. No new intelligence. No migrations.**
+
+Complete Director UX architecture produced for the Fable redesign. Every Director route audited. Operating model defined. Navigation reduced from 9 primary items to 6. All 50+ routes mapped to Keep / Merge / Remove / Replace / DONNA. Fable blueprint defines page hierarchy, component hierarchy, information hierarchy, user journeys, DONNA interaction patterns, approval patterns, and mobile considerations.
+
+**Principle established:** Deep System. Simple Screen. DONNA Is The Interface.
+
+**Files created:**
+- `docs/ux/DirectorCognitiveLoadAudit.md` — page-by-page audit of every Director route; current friction, redundancies, recommendations; cognitive load score (33+ routes → ~15)
+- `docs/ux/DirectorOperatingModel.md` — the 5 Director activities (RUN / IMPROVE / REVIEW / GROW / CONFIGURE); every page maps to one; anti-patterns documented
+- `docs/ux/DirectorScreenInventory.md` — Keep/Merge/Remove/Replace/DONNA decision for every screen; full migration map from old locations to new
+- `docs/ux/FABLE_DIRECTOR_BLUEPRINT.md` — complete source of truth for Fable redesign; 12 sections covering navigation, page specs, user journeys, information hierarchy, DONNA patterns, approval patterns, visual hierarchy, mobile, certification checklist; Appendix A (intelligence engines → surfaces) and Appendix B (proposed_actions taxonomy)
+
+**Navigation target:**
+```
+TODAY · PLAYERS · CURRICULUM · COACHES · APPROVALS · SETTINGS
+```
+
+**Certification:** All 11 Director workflows can be completed within the new architecture. All pages have a purpose. All pages map to exactly one of the 5 activities. No functionality lost.
+
+---
+
 ## 2026-06-12 — Mega Sprint 1866–1895 — DONNA Curriculum Evolution Engine V1
 
 **DONNA learns to improve curriculum based on reality signals.** Core principle: Reality Always Wins — player outcomes outrank philosophy, DONNA opinion, and original design. New `EvidenceStrength` system (high/medium/low/insufficient) gates all `RecommendationType` actions (CREATE/IMPROVE/REMOVE/MERGE/REORDER/INVESTIGATE/MONITOR). False Positive Prevention: `arePlayerOutcomesExcellent()` suppresses structural gap recommendations when advancement rate ≥40%, evidence is real records, and no weak domains exist. Bottlenecks with excellent outcomes become MONITOR-only at ≤20% confidence. REMOVE is never auto-recommended — always director-initiated.
