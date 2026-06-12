@@ -287,11 +287,12 @@ export default async function DirectorCommandCenter() {
 
   const { data: completedSessionsData } = await supabase
     .from('sessions')
-    .select('id')
+    .select('id, coach_id')
     .eq('academy_id', academyId)
     .eq('status', 'completed')
     .gte('scheduled_date', thirtyDaysAgoStr)
-  const completedSessionIds = (completedSessionsData ?? []).map((s: { id: string }) => s.id)
+  const typedCompletedSessions = (completedSessionsData ?? []) as Array<{ id: string; coach_id: string | null }>
+  const completedSessionIds = typedCompletedSessions.map(s => s.id)
 
   let sessionsWithNote = new Set<string>()
   if (completedSessionIds.length > 0) {
@@ -307,6 +308,13 @@ export default async function DirectorCommandCenter() {
     )
   }
   const coachRecapsMissing = completedSessionIds.filter(id => !sessionsWithNote.has(id)).length
+
+  // Per-coach missing wrap-up count (distinct coaches with at least one session missing a note)
+  const sessionsMissingNote = typedCompletedSessions.filter(s => !sessionsWithNote.has(s.id))
+  const missingWrapUpCoachIds = new Set(
+    sessionsMissingNote.map(s => s.coach_id).filter(Boolean) as string[]
+  )
+  const missingWrapUpCoachCount = missingWrapUpCoachIds.size
 
   // Templates
   const { data: templateCheckData } = await rawDb
@@ -354,6 +362,89 @@ export default async function DirectorCommandCenter() {
     r => r.urgency === 'overdue' || r.urgency === 'due_soon'
   ).length
 
+  // Coach count from memberships
+  const { count: coachMembershipCount } = await rawDb
+    .from('academy_memberships')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .in('role', ['coach', 'head_coach'])
+    .eq('is_active', true)
+  const totalCoachCount = coachMembershipCount ?? 0
+
+  // Stagnant players by coach (distinct coaches with 2+ stalled players)
+  let stagnantPlayerByCoachCount = 0
+  if (stalledRows.length > 0) {
+    const stalledIds = stalledRows.map(r => r.player_id).slice(0, 100)
+    const { data: stalledCoachData } = await rawDb
+      .from('players')
+      .select('id, primary_coach_id')
+      .in('id', stalledIds)
+    const stalledCoachRows = (stalledCoachData ?? []) as Array<{ id: string; primary_coach_id: string | null }>
+    const coachStalledMap = new Map<string, number>()
+    for (const p of stalledCoachRows) {
+      if (p.primary_coach_id) {
+        coachStalledMap.set(p.primary_coach_id, (coachStalledMap.get(p.primary_coach_id) ?? 0) + 1)
+      }
+    }
+    stagnantPlayerByCoachCount = Array.from(coachStalledMap.values()).filter(c => c >= 2).length
+  }
+
+  // Curriculum levels (global — no academy filter; levels are shared across academies)
+  const { data: curriculumLevelsData } = await rawDb
+    .from('curriculum_levels')
+    .select('id')
+  const allLevelRows = (curriculumLevelsData ?? []) as Array<{ id: string }>
+  const totalLevelCount = allLevelRows.length
+
+  // Curriculum gates (active only)
+  const { data: curriculumGatesData } = await rawDb
+    .from('curriculum_gates')
+    .select('from_level_id')
+    .eq('is_active', true)
+  const typedGatesRows = (curriculumGatesData ?? []) as Array<{ from_level_id: string | null }>
+
+  // Per-level gate and template counts
+  const gatesPerLevel = new Map<string, number>()
+  for (const gate of typedGatesRows) {
+    if (gate.from_level_id) {
+      gatesPerLevel.set(gate.from_level_id, (gatesPerLevel.get(gate.from_level_id) ?? 0) + 1)
+    }
+  }
+  const templatesPerLevel = new Map<string, number>()
+  for (const t of typedTemplateRows) {
+    if (t.curriculum_level_id) {
+      templatesPerLevel.set(t.curriculum_level_id, (templatesPerLevel.get(t.curriculum_level_id) ?? 0) + 1)
+    }
+  }
+
+  const missingGateCount = allLevelRows.filter(l => (gatesPerLevel.get(l.id) ?? 0) === 0).length
+  const emptyLevelCount  = allLevelRows.filter(l =>
+    (gatesPerLevel.get(l.id) ?? 0) === 0 && (templatesPerLevel.get(l.id) ?? 0) === 0
+  ).length
+  const weakLevelCount   = allLevelRows.filter(l =>
+    (gatesPerLevel.get(l.id) ?? 0) > 0 && (gatesPerLevel.get(l.id) ?? 0) < 3
+  ).length
+  const hasGateData = curriculumGatesData !== null
+
+  // Enrollment trend: compare last 30d enrollments vs prior 30–60d
+  const sixtyDaysAgo = new Date()
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+  const thirtyDaysAgoTs = thirtyDaysAgo.getTime()
+  const sixtyDaysAgoTs  = sixtyDaysAgo.getTime()
+  const recentEnrollments = typedCurricRows.filter(r => {
+    if (!r.enrolled_at) return false
+    return new Date(r.enrolled_at).getTime() >= thirtyDaysAgoTs
+  }).length
+  const priorEnrollments = typedCurricRows.filter(r => {
+    if (!r.enrolled_at) return false
+    const t = new Date(r.enrolled_at).getTime()
+    return t >= sixtyDaysAgoTs && t < thirtyDaysAgoTs
+  }).length
+  const enrollmentTrendSignal: 'growing' | 'stable' | 'declining' | 'unknown' =
+    recentEnrollments === 0 && priorEnrollments === 0 ? 'unknown' :
+    recentEnrollments > priorEnrollments    ? 'growing' :
+    recentEnrollments < priorEnrollments    ? 'declining' : 'stable'
+
   // Derived
   const totalPendingReviews = pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
@@ -378,7 +469,7 @@ export default async function DirectorCommandCenter() {
       stallCount:               stalledPlayerCount,
       assessmentDueCount:       reassessmentDue,
       advancementEligibleCount: advancementReadyCount,
-      attendanceRiskCount:      attentionCount,
+      attendanceRiskCount:      0,
       readinessBlockerCount:    0,
       playersWithoutLevel,
       playersWithoutCoach:      unassignedPlayerCount,
@@ -387,13 +478,13 @@ export default async function DirectorCommandCenter() {
       hasAttendanceData:        false,
     },
     coaches: {
-      dataAvailable:              completedSessionIds.length > 0,
-      missingData:                completedSessionIds.length === 0 ? ['No completed sessions in last 30 days'] : [],
-      totalCoachCount:            0,
+      dataAvailable:              totalCoachCount > 0,
+      missingData:                totalCoachCount === 0 ? ['No coaches found in academy memberships'] : [],
+      totalCoachCount,
       missingWrapUpCount:         coachRecapsMissing,
-      missingWrapUpCoachCount:    0,
+      missingWrapUpCoachCount,
       inconsistentExecutionCount: 0,
-      stagnantPlayerByCoachCount: 0,
+      stagnantPlayerByCoachCount,
       recentWrapUpSubmissionRate: completedSessionIds.length > 0
         ? (completedSessionIds.length - coachRecapsMissing) / completedSessionIds.length
         : 0,
@@ -401,18 +492,18 @@ export default async function DirectorCommandCenter() {
       hasExecutionData: false,
     },
     curriculum: {
-      dataAvailable:              playersWithLevel > 0 || classTemplateCount > 0,
-      missingData:                playersWithLevel === 0 ? ['No curriculum assignments'] : [],
-      weakLevelCount:             0,
-      emptyLevelCount:            0,
+      dataAvailable:              totalLevelCount > 0 || classTemplateCount > 0,
+      missingData:                totalLevelCount === 0 && classTemplateCount === 0 ? ['No curriculum structure found'] : [],
+      weakLevelCount,
+      emptyLevelCount,
       missingAssessmentCount:     0,
-      missingGateCount:           0,
+      missingGateCount,
       contentGapsByType:          {},
       bottleneckLevelCount:       curriculumGapCount > 0 ? 1 : 0,
       pendingApprovalCount:       assessmentsNeedingReview,
-      playerBackedBottleneckCount: 0,
-      hasCurriculumData:          classTemplateCount > 0,
-      hasGateData:                false,
+      playerBackedBottleneckCount: curriculumGapCount,
+      hasCurriculumData:          totalLevelCount > 0 || classTemplateCount > 0,
+      hasGateData,
       hasPlayerEvidenceData:      false,
     },
     parents: {
@@ -431,7 +522,7 @@ export default async function DirectorCommandCenter() {
     business: {
       dataAvailable:             groupSummaryRows.length > 0,
       missingData:               groupSummaryRows.length === 0 ? ['Group capacity data not available'] : [],
-      enrollmentTrendSignal:     players.length > 0 ? 'stable' : 'unknown',
+      enrollmentTrendSignal,
       capacityIssueCount:        overCapacityGroupCount,
       programImbalanceSignal:    null,
       attendanceTrendLast30Days: 'unknown',

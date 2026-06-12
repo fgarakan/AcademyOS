@@ -93,7 +93,13 @@ run(
   'npx tsx src/lib/donna/actions/donnaActionExecutionCertification.ts',
 )
 
-section('8. Production Build')
+section('8. Signal Activation Certification')
+run(
+  'donnaSignalActivationCertification (curriculum/coach/player/parent/business wiring, honest absences)',
+  'npx tsx src/lib/donna/operations/donnaSignalActivationCertification.ts',
+)
+
+section('9. Production Build')
 console.log('  — npm run build must be run manually:')
 console.log('    npm run build')
 console.log('    Expected: exit 0, no prerender errors')

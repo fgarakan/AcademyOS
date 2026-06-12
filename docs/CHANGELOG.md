@@ -2,6 +2,56 @@
 
 ---
 
+## 2026-06-12 — Mega Sprint 2021–2050 — DONNA Signal Activation & Reality Wiring V1
+
+**From assumptions to reality.**
+
+**Core mission:** Replaced hardcoded zeros and placeholder values in the Operating Partner data pipeline with real academy data. No new intelligence. No fake data. No migrations. Reality wiring only.
+
+**What was wired:**
+- `curriculum.weakLevelCount` / `emptyLevelCount` / `missingGateCount` — new queries on `curriculum_levels` + `curriculum_gates`
+- `curriculum.playerBackedBottleneckCount` — wired to `curriculumGapCount` from `academy_suggestions` (already computed)
+- `curriculum.hasCurriculumData` / `hasGateData` — derived from real query results (not hardcoded)
+- `coaches.totalCoachCount` — new query on `academy_memberships` (role IN [coach, head_coach])
+- `coaches.missingWrapUpCoachCount` — distinct coach_ids from sessions missing voice notes (sessions query extended with `coach_id`)
+- `coaches.stagnantPlayerByCoachCount` — cross-reference: stalled player IDs × `players.primary_coach_id`
+- `coaches.dataAvailable` — now based on `totalCoachCount > 0` (not session count)
+- `players.attendanceRiskCount` — corrected to `0` (honest absence; was proxy-using `attentionCount`)
+- `business.enrollmentTrendSignal` — derived from 30d vs 60d enrollment counts (was hardcoded `'stable'`)
+
+**What stayed honest absence:**
+- `hasAttendanceData`: false — no attendance rate table
+- `readinessBlockerCount`: 0 — no evidence records table
+- `inconsistentExecutionCount`: 0 — no execution quality tracking
+- `retentionRiskCount`, `engagementRiskCount`: 0 — no parent engagement infrastructure
+- `hasPlayerEvidenceData`: false — no evidence records
+- All philosophy inputs: default provisionals (academy DNA mapping deferred)
+
+**Signal coverage change:**
+- Before: ~11 of 27 signals could fire
+- After: ~16 of 27 signals can fire
+
+**Trust Scorecard change (V1 → V2):**
+- Attention Signals: 62/100 → 70/100 (+8)
+- Director Decisions: 64/100 → 69/100 (+5)
+- Overall: 65/100 → 68/100 (+3)
+
+**Validation:**
+- TypeScript: clean (0 errors)
+- Signal Activation Certification: 25/25 assertions
+- All 8 certification suites: PASS
+
+**Files created:**
+- `docs/audits/DONNA_SIGNAL_WIRING_REPORT.md` — full inventory of every signal gap with current → wired values and HONEST_ABSENCE markers
+- `src/lib/donna/operations/donnaSignalActivationCertification.ts` — 25 assertions verifying no known placeholder signals remain
+
+**Files modified:**
+- `src/app/director/page.tsx` — wired curriculum/coach/player/business signals; 3 new DB queries (academy_memberships, curriculum_levels, curriculum_gates) + conditional stalled-coach cross-reference; sessions query extended with coach_id
+- `docs/audits/DONNA_TRUST_SCORECARD.md` — updated to V2 with before/after scores for all affected systems
+- `src/lib/donna/releaseCertification.ts` — added Section 8: Signal Activation Certification; renamed old Section 8 → Section 9
+
+---
+
 ## 2026-06-12 — Mega Sprint 1991–2020 — DONNA Action Execution Layer V1
 
 **DONNA Drafts. Director Approves. System Executes.**
