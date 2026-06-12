@@ -30,6 +30,7 @@ export interface TodayPriority extends OperatingPriority {
   capacityCost: number
   tradeoff:     TradeoffAnalysis
   explanation:  PriorityExplanation
+  whyToday:     string  // why this priority matters specifically today, not just why it exists
 }
 
 // ── Result type ────────────────────────────────────────────────────────────────
@@ -860,6 +861,46 @@ function buildWhatToIgnore(
   return ignore
 }
 
+// ── Why Today builder ─────────────────────────────────────────────────────────
+// Explains why this priority matters TODAY, not just why it exists.
+// Draws on live operational counts to be specific.
+
+function buildWhyToday(p: OperatingPriority, inputs: OperatingPartnerInputs): string {
+  const { players, coaches, curriculum, parents, system } = inputs.operations
+
+  if (p.urgency === 'immediate') {
+    if ((p.domain === 'players' || p.domain === 'cross_domain') && players.stallCount > 0) {
+      return `${players.stallCount} player${players.stallCount > 1 ? 's are' : ' is'} currently stalled — every session without action deepens their disengagement.`
+    }
+    if (p.domain === 'coaches' && coaches.missingWrapUpCount > 0) {
+      return `${coaches.missingWrapUpCount} session recap${coaches.missingWrapUpCount > 1 ? 's are' : ' is'} outstanding now — DONNA cannot detect development issues without them.`
+    }
+    if (p.domain === 'parents' && parents.retentionRiskCount > 0) {
+      return `${parents.retentionRiskCount} at-risk ${parents.retentionRiskCount > 1 ? 'families are' : 'family is'} waiting — each day of delay increases cancellation probability.`
+    }
+    if (p.domain === 'system' && system.oldestPendingAgeDays !== null && system.oldestPendingAgeDays >= 3) {
+      return `The oldest pending approval is ${system.oldestPendingAgeDays} days old — coach and curriculum workflows are currently blocked until this is cleared.`
+    }
+    if ((p.domain === 'curriculum' || p.domain === 'cross_domain') && curriculum.playerBackedBottleneckCount > 0) {
+      return `${curriculum.playerBackedBottleneckCount} curriculum level${curriculum.playerBackedBottleneckCount > 1 ? 's are' : ' is'} confirmed as a bottleneck by real player evidence — the highest-quality signal DONNA has.`
+    }
+    if (p.evidenceUsed.length > 0) {
+      return `${p.evidenceUsed[0]} — this signal is at its immediate threshold right now.`
+    }
+  }
+
+  if (p.urgency === 'this_week') {
+    if (players.advancementEligibleCount >= 3 && (p.domain === 'players' || p.domain === 'curriculum')) {
+      return `${players.advancementEligibleCount} players are currently eligible for advancement — delay erodes their motivation and creates level capacity bottlenecks.`
+    }
+    if (p.evidenceUsed.length > 0) {
+      return `${p.evidenceUsed[0]} — acting this week prevents this from escalating to immediate urgency.`
+    }
+  }
+
+  return p.reason
+}
+
 // ── Cannot-brief result ────────────────────────────────────────────────────────
 
 function buildCannotBriefResult(
@@ -910,10 +951,11 @@ export function buildTodayPriorities(
     const ranked: OperatingPriority = { ...p, rank: i + 1 }
     const capacityCost  = budget.allocations.find(a => a.priorityTitle === p.title)?.capacityCost
       ?? estimateCapacityCost(p)
-    const tradeoff  = buildTradeoffAnalysis(ranked, deferred, situation)
+    const tradeoff    = buildTradeoffAnalysis(ranked, deferred, situation)
     const explanation = buildPriorityExplanation(ranked, inputs)
+    const whyToday    = buildWhyToday(ranked, inputs)
 
-    return { ...ranked, capacityCost, tradeoff, explanation }
+    return { ...ranked, capacityCost, tradeoff, explanation, whyToday }
   })
 
   const whatToIgnore = buildWhatToIgnore(situation, inputs)

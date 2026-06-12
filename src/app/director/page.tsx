@@ -2,18 +2,41 @@ import { redirect } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { getReassessmentPipeline } from '@/lib/backend/dashboard'
-import { computeRecapCompletionRate, type RecapCheckRow } from '@/lib/kpi/coachExecutionKpiEngine'
+
+// ── Operating Partner engines ───────────────────────────────────────────────
+import { classifyAcademySituation }                from '@/lib/donna/operations/academySituationAssessment'
+import { buildOperatingAttentionReport }           from '@/lib/donna/operations/academyAttentionEngine'
+import { buildTodayPriorities }                    from '@/lib/donna/operations/whatShouldIDoTodayEngine'
+import { buildTopWins }                            from '@/lib/donna/operations/academyOpportunityEngine'
+import { buildDirectorDailyBrief }                 from '@/lib/donna/operations/directorDailyBriefEngine'
+import { answerAllCOOQuestions }                   from '@/lib/donna/operations/cooConversationEngine'
+import { buildOperatingPartnerInputs }             from '@/lib/donna/operations/buildOperatingPartnerInputs'
+import {
+  buildWaitDecisions,
+  buildIgnoreDecisions,
+  buildActionTargets,
+  buildWhatChangedResult,
+} from '@/lib/donna/operations/academyChangeEngine'
+import type { OperatingPartnerPhilosophyInputs } from '@/lib/donna/operations/operatingPartnerPhilosophyContract'
+import type { OperatingPartnerOperationalInputs } from '@/lib/donna/operations/operatingPartnerOperationalContract'
+
+// ── Command Center components ───────────────────────────────────────────────
+import { AcademySituationBanner }   from './_components/AcademySituationBanner'
+import { DonnaDailyBriefHero }      from './_components/DonnaDailyBriefHero'
+import { DirectorCapacityMeter }    from './_components/DirectorCapacityMeter'
+import { TopThreePrioritiesPanel }  from './_components/TopThreePrioritiesPanel'
+import { TopThreeAlertsPanel }      from './_components/TopThreeAlertsPanel'
+import { TopThreeWinsPanel }        from './_components/TopThreeWinsPanel'
+import { WhatCanWaitPanel }         from './_components/WhatCanWaitPanel'
+import { WhatShouldIIgnorePanel }   from './_components/WhatShouldIIgnorePanel'
+import { WhatChangedPanel }         from './_components/WhatChangedPanel'
+import { DonnaCOOPanel }            from './_components/DonnaCOOPanel'
+
+// ── Legacy setup card (still used for empty academy onboarding) ─────────────
+import { TodaySetupCard } from './_components/TodaySetupCard'
 import { buildTodayBrief } from '@/lib/donna/today/todayBriefEngine'
-import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
 
-import { TodaySetupCard }      from './_components/TodaySetupCard'
-import { TodayHealthCard }     from './_components/TodayHealthCard'
-import { TodayPrioritiesCard } from './_components/TodayPrioritiesCard'
-import { TodayRisksCard }      from './_components/TodayRisksCard'
-import { TodayDecisionsCard }  from './_components/TodayDecisionsCard'
-import { TodayDonnaPromptsCard } from './_components/TodayDonnaPromptsCard'
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function isPending(status: string | null): boolean {
   return (
@@ -23,9 +46,57 @@ function isPending(status: string | null): boolean {
   )
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
+function buildDefaultPhilosophyInputs(academyId: string): OperatingPartnerPhilosophyInputs {
+  return {
+    academyId,
+    generatedAt:    new Date().toISOString(),
+    dataWindowDays: 0,
+    identity: {
+      dimensions: [
+        { key: 'technique_focus',       label: 'Technique Focus',        finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'tactical_focus',        label: 'Tactical Focus',         finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'game_based_learning',   label: 'Game-Based Learning',    finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'competition_emphasis',  label: 'Competition Emphasis',   finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'assessment_rigor',      label: 'Assessment Rigor',       finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'coach_autonomy',        label: 'Coach Autonomy',         finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'parent_transparency',   label: 'Parent Transparency',    finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'long_term_development', label: 'Long-Term Development',  finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'retention_focus',       label: 'Retention Focus',        finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+        { key: 'player_wellbeing',      label: 'Player Wellbeing',       finalScore: 50, primarySource: 'default', confidence: 'provisional', driftWarning: null },
+      ],
+      overallConfidence: 'provisional',
+      narrative:         'Academy philosophy not yet configured. Complete your academy DNA to unlock philosophy-informed recommendations.',
+      dataLimitations:   ['Academy DNA not configured — dimensions use default baseline scores'],
+    },
+    drift: {
+      driftDetected:     false,
+      driftSeverity:     'LOW',
+      confidence:        'provisional',
+      driftedDimensions: [],
+      donnaMessage:      '',
+      suggestedAction:   '',
+    },
+    preferences: { topPreferences: [], topAvoidances: [] },
+    decisions: {
+      totalDecisions:  0,
+      overrideCount:   0,
+      overrideRate:    0,
+      topContentTypes: [],
+      dataLimitation:  'No decision history yet.',
+    },
+    evolution: {
+      recentPhases:    [],
+      overallTheme:    'Academy is in its early operating phase.',
+      summaryLine:     'No evolution history recorded yet.',
+      dataLimitations: [],
+    },
+    overrides: [],
+  }
+}
 
-export default async function DirectorDashboard() {
+// ── Page ─────────────────────────────────────────────────────────────────────
+
+export default async function DirectorCommandCenter() {
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -68,7 +139,6 @@ export default async function DirectorDashboard() {
   const players             = await getPlayerSummaries(supabase, academyId)
   const reassessmentPipeline = await getReassessmentPipeline(supabase, academyId)
 
-  // Player counts
   const activePl      = players.filter(p => p.player_status === 'active')
   const activePlayers = activePl.length
   const pendingCount  = players.filter(p => isPending(p.player_status)).length
@@ -76,14 +146,13 @@ export default async function DirectorDashboard() {
     p => p.player_status === 'on_hold' || p.player_status === 'reassessment_due'
   ).length
 
-  // Sessions — this week
+  // Sessions
   const now       = new Date()
   const weekStart = new Date(now)
   weekStart.setDate(now.getDate() - now.getDay())
   weekStart.setHours(0, 0, 0, 0)
   const weekStartStr = weekStart.toISOString().split('T')[0]
-  const weekEndStr   = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
-    .toISOString().split('T')[0]
+  const weekEndStr   = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   const { data: weekSessions } = await supabase
     .from('sessions')
@@ -95,7 +164,7 @@ export default async function DirectorDashboard() {
   const todayStr      = now.toISOString().split('T')[0]
   const todaySessions = (weekSessions ?? []).filter(s => s.scheduled_date === todayStr)
 
-  // Onboarding settings
+  // Onboarding
   const onboardingSettings = (academy?.settings as Record<string, unknown>) ?? {}
   const hasAcademyDna = typeof onboardingSettings.academy_dna === 'object' && onboardingSettings.academy_dna !== null
   const hasOnboardingComplete = (
@@ -116,7 +185,7 @@ export default async function DirectorDashboard() {
   const newRequests = ((plrData ?? []) as Array<{ id: string; status: string }>)
     .filter(r => r.status === 'new').length
 
-  // AI Suggestions (curriculum gaps)
+  // AI Suggestions
   const { data: suggestionCountData } = await rawDb
     .from('academy_suggestions')
     .select('priority, suggestion_type')
@@ -140,7 +209,7 @@ export default async function DirectorDashboard() {
   const playersWithoutLevel  = Math.max(0, activePlayers - playersWithLevel)
   const advancementReadyCount = typedCurricRows.filter(r => r.advancement_eligible === true).length
 
-  // Stalled players (enrolled > 180 days, not advancement-eligible)
+  // Stalled players
   const now180dAgo = new Date()
   now180dAgo.setDate(now180dAgo.getDate() - 180)
   const stalledRows = typedCurricRows.filter(r =>
@@ -150,7 +219,7 @@ export default async function DirectorDashboard() {
   )
   const stalledPlayerCount = stalledRows.length
 
-  // Pending coach wrap-ups
+  // Pending wrap-ups
   const { data: pendingWrapUpData } = await rawDb
     .from('proposed_actions')
     .select('id')
@@ -159,7 +228,7 @@ export default async function DirectorDashboard() {
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
 
-  // Oldest pending review age
+  // Oldest pending
   const { data: oldestPendingRows } = await rawDb
     .from('proposed_actions')
     .select('created_at')
@@ -172,7 +241,7 @@ export default async function DirectorDashboard() {
     ? Math.floor((Date.now() - new Date(oldestPendingCreatedAt).getTime()) / 86400000)
     : null
 
-  // Assessments in review queue
+  // Assessments in review
   const { count: assessmentsInReviewCount } = await rawDb
     .from('proposed_actions')
     .select('*', { count: 'exact', head: true })
@@ -181,7 +250,7 @@ export default async function DirectorDashboard() {
     .in('target_module', ['assessment_studio_draft', 'placement_assessment_draft'])
   const assessmentsNeedingReview = assessmentsInReviewCount ?? 0
 
-  // Parent updates pending
+  // Parent updates
   const { count: parentUpdatesCount } = await rawDb
     .from('proposed_actions')
     .select('*', { count: 'exact', head: true })
@@ -259,7 +328,7 @@ export default async function DirectorDashboard() {
     g.player_count !== null && g.max_players !== null && g.player_count > g.max_players
   ).length
 
-  // Unassigned players (no primary_coach_id)
+  // Unassigned players
   const { count: unassignedCount } = await rawDb
     .from('players')
     .select('id', { count: 'exact', head: true })
@@ -277,13 +346,121 @@ export default async function DirectorDashboard() {
   const totalPendingReviews = pendingWrapUpsCount + assessmentsNeedingReview + activePlacementReviews
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
-  // Mandatory onboarding gate — redirect new academies that haven't completed setup
+  // ── Onboarding redirect ────────────────────────────────────────────────────
   if (!hasOnboardingComplete && !isAcademyLive) {
     redirect('/onboarding')
   }
 
-  // ── Today brief ────────────────────────────────────────────────────────────────
-  const brief = buildTodayBrief({
+  // ── Build Operating Partner inputs ────────────────────────────────────────
+  const philosophyInputs = buildDefaultPhilosophyInputs(academyId)
+
+  const operationalInputs: OperatingPartnerOperationalInputs = {
+    academyId,
+    generatedAt:    now.toISOString(),
+    dataWindowDays: 30,
+    players: {
+      dataAvailable:            players.length > 0,
+      missingData:              players.length === 0 ? ['No active player data'] : [],
+      totalPlayerCount:         activePlayers,
+      levelDistribution:        [],
+      stallCount:               stalledPlayerCount,
+      assessmentDueCount:       reassessmentDue,
+      advancementEligibleCount: advancementReadyCount,
+      attendanceRiskCount:      attentionCount,
+      readinessBlockerCount:    0,
+      playersWithoutLevel,
+      playersWithoutCoach:      unassignedPlayerCount,
+      hasStallData:             stalledPlayerCount > 0 || activePlayers > 0,
+      hasAssessmentData:        reassessmentDue >= 0,
+      hasAttendanceData:        false,
+    },
+    coaches: {
+      dataAvailable:              completedSessionIds.length > 0,
+      missingData:                completedSessionIds.length === 0 ? ['No completed sessions in last 30 days'] : [],
+      totalCoachCount:            0,
+      missingWrapUpCount:         coachRecapsMissing,
+      missingWrapUpCoachCount:    0,
+      inconsistentExecutionCount: 0,
+      stagnantPlayerByCoachCount: 0,
+      recentWrapUpSubmissionRate: completedSessionIds.length > 0
+        ? (completedSessionIds.length - coachRecapsMissing) / completedSessionIds.length
+        : 0,
+      hasWrapUpData:   completedSessionIds.length > 0,
+      hasExecutionData: false,
+    },
+    curriculum: {
+      dataAvailable:              playersWithLevel > 0 || classTemplateCount > 0,
+      missingData:                playersWithLevel === 0 ? ['No curriculum assignments'] : [],
+      weakLevelCount:             0,
+      emptyLevelCount:            0,
+      missingAssessmentCount:     0,
+      missingGateCount:           0,
+      contentGapsByType:          {},
+      bottleneckLevelCount:       curriculumGapCount > 0 ? 1 : 0,
+      pendingApprovalCount:       assessmentsNeedingReview,
+      playerBackedBottleneckCount: 0,
+      hasCurriculumData:          classTemplateCount > 0,
+      hasGateData:                false,
+      hasPlayerEvidenceData:      false,
+    },
+    parents: {
+      dataAvailable:         parentUpdatesPendingApproval >= 0,
+      missingData:           [],
+      totalParentCount:      0,
+      communicationGapCount: parentUpdatesPendingApproval,
+      updateOverdueCount:    parentUpdatesPendingApproval,
+      engagementRiskCount:   0,
+      retentionRiskCount:    0,
+      transparencyLevel:     'standard',
+      hasCommunicationData:  true,
+      hasEngagementData:     false,
+      hasRetentionData:      false,
+    },
+    business: {
+      dataAvailable:             groupSummaryRows.length > 0,
+      missingData:               groupSummaryRows.length === 0 ? ['Group capacity data not available'] : [],
+      enrollmentTrendSignal:     players.length > 0 ? 'stable' : 'unknown',
+      capacityIssueCount:        overCapacityGroupCount,
+      programImbalanceSignal:    null,
+      attendanceTrendLast30Days: 'unknown',
+      churnRiskSignal:           stalledPlayerCount > 3 ? 'medium' : 'low',
+      revenueSignal:             'unavailable',
+      hasEnrollmentData:         players.length > 0,
+      hasCapacityData:           groupSummaryRows.length > 0,
+    },
+    system: {
+      dataAvailable: true,
+      missingData:   [],
+      pendingApprovalCount:      totalPendingReviews,
+      oldestPendingAgeDays:      oldestPendingReviewAgeDays,
+      onboardingIncompleteItems: [
+        ...(!hasAcademyDna ? ['academy_dna'] : []),
+        ...(players.length === 0 ? ['first_player'] : []),
+        ...(classTemplateCount === 0 ? ['first_template'] : []),
+      ],
+      unreadAlertCount: 0,
+      hasLiveData:      players.length > 0,
+      isAcademyLive,
+    },
+  }
+
+  // ── Run Operating Partner engines ─────────────────────────────────────────
+  const partnerInputs = buildOperatingPartnerInputs(academyId, philosophyInputs, operationalInputs)
+  const situation     = classifyAcademySituation(philosophyInputs, operationalInputs)
+  const attentionReport = buildOperatingAttentionReport(partnerInputs)
+  const todayResult   = buildTodayPriorities(partnerInputs, situation, attentionReport)
+  const wins          = buildTopWins(partnerInputs)
+  const brief         = buildDirectorDailyBrief(partnerInputs, situation, attentionReport, todayResult, wins)
+  const cooAnswers    = answerAllCOOQuestions(partnerInputs, brief, situation, todayResult)
+
+  // ── Build UI-layer decision models ────────────────────────────────────────
+  const waitDecisions   = buildWaitDecisions(todayResult)
+  const ignoreDecisions = buildIgnoreDecisions(attentionReport.signals, todayResult.whatToIgnore)
+  const actionTargets   = buildActionTargets(todayResult.priorities)
+  const whatChanged     = buildWhatChangedResult(todayResult.priorities, brief.alerts, brief.wins, 7)
+
+  // ── Legacy brief (for setup card only) ───────────────────────────────────
+  const legacyBrief = buildTodayBrief({
     isAcademyLive,
     hasAcademyDna,
     hasOnboardingComplete,
@@ -310,58 +487,61 @@ export default async function DirectorDashboard() {
     overCapacityGroupCount,
   })
 
-  // ── Greeting ────────────────────────────────────────────────────────────────────
-  const hour         = now.getHours()
-  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const todayLabel   = now.toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  })
+  // ── Primary priority for hero ─────────────────────────────────────────────
+  const primaryPriority = todayResult.priorities[0] ?? null
+  const primaryTarget   = actionTargets[0] ?? null
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 space-y-4 animate-fade-in">
+    <div className="p-6 space-y-5 animate-fade-in pb-16">
 
-      {/* Header — greeting + academy name + date */}
-      <div className="space-y-0.5">
-        <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted leading-none">
-          {todayLabel}
-        </p>
-        <h1 className="text-[26px] font-bold text-text-primary tracking-tight leading-tight">
-          {timeGreeting}{directorDisplayName ? `, ${directorDisplayName}` : ''}.
-        </h1>
-        <p className="text-xs text-text-muted">{academyName}</p>
-      </div>
+      {/* Setup mode — keep existing onboarding gate */}
+      {legacyBrief.setupMode ? (
+        <TodaySetupCard steps={legacyBrief.setupSteps} />
+      ) : (
+        <>
+          {/* ── Academy Weather ───────────────────────────────────────────── */}
+          <AcademySituationBanner
+            situation={situation}
+            generatedAt={partnerInputs.generatedAt}
+          />
 
-      {/* ── Setup mode ─────────────────────────────────────────────────────────── */}
-      {brief.setupMode && (
-        <TodaySetupCard steps={brief.setupSteps} />
+          {/* ── Hero + Capacity ───────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
+            <DonnaDailyBriefHero
+              brief={brief}
+              directorName={directorDisplayName}
+              situation={situation}
+              primaryPriority={primaryPriority}
+              primaryTarget={primaryTarget}
+            />
+            <DirectorCapacityMeter budget={todayResult.budget} />
+          </div>
+
+          {/* ── Top 3 Priorities ─────────────────────────────────────────── */}
+          <TopThreePrioritiesPanel
+            priorities={todayResult.priorities}
+            actionTargets={actionTargets}
+          />
+
+          {/* ── Alerts + Wins ─────────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <TopThreeAlertsPanel alerts={brief.alerts} />
+            <TopThreeWinsPanel wins={brief.wins} />
+          </div>
+
+          {/* ── Decisions ────────────────────────────────────────────────── */}
+          <WhatCanWaitPanel waitDecisions={waitDecisions} />
+          <WhatShouldIIgnorePanel ignoreDecisions={ignoreDecisions} />
+
+          {/* ── What Changed ─────────────────────────────────────────────── */}
+          <WhatChangedPanel whatChanged={whatChanged} />
+
+          {/* ── DONNA COO Conversations ───────────────────────────────────── */}
+          <DonnaCOOPanel answers={cooAnswers} />
+        </>
       )}
-
-      {/* ── Academy Health ─────────────────────────────────────────────────────── */}
-      {!brief.setupMode && brief.academyHealth && (
-        <TodayHealthCard health={brief.academyHealth} />
-      )}
-
-      {/* ── Top 3 Priorities ──────────────────────────────────────────────────── */}
-      {!brief.setupMode && (
-        <TodayPrioritiesCard priorities={brief.topPriorities} />
-      )}
-
-      {/* ── Top 3 Risks ───────────────────────────────────────────────────────── */}
-      {!brief.setupMode && (
-        <TodayRisksCard risks={brief.topRisks} />
-      )}
-
-      {/* ── Decisions Needed ──────────────────────────────────────────────────── */}
-      <TodayDecisionsCard
-        decisions={brief.decisionsNeeded}
-        totalPendingReviews={totalPendingReviews + newRequests}
-      />
-
-      {/* ── Ask DONNA ─────────────────────────────────────────────────────────── */}
-      <TodayDonnaPromptsCard prompts={brief.suggestedPrompts} />
-
     </div>
   )
 }
