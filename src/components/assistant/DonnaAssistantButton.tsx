@@ -253,6 +253,13 @@ import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 // DonnaResponseCard is rendered inside DonnaPanelResponseRenderer — no direct import needed here
 import { DonnaPanelResponseRenderer } from '@/components/donna/DonnaPanelResponseRenderer'
 import { runDonnaOrchestratorAction } from '@/app/director/_actions/donnaOrchestratorAction'
+// Sprint 2261–2290 — DONNA Memory Activation
+import {
+  loadDonnaMemoryContextAction,
+  finalizeStaleSessionAction,
+} from '@/lib/actions/donnaMemoryActions'
+import type { MemoryContextPacket } from '@/lib/donna/memory/donnaMemoryContextTypes'
+import { EMPTY_MEMORY_PACKET } from '@/lib/donna/memory/donnaMemoryContextTypes'
 import { executeDonnaHighlight } from '@/lib/donna/llmOrchestration/donnaGuidedAction'
 import type { OrchestratorOutput, ConversationTurn as OrchestratorTurn } from '@/lib/donna/llmOrchestration/types'
 import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOperators'
@@ -541,6 +548,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // so IDs persist after navigating away from a session/template detail page.
   // Passed into dispatchUIIntent → resolveSectionNavigation as ctxParams fallback.
   const lastKnownContextParamsRef = useRef<{ sessionId?: string; templateId?: string }>({})
+  // Sprint 2261–2290 — DONNA Memory Activation: four-tier memory context loaded at panel open
+  const memoryContextRef = useRef<MemoryContextPacket>(EMPTY_MEMORY_PACKET)
+  const memoryLoadedRef = useRef(false)
+  // Sprint 2261–2290A — tracks last player ID for which Tier 3 entity memory was loaded
+  const lastEntityPlayerIdRef = useRef<string | null>(null)
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -1205,6 +1217,77 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       if (ctx !== null) setEntityContext(ctx)
     })
   }, [panelOpen])
+
+  // Sprint 2261–2290 — Load four-tier DONNA memory context once on panel open.
+  // Sprint 2261–2290A Fix 3: await finalization so the summary is available in this same load.
+  // isFirstSessionOfDay is detected via localStorage (no extra DB round-trip).
+  useEffect(() => {
+    if (!panelOpen) return
+    if (memoryLoadedRef.current) return
+    memoryLoadedRef.current = true
+
+    const todayKey = `academyos:donna:session-date:${academyId ?? 'default'}`
+    const storedDate = typeof window !== 'undefined' ? localStorage.getItem(todayKey) : null
+    const todayIso = new Date().toISOString().slice(0, 10)
+    const isFirstSessionOfDay = storedDate !== todayIso
+    if (isFirstSessionOfDay && typeof window !== 'undefined') {
+      localStorage.setItem(todayKey, todayIso)
+    }
+
+    void (async () => {
+      // Await finalization so the generated summary is included in this same memory load.
+      await finalizeStaleSessionAction().catch(() => {})
+
+      // Extract playerId from route if on a player profile page
+      const playerIdFromPath =
+        pathname.startsWith('/director/players/') && pathname.split('/').length === 4
+          ? pathname.split('/')[3]
+          : null
+
+      if (playerIdFromPath) {
+        lastEntityPlayerIdRef.current = playerIdFromPath
+      }
+
+      const result = await loadDonnaMemoryContextAction({
+        playerId: playerIdFromPath,
+        isFirstSessionOfDay,
+      }).catch(() => null)
+
+      if (result?.ok && result.data) {
+        memoryContextRef.current = result.data
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panelOpen])
+
+  // Sprint 2261–2290A Fix 2: Reload Tier 3 entity memory when navigating to a new player page.
+  // Only runs after the initial memory load (memoryLoadedRef guard ensures no double-load on first open).
+  // Replaces only entityMemoryContext — Tiers 1/2/4 are not reloaded.
+  useEffect(() => {
+    const playerIdFromPath =
+      pathname.startsWith('/director/players/') && pathname.split('/').length === 4
+        ? pathname.split('/')[3]
+        : null
+
+    if (!playerIdFromPath) return
+    if (!memoryLoadedRef.current) return  // first open handles it via the panel-open effect
+    if (lastEntityPlayerIdRef.current === playerIdFromPath) return  // same player, skip
+
+    lastEntityPlayerIdRef.current = playerIdFromPath
+
+    void loadDonnaMemoryContextAction({
+      playerId: playerIdFromPath,
+      isFirstSessionOfDay: false,
+    }).then(result => {
+      if (result?.ok && result.data.entityMemoryContext) {
+        memoryContextRef.current = {
+          ...memoryContextRef.current,
+          entityMemoryContext: result.data.entityMemoryContext,
+        }
+      }
+    }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
 
   // Sprint 787 — Idle timer lifecycle: start 3-min timer when panel opens, clear when it closes.
   useEffect(() => {
@@ -3642,6 +3725,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         pendingReviews: reviewQueuePendingCount,
         conversationHistory: godModeHistory,
         useLlm: true,
+        // Sprint 2261–2290 — inject four-tier memory context (loaded at panel open)
+        priorSessionContext:   memoryContextRef.current.priorSessionContext ?? undefined,
+        decisionMemoryContext: memoryContextRef.current.decisionMemoryContext ?? undefined,
+        entityMemoryContext:   memoryContextRef.current.entityMemoryContext ?? undefined,
+        academyMemoryContext:  memoryContextRef.current.academyMemoryContext ?? undefined,
       })
       if (result.ok && result.output) {
         setGodModeOutput(result.output)

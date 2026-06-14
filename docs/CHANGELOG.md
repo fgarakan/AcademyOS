@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-06-13 — Sprint 2261–2290 — DONNA Memory Activation V1
+
+**Mission:** Transform DONNA from a session-based assistant to a persistent academy operating intelligence. DONNA now opens every session with context from prior interactions, recent director decisions, entity-specific signals, and academy operating patterns.
+
+**Architecture — four-tier memory system:**
+- **Tier 1 — Session Memory:** Last 2 closed session summaries (topics, pages, actions, open items). Generated deterministically from message intents + proposed_actions. Stored in `donna_conversation_sessions.metadata` JSONB.
+- **Tier 2 — Decision Memory:** Last 5 director decisions from `proposed_actions` — action label, outcome, target area, relative date, approval rate. Loaded on first session of day.
+- **Tier 3 — Entity Memory:** Player-specific context from `players`, `donna_entity_summaries`, `player_development_blueprints`, `player_development_signals`, `player_recommendations`. Loaded when on a player profile page.
+- **Tier 4 — Academy Memory:** Academy identity narrative, dominant decision pattern, evolution summary. Loaded only on first session of day. ≤150 tokens.
+
+**Files created:**
+- `src/lib/donna/memory/donnaMemoryContextTypes.ts` — all type definitions for all four tiers
+- `src/lib/donna/memory/donnaCrossSessionMemory.ts` — Tier 1 engine: deterministic summary generation, 4-hour staleness detection, DB persistence
+- `src/lib/donna/memory/donnaMemoryContextLoader.ts` — Tier 2/3/4 loaders + `loadAllMemoryTiers()` assembly function
+- `src/lib/actions/donnaMemoryActions.ts` — `loadDonnaMemoryContextAction`, `finalizeStaleSessionAction` server actions
+- `docs/donna/DONNA_MEMORY_ACTIVATION_REPORT.md` — sprint certification report
+
+**Files modified:**
+- `src/lib/donna/llmOrchestration/contextPacket.ts` — + 5 memory fields on `ContextPacketInput`; + 4 tier injection blocks in `buildSystemPrompt`; + `isAcademyLevelQuery()`, `isMemoryQuery()` helpers
+- `src/app/director/_actions/donnaOrchestratorAction.ts` — + 5 memory fields on `DonnaOrchestratorInput`; passes memory to `orchestrate()`
+- `src/components/assistant/DonnaAssistantButton.tsx` — + `memoryContextRef`; + panel-open effect loading all 4 tiers; + memory context spread into `runDonnaOrchestratorAction`
+
+**No new migrations.** All tiers read from existing tables.
+
+**TypeScript:** Clean (0 errors)
+
+---
+
 ## 2026-06-12 — Mega Sprint 2201–2230 — Fable Platform-Wide Screen Transformation V1
 
 **Mission:** Normalize typography, headers, and design tokens across all director screens. Eliminate hardcoded font sizes, restore `page-eyebrow/title/subtitle` pattern, and apply `label-xs` utility class platform-wide.

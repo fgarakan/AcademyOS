@@ -26,6 +26,13 @@ import {
 } from '@/lib/donna/donnaAcademyProfileContext'
 // Sprint 1082 — Academy context TTL cache (avoids repeated DB query per orchestrator call)
 import { cachedFetch, CACHE_KEYS, CACHE_TTL_MS } from '@/lib/donna/donnaContextCache'
+// Sprint 2261–2290 — DONNA Memory Activation
+import type {
+  PriorSessionContext,
+  DecisionMemoryContext,
+  EntityMemoryContext,
+  AcademyMemoryContext,
+} from '@/lib/donna/memory/donnaMemoryContextTypes'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -58,6 +65,13 @@ export interface DonnaOrchestratorInput {
   sessionId?: string | null
   /** Whether to use the LLM path. Defaults to true. */
   useLlm?: boolean
+  // Sprint 2261–2290 — DONNA Memory Activation: four-tier memory context (loaded client-side at panel open)
+  priorSessionContext?: PriorSessionContext | null
+  decisionMemoryContext?: DecisionMemoryContext | null
+  entityMemoryContext?: EntityMemoryContext | null
+  academyMemoryContext?: AcademyMemoryContext | null
+  /** True when this is the first DONNA panel open of the calendar day */
+  isFirstSessionOfDay?: boolean
 }
 
 // ── Result type ───────────────────────────────────────────────────────────────
@@ -221,6 +235,12 @@ export async function runDonnaOrchestratorAction(
       ...(input.playerId ? { playerId: input.playerId } : {}),
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       useLlm: input.useLlm ?? true,
+      // Sprint 2261–2290 — Memory tiers loaded client-side at panel open, passed through here
+      ...(input.priorSessionContext != null ? { priorSessionContext: input.priorSessionContext } : {}),
+      ...(input.decisionMemoryContext != null ? { decisionMemoryContext: input.decisionMemoryContext } : {}),
+      ...(input.entityMemoryContext != null ? { entityMemoryContext: input.entityMemoryContext } : {}),
+      ...(input.academyMemoryContext != null ? { academyMemoryContext: input.academyMemoryContext } : {}),
+      isFirstSessionOfDay: input.isFirstSessionOfDay ?? false,
     })
   } catch (err) {
     return {

@@ -35,6 +35,13 @@ import {
   isCurriculumStrategyQuery,
   CURRICULUM_STRATEGY_PROMPT_SECTION,
 } from './curriculumStrategyConversation'
+// Sprint 2261–2290 — DONNA Memory Activation
+import type {
+  PriorSessionContext,
+  DecisionMemoryContext,
+  EntityMemoryContext,
+  AcademyMemoryContext,
+} from '../memory/donnaMemoryContextTypes'
 
 // ── Context packet input ──────────────────────────────────────────────────────
 
@@ -72,6 +79,13 @@ export interface ContextPacketInput {
    * Missing fields are explicit (see getAcademyProfileSummaryText).
    */
   academyProfileSummary?: string
+  // Sprint 2261–2290 — DONNA Memory Activation: four-tier memory context
+  priorSessionContext?: PriorSessionContext | null
+  decisionMemoryContext?: DecisionMemoryContext | null
+  entityMemoryContext?: EntityMemoryContext | null
+  academyMemoryContext?: AcademyMemoryContext | null
+  /** True when this is the first DONNA panel open of the calendar day — triggers Tier 2 + Tier 4 injection */
+  isFirstSessionOfDay?: boolean
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -298,6 +312,20 @@ function buildPageContext(pathname: string): PageContextSummary {
   }
 }
 
+// ── Sprint 2261–2290 — Memory query detection ─────────────────────────────────
+
+/** True when the director is asking a strategic or academy-identity question. */
+export function isAcademyLevelQuery(userInput: string): boolean {
+  const lower = userInput.toLowerCase()
+  return /\b(academy|our approach|philosophy|how we|culture|identity|strategy|overall|this year|last quarter|history|since we started|been operating|pattern)\b/.test(lower)
+}
+
+/** True when the director is explicitly referencing prior DONNA interactions. */
+export function isMemoryQuery(userInput: string): boolean {
+  const lower = userInput.toLowerCase()
+  return /\b(last time|remember|earlier|before|previous session|you said|you mentioned|we discussed|what did we|did we talk|last week|yesterday)\b/.test(lower)
+}
+
 // ── System prompt builder ─────────────────────────────────────────────────────
 
 function buildSystemPrompt(
@@ -308,6 +336,10 @@ function buildSystemPrompt(
   toolManifest: ToolManifest,
   conversationHistory: ConversationHistory,
   academyProfileSummary?: string,
+  priorSessionContext?: PriorSessionContext | null,
+  decisionMemoryContext?: DecisionMemoryContext | null,
+  entityMemoryContext?: EntityMemoryContext | null,
+  academyMemoryContext?: AcademyMemoryContext | null,
 ): string {
   const lines: string[] = []
 
@@ -322,6 +354,67 @@ function buildSystemPrompt(
   if (academyProfileSummary && !academyProfileSummary.startsWith('Academy profile context is not available')) {
     lines.push('\n## Academy Context')
     lines.push(academyProfileSummary)
+  }
+
+  // 1.6. Sprint 2261–2290 — Memory Context (four tiers, conditional injection)
+
+  // Tier 1: Prior session context — always inject when present
+  if (priorSessionContext && priorSessionContext.sessions.length > 0) {
+    lines.push('\n## Prior Session Memory')
+    const [most, prev] = priorSessionContext.sessions
+    lines.push(`Last session: ${most.sessionSummaryText}`)
+    if (most.openItems.length > 0) {
+      lines.push(`Open items from last session: ${most.openItems.join('; ')}`)
+    }
+    if (prev) {
+      lines.push(`Earlier: ${prev.sessionSummaryText}`)
+    }
+  }
+
+  // Tier 2: Decision memory — inject when present (loaded on first session of day)
+  if (decisionMemoryContext && decisionMemoryContext.recentDecisions.length > 0) {
+    lines.push('\n## Recent Director Decisions')
+    for (const d of decisionMemoryContext.recentDecisions.slice(0, 3)) {
+      lines.push(`- ${d.date}: ${d.action} → ${d.outcome}${d.targetArea ? ` (${d.targetArea})` : ''}`)
+    }
+    if (decisionMemoryContext.dominantArea) {
+      lines.push(`Most active decision area: ${decisionMemoryContext.dominantArea}`)
+    }
+  }
+
+  // Tier 3: Entity memory — inject when a specific entity is in context
+  if (entityMemoryContext) {
+    lines.push(`\n## ${entityMemoryContext.entityLabel} Context`)
+    if (entityMemoryContext.operatingSummary) {
+      lines.push(entityMemoryContext.operatingSummary)
+    }
+    if (entityMemoryContext.activePriorities.length > 0) {
+      lines.push(`Active priorities: ${entityMemoryContext.activePriorities.join(', ')}`)
+    }
+    if (entityMemoryContext.recentSignals.length > 0) {
+      lines.push(`Recent signals: ${entityMemoryContext.recentSignals.join('; ')}`)
+    }
+    if (entityMemoryContext.activeRecommendations.length > 0) {
+      lines.push(`Active recommendations: ${entityMemoryContext.activeRecommendations.join('; ')}`)
+    }
+    if (entityMemoryContext.lastDiscussedAt) {
+      lines.push(`Last discussed with DONNA: ${entityMemoryContext.lastDiscussedAt}`)
+    }
+  }
+
+  // Tier 4: Academy memory — inject only on first session of day (≤150 tokens)
+  if (academyMemoryContext) {
+    lines.push('\n## Academy Operating Memory')
+    if (academyMemoryContext.identityNarrative) {
+      lines.push(academyMemoryContext.identityNarrative)
+    }
+    if (academyMemoryContext.dominantDecisionPattern) {
+      lines.push(academyMemoryContext.dominantDecisionPattern)
+    }
+    if (academyMemoryContext.recentEvolutionSummary) {
+      lines.push(academyMemoryContext.recentEvolutionSummary)
+    }
+    lines.push(`Approval rate (90 days): ${academyMemoryContext.approvalRatePercent}% on ${academyMemoryContext.totalApprovedDecisions} approved decisions`)
   }
 
   // 2. Current state
@@ -512,6 +605,10 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     toolManifest,
     sanitizedHistory,
     input.academyProfileSummary,
+    input.priorSessionContext ?? null,
+    input.decisionMemoryContext ?? null,
+    input.entityMemoryContext ?? null,
+    input.academyMemoryContext ?? null,
   )
 
   // Sprint 1018 — inject curriculum strategy framing when user input or page is curriculum-strategic
