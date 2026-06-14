@@ -271,6 +271,9 @@ import {
   detectControlIntent,
   handleWorkflowIntent,
   advanceOnRouteChange,
+  advanceExplicit,
+  detectStepConfirmation,
+  getCurrentStepSignal,
 } from '@/lib/donna/workflow/donnaWorkflowGuidanceEngine'
 import { formatActiveMission } from '@/lib/donna/workflow/donnaMissionFormatter'
 import { executeDonnaHighlight } from '@/lib/donna/llmOrchestration/donnaGuidedAction'
@@ -1692,6 +1695,32 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           workflowStateRef.current = newState
           void saveWorkflowStateAction(newState).catch(() => {})
           // Let the input fall through to god mode so DONNA explains what's next
+        }
+      }
+
+      // Sprint 2351 — Explicit step confirmation: advance explicit-signal steps when
+      // the Director confirms via natural language (voice path).
+      if (workflowStateRef.current?.status === 'active') {
+        const signal = getCurrentStepSignal(workflowStateRef.current)
+        if (signal === 'explicit' && detectStepConfirmation(text)) {
+          const advanced = advanceExplicit(workflowStateRef.current)
+          if (advanced.status === 'completed') {
+            workflowStateRef.current = null
+            void clearWorkflowStateAction().catch(() => {})
+            setCommandResponse({ message: 'Mission complete! Well done.', type: 'info', label: 'DONNA' })
+            speakDonna('Mission complete!')
+            return
+          } else {
+            workflowStateRef.current = advanced
+            void saveWorkflowStateAction(advanced).catch(() => {})
+            const mission = formatActiveMission(advanced)
+            const nextMsg = mission
+              ? `Got it. Next: ${mission.nextAction}.`
+              : 'Step complete. Moving on.'
+            setCommandResponse({ message: nextMsg, type: 'info', label: 'DONNA' })
+            speakDonna(nextMsg)
+            return
+          }
         }
       }
     }
@@ -3808,6 +3837,23 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setGodModeOutput(null)
     setIsGodModeLoading(true)
     try {
+      // Sprint 2351 — Explicit step confirmation: advance explicit-signal steps when
+      // the Director confirms via typed input. Runs before building workflow guidance so
+      // the orchestrator sees the updated state and can respond to the new step.
+      if (workflowStateRef.current?.status === 'active') {
+        const signal = getCurrentStepSignal(workflowStateRef.current)
+        if (signal === 'explicit' && detectStepConfirmation(text)) {
+          const advanced = advanceExplicit(workflowStateRef.current)
+          if (advanced.status === 'completed') {
+            workflowStateRef.current = null
+            void clearWorkflowStateAction().catch(() => {})
+          } else {
+            workflowStateRef.current = advanced
+            void saveWorkflowStateAction(advanced).catch(() => {})
+          }
+        }
+      }
+
       // Sprint 2291–2320 — build formatted mission for LLM context injection
       const activeWf = workflowStateRef.current
       const activeWorkflowGuidance =

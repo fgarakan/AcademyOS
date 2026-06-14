@@ -98,28 +98,28 @@ export const WORKFLOW_STEP_DEFS: Record<DonnaWorkflowType, DonnaWorkflowStepDef[
     { stepId: 'add_player',       directorLabel: 'Add Player',               targetRoute: '/director/players/new', completionSignal: 'route_visit', requiresApproval: false,
       question: 'Which player are we onboarding? Tell me their name and approximate age group.' },
     { stepId: 'placement',        directorLabel: 'Placement Assessment',       targetRoute: '/director/placement',   completionSignal: 'route_visit', requiresApproval: true },
-    { stepId: 'assign_curriculum', directorLabel: 'Assign Curriculum Level',   completionSignal: 'data_present',    dataKey: 'levelKey', requiresApproval: false,
-      question: 'Which curriculum level should this player start at?' },
+    { stepId: 'assign_curriculum', directorLabel: 'Assign Curriculum Level',   completionSignal: 'explicit', requiresApproval: false,
+      question: 'Have you assigned a curriculum level to this player from their profile? Tell me when it\'s done.' },
     { stepId: 'first_session',    directorLabel: 'Schedule First Session',    targetRoute: '/director/sessions',    completionSignal: 'route_visit', requiresApproval: false },
   ],
 
   class_template_creation: [
-    { stepId: 'name_template', directorLabel: 'Template Name',   completionSignal: 'data_present', dataKey: 'templateName', requiresApproval: false,
-      question: 'What should we call this class template?' },
-    { stepId: 'set_focus',     directorLabel: 'Focus Area',      completionSignal: 'data_present', dataKey: 'focusArea',    requiresApproval: false,
-      question: 'What is the main focus area for this template? (e.g. groundstrokes, volleys, match play)' },
-    { stepId: 'add_blocks',    directorLabel: 'Session Blocks',  targetRoute: '/director/class-templates', completionSignal: 'route_visit', requiresApproval: false,
+    { stepId: 'name_template', directorLabel: 'Template Name',   completionSignal: 'explicit', requiresApproval: false,
+      question: 'What should we call this class template? Tell me the name and I\'ll confirm before we move on.' },
+    { stepId: 'set_focus',     directorLabel: 'Focus Area',      completionSignal: 'explicit', requiresApproval: false,
+      question: 'What is the main focus area for this template? (e.g. groundstrokes, volleys, match play) Confirm when ready.' },
+    { stepId: 'add_blocks',    directorLabel: 'Session Blocks',  targetRoute: '/director/class-templates/new', completionSignal: 'route_visit', requiresApproval: false,
       question: 'How many minutes should this template run, and what blocks would you like?' },
-    { stepId: 'add_fitness',   directorLabel: 'Fitness Block',   completionSignal: 'data_present', dataKey: 'fitnessAdded', requiresApproval: false,
-      question: 'Should this template include a fitness block? If so, what type?' },
+    { stepId: 'add_fitness',   directorLabel: 'Fitness Block',   completionSignal: 'explicit', requiresApproval: false,
+      question: 'Should this template include a fitness block? If so, what type? Say \'done\' or \'skip\' to continue.' },
     { stepId: 'publish',       directorLabel: 'Publish Template', completionSignal: 'explicit', requiresApproval: true },
   ],
 
   fitness_template_creation: [
-    { stepId: 'name_template', directorLabel: 'Template Name',   completionSignal: 'data_present', dataKey: 'templateName', requiresApproval: false,
-      question: 'What should we call this fitness template?' },
-    { stepId: 'set_type',      directorLabel: 'Fitness Type',    completionSignal: 'data_present', dataKey: 'fitnessType',  requiresApproval: false,
-      question: 'What type of fitness is this template focused on? (e.g. agility, strength, conditioning)' },
+    { stepId: 'name_template', directorLabel: 'Template Name',   completionSignal: 'explicit', requiresApproval: false,
+      question: 'What should we call this fitness template? Tell me the name and I\'ll confirm before we move on.' },
+    { stepId: 'set_type',      directorLabel: 'Fitness Type',    completionSignal: 'explicit', requiresApproval: false,
+      question: 'What type of fitness is this template focused on? (e.g. agility, strength, conditioning) Confirm when ready.' },
     { stepId: 'add_exercises', directorLabel: 'Add Exercises',   targetRoute: '/director/fitness', completionSignal: 'route_visit', requiresApproval: false },
     { stepId: 'publish',       directorLabel: 'Publish Template', completionSignal: 'explicit', requiresApproval: true },
   ],
@@ -129,40 +129,46 @@ export const WORKFLOW_STEP_DEFS: Record<DonnaWorkflowType, DonnaWorkflowStepDef[
       question: 'Which class template should we use for this session?' },
     { stepId: 'set_schedule',    directorLabel: 'Set Date + Time', targetRoute: '/director/sessions',        completionSignal: 'route_visit', requiresApproval: false,
       question: 'When should this session run?' },
-    { stepId: 'assign_coach',    directorLabel: 'Assign Coach',    completionSignal: 'data_present', dataKey: 'coachId', requiresApproval: false,
-      question: 'Which coach should lead this session?' },
+    { stepId: 'assign_coach',    directorLabel: 'Assign Coach',    completionSignal: 'explicit', requiresApproval: false,
+      question: 'Which coach should lead this session? Say \'done\' after assigning them.' },
     { stepId: 'confirm',         directorLabel: 'Confirm Session',  completionSignal: 'explicit', requiresApproval: true },
   ],
 
   coach_wrap_up_review: [
     { stepId: 'open_queue',  directorLabel: 'Open Review Queue', targetRoute: '/director/review', completionSignal: 'route_visit', requiresApproval: false },
-    { stepId: 'review',      directorLabel: 'Review Wrap-Ups',   completionSignal: 'data_present', dataKey: 'reviewItemsReviewed', requiresApproval: false },
+    { stepId: 'review',      directorLabel: 'Review Wrap-Ups',   completionSignal: 'explicit', requiresApproval: false,
+      question: 'Have you reviewed the coach wrap-ups in the queue? Tell me when you\'re done reviewing.' },
     { stepId: 'decisions',   directorLabel: 'Approve Decisions', completionSignal: 'explicit', requiresApproval: true },
   ],
 
   player_assessment: [
     { stepId: 'open_player', directorLabel: 'Open Player Profile',    targetRoute: '/director/players', completionSignal: 'route_visit', requiresApproval: false,
       question: 'Which player are we assessing?' },
-    { stepId: 'assessment',  directorLabel: 'Complete Assessment',     completionSignal: 'data_present', dataKey: 'assessmentComplete', requiresApproval: false },
+    { stepId: 'assessment',  directorLabel: 'Complete Assessment',     completionSignal: 'explicit', requiresApproval: false,
+      question: 'Complete the assessment in the player profile. Tell me when it\'s done.' },
     { stepId: 'signals',     directorLabel: 'Record Development Signals', completionSignal: 'explicit', requiresApproval: false },
   ],
 
   placement_review: [
     { stepId: 'open_placement', directorLabel: 'Open Placement Queue', targetRoute: '/director/placement', completionSignal: 'route_visit', requiresApproval: false },
-    { stepId: 'review_player',  directorLabel: 'Review Placement',     completionSignal: 'data_present', dataKey: 'placementReviewed', requiresApproval: false },
+    { stepId: 'review_player',  directorLabel: 'Review Placement',     completionSignal: 'explicit', requiresApproval: false,
+      question: 'Review the player\'s placement assessment. Tell me when you\'re ready to confirm.' },
     { stepId: 'confirm',        directorLabel: 'Confirm Placement',    completionSignal: 'explicit', requiresApproval: true },
   ],
 
   approval_review: [
     { stepId: 'open_queue',  directorLabel: 'Open Review Queue', targetRoute: '/director/review', completionSignal: 'route_visit', requiresApproval: false },
-    { stepId: 'review',      directorLabel: 'Review Pending Items', completionSignal: 'data_present', dataKey: 'itemsReviewed', requiresApproval: false },
+    { stepId: 'review',      directorLabel: 'Review Pending Items', completionSignal: 'explicit', requiresApproval: false,
+      question: 'Review the pending items in the queue. Tell me when you\'re done reviewing.' },
     { stepId: 'complete',    directorLabel: 'Complete All Decisions', completionSignal: 'explicit', requiresApproval: true },
   ],
 
   curriculum_review: [
     { stepId: 'open_curriculum', directorLabel: 'Open Curriculum',  targetRoute: '/director/curriculum', completionSignal: 'route_visit', requiresApproval: false },
-    { stepId: 'review_levels',   directorLabel: 'Review Levels',    completionSignal: 'data_present', dataKey: 'levelsReviewed', requiresApproval: false },
-    { stepId: 'draft_changes',   directorLabel: 'Draft Changes',    completionSignal: 'data_present', dataKey: 'changesDrafted', requiresApproval: false },
+    { stepId: 'review_levels',   directorLabel: 'Review Levels',    completionSignal: 'explicit', requiresApproval: false,
+      question: 'Review the curriculum levels and coverage. Tell me what you notice — say \'done\' when reviewed.' },
+    { stepId: 'draft_changes',   directorLabel: 'Draft Changes',    completionSignal: 'explicit', requiresApproval: false,
+      question: 'What changes do you want to make to the curriculum? Tell me when the draft is ready.' },
     { stepId: 'approve_changes', directorLabel: 'Approve Changes',  completionSignal: 'explicit', requiresApproval: true },
   ],
 
@@ -193,14 +199,15 @@ export const WORKFLOW_STEP_DEFS: Record<DonnaWorkflowType, DonnaWorkflowStepDef[
 
   coach_deactivate: [
     { stepId: 'review_history', directorLabel: 'Review Coach History',    completionSignal: 'explicit', requiresApproval: false },
-    { stepId: 'reassign',       directorLabel: 'Reassign Players',        completionSignal: 'data_present', dataKey: 'playersReassigned', requiresApproval: false,
-      question: 'Which coach should take over this coach\'s players?' },
+    { stepId: 'reassign',       directorLabel: 'Reassign Players',        completionSignal: 'explicit', requiresApproval: false,
+      question: 'Which coach should take over this coach\'s players? Tell me when reassignment is complete.' },
     { stepId: 'confirm',        directorLabel: 'Confirm Deactivation',    completionSignal: 'explicit', requiresApproval: true },
   ],
 
   player_deactivate: [
     { stepId: 'review_history',   directorLabel: 'Review Player History',   completionSignal: 'explicit', requiresApproval: false },
-    { stepId: 'archive_sessions', directorLabel: 'Archive Active Sessions', completionSignal: 'data_present', dataKey: 'sessionsArchived', requiresApproval: false },
+    { stepId: 'archive_sessions', directorLabel: 'Archive Active Sessions', completionSignal: 'explicit', requiresApproval: false,
+      question: 'Archive or cancel any active sessions for this player. Tell me when that\'s done.' },
     { stepId: 'confirm',          directorLabel: 'Confirm Deactivation',    completionSignal: 'explicit', requiresApproval: true },
   ],
 }

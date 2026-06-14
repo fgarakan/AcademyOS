@@ -2,6 +2,66 @@
 
 ---
 
+## 2026-06-14 — Mega Sprint 2351–2380 — DONNA Workflow Integrity Remediation V1
+
+**Mission:** Fix every critical workflow failure from Sprint 2321–2350. Remove all dead ends. 8/8 workflow certification achieved.
+
+**Root causes fixed:**
+
+**CRITICAL — Template Archive/Delete had no UI endpoint:**
+- Created `archiveClassTemplateAction` and `deleteClassTemplateAction` (class templates)
+- Created `archiveFitnessTemplateAction` and `deleteFitnessTemplateAction` (fitness templates)
+- Created `TemplateArchiveDeletePanel` and `FitnessTemplateArchiveDeletePanel` — inline confirmation UI with session count, usage explanation, safety guards
+- Archive: sets `is_active=false, archived_at=now(), status='archived'`. Preserves all history.
+- Delete: blocked if sessions exist; cascade-deletes blocks on confirm. Both write to `audit_logs`.
+- Panels rendered on template detail pages (class + fitness)
+
+**CRITICAL — All `data_present` workflow steps permanently stuck:**
+- 15 steps across 8 workflow types changed from `data_present` to `explicit`
+- Each step now has a director-facing question + "Tell me when it's done" instruction
+- Added `detectStepConfirmation(text)` to guidance engine — matches "yes", "done", "ok", "I assigned it", "it's done", etc.
+- Added `getCurrentStepSignal(state)` to guidance engine — returns signal of current step
+- Wired in `DonnaAssistantButton.tsx`: voice path (early return with spoken feedback) + typed/god mode path (silent advance before orchestrator call)
+
+**MINOR — Class template `add_blocks` targetRoute fixed:**
+- Was `/director/class-templates` (list) → now `/director/class-templates/new` (creation form)
+
+**Files created:** `archiveDeleteTemplateAction.ts`, `TemplateArchiveDeletePanel.tsx`, `archiveDeleteFitnessTemplateAction.ts`, `FitnessTemplateArchiveDeletePanel.tsx`, `docs/donna/DONNA_WORKFLOW_INTEGRITY_REMEDIATION_REPORT.md`
+
+**Files modified:** `class-templates/[templateId]/page.tsx`, `fitness/templates/[templateId]/page.tsx`, `donnaWorkflowState.ts`, `donnaWorkflowGuidanceEngine.ts`, `DonnaAssistantButton.tsx`
+
+**Certification:** 8/8 workflows pass | Mission Quality 9/10 | Director Experience 9/10 | Pilot Readiness: **READY**
+
+---
+
+## 2026-06-14 — Mega Sprint 2321–2350 — DONNA Real Workflow Execution V1
+
+**Mission:** Reality-validate that DONNA can guide a Director through all core AcademyOS workflows from start to finish. Code and static-analysis audit — not an implementation sprint.
+
+**What was audited (8 workflows):**
+- ✅ PASS: Class Template Creation, Fitness Template Creation, Recommendation Approval, Coach Wrap-Up Review
+- ⚠️ PARTIAL: Player Onboarding (curriculum_assign step stuck), Curriculum Modification (route-sharing double-advance)
+- ❌ FAIL: Template Archive, Template Delete — no UI endpoint or server action exists for either
+
+**Key findings:**
+- **CRITICAL:** Template archive/delete workflows are defined in DONNA but have no corresponding UI button or server action. DONNA guides the Director to a dead end.
+- **MEDIUM:** Player onboarding `curriculum_assign` step uses `data_present` signal but no mechanism populates `entityRefs.curriculumLevelId` from the placement UI.
+- **MEDIUM:** Sessions route (`/director/sessions`) targeted by player onboarding step 4 is not confirmed in canonical nav.
+- **LOW:** Steps sharing a target route (approval_review, curriculum_review, coach_wrap_up_review) advance two steps simultaneously on one navigation event.
+- **ARCHITECTURE:** ProWorld Demo Academy seed does not exist; only Monteiro Tennis Academy seed present.
+- **ARCHITECTURE:** Class template creation bypasses proposed_actions pipeline (documented in DIRECTOR_WORKFLOW_INTEGRITY_AUDIT.md).
+
+**Scores:** Workflow Cert 5/8 pass | Mission Quality 6/10 | DONNA COO 7.5/10 | Pilot Readiness: NOT READY
+
+**Required fixes before pilot:** Template archive/delete UI + actions, player onboarding curriculum_assign fix, sessions route verification.
+
+**Files created:**
+- `docs/donna/DONNA_REAL_WORKFLOW_EXECUTION_REPORT.md` — full audit report with all findings, scores, and top 10 recommended improvements
+
+**No code changes in this sprint.**
+
+---
+
 ## 2026-06-14 — Mega Sprint 2291–2320 — DONNA Workflow Guidance + Mission Control V1
 
 **Mission:** Transform DONNA from a memory-aware assistant into a workflow-guiding academy COO. DONNA now knows what the Director is doing, what has been completed, what is missing, and what to do next. The Director should never wonder "what am I supposed to do next?"

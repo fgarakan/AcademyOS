@@ -8,6 +8,7 @@ import { GenerateSessionPanel, type CoachOption, type GateOption, type LessonPla
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
 import { FitnessBuilderStepper } from './FitnessBuilderStepper'
+import { FitnessTemplateArchiveDeletePanel } from './FitnessTemplateArchiveDeletePanel'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
 import type { Tables } from '@/lib/supabase/database.types'
 
@@ -170,6 +171,13 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
   const typeLabel = getTemplateTypeLabel(tags)
   const totalExercises = rawExercises.length
 
+  // Session count — required for archive/delete panel (Sprint 2351)
+  const { count: sessionCount } = await rawDb
+    .from('sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('template_id', params.templateId)
+    .eq('academy_id', academyId)
+
   // Curriculum level for this template — curriculum_level_id not in generated types, use rawDb
   const curriculumLevelId: string | null = (template as any).curriculum_level_id ?? null
 
@@ -254,6 +262,12 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     return (
       <div className="p-6 animate-fade-in space-y-6">
         <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={true} />
+        {/* Archive / Delete panel — Sprint 2351: enables fitness_template_archive and fitness_template_delete workflows */}
+        <FitnessTemplateArchiveDeletePanel
+          templateId={params.templateId}
+          templateName={template.name}
+          sessionCount={sessionCount ?? 0}
+        />
         <FitnessBuilderStepper
           templateId={params.templateId}
           templateName={template.name}

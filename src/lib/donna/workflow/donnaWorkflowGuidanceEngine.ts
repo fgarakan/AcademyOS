@@ -426,3 +426,40 @@ export function scoreWorkflowConfidence(
 export function shouldAllowStepCompletion(confidence: number): boolean {
   return confidence >= 70
 }
+
+// ── Explicit step helpers ─────────────────────────────────────────────────────
+
+import type { StepCompletionSignal } from './donnaWorkflowState'
+
+/**
+ * Returns the completion signal of the current step, or null if state is invalid.
+ * Used by the DONNA panel to decide whether to attempt explicit advancement.
+ */
+export function getCurrentStepSignal(state: DonnaWorkflowState): StepCompletionSignal | null {
+  if (state.status !== 'active') return null
+  const defs = WORKFLOW_STEP_DEFS[state.workflowType]
+  const currentDef = defs.find(d => d.stepId === state.currentStepId)
+  return currentDef?.completionSignal ?? null
+}
+
+/**
+ * Returns true when the Director's input looks like a step confirmation.
+ * Used to advance explicit-signal steps via natural language.
+ * Conservative: requires clear affirmative, not single-word "no" or questions.
+ */
+export function detectStepConfirmation(input: string): boolean {
+  const lower = input.toLowerCase().trim()
+  if (!lower) return false
+
+  // Reject questions — Director is asking, not confirming
+  if (lower.endsWith('?')) return false
+
+  return (
+    /\b(yes|yeah|yep|done|confirmed|finished|complete|ok|okay|sure|got it|all set|all done)\b/.test(lower) ||
+    /\b(i (did|have|did it|have done|assigned|added|created|scheduled|reviewed|archived|deleted|set it|set that))\b/.test(lower) ||
+    /\b(it'?s (done|complete|finished|been added|been created|been assigned|been set|been scheduled|been reviewed|archived|deleted))\b/.test(lower) ||
+    /\b(that'?s (done|complete|finished|set|confirmed))\b/.test(lower) ||
+    /\b(skip|no (fitness|block|thanks)|no (that'?s|need))\b/.test(lower) ||
+    lower === 'yes' || lower === 'no' || lower === 'ok' || lower === 'done' || lower === 'skip'
+  )
+}

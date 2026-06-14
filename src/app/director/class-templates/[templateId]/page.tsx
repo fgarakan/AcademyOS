@@ -7,6 +7,7 @@ import type { AvailableContentItem } from './BlockContentPickerCard'
 import type { PreviewBlock } from './TemplateSessionPreviewCard'
 import type { CoachOption, GateOption } from './GenerateSessionFromTemplateButton'
 import { ClassTemplateBuilderStepper } from './ClassTemplateBuilderStepper'
+import { TemplateArchiveDeletePanel } from './TemplateArchiveDeletePanel'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -365,6 +366,13 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Archive / Delete panel — Sprint 2351: enables template_archive and template_delete workflows */}
+      <TemplateArchiveDeletePanel
+        templateId={params.templateId}
+        templateName={template.name}
+        sessionCount={sessionCount ?? 0}
+      />
 
       {/* Guided builder stepper */}
       <ClassTemplateBuilderStepper
