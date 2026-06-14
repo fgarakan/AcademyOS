@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-06-14 — Mega Sprint 2291–2320 — DONNA Workflow Guidance + Mission Control V1
+
+**Mission:** Transform DONNA from a memory-aware assistant into a workflow-guiding academy COO. DONNA now knows what the Director is doing, what has been completed, what is missing, and what to do next. The Director should never wonder "what am I supposed to do next?"
+
+**What was built:**
+- **17 workflow types** — academy_setup, player_onboarding, class_template_creation, fitness_template_creation, session_creation, coach_wrap_up_review, player_assessment, placement_review, approval_review, curriculum_review, plus 7 safe-delete/archive/deactivate flows
+- **Workflow state engine** — step definitions with three completion signals: route_visit, data_present, explicit. Persisted in donna_working_memory (7-day TTL, cross-session).
+- **Mission Formatter** — converts internal state to Director language: title, completed items (no internal IDs), next action, progress %, continue route
+- **Active Mission Card** — above-fold card on Today page showing current mission, progress bar, completed steps, next action, Continue button
+- **DONNA panel integration** — workflow intent detected from natural language; route changes advance steps; cancel/pause/resume via DONNA; active mission injected into LLM system prompt
+- **Workflow confidence scoring** — 0–100 scale; step completion blocked below 70 to prevent false progress
+- **Safe delete/archive flows** — 7 workflows with usage-count-aware guidance (archive recommended when history exists; delete allowed for unused items)
+- **One question at a time** — getMissingDataQuestion() always returns null or exactly one question
+
+**Files created:**
+- `src/lib/donna/workflow/donnaWorkflowState.ts` — 17 workflow types, step defs, state builders
+- `src/lib/donna/workflow/donnaWorkflowGuidanceEngine.ts` — intent detection, route advancement, confidence, question engine
+- `src/lib/donna/workflow/donnaMissionFormatter.ts` — state → Director language
+- `src/lib/donna/workflow/donnaWorkflowCertification.ts` — 10 static certification scenarios
+- `src/app/director/_components/ActiveMissionCard.tsx` — Today page mission card component
+- `docs/donna/DONNA_WORKFLOW_GUIDANCE_REPORT.md` — certification report
+
+**Files modified:**
+- `src/lib/actions/donnaMemoryActions.ts` — + saveWorkflowStateAction, loadWorkflowStateAction, clearWorkflowStateAction
+- `src/lib/donna/llmOrchestration/contextPacket.ts` — + activeWorkflowGuidance field; + ## Active Mission section
+- `src/app/director/_actions/donnaOrchestratorAction.ts` — + activeWorkflowGuidance passthrough
+- `src/components/assistant/DonnaAssistantButton.tsx` — + workflow load/save/advance/detect wiring
+- `src/app/director/page.tsx` — + donna_working_memory query; + ActiveMissionCard above fold
+
+**Certification:** 10/10 scenarios pass. TypeScript clean. No new migrations.
+
+---
+
 ## 2026-06-13 — Sprint 2261–2290 — DONNA Memory Activation V1
 
 **Mission:** Transform DONNA from a session-based assistant to a persistent academy operating intelligence. DONNA now opens every session with context from prior interactions, recent director decisions, entity-specific signals, and academy operating patterns.

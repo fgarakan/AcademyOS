@@ -32,6 +32,10 @@ import { DonnaCOOPanel }            from './_components/DonnaCOOPanel'
 
 // ── Legacy setup card (still used for empty academy onboarding) ─────────────
 import { TodaySetupCard } from './_components/TodaySetupCard'
+// ── Sprint 2291–2320 — DONNA Mission Control ────────────────────────────────
+import { ActiveMissionCard } from './_components/ActiveMissionCard'
+import { formatActiveMission } from '@/lib/donna/workflow/donnaMissionFormatter'
+import type { DonnaWorkflowState } from '@/lib/donna/workflow/donnaWorkflowState'
 import { buildTodayBrief } from '@/lib/donna/today/todayBriefEngine'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -141,6 +145,25 @@ export default async function DirectorCommandCenter() {
     .single()
 
   const academyName = (academy?.name as string | null) ?? 'Your Academy'
+
+  // Sprint 2291–2320 — Load active mission from donna_working_memory
+  const nowIso = new Date().toISOString()
+  const { data: wfRow } = await rawDb
+    .from('donna_working_memory')
+    .select('memory_value, expires_at')
+    .eq('user_id', user.id)
+    .eq('memory_key', 'active_workflow_state')
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const rawWfState = wfRow?.memory_value as DonnaWorkflowState | null | undefined
+  const activeMission = rawWfState &&
+    rawWfState.status !== 'cancelled' &&
+    rawWfState.status !== 'completed'
+      ? formatActiveMission(rawWfState)
+      : null
 
   const players             = await getPlayerSummaries(supabase, academyId)
   const reassessmentPipeline = await getReassessmentPipeline(supabase, academyId)
@@ -610,6 +633,11 @@ export default async function DirectorCommandCenter() {
         <TodaySetupCard steps={legacyBrief.setupSteps} />
       ) : (
         <>
+          {/* ── Active Mission Card — above fold when Director has a mission ─── */}
+          {activeMission && (
+            <ActiveMissionCard mission={activeMission} />
+          )}
+
           {/* ── DONNA Command Brief ─────────────────────────────────────────
               Unified hero: situation + greeting + returning-director context
               + primary CTA + work queue count link. ───────────────────────── */}

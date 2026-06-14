@@ -42,6 +42,9 @@ import type {
   EntityMemoryContext,
   AcademyMemoryContext,
 } from '../memory/donnaMemoryContextTypes'
+// Sprint 2291–2320 — DONNA Workflow Guidance
+import type { FormattedMission } from '../workflow/donnaMissionFormatter'
+import { buildWorkflowPromptSection } from '../workflow/donnaMissionFormatter'
 
 // ── Context packet input ──────────────────────────────────────────────────────
 
@@ -86,6 +89,8 @@ export interface ContextPacketInput {
   academyMemoryContext?: AcademyMemoryContext | null
   /** True when this is the first DONNA panel open of the calendar day — triggers Tier 2 + Tier 4 injection */
   isFirstSessionOfDay?: boolean
+  // Sprint 2291–2320 — DONNA Workflow Guidance
+  activeWorkflowGuidance?: FormattedMission | null
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -340,6 +345,7 @@ function buildSystemPrompt(
   decisionMemoryContext?: DecisionMemoryContext | null,
   entityMemoryContext?: EntityMemoryContext | null,
   academyMemoryContext?: AcademyMemoryContext | null,
+  activeWorkflowGuidance?: FormattedMission | null,
 ): string {
   const lines: string[] = []
 
@@ -415,6 +421,11 @@ function buildSystemPrompt(
       lines.push(academyMemoryContext.recentEvolutionSummary)
     }
     lines.push(`Approval rate (90 days): ${academyMemoryContext.approvalRatePercent}% on ${academyMemoryContext.totalApprovedDecisions} approved decisions`)
+  }
+
+  // 1.7. Sprint 2291–2320 — Active workflow guidance (inject when Director has an active mission)
+  if (activeWorkflowGuidance && activeWorkflowGuidance.status !== 'blocked') {
+    lines.push(buildWorkflowPromptSection(activeWorkflowGuidance))
   }
 
   // 2. Current state
@@ -609,6 +620,7 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     input.decisionMemoryContext ?? null,
     input.entityMemoryContext ?? null,
     input.academyMemoryContext ?? null,
+    input.activeWorkflowGuidance ?? null,
   )
 
   // Sprint 1018 — inject curriculum strategy framing when user input or page is curriculum-strategic

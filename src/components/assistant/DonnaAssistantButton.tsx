@@ -257,9 +257,22 @@ import { runDonnaOrchestratorAction } from '@/app/director/_actions/donnaOrchest
 import {
   loadDonnaMemoryContextAction,
   finalizeStaleSessionAction,
+  saveWorkflowStateAction,
+  loadWorkflowStateAction,
+  clearWorkflowStateAction,
 } from '@/lib/actions/donnaMemoryActions'
 import type { MemoryContextPacket } from '@/lib/donna/memory/donnaMemoryContextTypes'
 import { EMPTY_MEMORY_PACKET } from '@/lib/donna/memory/donnaMemoryContextTypes'
+// Sprint 2291–2320 — DONNA Workflow Guidance
+import type { DonnaWorkflowState } from '@/lib/donna/workflow/donnaWorkflowState'
+import { startWorkflow } from '@/lib/donna/workflow/donnaWorkflowState'
+import {
+  detectWorkflowIntent,
+  detectControlIntent,
+  handleWorkflowIntent,
+  advanceOnRouteChange,
+} from '@/lib/donna/workflow/donnaWorkflowGuidanceEngine'
+import { formatActiveMission } from '@/lib/donna/workflow/donnaMissionFormatter'
 import { executeDonnaHighlight } from '@/lib/donna/llmOrchestration/donnaGuidedAction'
 import type { OrchestratorOutput, ConversationTurn as OrchestratorTurn } from '@/lib/donna/llmOrchestration/types'
 import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOperators'
@@ -553,6 +566,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const memoryLoadedRef = useRef(false)
   // Sprint 2261–2290A — tracks last player ID for which Tier 3 entity memory was loaded
   const lastEntityPlayerIdRef = useRef<string | null>(null)
+  // Sprint 2291–2320 — DONNA Workflow Guidance: active workflow state (loaded from DB at panel open)
+  const workflowStateRef = useRef<DonnaWorkflowState | null>(null)
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -1256,6 +1271,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       if (result?.ok && result.data) {
         memoryContextRef.current = result.data
       }
+
+      // Sprint 2291–2320 — Load active workflow state from DB (cross-session persistence)
+      const wfResult = await loadWorkflowStateAction().catch(() => null)
+      if (wfResult?.ok && wfResult.data.state) {
+        workflowStateRef.current = wfResult.data.state
+      }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panelOpen])
@@ -1286,6 +1307,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         }
       }
     }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
+
+  // Sprint 2291–2320 — Advance workflow state when route changes (route_visit completion signal).
+  // Only advances when an active workflow exists and confidence ≥ 70.
+  useEffect(() => {
+    const state = workflowStateRef.current
+    if (!state || state.status !== 'active') return
+    const updated = advanceOnRouteChange(state, pathname)
+    if (updated === state) return  // nothing changed
+    workflowStateRef.current = updated
+    if (updated.status === 'completed') {
+      void clearWorkflowStateAction().catch(() => {})
+    } else {
+      void saveWorkflowStateAction(updated).catch(() => {})
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
@@ -1604,6 +1641,60 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setVoiceTranscript(text)
     resetIdleTimer() // Sprint 787 — voice transcript counts as interaction
     const lower = text.toLowerCase()
+
+    // Sprint 2291–2320 — Workflow control: detect cancel/pause/resume/status intents first.
+    // Runs before controller so "cancel workflow" is never intercepted as a draft cancel.
+    {
+      const controlIntent = detectControlIntent(text)
+      if (controlIntent && workflowStateRef.current) {
+        const updated = handleWorkflowIntent(workflowStateRef.current, controlIntent)
+        workflowStateRef.current = updated
+        if (controlIntent === 'cancel' || updated.status === 'completed') {
+          workflowStateRef.current = null
+          void clearWorkflowStateAction().catch(() => {})
+          setCommandResponse({ message: 'Mission cancelled. Let me know when you\'re ready to start a new one.', type: 'info', label: 'DONNA' })
+          speakDonna('Mission cancelled.')
+          return
+        }
+        if (controlIntent === 'pause') {
+          void saveWorkflowStateAction(updated).catch(() => {})
+          setCommandResponse({ message: 'Mission paused. I\'ll resume it when you\'re ready.', type: 'info', label: 'DONNA' })
+          speakDonna('Mission paused.')
+          return
+        }
+        if (controlIntent === 'resume' && updated.status === 'active') {
+          void saveWorkflowStateAction(updated).catch(() => {})
+          const mission = formatActiveMission(updated)
+          const msg = mission
+            ? `Resuming: ${mission.title}. Next: ${mission.nextAction}.`
+            : 'Resuming your active mission.'
+          setCommandResponse({ message: msg, type: 'info', label: 'DONNA' })
+          speakDonna(msg)
+          return
+        }
+        if (controlIntent === 'status') {
+          const mission = formatActiveMission(updated)
+          const msg = mission
+            ? `${mission.title} — ${mission.completedSteps} of ${mission.totalSteps} steps done. Next: ${mission.nextAction}.`
+            : 'No active mission right now.'
+          setCommandResponse({ message: msg, type: 'info', label: 'DONNA' })
+          speakDonna(msg)
+          return
+        }
+      }
+
+      // Sprint 2291–2320 — Workflow start: detect workflow intent when no active workflow.
+      // Only starts if no active workflow is already running (one at a time).
+      if (!workflowStateRef.current) {
+        const wfType = detectWorkflowIntent(text, pathname)
+        if (wfType) {
+          const newState = startWorkflow(wfType, {}, pathname)
+          workflowStateRef.current = newState
+          void saveWorkflowStateAction(newState).catch(() => {})
+          // Let the input fall through to god mode so DONNA explains what's next
+        }
+      }
+    }
 
     // Sprint 315–321: Run conversation controller to track intent and handle undo/go-back.
     // Controller runs first, before legacy routing. Undo and go-back are handled exclusively
@@ -3717,6 +3808,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setGodModeOutput(null)
     setIsGodModeLoading(true)
     try {
+      // Sprint 2291–2320 — build formatted mission for LLM context injection
+      const activeWf = workflowStateRef.current
+      const activeWorkflowGuidance =
+        activeWf && activeWf.status === 'active'
+          ? formatActiveMission(activeWf) ?? undefined
+          : undefined
+
       const result = await runDonnaOrchestratorAction({
         userInput: text,
         pathname,
@@ -3730,6 +3828,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         decisionMemoryContext: memoryContextRef.current.decisionMemoryContext ?? undefined,
         entityMemoryContext:   memoryContextRef.current.entityMemoryContext ?? undefined,
         academyMemoryContext:  memoryContextRef.current.academyMemoryContext ?? undefined,
+        // Sprint 2291–2320 — inject active workflow guidance
+        activeWorkflowGuidance,
       })
       if (result.ok && result.output) {
         setGodModeOutput(result.output)

@@ -33,6 +33,8 @@ import type {
   EntityMemoryContext,
   AcademyMemoryContext,
 } from '@/lib/donna/memory/donnaMemoryContextTypes'
+// Sprint 2291–2320 — DONNA Workflow Guidance
+import type { FormattedMission } from '@/lib/donna/workflow/donnaMissionFormatter'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -72,6 +74,8 @@ export interface DonnaOrchestratorInput {
   academyMemoryContext?: AcademyMemoryContext | null
   /** True when this is the first DONNA panel open of the calendar day */
   isFirstSessionOfDay?: boolean
+  // Sprint 2291–2320 — DONNA Workflow Guidance
+  activeWorkflowGuidance?: FormattedMission | null
 }
 
 // ── Result type ───────────────────────────────────────────────────────────────
@@ -241,6 +245,8 @@ export async function runDonnaOrchestratorAction(
       ...(input.entityMemoryContext != null ? { entityMemoryContext: input.entityMemoryContext } : {}),
       ...(input.academyMemoryContext != null ? { academyMemoryContext: input.academyMemoryContext } : {}),
       isFirstSessionOfDay: input.isFirstSessionOfDay ?? false,
+      // Sprint 2291–2320 — Active workflow guidance for LLM context injection
+      ...(input.activeWorkflowGuidance != null ? { activeWorkflowGuidance: input.activeWorkflowGuidance } : {}),
     })
   } catch (err) {
     return {
