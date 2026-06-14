@@ -83,6 +83,10 @@ const QUERY_PATTERNS: NavigatePattern[] = [
   { re: /\bwhat\s+(?:do\s+you\s+know\s+)?about\s+(.{2,60})\s*$/i, group: 1 },
   // "details on Jake" / "details for Jake"
   { re: /\bdetails?\s+(?:on|for)\s+(.{2,60})\s*$/i,            group: 1 },
+  // "what's going on with Alex" / "what is going on with Jake"
+  { re: /\bwhat(?:'s| is)\s+going\s+on\s+with\s+(.{2,60})\s*$/i, group: 1 },
+  // "can you update me on Jake" / "update me on Jake"
+  { re: /\bupdate\s+(?:me\s+)?on\s+(.{2,60})\s*$/i,            group: 1 },
 ]
 
 // ── Improve intent patterns ──────────────────────────────────────────────────
@@ -101,6 +105,8 @@ const IMPROVE_PATTERNS: NavigatePattern[] = [
 const STATUS_PATTERNS: NavigatePattern[] = [
   // "what's the status of OB2"
   { re: /\bstatus\s+of\s+(.{2,60})\s*$/i,                     group: 1 },
+  // "status on Jake"
+  { re: /\bstatus\s+on\s+(.{2,60})\s*$/i,                     group: 1 },
   // "how is OB2 looking" / "how's OB2 looking"
   { re: /\bhow(?:'s| is)\s+(.+?)\s+(?:looking|shaping up)\b/i, group: 1 },
 ]

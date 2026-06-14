@@ -35,6 +35,9 @@ import type {
 } from '@/lib/donna/memory/donnaMemoryContextTypes'
 // Sprint 2291–2320 — DONNA Workflow Guidance
 import type { FormattedMission } from '@/lib/donna/workflow/donnaMissionFormatter'
+// Mega Sprint 2411–2440 — Entity Intelligence V1: server-side entity detection
+import { detectEntityIntent } from '@/lib/donna/entity/donnaEntityIntentRouter'
+import { loadEntityContextFromPhrase } from '@/lib/donna/memory/donnaEntityIntelligence'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -221,6 +224,25 @@ export async function runDonnaOrchestratorAction(
 
   const { supabase, academyId, role, academyProfileSummary } = auth
 
+  // 3a. Mega Sprint 2411–2440 — Entity Intelligence V1
+  // If client didn't provide entity context (no route-level player/session), attempt server-side
+  // entity detection from userInput. Cheap regex check first; DB queries only when entity matched.
+  let resolvedEntityMemoryContext = input.entityMemoryContext ?? null
+  if (!resolvedEntityMemoryContext && !input.playerId) {
+    try {
+      const entityIntent = detectEntityIntent(input.userInput)
+      if (entityIntent?.entityPhrase) {
+        resolvedEntityMemoryContext = await loadEntityContextFromPhrase(
+          supabase,
+          academyId,
+          entityIntent.entityPhrase,
+        )
+      }
+    } catch {
+      // Non-fatal — proceed without entity context
+    }
+  }
+
   // 3. Run orchestrator
   let response
   try {
@@ -240,9 +262,10 @@ export async function runDonnaOrchestratorAction(
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       useLlm: input.useLlm ?? true,
       // Sprint 2261–2290 — Memory tiers loaded client-side at panel open, passed through here
+      // Mega Sprint 2411–2440 — entityMemoryContext may be server-resolved (see step 3a above)
       ...(input.priorSessionContext != null ? { priorSessionContext: input.priorSessionContext } : {}),
       ...(input.decisionMemoryContext != null ? { decisionMemoryContext: input.decisionMemoryContext } : {}),
-      ...(input.entityMemoryContext != null ? { entityMemoryContext: input.entityMemoryContext } : {}),
+      ...(resolvedEntityMemoryContext != null ? { entityMemoryContext: resolvedEntityMemoryContext } : {}),
       ...(input.academyMemoryContext != null ? { academyMemoryContext: input.academyMemoryContext } : {}),
       isFirstSessionOfDay: input.isFirstSessionOfDay ?? false,
       // Sprint 2291–2320 — Active workflow guidance for LLM context injection

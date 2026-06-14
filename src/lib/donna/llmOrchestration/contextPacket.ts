@@ -46,6 +46,26 @@ import type {
 import type { FormattedMission } from '../workflow/donnaMissionFormatter'
 import { buildWorkflowPromptSection } from '../workflow/donnaMissionFormatter'
 
+// Sprint 2381–2410 — Daily brief opening format (Today page, first session of day)
+const DAILY_BRIEF_OPENING_SECTION = `## Daily Brief Opening (first session today — Today page)
+The director has opened DONNA for the first time today on the Today page. If their message is a greeting, "what should I do", "what do I need to do today", or any general opening question, respond ONLY in this format:
+
+"Good [morning/afternoon/evening][, Name]. Here are the 3 things that matter today:
+1. [Most urgent action — derived from highest-severity signal in current state]
+2. [Second action — next biggest signal]
+3. [Third action — third biggest signal]
+
+Academy pulse: [stable / needs attention / critical] — [one-sentence reason from signals]."
+
+If an active workflow mission is present, add after: "You also have an active mission in progress: [mission title]."
+
+Rules:
+- Under 80 words total for the opening.
+- Sound like a COO, not a chatbot. No hedging. No preamble.
+- Derive actions from pending reviews, missing recaps, advancement-eligible players, placement gaps — the signals already in your context.
+- If data is insufficient, say: "Academy Pulse is limited — setup data is incomplete. Focus on completing your academy profile first."
+- Do NOT use markdown lists or headers in your response.`
+
 // ── Context packet input ──────────────────────────────────────────────────────
 
 export interface ContextPacketInput {
@@ -406,6 +426,15 @@ function buildSystemPrompt(
     if (entityMemoryContext.lastDiscussedAt) {
       lines.push(`Last discussed with DONNA: ${entityMemoryContext.lastDiscussedAt}`)
     }
+    // Mega Sprint 2411–2440 — Entity Intelligence V1: health score + navigation target
+    if (entityMemoryContext.healthScore !== undefined) {
+      const score = entityMemoryContext.healthScore
+      const indicator = score >= 8 ? '✓' : score >= 5 ? '⚠' : '✗'
+      lines.push(`Health score: ${indicator} ${score}/10`)
+    }
+    if (entityMemoryContext.entityRoute) {
+      lines.push(`Navigate: ${entityMemoryContext.entityRoute}`)
+    }
   }
 
   // Tier 4: Academy memory — inject only on first session of day (≤150 tokens)
@@ -629,6 +658,12 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     systemPrompt = systemPrompt + '\n\n' + CURRICULUM_STRATEGY_PROMPT_SECTION
   }
 
+  // Sprint 2381–2410 — inject daily brief opening instruction on Today page, first session of day.
+  // Tells DONNA to lead with "3 things that matter today" format when the director first opens the panel.
+  if (input.isFirstSessionOfDay && (pathname === '/director' || pathname === '/director/today')) {
+    systemPrompt = systemPrompt + '\n\n' + DAILY_BRIEF_OPENING_SECTION
+  }
+
   // Token budget estimation: compact (<500 chars input+history), standard (500-1500), extended (>1500)
   const totalInputSize = systemPrompt.length + userInput.length +
     sanitizedHistory.reduce((sum, t) => sum + t.content.length, 0)
@@ -681,6 +716,18 @@ export function appendDonnaTurn(
     outputType,
   }
   return [...history, turn].slice(-10)
+}
+
+// ── Mega Sprint 2411–2440 — Entity query helpers ──────────────────────────────
+
+/** True when the user is asking about coaches (individual or aggregate). */
+export function isCoachQuery(userInput: string): boolean {
+  return /\bcoach(?:es)?\b/i.test(userInput)
+}
+
+/** True when user is asking about multiple entities of a kind (coaches, parents, levels, templates, groups). */
+export function isAggregateEntityQuery(userInput: string): boolean {
+  return /\bwhich\s+(?:coach(?:es)?|parent(?:s)?|curriculum|levels?|templates?|groups?)\b/i.test(userInput)
 }
 
 /** Build an AcademyStateSummary from available panel-state signals. No DB calls. */

@@ -44,14 +44,17 @@ export interface DecisionMemoryContext {
 // ── Tier 3: Entity Memory ─────────────────────────────────────────────────────
 
 export interface EntityMemoryContext {
-  entityType: 'player' | 'group' | 'session' | 'curriculum_level'
+  entityType: 'player' | 'group' | 'session' | 'curriculum_level' | 'coach' | 'parent' | 'template' | 'academy'
   entityLabel: string
   operatingSummary: string | null  // from donna_entity_summaries (kind: operating)
-  activePriorities: string[]       // top 2 from player_development_blueprints
+  activePriorities: string[]       // top 2–3 signals/metrics for this entity
   recentSignals: string[]          // last 3 signals (type + severity label)
-  activeRecommendations: string[]  // urgent/immediate from player_recommendations
+  activeRecommendations: string[]  // urgent/immediate recommendations for this entity
   recentDecisions: string[]        // last 3 proposed_actions for this entity
   lastDiscussedAt: string | null   // when DONNA last discussed this entity
+  // Mega Sprint 2411–2440 — Entity Intelligence V1
+  healthScore?: number             // 0–10 computed from entity signals
+  entityRoute?: string | null      // navigation target where applicable
 }
 
 // ── Tier 4: Academy Memory ────────────────────────────────────────────────────

@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-06-14 — Mega Sprint 2411–2440 — DONNA Entity Intelligence V1
+
+**Mission:** Give DONNA server-side entity context for all academy entity types. Director asks "What's going on with Alex?" or "How is Coach Sarah doing?" from the Today page — DONNA loads real data and answers with signals, health score, and a navigation link.
+
+**`donnaEntityIntelligence.ts` (new file):**
+- 7 entity loaders: player, coach, parent, curriculum_level, group, template, academy
+- `loadPlayerEntityContext` — players, curriculum state, level name, signals, decisions
+- `loadCoachEntityContext` — sessions, recaps, player roster, operating summary
+- `loadParentEntityContext` — guardians, linked players, at-risk signals
+- `loadCurriculumLevelEntityContext` — player counts, stall rate, template coverage, health score
+- `loadGroupEntityContext` — capacity, advancement eligible, recent session count
+- `loadTemplateEntityContext` — session usage, last used date, underuse detection
+- `loadAcademyEntityContext` — active players, pending reviews, sessions this week, on-hold count
+- `loadEntityContextFromPhrase` — orchestrator: academy → level alias → coach keyword → template → group → player roster → coach roster
+- All functions non-fatal; healthScore 0–10; entityRoute where applicable
+
+**`donnaEntityIntentRouter.ts` (modified):**
+- Added QUERY_PATTERNS: "what's going on with X", "update me on X"
+- Added STATUS_PATTERNS: "status on X"
+- Without these, "What's going on with Alex?" from Today page would not trigger entity resolution
+
+**`donnaMemoryContextTypes.ts` (modified):**
+- `EntityMemoryContext` extended: `healthScore?`, `entityRoute?`, new entity types: coach, parent, template, academy
+
+**`contextPacket.ts` (modified):**
+- Entity health score injected into system prompt (✓/⚠/✗ N/10)
+- Entity route injected as "Navigate: /path" when available
+- Daily brief opening format (Today page, first session of day)
+- `isCoachQuery` and `isAggregateEntityQuery` helpers
+
+**`donnaOrchestratorAction.ts` (modified):**
+- Server-side entity detection: when client sends no entity context and no playerId, server calls `detectEntityIntent` → `loadEntityContextFromPhrase` → injects resolved context into orchestrator
+
+**Recovered from prior sprint commit (accidentally omitted from `c53dfa95`):**
+- `AcademyPulseBar.tsx` — pulse status bar component
+- `SinceYourLastVisitPanel.tsx` — session memory panel
+- `academyPulseEngine.ts` — pure TS pulse computation engine
+- `DONNA_DAILY_BRIEF_ACADEMY_PULSE_REPORT.md` — prior sprint report
+
+**Certification:** 7/7 questions pass — TypeScript clean (exit 0)
+
+---
+
 ## 2026-06-14 — Mega Sprint 2381B–2410B — DONNA Today Decision Layer V2
 
 **Mission:** Transform Today from an information page into a decision page. Director opens Today and answers "Who needs attention? Why? What should I do first?" within 3 seconds.
