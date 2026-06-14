@@ -49,6 +49,16 @@ import { buildProactiveAlerts } from '@/lib/donna/coo/donnaProactiveAlerts'
 import { COOHeroBanner }        from './_components/COOHeroBanner'
 import { AcademyPulseTimeline } from './_components/AcademyPulseTimeline'
 import type { PulseTimelineWindow } from './_components/AcademyPulseTimeline'
+// ── Mega Sprint 2621–2650 — DONNA Operating Layer V1 ─────────────────────────
+import { buildOperatingLayer }  from '@/lib/donna/operating/donnaOperatingLayer'
+import { DonnaOperatingFeed }   from './_components/DonnaOperatingFeed'
+// ── Mega Sprint 2651–2680 — DONNA Executive Intelligence Dashboard V1 ─────────
+import { AcademyHealthExecutiveCard } from './_components/AcademyHealthExecutiveCard'
+import { AdvancementFunnelChart }     from './_components/AdvancementFunnelChart'
+import { AssessmentComplianceChart }  from './_components/AssessmentComplianceChart'
+import { CoachRecapChart }            from './_components/CoachRecapChart'
+import { RecommendationQueueChart }   from './_components/RecommendationQueueChart'
+import { DonnaEvidencePanel }         from './_components/DonnaEvidencePanel'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -680,6 +690,27 @@ export default async function DirectorCommandCenter() {
     itemCount: 0,
   }
 
+  // ── Mega Sprint 2621–2650 — DONNA Operating Layer V1 ────────────────────────
+  const completedSessionsCount = completedSessionIds.length
+  const operatingLayer = buildOperatingLayer({
+    packet:                    null,            // packet not loaded in page.tsx
+    attentionReport,
+    situation,
+    activePlayers,
+    attentionCount,
+    advancementReadyCount,
+    stalledPlayerCount,
+    parentFollowupCount:       parentUpdatesPendingApproval,
+    pendingActionsCount:       totalPendingReviews,
+    coachRecapsMissing,
+    totalCoachCount,
+    reassessmentDue,
+    overCapacityGroupCount,
+    curriculumGapCount,
+    attendanceRiskCount:       0,
+    oldestPendingReviewAgeDays,
+  })
+
   const allPriorityItems: BriefPriorityItem[] = todayResult.priorities.slice(0, 3).map((p, i) => ({
     title:   p.title,
     route:   actionTargets[i]?.route ?? '/director/review',
@@ -949,6 +980,55 @@ export default async function DirectorCommandCenter() {
               </div>
             </details>
           )}
+
+          {/* ── DONNA Operating Feed — Mission control (Sprint 2621–2650) ── */}
+          <DonnaOperatingFeed
+            feedItems={operatingLayer.feedItems}
+            pendingFollowUps={operatingLayer.pendingFollowUps}
+            health={operatingLayer.health}
+          />
+
+          {/* ── DONNA Evidence Layer — why this recommendation (Sprint 2651–2680) ── */}
+          <DonnaEvidencePanel
+            guidance={operatingLayer.guidance}
+            signals={operatingLayer.signals}
+            health={operatingLayer.health}
+          />
+
+          {/* ── Academy Intelligence Dashboard — charts (Sprint 2651–2680) ── */}
+          <details className="rounded-xl border border-border overflow-hidden">
+            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-raised/50 transition-colors list-none">
+              <span className="text-sm font-medium text-text-secondary">Academy Intelligence Dashboard</span>
+              <span className="label-xs text-text-muted">health · pipeline · compliance · queue · expand</span>
+            </summary>
+            <div className="border-t border-border p-5 space-y-6">
+              <AcademyHealthExecutiveCard health={operatingLayer.health} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AdvancementFunnelChart
+                  activePlayers={activePlayers}
+                  playersWithLevel={playersWithLevel}
+                  advancementReadyCount={advancementReadyCount}
+                  stalledPlayerCount={stalledPlayerCount}
+                />
+                <AssessmentComplianceChart
+                  activePlayers={activePlayers}
+                  reassessmentDue={reassessmentDue}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CoachRecapChart
+                  totalSessions={completedSessionsCount}
+                  missingRecaps={coachRecapsMissing}
+                />
+                <RecommendationQueueChart
+                  pendingWrapUps={pendingWrapUpsCount}
+                  assessmentsInReview={assessmentsNeedingReview}
+                  placementReviews={activePlacementReviews}
+                  oldestAgeDays={oldestPendingReviewAgeDays}
+                />
+              </div>
+            </div>
+          </details>
 
           {/* ── What Can Wait — DONNA deferrals (already collapsed) ──────── */}
           <WhatCanWaitPanel waitDecisions={waitDecisions} />
