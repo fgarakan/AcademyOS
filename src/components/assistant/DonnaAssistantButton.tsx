@@ -376,6 +376,14 @@ import { updateConversationOperatingContext, isContextThreadActive } from '@/lib
 import { resolveEntityFollowUp } from '@/lib/donna/conversation/donnaConversationFollowUp'
 import { resolveConversationalAction } from '@/lib/donna/conversation/donnaConversationActionRouter'
 import { DonnaConversationThreadIndicator } from '@/components/donna/DonnaConversationThreadIndicator'
+// Mega Sprint 2561–2590 — Academy Intelligence Engine V1: perceived speed + broad query thread seeding
+import { getAcademyThinkingText } from '@/lib/donna/academy/academyThinkingResponses'
+import { applyEntitySeedToContext } from '@/lib/donna/academy/academyBroadQueryThreadSeeder'
+// Mega Sprint 2681–2740 — DONNA Guided Execution OS V1+V2
+import type { NextBestAction, ExecutionRecord } from '@/lib/donna/guided/nextBestAction'
+import { createIdleExecutionState, executionStateFromAction, snapshotFromExecutionState } from '@/lib/donna/guided/nextBestAction'
+import type { ExecutionState } from '@/lib/donna/guided/nextBestAction'
+import { DonnaExecutionModeCard } from '@/app/director/_components/DonnaExecutionModeCard'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -584,6 +592,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     recommendationTitle: string | null
     turnCount: number
   } | null>(null)
+  // Mega Sprint 2561–2590 — perceived speed layer: contextual thinking text for broad queries
+  const [godModeThinkingText, setGodModeThinkingText] = useState<string | null>(null)
+  // Mega Sprint 2681–2740 — Guided Execution OS V1+V2: execution state + history
+  const [activeExecutionState, setActiveExecutionState] = useState<ExecutionState>(createIdleExecutionState)
+  const executionHistoryRef = useRef<ExecutionRecord[]>([])
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -3916,6 +3929,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           ? formatActiveMission(activeWf) ?? undefined
           : undefined
 
+      // Mega Sprint 2561–2590 — perceived speed layer: show contextual thinking text
+      // for broad academy queries before the server round-trip completes.
+      const thinkingText = getAcademyThinkingText(text)
+      setGodModeThinkingText(thinkingText)
+
       const result = await runDonnaOrchestratorAction({
         userInput: text,
         pathname,
@@ -3933,15 +3951,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         activeWorkflowGuidance,
         // Mega Sprint 2501–2530 — round-trip conversation thread context
         conversationOperatingContext: conversationOperatingContextRef.current ?? undefined,
+        // Mega Sprint 2681–2740 — Guided Execution OS: execution state + completed IDs
+        executionState: activeExecutionState.executionStatus !== 'idle'
+          ? snapshotFromExecutionState(activeExecutionState)
+          : null,
+        completedActionIds: executionHistoryRef.current.map(r => r.id),
       })
       if (result.ok && result.output) {
         setGodModeOutput(result.output)
+        setGodModeThinkingText(null)
         // Mega Sprint 2501–2530 — persist updated conversation thread context
         if (result.updatedConversationContext) {
-          conversationOperatingContextRef.current = result.updatedConversationContext
-          const uc = result.updatedConversationContext
-          if (isContextThreadActive(uc) && uc.currentEntityLabel) {
-            setConversationThreadInfo({ entityLabel: uc.currentEntityLabel, recommendationTitle: uc.currentRecommendationTitle, turnCount: uc.turnCount })
+          let activeCtx = result.updatedConversationContext
+          // Mega Sprint 2561–2590 — seed thread from broad query top entity
+          // when LLM answer doesn't establish an entity thread naturally.
+          if (result.suggestedEntitySeed && !activeCtx.currentEntityLabel) {
+            activeCtx = applyEntitySeedToContext(activeCtx, result.suggestedEntitySeed, text)
+          }
+          conversationOperatingContextRef.current = activeCtx
+          if (isContextThreadActive(activeCtx) && activeCtx.currentEntityLabel) {
+            setConversationThreadInfo({ entityLabel: activeCtx.currentEntityLabel, recommendationTitle: activeCtx.currentRecommendationTitle, turnCount: activeCtx.turnCount })
           } else {
             setConversationThreadInfo(null)
           }
@@ -3951,6 +3980,32 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           { role: 'user' as const, content: text, timestamp: Date.now() },
           { role: 'donna' as const, content: result.output!.text, timestamp: Date.now(), outputType: result.output!.type },
         ])
+        // Mega Sprint 2681–2740 — Guided Execution OS: update execution state + history
+        if (result.nextBestAction) {
+          // If there was an active action marked complete, record it in history
+          if (result.executionIntent === 'task_completed' && activeExecutionState.activeActionId) {
+            const prev = activeExecutionState
+            executionHistoryRef.current = [
+              ...executionHistoryRef.current,
+              {
+                id:           prev.activeActionId!,
+                title:        prev.activeActionTitle ?? '',
+                domain:       prev.domain ?? 'academy',
+                status:       'completed' as const,
+                completedAt:  new Date().toISOString(),
+                durationMs:   prev.startedAt
+                  ? Date.now() - new Date(prev.startedAt).getTime()
+                  : 0,
+                helpRequests: prev.helpCount,
+              },
+            ].slice(-20) // keep last 20 records
+          }
+          setActiveExecutionState(executionStateFromAction(result.nextBestAction))
+        }
+        // Navigate client-side when intent is navigate_to_action
+        if (result.executionIntent === 'navigate_to_action' && result.nextBestAction?.route) {
+          router.push(result.nextBestAction.route)
+        }
       } else {
         setCommandResponse({
           message: result.error ?? 'DONNA is temporarily unavailable. Please try again.',
@@ -3967,6 +4022,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     } finally {
       setIsGodModeLoading(false)
       setIsProcessingCommand(false)
+      setGodModeThinkingText(null)
     }
   }
 
@@ -5064,6 +5120,35 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             onPrompt={(text) => handleCommandSubmit(text)}
             onBrief={() => void handleFetchDailyBrief()}
           />
+
+          {/* ── Mega Sprint 2561–2590 — Academy intelligence thinking text ── */}
+          {isGodModeLoading && godModeThinkingText && (
+            <p className="mx-4 mb-1 text-[11px] text-text-muted italic">{godModeThinkingText}</p>
+          )}
+
+          {/* ── Mega Sprint 2681–2740 — Guided Execution OS: execution mode card ── */}
+          {activeExecutionState.executionStatus === 'active' && activeExecutionState.activeActionId && activeExecutionState.activeActionTitle && (
+            <DonnaExecutionModeCard
+              action={{
+                id:                  activeExecutionState.activeActionId,
+                title:               activeExecutionState.activeActionTitle,
+                description:         activeExecutionState.lastInstruction ?? '',
+                reason:              activeExecutionState.lastInstruction ?? '',
+                impactScore:         80,
+                urgencyScore:        70,
+                confidenceScore:     85,
+                domain:              activeExecutionState.domain ?? 'academy',
+                entityType:          activeExecutionState.activeEntityType,
+                entityId:            activeExecutionState.activeEntityId,
+                route:               activeExecutionState.activeRoute,
+                completionCriteria:  activeExecutionState.completionCriteria ?? 'Action confirmed complete.',
+                nextActionHint:      null,
+                estimatedMinutes:    '—',
+              }}
+              onSubmit={(text) => handleCommandSubmit(text)}
+              onDismiss={() => setActiveExecutionState(createIdleExecutionState())}
+            />
+          )}
 
           {/* ── Mega Sprint 2501–2530 — Conversation thread indicator ── */}
           <DonnaConversationThreadIndicator

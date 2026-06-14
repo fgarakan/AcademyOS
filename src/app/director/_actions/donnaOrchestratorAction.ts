@@ -43,6 +43,28 @@ import type { ConversationOperatingContext } from '@/lib/donna/conversation/donn
 import { updateConversationOperatingContext } from '@/lib/donna/conversation/donnaConversationOperatingContext'
 import { resolveReferences } from '@/lib/donna/conversation/donnaReferenceResolver'
 import { buildProactiveCOOSignal, buildProactiveCOOSection, shouldTriggerProactiveCOO } from '@/lib/donna/conversation/donnaProactiveCOODialogue'
+// Mega Sprint 2561–2590 — Academy Intelligence Engine V1
+import { detectBroadAcademyQuery } from '@/lib/donna/academy/academyIntelligenceEngine'
+import type { AcademyIntelligencePacket } from '@/lib/donna/academy/academyIntelligenceEngine'
+import { loadAcademyIntelligencePacket } from '@/lib/donna/academy/academyIntelligenceLoader'
+import { answerAcademyDirectorQuestion } from '@/lib/donna/academy/academyDirectorQuestionsEngine'
+// Mega Sprint 2621–2650 — DONNA Operating Layer V1
+import { detectOperatingQuestion, answerOperatingQuestion } from '@/lib/donna/operating/directorOperatingQuestions'
+import { buildOperatingLayerFromPacket } from '@/lib/donna/operating/donnaOperatingLayer'
+// Mega Sprint 2681–2740 — DONNA Guided Execution OS V1+V2
+import type { NextBestAction, ExecutionStateSnapshot } from '@/lib/donna/guided/nextBestAction'
+import { detectExecutionIntent } from '@/lib/donna/guided/executionIntentDetector'
+import type { ExecutionIntentType } from '@/lib/donna/guided/executionIntentDetector'
+import { buildNextBestAction } from '@/lib/donna/guided/donnaNextBestActionEngine'
+import {
+  handleNextBestAction,
+  handleTaskCompleted,
+  handleExecutionHelp,
+  handleExecutionHelpFallback,
+  handleNavigateIntent,
+  handleAllActionsComplete,
+  getNextBestActionThinkingText,
+} from '@/lib/donna/guided/donnaGuidedExecutionEngine'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -87,6 +109,11 @@ export interface DonnaOrchestratorInput {
   // Mega Sprint 2471–2500 — DONNA Conversational OS V1
   /** Thread-level operating context: current entity, recommendation, topic, goal */
   conversationOperatingContext?: ConversationOperatingContext | null
+  // Mega Sprint 2681–2740 — DONNA Guided Execution OS V1+V2
+  /** Snapshot of client-side execution state — used to answer help and navigate intents. */
+  executionState?: ExecutionStateSnapshot | null
+  /** Signal IDs completed this session — excluded from next best action selection. */
+  completedActionIds?: string[]
 }
 
 // ── Result type ───────────────────────────────────────────────────────────────
@@ -106,6 +133,18 @@ export interface DonnaOrchestratorResult {
   // Mega Sprint 2471–2500 — DONNA Conversational OS V1
   /** Updated conversation thread context — client stores and sends back next turn. */
   updatedConversationContext?: ConversationOperatingContext
+  // Mega Sprint 2561–2590 — Academy Intelligence Engine V1
+  /** Top entity from academy attention queue — seeds conversation thread after broad queries. */
+  suggestedEntitySeed?: {
+    entityLabel: string
+    entityRoute: string
+    entityType: 'player' | 'coach' | 'parent'
+  }
+  // Mega Sprint 2681–2740 — DONNA Guided Execution OS V1+V2
+  /** Structured next best action — used to display execution mode card on client. */
+  nextBestAction?: NextBestAction
+  /** Which execution intent was detected — used for client-side navigation on 'navigate_to_action'. */
+  executionIntent?: ExecutionIntentType
 }
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
@@ -283,6 +322,215 @@ export async function runDonnaOrchestratorAction(
     entityMemoryContext: resolvedEntityMemoryContext,
   })
 
+  // 3c. Mega Sprint 2561–2590 — Academy Intelligence Engine V1
+  // 3d. Mega Sprint 2621–2650 — Operating Layer V1: operating question fast path
+  // 3e. Mega Sprint 2681–2740 — Guided Execution OS V1+V2: execution intent fast path
+  // When the director asks a broad academy question (no entity in context), load
+  // the live AcademyIntelligencePacket and attempt a deterministic answer.
+  // If deterministic answer found → return immediately (no LLM call).
+  // Otherwise → inject packet into orchestrate call for LLM enrichment.
+  let academyIntelligencePacket: AcademyIntelligencePacket | null = null
+  let suggestedEntitySeed: DonnaOrchestratorResult['suggestedEntitySeed'] | undefined
+
+  // 3e: Execution intents — checked FIRST (before operating questions and broad queries).
+  // Catches: done/finished/handled, help/stuck, take me there/open it, continue/next/what else.
+  const executionIntentType = detectExecutionIntent(input.userInput)
+  if (executionIntentType) {
+    try {
+      academyIntelligencePacket = await loadAcademyIntelligencePacket(supabase, academyId)
+    } catch {
+      // Non-fatal — proceed with reduced context
+    }
+
+    const completedActionIds = input.completedActionIds ?? []
+    const executionState     = input.executionState ?? null
+
+    let nextBestAction: NextBestAction | null = null
+    if (academyIntelligencePacket) {
+      const { signals, health, guidance } = buildOperatingLayerFromPacket(academyIntelligencePacket)
+      nextBestAction = buildNextBestAction(guidance, signals, health, completedActionIds)
+
+      let guidedResponse
+
+      if (executionIntentType === 'task_completed') {
+        // "Done.", "Finished.", "Handled.", etc.
+        // Mark current action complete, re-rank, return next action.
+        const completedTitle    = executionState?.activeActionTitle ?? null
+        const completionCriteria = executionState?.completionCriteria ?? null
+
+        // Exclude the just-completed action when selecting next
+        const nextCompletedIds = executionState?.activeActionId
+          ? [...completedActionIds, executionState.activeActionId]
+          : completedActionIds
+        const nextAction = buildNextBestAction(guidance, signals, health, nextCompletedIds)
+
+        guidedResponse = handleTaskCompleted(completedTitle, completionCriteria, nextAction)
+        nextBestAction = nextAction
+
+      } else if (executionIntentType === 'execution_help') {
+        // "Help.", "I'm stuck.", "Walk me through it."
+        if (nextBestAction) {
+          guidedResponse = handleExecutionHelp(nextBestAction, null)
+        } else {
+          guidedResponse = handleExecutionHelpFallback()
+        }
+
+      } else if (executionIntentType === 'navigate_to_action') {
+        // "Take me there.", "Open it.", "Go there."
+        guidedResponse = handleNavigateIntent(nextBestAction, {
+          activeActionId:    executionState?.activeActionId ?? null,
+          activeActionTitle: executionState?.activeActionTitle ?? null,
+          activeEntityId:    null,
+          activeEntityType:  null,
+          activeRoute:       executionState?.activeRoute ?? null,
+          startedAt:         null,
+          completionCriteria: executionState?.completionCriteria ?? null,
+          executionStatus:   'active',
+          lastInstruction:   executionState?.activeActionTitle ?? null,
+          helpCount:         0,
+          domain:            executionState?.domain ?? null,
+        })
+
+      } else {
+        // 'next_best_action' — "What next?", "Continue.", "What else?", etc.
+        const isContinuation = /^(continue|keep\s+going|what\s+else|anything\s+else|next)[.!?]?$/i.test(input.userInput.trim())
+        guidedResponse = nextBestAction
+          ? handleNextBestAction(nextBestAction, isContinuation)
+          : { text: 'No further high-priority actions at this time. Ask "How is the academy?" for a health check.', navigationHint: null, thinkingText: null }
+      }
+
+      void writeUsageEventToDb(supabase, {
+        eventType: 'donna_intelligence_call', academyId, userId: auth.userId,
+        blocked: false,
+        requestId: `execution_intent:${executionIntentType}`,
+        inputTokens: 0, outputTokens: 0, latencyMs: 0,
+      })
+
+      return {
+        ok: true,
+        output: {
+          type:                 'answer',
+          text:                 guidedResponse.text,
+          safetyLevel:          'safe',
+          requiresConfirmation: false,
+          confidence:           'high',
+          source:               'deterministic',
+          ...(guidedResponse.navigationHint ? { suggestedRoute: guidedResponse.navigationHint } : {}),
+        },
+        hadBlockedAttempt:     false,
+        updatedConversationContext,
+        ...(nextBestAction ? { nextBestAction } : {}),
+        executionIntent: executionIntentType,
+      }
+    } else {
+      // Packet unavailable — fall through to help or generic response
+      if (executionIntentType === 'execution_help') {
+        const resp = handleExecutionHelpFallback()
+        void writeUsageEventToDb(supabase, {
+          eventType: 'donna_intelligence_call', academyId, userId: auth.userId,
+          blocked: false, requestId: 'execution_intent:help_fallback',
+          inputTokens: 0, outputTokens: 0, latencyMs: 0,
+        })
+        return {
+          ok: true,
+          output: {
+            type: 'answer', text: resp.text, safetyLevel: 'safe',
+            requiresConfirmation: false, confidence: 'medium', source: 'deterministic',
+          },
+          hadBlockedAttempt: false,
+          updatedConversationContext,
+          executionIntent: executionIntentType,
+        }
+      }
+      // For other execution intents without a packet, fall through to LLM
+    }
+  }
+
+  // 3d: Check operating questions first (more specific, fewer LLM fallbacks)
+  const operatingQuestionType = detectOperatingQuestion(input.userInput)
+  if (operatingQuestionType && !resolvedEntityMemoryContext) {
+    try {
+      academyIntelligencePacket = academyIntelligencePacket ?? await loadAcademyIntelligencePacket(supabase, academyId)
+    } catch {
+      // Non-fatal
+    }
+    if (academyIntelligencePacket) {
+      const { signals, health, guidance } = buildOperatingLayerFromPacket(academyIntelligencePacket)
+      const operatingAnswer = answerOperatingQuestion(operatingQuestionType, guidance, signals, health)
+      void writeUsageEventToDb(supabase, {
+        eventType: 'donna_intelligence_call', academyId, userId: auth.userId,
+        blocked: false,
+        requestId: `operating_question:${operatingQuestionType}`,
+        inputTokens: 0, outputTokens: 0, latencyMs: 0,
+      })
+      return {
+        ok: true,
+        output: {
+          type: 'answer',
+          text: operatingAnswer.responseText,
+          safetyLevel: 'safe',
+          requiresConfirmation: false,
+          confidence: operatingAnswer.confidence,
+          source: 'deterministic',
+          ...(operatingAnswer.navigationHint ? { suggestedRoute: operatingAnswer.navigationHint } : {}),
+        },
+        hadBlockedAttempt: false,
+        updatedConversationContext,
+      }
+    }
+  }
+
+  const broadQuestionType = detectBroadAcademyQuery(input.userInput)
+  if (broadQuestionType && !resolvedEntityMemoryContext) {
+    try {
+      academyIntelligencePacket = await loadAcademyIntelligencePacket(supabase, academyId)
+    } catch {
+      // Non-fatal — proceed without academy intelligence
+    }
+
+    if (academyIntelligencePacket) {
+      // Build suggested entity seed from top attention item
+      const topItem = academyIntelligencePacket.attentionQueue[0]
+      if (topItem) {
+        suggestedEntitySeed = {
+          entityLabel: topItem.playerName,
+          entityRoute: topItem.playerRoute,
+          entityType:  'player',
+        }
+      }
+
+      // Try deterministic answer — if high confidence, skip LLM entirely
+      const deterministicAnswer = answerAcademyDirectorQuestion(broadQuestionType, academyIntelligencePacket)
+      if (deterministicAnswer.confidence === 'high') {
+        void writeUsageEventToDb(supabase, {
+          eventType:    'donna_intelligence_call',
+          academyId,
+          userId:       auth.userId,
+          blocked:      false,
+          requestId:    `academy_director_question:${broadQuestionType}`,
+          inputTokens:  0,
+          outputTokens: 0,
+          latencyMs:    0,
+        })
+        return {
+          ok:                       true,
+          output:                   {
+            type:                   'answer',
+            text:                   deterministicAnswer.responseText,
+            safetyLevel:            'safe',
+            requiresConfirmation:   false,
+            confidence:             'high',
+            source:                 'deterministic',
+            ...(deterministicAnswer.navigationHint ? { suggestedRoute: deterministicAnswer.navigationHint } : {}),
+          },
+          hadBlockedAttempt:        false,
+          updatedConversationContext,
+          suggestedEntitySeed,
+        }
+      }
+    }
+  }
+
   // 3. Run orchestrator
   let response
   try {
@@ -313,6 +561,8 @@ export async function runDonnaOrchestratorAction(
       // Mega Sprint 2471–2500 — Conversational OS V1
       ...(updatedConversationContext ? { conversationOperatingContext: updatedConversationContext } : {}),
       ...(proactiveCOOSection ? { proactiveCOOSection } : {}),
+      // Mega Sprint 2561–2590 — Academy Intelligence Engine V1
+      ...(academyIntelligencePacket ? { academyIntelligencePacket } : {}),
     })
   } catch (err) {
     return {
@@ -339,10 +589,12 @@ export async function runDonnaOrchestratorAction(
 
   // 5. Return safe result — safetyAudit and contextSummary are NOT returned
   // Mega Sprint 2471–2500 — return updated conversation context for client round-trip
+  // Mega Sprint 2561–2590 — return suggestedEntitySeed for broad query thread seeding
   return {
     ok: true,
     output: response.primaryOutput,
     hadBlockedAttempt: response.hadBlockedAttempt,
     updatedConversationContext,
+    ...(suggestedEntitySeed ? { suggestedEntitySeed } : {}),
   }
 }
