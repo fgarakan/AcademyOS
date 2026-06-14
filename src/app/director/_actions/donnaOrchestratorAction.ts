@@ -38,6 +38,11 @@ import type { FormattedMission } from '@/lib/donna/workflow/donnaMissionFormatte
 // Mega Sprint 2411–2440 — Entity Intelligence V1: server-side entity detection
 import { detectEntityIntent } from '@/lib/donna/entity/donnaEntityIntentRouter'
 import { loadEntityContextFromPhrase } from '@/lib/donna/memory/donnaEntityIntelligence'
+// Mega Sprint 2471–2500 — DONNA Conversational OS V1
+import type { ConversationOperatingContext } from '@/lib/donna/conversation/donnaConversationOperatingContext'
+import { updateConversationOperatingContext } from '@/lib/donna/conversation/donnaConversationOperatingContext'
+import { resolveReferences } from '@/lib/donna/conversation/donnaReferenceResolver'
+import { buildProactiveCOOSignal, buildProactiveCOOSection, shouldTriggerProactiveCOO } from '@/lib/donna/conversation/donnaProactiveCOODialogue'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -79,6 +84,9 @@ export interface DonnaOrchestratorInput {
   isFirstSessionOfDay?: boolean
   // Sprint 2291–2320 — DONNA Workflow Guidance
   activeWorkflowGuidance?: FormattedMission | null
+  // Mega Sprint 2471–2500 — DONNA Conversational OS V1
+  /** Thread-level operating context: current entity, recommendation, topic, goal */
+  conversationOperatingContext?: ConversationOperatingContext | null
 }
 
 // ── Result type ───────────────────────────────────────────────────────────────
@@ -95,6 +103,9 @@ export interface DonnaOrchestratorResult {
   hadBlockedAttempt: boolean
   /** Safe error message. Present when ok: false. */
   error?: string
+  // Mega Sprint 2471–2500 — DONNA Conversational OS V1
+  /** Updated conversation thread context — client stores and sends back next turn. */
+  updatedConversationContext?: ConversationOperatingContext
 }
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
@@ -243,13 +254,42 @@ export async function runDonnaOrchestratorAction(
     }
   }
 
+  // 3b. Mega Sprint 2471–2500 — DONNA Conversational OS V1
+  // Step 1: Resolve anaphoric references in userInput before building context packet.
+  //   "What level is he?" → "What level is Alex Rivera?" (using thread entity context)
+  // Step 2: Compute proactive COO signal when entity is in context.
+  // Step 3: Update conversation thread context for round-trip to client.
+
+  const existingConvCtx = input.conversationOperatingContext ?? null
+
+  // Resolve references: pronoun substitution before LLM sees the input
+  const { resolvedText: resolvedUserInput } = resolveReferences(input.userInput, existingConvCtx)
+
+  // Compute proactive COO section (non-fatal)
+  let proactiveCOOSection: string | undefined
+  try {
+    if (shouldTriggerProactiveCOO(input.userInput, existingConvCtx)) {
+      const signal = buildProactiveCOOSignal(resolvedEntityMemoryContext, existingConvCtx)
+      const section = buildProactiveCOOSection(signal, resolvedEntityMemoryContext?.entityLabel ?? existingConvCtx?.currentEntityLabel ?? null)
+      if (section) proactiveCOOSection = section
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  // Update conversation thread context (will be returned to client after turn)
+  const updatedConversationContext = updateConversationOperatingContext(existingConvCtx, {
+    userInput:           resolvedUserInput,
+    entityMemoryContext: resolvedEntityMemoryContext,
+  })
+
   // 3. Run orchestrator
   let response
   try {
     response = await orchestrate({
       role,
       pathname: input.pathname,
-      userInput: input.userInput.trim(),
+      userInput: resolvedUserInput.trim(),
       academyId,
       pageLabel: input.pageLabel,
       firstName: input.firstName,
@@ -270,6 +310,9 @@ export async function runDonnaOrchestratorAction(
       isFirstSessionOfDay: input.isFirstSessionOfDay ?? false,
       // Sprint 2291–2320 — Active workflow guidance for LLM context injection
       ...(input.activeWorkflowGuidance != null ? { activeWorkflowGuidance: input.activeWorkflowGuidance } : {}),
+      // Mega Sprint 2471–2500 — Conversational OS V1
+      ...(updatedConversationContext ? { conversationOperatingContext: updatedConversationContext } : {}),
+      ...(proactiveCOOSection ? { proactiveCOOSection } : {}),
     })
   } catch (err) {
     return {
@@ -295,9 +338,11 @@ export async function runDonnaOrchestratorAction(
   })
 
   // 5. Return safe result — safetyAudit and contextSummary are NOT returned
+  // Mega Sprint 2471–2500 — return updated conversation context for client round-trip
   return {
     ok: true,
     output: response.primaryOutput,
     hadBlockedAttempt: response.hadBlockedAttempt,
+    updatedConversationContext,
   }
 }

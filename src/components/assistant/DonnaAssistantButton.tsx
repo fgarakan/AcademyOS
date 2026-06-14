@@ -370,6 +370,12 @@ import {
   clearCOO,
 } from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
 import type { COOOrchestrationState, COOPriorityItem } from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
+// Mega Sprint 2501–2530 — DONNA Conversational OS V2: client-side thread wiring + fast paths
+import type { ConversationOperatingContext } from '@/lib/donna/conversation/donnaConversationOperatingContext'
+import { updateConversationOperatingContext, isContextThreadActive } from '@/lib/donna/conversation/donnaConversationOperatingContext'
+import { resolveEntityFollowUp } from '@/lib/donna/conversation/donnaConversationFollowUp'
+import { resolveConversationalAction } from '@/lib/donna/conversation/donnaConversationActionRouter'
+import { DonnaConversationThreadIndicator } from '@/components/donna/DonnaConversationThreadIndicator'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -571,6 +577,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const lastEntityPlayerIdRef = useRef<string | null>(null)
   // Sprint 2291–2320 — DONNA Workflow Guidance: active workflow state (loaded from DB at panel open)
   const workflowStateRef = useRef<DonnaWorkflowState | null>(null)
+  // Mega Sprint 2501–2530 — DONNA Conversational OS V2: round-trip thread context
+  const conversationOperatingContextRef = useRef<ConversationOperatingContext | null>(null)
+  const [conversationThreadInfo, setConversationThreadInfo] = useState<{
+    entityLabel: string
+    recommendationTitle: string | null
+    turnCount: number
+  } | null>(null)
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -3837,9 +3850,51 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setGodModeOutput(null)
     setIsGodModeLoading(true)
     try {
-      // Sprint 2351 — Explicit step confirmation: advance explicit-signal steps when
-      // the Director confirms via typed input. Runs before building workflow guidance so
-      // the orchestrator sees the updated state and can respond to the new step.
+      // ── Mega Sprint 2501–2530: Deterministic fast paths (Parts 3 + 4) ──────────
+      // These run BEFORE the LLM. If a deterministic handler claims the input,
+      // we skip the server round-trip entirely — answer is immediate.
+      // Context is still updated locally via the pure updateConversationOperatingContext.
+      const convCtx = conversationOperatingContextRef.current
+
+      // Part 3 — Follow-up fast path: "Why?", "Should I worry?", "Anything else?", etc.
+      const followUp = resolveEntityFollowUp(text, convCtx)
+      if (followUp) {
+        const updatedCtx = updateConversationOperatingContext(convCtx, { userInput: text, entityMemoryContext: null })
+        conversationOperatingContextRef.current = updatedCtx
+        if (updatedCtx && isContextThreadActive(updatedCtx) && updatedCtx.currentEntityLabel) {
+          setConversationThreadInfo({ entityLabel: updatedCtx.currentEntityLabel, recommendationTitle: updatedCtx.currentRecommendationTitle, turnCount: updatedCtx.turnCount })
+        }
+        setGodModeOutput({ type: 'answer', text: followUp.responseText, safetyLevel: 'safe', requiresConfirmation: false, confidence: 'high', source: 'deterministic', ...(followUp.navigationHref ? { suggestedRoute: followUp.navigationHref } : {}) })
+        setGodModeHistory(prev => [...prev.slice(-8), { role: 'user' as const, content: text, timestamp: Date.now() }, { role: 'donna' as const, content: followUp.responseText, timestamp: Date.now(), outputType: 'answer' as const }])
+        setIsGodModeLoading(false)
+        setIsProcessingCommand(false)
+        return
+      }
+
+      // Part 4 — Action fast path: "Let's do it", "Open it", "Show me", "Review it"
+      const actionResult = resolveConversationalAction(text, convCtx)
+      if (actionResult) {
+        const updatedCtx = updateConversationOperatingContext(convCtx, { userInput: text, entityMemoryContext: null })
+        conversationOperatingContextRef.current = updatedCtx
+        if (updatedCtx && isContextThreadActive(updatedCtx) && updatedCtx.currentEntityLabel) {
+          setConversationThreadInfo({ entityLabel: updatedCtx.currentEntityLabel, recommendationTitle: updatedCtx.currentRecommendationTitle, turnCount: updatedCtx.turnCount })
+        }
+        const aOutType = actionResult.actionType === 'draft_recommendation' ? 'draft_proposed_action' as const
+          : actionResult.actionType === 'navigate_review' ? 'route_to_review' as const
+          : 'recommend_next_action' as const
+        setGodModeOutput({ type: aOutType, text: actionResult.responseText, safetyLevel: 'safe', requiresConfirmation: false, confidence: 'high', source: 'deterministic', ...(actionResult.navigationHref ? { suggestedRoute: actionResult.navigationHref } : {}) })
+        setGodModeHistory(prev => [...prev.slice(-8), { role: 'user' as const, content: text, timestamp: Date.now() }, { role: 'donna' as const, content: actionResult.responseText, timestamp: Date.now(), outputType: aOutType }])
+        if (actionResult.navigationHref && (actionResult.actionType === 'navigate_entity' || actionResult.actionType === 'navigate_create')) {
+          router.push(actionResult.navigationHref)
+        }
+        setIsGodModeLoading(false)
+        setIsProcessingCommand(false)
+        return
+      }
+
+      // ── Sprint 2351 — Explicit step confirmation ──────────────────────────────
+      // Advance explicit-signal steps when the Director confirms via typed input.
+      // Runs before building workflow guidance so the orchestrator sees the updated state.
       if (workflowStateRef.current?.status === 'active') {
         const signal = getCurrentStepSignal(workflowStateRef.current)
         if (signal === 'explicit' && detectStepConfirmation(text)) {
@@ -3876,9 +3931,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         academyMemoryContext:  memoryContextRef.current.academyMemoryContext ?? undefined,
         // Sprint 2291–2320 — inject active workflow guidance
         activeWorkflowGuidance,
+        // Mega Sprint 2501–2530 — round-trip conversation thread context
+        conversationOperatingContext: conversationOperatingContextRef.current ?? undefined,
       })
       if (result.ok && result.output) {
         setGodModeOutput(result.output)
+        // Mega Sprint 2501–2530 — persist updated conversation thread context
+        if (result.updatedConversationContext) {
+          conversationOperatingContextRef.current = result.updatedConversationContext
+          const uc = result.updatedConversationContext
+          if (isContextThreadActive(uc) && uc.currentEntityLabel) {
+            setConversationThreadInfo({ entityLabel: uc.currentEntityLabel, recommendationTitle: uc.currentRecommendationTitle, turnCount: uc.turnCount })
+          } else {
+            setConversationThreadInfo(null)
+          }
+        }
         setGodModeHistory(prev => [
           ...prev.slice(-8),
           { role: 'user' as const, content: text, timestamp: Date.now() },
@@ -4996,6 +5063,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             pathname={pathname}
             onPrompt={(text) => handleCommandSubmit(text)}
             onBrief={() => void handleFetchDailyBrief()}
+          />
+
+          {/* ── Mega Sprint 2501–2530 — Conversation thread indicator ── */}
+          <DonnaConversationThreadIndicator
+            ctx={conversationOperatingContextRef.current}
+            onClear={() => {
+              conversationOperatingContextRef.current = null
+              setConversationThreadInfo(null)
+            }}
           />
 
           {/* ── Sprint 1028 — Unified DONNA response renderer ── */}

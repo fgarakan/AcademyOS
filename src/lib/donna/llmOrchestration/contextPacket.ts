@@ -50,6 +50,11 @@ import {
   buildRecommendationContextSection,
   RECOMMENDATION_REASONING_INSTRUCTION,
 } from '../recommendation/donnaRecommendationContextSection'
+// Mega Sprint 2471–2500 — DONNA Conversational OS V1
+import type { ConversationOperatingContext } from '../conversation/donnaConversationOperatingContext'
+import { buildConversationThreadSection } from '../conversation/donnaConversationOperatingContext'
+import { buildNavigationContextSection } from '../conversation/donnaConversationNavigation'
+import { buildProactiveCOOSection } from '../conversation/donnaProactiveCOODialogue'
 
 // Sprint 2381–2410 — Daily brief opening format (Today page, first session of day)
 const DAILY_BRIEF_OPENING_SECTION = `## Daily Brief Opening (first session today — Today page)
@@ -116,6 +121,11 @@ export interface ContextPacketInput {
   isFirstSessionOfDay?: boolean
   // Sprint 2291–2320 — DONNA Workflow Guidance
   activeWorkflowGuidance?: FormattedMission | null
+  // Mega Sprint 2471–2500 — DONNA Conversational OS V1
+  /** Thread-level operating context: current entity, recommendation, topic, goal */
+  conversationOperatingContext?: ConversationOperatingContext | null
+  /** Pre-computed proactive COO section (built in donnaOrchestratorAction) */
+  proactiveCOOSection?: string
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -371,6 +381,8 @@ function buildSystemPrompt(
   entityMemoryContext?: EntityMemoryContext | null,
   academyMemoryContext?: AcademyMemoryContext | null,
   activeWorkflowGuidance?: FormattedMission | null,
+  conversationOperatingContext?: ConversationOperatingContext | null,
+  proactiveCOOSection?: string,
 ): string {
   const lines: string[] = []
 
@@ -447,6 +459,14 @@ function buildSystemPrompt(
         entityMemoryContext.entityLabel,
       ))
     }
+  }
+
+  // Mega Sprint 2471–2500 — Conversation Thread Memory (injected after entity memory)
+  if (conversationOperatingContext) {
+    const threadSection = buildConversationThreadSection(conversationOperatingContext)
+    if (threadSection) lines.push(threadSection)
+    const navSection = buildNavigationContextSection(conversationOperatingContext)
+    if (navSection) lines.push(navSection)
   }
 
   // Tier 4: Academy memory — inject only on first session of day (≤150 tokens)
@@ -662,6 +682,8 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     input.entityMemoryContext ?? null,
     input.academyMemoryContext ?? null,
     input.activeWorkflowGuidance ?? null,
+    input.conversationOperatingContext ?? null,
+    input.proactiveCOOSection,
   )
 
   // Sprint 1018 — inject curriculum strategy framing when user input or page is curriculum-strategic
@@ -681,6 +703,11 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
   // questions from the evidence in the context packet — not from hallucinated reasoning.
   if (input.entityMemoryContext?.typedRecommendations && input.entityMemoryContext.typedRecommendations.length > 0) {
     systemPrompt = systemPrompt + '\n\n' + RECOMMENDATION_REASONING_INSTRUCTION
+  }
+
+  // Mega Sprint 2471–2500 — inject proactive COO section when there is a signal to volunteer.
+  if (input.proactiveCOOSection) {
+    systemPrompt = systemPrompt + '\n\n' + input.proactiveCOOSection
   }
 
   // Token budget estimation: compact (<500 chars input+history), standard (500-1500), extended (>1500)
