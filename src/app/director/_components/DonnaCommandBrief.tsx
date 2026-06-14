@@ -1,15 +1,26 @@
+// Sprint 2381–2410 — updated: Academy Pulse bar + 3-priority greeting
 import Link from 'next/link'
 import { ArrowRight, ChevronRight, TrendingUp, TrendingDown, AlertCircle, Sparkles } from 'lucide-react'
 import { Card } from '@/components/ui'
 import type {
   DirectorOperatingBrief,
   AcademySituationAssessment,
-  SituationType,
-  SituationSeverity,
 } from '@/lib/donna/operations/operatingPartnerOutputContract'
 import type { TodayPriority } from '@/lib/donna/operations/whatShouldIDoTodayEngine'
 import type { DonnaActionTarget } from '@/lib/donna/operations/academyChangeEngine'
 import type { ReturningDirectorSummary } from '@/lib/donna/operations/directorDecisionEngine'
+import type { AcademyPulse } from '@/lib/donna/pulse/academyPulseEngine'
+import { AcademyPulseBar } from './AcademyPulseBar'
+
+// ── Priority item type ─────────────────────────────────────────────────────────
+
+export interface BriefPriorityItem {
+  title:   string
+  route:   string
+  urgency: string
+}
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   brief:                    DirectorOperatingBrief
@@ -22,76 +33,40 @@ interface Props {
   returningDirectorMode:    boolean
   returningDirectorSummary: ReturningDirectorSummary | null
   daysSinceLastVisit:       number | null
+  // Sprint 2381–2410 — Academy Pulse + 3-priority list
+  pulse:                    AcademyPulse
+  allPriorityItems:         BriefPriorityItem[]
 }
 
-// ── Situation metadata ────────────────────────────────────────────────────────
+// ── Urgency labels + colours ───────────────────────────────────────────────────
 
-const SITUATION_LABELS: Record<SituationType, string> = {
-  player_progression_bottleneck: 'Player Progression Bottleneck',
-  coach_execution_gap:           'Coach Execution Gap',
-  curriculum_gap:                'Curriculum Gap',
-  parent_retention_risk:         'Parent Retention Risk',
-  business_capacity_issue:       'Business Capacity Issue',
-  philosophy_drift:              'Philosophy Drift',
-  opportunity_to_double_down:    'Opportunity To Double Down',
-  assessment_debt:               'Assessment Debt',
-  communication_gap:             'Communication Gap',
-  unclear_cause_requires_review: 'Under Review',
+const URGENCY_LABEL: Record<string, string> = {
+  immediate:  'Act now',
+  this_week:  'This week',
+  this_month: 'This month',
 }
 
-const SEVERITY_DOT: Record<SituationSeverity, string> = {
-  critical: 'bg-status-red',
-  high:     'bg-status-orange',
-  medium:   'bg-status-blue',
-  low:      'bg-status-green',
+const URGENCY_COLOR: Record<string, string> = {
+  immediate:  'text-status-red',
+  this_week:  'text-status-orange',
+  this_month: 'text-status-blue',
 }
 
-const SEVERITY_TEXT: Record<SituationSeverity, string> = {
-  critical: 'text-status-red',
-  high:     'text-status-orange',
-  medium:   'text-status-blue',
-  low:      'text-status-green',
+// ── Brief confidence display ───────────────────────────────────────────────────
+
+const CONFIDENCE_CLS: Record<string, string> = {
+  reliable:    'bg-status-green/10 text-status-green',
+  provisional: 'bg-status-orange/10 text-status-orange',
 }
 
-function relativeTime(iso: string): string {
-  const diffMs  = Date.now() - new Date(iso).getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 2)   return 'just now'
-  if (diffMin < 60)  return `${diffMin}m ago`
-  const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24)   return `${diffHr}h ago`
-  return `${Math.floor(diffHr / 24)}d ago`
-}
+// ── Greeting ──────────────────────────────────────────────────────────────────
 
-// ── DONNA presence greeting ───────────────────────────────────────────────────
-
-function buildGreeting(
-  directorName: string,
-  situation:    AcademySituationAssessment,
-  brief:        DirectorOperatingBrief,
-): string {
+function buildGreeting(directorName: string, hasPriorities: boolean): string {
   const hour = new Date().getHours()
   const time = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const name = directorName ? `, ${directorName.split(' ')[0]}` : ''
-
-  const situationLine = buildSituationLine(situation)
-  const goodNews      = brief.wins.length > 0 ? `The good news: ${brief.wins[0].headline}.` : ''
-
-  return [`${time}${name}.`, situationLine, goodNews].filter(Boolean).join(' ')
-}
-
-function buildSituationLine(situation: AcademySituationAssessment): string {
-  const t: SituationType = situation.situationType
-  if (t === 'opportunity_to_double_down')    return "There's momentum to capitalise on today."
-  if (t === 'player_progression_bottleneck') return 'Player progression needs your attention.'
-  if (t === 'coach_execution_gap')           return 'The coaching execution gap requires action.'
-  if (t === 'curriculum_gap')                return 'Curriculum gaps are limiting player development.'
-  if (t === 'parent_retention_risk')         return 'Parent retention risk is elevated right now.'
-  if (t === 'business_capacity_issue')       return 'Business capacity needs attention today.'
-  if (t === 'philosophy_drift')              return 'The academy is drifting from its stated identity.'
-  if (t === 'assessment_debt')               return 'Assessment debt is accumulating.'
-  if (t === 'communication_gap')             return 'The approval queue needs your attention.'
-  return 'DONNA is monitoring the academy situation.'
+  if (hasPriorities) return `${time}${name}. Here are the 3 things that matter today.`
+  return `${time}${name}. Here is your academy overview.`
 }
 
 // ── CTA helpers ───────────────────────────────────────────────────────────────
@@ -118,6 +93,16 @@ function changeTextColor(type: 'positive' | 'negative' | 'attention'): string {
   return 'text-status-orange'
 }
 
+function relativeTime(iso: string): string {
+  const diffMs  = Date.now() - new Date(iso).getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 2)   return 'just now'
+  if (diffMin < 60)  return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24)   return `${diffHr}h ago`
+  return `${Math.floor(diffHr / 24)}d ago`
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DonnaCommandBrief({
@@ -131,14 +116,10 @@ export function DonnaCommandBrief({
   returningDirectorMode,
   returningDirectorSummary,
   daysSinceLastVisit,
+  pulse,
+  allPriorityItems,
 }: Props) {
-  const isOpportunity = situation.situationType === 'opportunity_to_double_down'
-  const dotClass      = isOpportunity ? 'bg-lime' : SEVERITY_DOT[situation.severity]
-  const textClass     = isOpportunity ? 'text-lime' : SEVERITY_TEXT[situation.severity]
-
-  const confidenceCls = brief.confidence === 'reliable'
-    ? 'bg-status-green/10 text-status-green'
-    : 'bg-status-orange/10 text-status-orange'
+  const confidenceCls   = CONFIDENCE_CLS[brief.confidence] ?? CONFIDENCE_CLS.provisional
   const confidenceLabel = brief.confidence === 'reliable' ? 'Reliable' : 'Provisional'
 
   const href  = ctaHref(primaryTarget, returningDirectorSummary)
@@ -160,30 +141,18 @@ export function DonnaCommandBrief({
   return (
     <Card className="p-6 space-y-5">
 
-      {/* ── Header: situation or return state ─────────────────────────────── */}
+      {/* ── Header: pulse status | confidence badge + time ─────────────────── */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          {returningDirectorMode ? (
-            <>
-              <Sparkles className="w-4 h-4 text-lime shrink-0" />
-              <span className="text-sm font-semibold text-lime">
-                {daysSinceLastVisit} day{daysSinceLastVisit !== 1 ? 's' : ''} away
-              </span>
-              <span className="text-border mx-1 hidden sm:block">·</span>
-              <span className={`w-2 h-2 rounded-full shrink-0 hidden sm:block ${dotClass}`} />
-              <span className={`text-sm font-medium hidden sm:block ${textClass}`}>
-                {SITUATION_LABELS[situation.situationType]}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
-              <span className={`text-sm font-semibold ${textClass}`}>
-                {SITUATION_LABELS[situation.situationType]}
-              </span>
-            </>
-          )}
-        </div>
+        {returningDirectorMode ? (
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="w-4 h-4 text-lime shrink-0" />
+            <span className="text-sm font-semibold text-lime">
+              {daysSinceLastVisit} day{daysSinceLastVisit !== 1 ? 's' : ''} away
+            </span>
+          </div>
+        ) : (
+          <AcademyPulseBar pulse={pulse} />
+        )}
 
         <div className="flex items-center gap-2 shrink-0">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${confidenceCls}`}>
@@ -241,10 +210,61 @@ export function DonnaCommandBrief({
           </div>
         </div>
       ) : (
-        /* Normal greeting */
-        <p className="text-text-primary text-2xl leading-snug font-medium">
-          {buildGreeting(directorName, situation, brief)}
-        </p>
+        /* ── Normal mode: greeting + 3-priority list ── */
+        <div className="space-y-4">
+          <p className="text-text-primary text-2xl leading-snug font-medium">
+            {buildGreeting(directorName, allPriorityItems.length > 0)}
+          </p>
+
+          {/* Pulse summary line (brief, director-language) */}
+          <p className="text-sm text-text-secondary leading-relaxed">
+            {pulse.pulseSummary}
+          </p>
+
+          {/* Academy Pulse — top drivers (Part 5: Status + Summary + Drivers) */}
+          {pulse.topDrivers.length > 0 && (
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+              {pulse.topDrivers.map((driver, i) => (
+                <div key={i} className="flex items-center gap-1.5 min-w-0">
+                  <span className={`text-xs font-bold shrink-0 ${
+                    driver.severity === 'critical' || driver.severity === 'high'
+                      ? 'text-status-orange'
+                      : 'text-status-green'
+                  }`}>
+                    {driver.severity === 'critical' || driver.severity === 'high' ? '⚠' : '✓'}
+                  </span>
+                  <span className="text-xs text-text-secondary">{driver.headline}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Top 3 priorities — scannable, one line each */}
+          {allPriorityItems.length > 0 && (
+            <div className="space-y-2.5 pt-1">
+              {allPriorityItems.map((item, i) => (
+                <div key={i} className="flex items-center gap-3 min-w-0">
+                  <span className="w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-text-muted shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 text-sm text-text-primary leading-snug min-w-0 truncate">
+                    {item.title}
+                  </span>
+                  <span className={`text-xs font-medium shrink-0 ${URGENCY_COLOR[item.urgency] ?? 'text-text-muted'}`}>
+                    {URGENCY_LABEL[item.urgency] ?? ''}
+                  </span>
+                  <Link
+                    href={item.route}
+                    aria-label={`Go to: ${item.title}`}
+                    className="text-text-muted hover:text-lime transition-colors shrink-0"
+                  >
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ── Primary CTA ───────────────────────────────────────────────────── */}

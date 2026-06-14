@@ -23,12 +23,12 @@ import { buildDraftsFromDecisions, buildWorkQueueSummary } from '@/lib/donna/act
 
 // ── Command Center components ───────────────────────────────────────────────
 import { DonnaCommandBrief }        from './_components/DonnaCommandBrief'
+import type { BriefPriorityItem }   from './_components/DonnaCommandBrief'
 import { DonnaAlertsAndMomentum }   from './_components/DonnaAlertsAndMomentum'
 import { DirectorDecisionCenter }   from './_components/DirectorDecisionCenter'
-import { DonnaQuickActions }        from './_components/DonnaQuickActions'
 import { WhatCanWaitPanel }         from './_components/WhatCanWaitPanel'
-import { WhatChangedPanel }         from './_components/WhatChangedPanel'
 import { DonnaCOOPanel }            from './_components/DonnaCOOPanel'
+import { PlayersNeedingAttentionPanel } from './_components/PlayersNeedingAttentionPanel'
 
 // ── Legacy setup card (still used for empty academy onboarding) ─────────────
 import { TodaySetupCard } from './_components/TodaySetupCard'
@@ -37,6 +37,10 @@ import { ActiveMissionCard } from './_components/ActiveMissionCard'
 import { formatActiveMission } from '@/lib/donna/workflow/donnaMissionFormatter'
 import type { DonnaWorkflowState } from '@/lib/donna/workflow/donnaWorkflowState'
 import { buildTodayBrief } from '@/lib/donna/today/todayBriefEngine'
+// ── Sprint 2381–2410 — DONNA Daily Brief + Academy Pulse V1 ─────────────────
+import { buildAcademyPulse }         from '@/lib/donna/pulse/academyPulseEngine'
+import { loadPriorSessionSummaries } from '@/lib/donna/memory/donnaCrossSessionMemory'
+import { SinceYourLastVisitPanel }   from './_components/SinceYourLastVisitPanel'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -591,6 +595,160 @@ export default async function DirectorCommandCenter() {
   const actionDrafts     = buildDraftsFromDecisions(decisionContext.decisions)
   const workQueueSummary = buildWorkQueueSummary(actionDrafts)
 
+  // ── Sprint 2381–2410 — Academy Pulse + Session Memory ────────────────────
+  const pulse = buildAcademyPulse(situation, brief, attentionReport)
+
+  const allPriorityItems: BriefPriorityItem[] = todayResult.priorities.slice(0, 3).map((p, i) => ({
+    title:   p.title,
+    route:   actionTargets[i]?.route ?? '/director/review',
+    urgency: p.urgency,
+  }))
+
+  // Load Tier 1 session memory for "Since Your Last Visit" panel
+  // Non-fatal: if this fails, priorSessionContext stays null and the panel doesn't render
+  let priorSessionContext = null
+  try {
+    priorSessionContext = await loadPriorSessionSummaries(supabase, user.id, academyId)
+  } catch {
+    // silent — optional enrichment only
+  }
+
+  // ── Sprint 2381B–2410B — Who Needs Attention (ranked) ────────────────────────
+  // Ranking tiers: 1=High Risk · 2=Stalled Progression · 3=Overdue Assessment
+  //                4=Advancement Ready · 5=General Attention
+  // #1 player = "If the Director only looks at one player today, who should it be?"
+
+  const playerNameMap = new Map<string, string>()
+  for (const p of players) {
+    if (p.player_id && p.full_name) {
+      playerNameMap.set(p.player_id, p.full_name)
+    }
+  }
+
+  interface PlayerAttentionCandidate {
+    playerId: string
+    name: string
+    reason: string
+    recommendedAction: string
+    rankTier: number
+    rankScore: number
+    route: string
+  }
+  const attentionCandidates: PlayerAttentionCandidate[] = []
+  const seenAttentionIds = new Set<string>()
+
+  // Tier 1: High Risk — player is on hold (explicit director action required)
+  for (const p of players) {
+    if (!p.player_id || !p.full_name) continue
+    if (p.player_status !== 'on_hold') continue
+    if (seenAttentionIds.has(p.player_id)) continue
+    seenAttentionIds.add(p.player_id)
+    attentionCandidates.push({
+      playerId: p.player_id,
+      name: p.full_name,
+      reason: 'Player is on hold — requires director decision',
+      recommendedAction: 'Review player status and determine path forward',
+      rankTier: 1,
+      rankScore: 100,
+      route: `/director/players/${p.player_id}`,
+    })
+  }
+
+  // Tier 2: Stalled Progression — enrolled > 180 days, not advancement eligible
+  // Sort by worst stall first (most days = most urgent)
+  const stalledWithDays = stalledRows
+    .map(r => ({
+      player_id: r.player_id,
+      stallDays: r.enrolled_at
+        ? Math.floor((now.getTime() - new Date(r.enrolled_at).getTime()) / 86400000)
+        : 180,
+    }))
+    .sort((a, b) => b.stallDays - a.stallDays)
+
+  for (const s of stalledWithDays) {
+    if (!s.player_id) continue
+    const name = playerNameMap.get(s.player_id)
+    if (!name) continue
+    if (seenAttentionIds.has(s.player_id)) continue
+    seenAttentionIds.add(s.player_id)
+    attentionCandidates.push({
+      playerId: s.player_id,
+      name,
+      reason: `Progress stalled ${s.stallDays} days`,
+      recommendedAction: 'Review advancement readiness and set next milestone',
+      rankTier: 2,
+      rankScore: s.stallDays,
+      route: `/director/players/${s.player_id}`,
+    })
+  }
+
+  // Tier 3: Overdue Assessment — sorted by days_overdue descending
+  const overdueByDays = reassessmentPipeline
+    .filter(r => r.urgency === 'overdue')
+    .sort((a, b) => (b.days_overdue ?? 0) - (a.days_overdue ?? 0))
+
+  for (const r of overdueByDays) {
+    if (!r.player_id || !r.full_name) continue
+    if (seenAttentionIds.has(r.player_id)) continue
+    seenAttentionIds.add(r.player_id)
+    const days = typeof r.days_overdue === 'number' && r.days_overdue > 0 ? r.days_overdue : null
+    attentionCandidates.push({
+      playerId: r.player_id,
+      name: r.full_name,
+      reason: days ? `Assessment ${days} days overdue` : 'Assessment overdue',
+      recommendedAction: 'Schedule reassessment and update curriculum level',
+      rankTier: 3,
+      rankScore: r.days_overdue ?? 0,
+      route: `/director/players/${r.player_id}`,
+    })
+  }
+
+  // Tier 4: Advancement Ready — promotion_ready on active players
+  for (const p of activePl) {
+    if (!p.player_id || !p.full_name) continue
+    if (!p.promotion_ready) continue
+    if (seenAttentionIds.has(p.player_id)) continue
+    seenAttentionIds.add(p.player_id)
+    attentionCandidates.push({
+      playerId: p.player_id,
+      name: p.full_name,
+      reason: 'Ready for level advancement',
+      recommendedAction: 'Review advancement criteria and assign next curriculum level',
+      rankTier: 4,
+      rankScore: 50,
+      route: `/director/players/${p.player_id}`,
+    })
+  }
+
+  // Tier 5: General Attention — reassessment_due status
+  for (const p of players) {
+    if (!p.player_id || !p.full_name) continue
+    if (p.player_status !== 'reassessment_due') continue
+    if (seenAttentionIds.has(p.player_id)) continue
+    seenAttentionIds.add(p.player_id)
+    attentionCandidates.push({
+      playerId: p.player_id,
+      name: p.full_name,
+      reason: 'Reassessment is due',
+      recommendedAction: 'Complete scheduled reassessment',
+      rankTier: 5,
+      rankScore: 25,
+      route: `/director/players/${p.player_id}`,
+    })
+  }
+
+  // Sort: tier first, then rankScore descending within tier → take top 3
+  const playersNeedingAttention = attentionCandidates
+    .sort((a, b) =>
+      a.rankTier !== b.rankTier
+        ? a.rankTier - b.rankTier
+        : b.rankScore - a.rankScore,
+    )
+    .slice(0, 3)
+    .map(({ playerId, name, reason, recommendedAction, route }) => ({
+      playerId, name, reason, recommendedAction, route,
+    }))
+
   // ── Legacy brief (for setup card only) ───────────────────────────────────
   const legacyBrief = buildTodayBrief({
     isAcademyLive,
@@ -638,9 +796,12 @@ export default async function DirectorCommandCenter() {
             <ActiveMissionCard mission={activeMission} />
           )}
 
+          {/* ── Since Your Last Visit — session memory panel (Sprint 2381) ─── */}
+          <SinceYourLastVisitPanel priorSessionContext={priorSessionContext} />
+
           {/* ── DONNA Command Brief ─────────────────────────────────────────
-              Unified hero: situation + greeting + returning-director context
-              + primary CTA + work queue count link. ───────────────────────── */}
+              Unified hero: academy pulse + "3 things that matter" greeting
+              + priority list + primary CTA + work queue count link. ───────── */}
           <DonnaCommandBrief
             brief={brief}
             directorName={directorDisplayName}
@@ -652,27 +813,46 @@ export default async function DirectorCommandCenter() {
             returningDirectorMode={decisionContext.returningDirectorMode}
             returningDirectorSummary={decisionContext.returningDirectorSummary}
             daysSinceLastVisit={decisionContext.daysSinceLastVisit}
+            pulse={pulse}
+            allPriorityItems={allPriorityItems}
           />
 
-          {/* ── Quick Actions — primary execution surface ─────────────────
-              Positioned above decisions: director acts here first,
-              reads context in decisions below. ──────────────────────── */}
-          <DonnaQuickActions
-            situationType={situation.situationType}
-            workQueuePendingCount={workQueueSummary.totalPending}
-            alertCount={brief.alerts.length}
-          />
+          {/* ── Players Needing Attention — WHO + WHY + NEXT ACTION ────────
+              Ranked: High Risk → Stalled → Overdue Assessment →
+              Advancement Ready → General. #1 = highest urgency today. */}
+          <PlayersNeedingAttentionPanel players={playersNeedingAttention} />
 
-          {/* ── Top 3 Decisions — context + why ──────────────────────────── */}
-          <DirectorDecisionCenter decisions={decisionContext.decisions} />
+          {/* ── Top Decisions — evidence below fold (collapsed) ──────────── */}
+          <details className="rounded-xl border border-border overflow-hidden">
+            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-raised/50 transition-colors list-none">
+              <span className="text-sm font-medium text-text-secondary">Top Decisions</span>
+              <span className="label-xs text-text-muted">
+                {decisionContext.decisions.length} item{decisionContext.decisions.length !== 1 ? 's' : ''} · expand
+              </span>
+            </summary>
+            <div className="border-t border-border p-5">
+              <DirectorDecisionCenter decisions={decisionContext.decisions} />
+            </div>
+          </details>
 
-          {/* ── Alerts + Momentum ─────────────────────────────────────────── */}
-          <DonnaAlertsAndMomentum alerts={brief.alerts} wins={brief.wins} />
+          {/* ── Academy Signals — alerts + wins (collapsed) ──────────────── */}
+          {(brief.alerts.length > 0 || brief.wins.length > 0) && (
+            <details className="rounded-xl border border-border overflow-hidden">
+              <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-raised/50 transition-colors list-none">
+                <span className="text-sm font-medium text-text-secondary">Academy Signals</span>
+                <span className="label-xs text-text-muted">
+                  {brief.alerts.length > 0
+                    ? `${brief.alerts.length} alert${brief.alerts.length !== 1 ? 's' : ''} · expand`
+                    : 'expand'}
+                </span>
+              </summary>
+              <div className="border-t border-border">
+                <DonnaAlertsAndMomentum alerts={brief.alerts} wins={brief.wins} />
+              </div>
+            </details>
+          )}
 
-          {/* ── What Changed ─────────────────────────────────────────────── */}
-          <WhatChangedPanel whatChanged={whatChanged} />
-
-          {/* ── What Can Wait ─────────────────────────────────────────────── */}
+          {/* ── What Can Wait — DONNA deferrals (already collapsed) ──────── */}
           <WhatCanWaitPanel waitDecisions={waitDecisions} />
 
           {/* ── DONNA Strategic Questions — collapsed by default ──────────── */}

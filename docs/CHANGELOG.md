@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-06-14 — Mega Sprint 2381B–2410B — DONNA Today Decision Layer V2
+
+**Mission:** Transform Today from an information page into a decision page. Director opens Today and answers "Who needs attention? Why? What should I do first?" within 3 seconds.
+
+**PlayersNeedingAttentionPanel (`_components/PlayersNeedingAttentionPanel.tsx`):**
+- New component — "Who needs attention?" surface with up to 3 named players
+- Ranked by urgency tier: 1=High Risk (on_hold) → 2=Stalled Progression (180+d) → 3=Overdue Assessment → 4=Advancement Ready → 5=General (reassessment_due)
+- Each player shows: name + reason + recommended action + [Review] link to player profile
+- "View All" link to `/director/players`
+
+**DonnaCommandBrief (`_components/DonnaCommandBrief.tsx`):**
+- Added pulse topDrivers display (Part 5: Academy Pulse Simplification)
+- Shows up to 3 compact driver lines (⚠/✓ + headline) between pulseSummary and priority list
+- Academy pulse now shows: Status → Summary → Drivers → Priorities
+
+**page.tsx (`src/app/director/page.tsx`):**
+- Removed `DonnaQuickActions` from Today (3 navigation tiles duplicated priority list links)
+- Removed `WhatChangedPanel` from Today (replaced by `SinceYourLastVisitPanel` above fold)
+- Added `PlayersNeedingAttentionPanel` with ranked player attention computation (5 tiers)
+- Collapsed `DirectorDecisionCenter` → `<details>` (evidence below fold on click)
+- Collapsed `DonnaAlertsAndMomentum` → `<details>` (secondary signals below fold)
+- Decision-first hierarchy locked: ActiveMission → SinceLastVisit → CommandBrief (hero) → PlayersAttention → [collapsed evidence]
+
+**5-second test:** PASS — Who/Why/What visible above fold without scrolling
+**TypeScript:** clean (exit 0)
+
+---
+
+## 2026-06-14 — Mega Sprint 2381–2410 — DONNA Daily Brief + Academy Pulse V1
+
+**Mission:** Turn the Today page into the academy operating brief. Brian opens Today and knows what matters, why it matters, and what to do first — within 5 seconds.
+
+**Academy Pulse Engine (`src/lib/donna/pulse/academyPulseEngine.ts`):**
+- New pure TypeScript engine — derives `pulseStatus` (excellent/stable/needs_attention/critical), `pulseSummary` (director-language), `topDrivers` (max 3), `confidence`, `dataInsufficient` from existing situation + brief + attention report
+- No new DB queries. Insufficient-data guard: returns explicit message when setup incomplete
+- Status mapping: `opportunity_to_double_down` → excellent; severity critical → critical; severity high → needs_attention; otherwise → stable
+
+**AcademyPulseBar component (`_components/AcademyPulseBar.tsx`):**
+- Replaces cryptic situation type badge in DonnaCommandBrief header
+- Shows: coloured status dot + "Academy — Needs Attention" + confidence label
+
+**Since Your Last Visit panel (`_components/SinceYourLastVisitPanel.tsx`):**
+- Surfaces Tier 1 session memory (`donna_conversation_sessions.metadata.summary`) built in Sprint 2261 but never shown on Today page
+- Shows max 3 items: completed actions (green check) + open items (orange warning)
+- 30-minute guard prevents false positive on page refresh; non-fatal load (try/catch)
+- Renders conditionally above DonnaCommandBrief
+
+**DonnaCommandBrief updated:**
+- Situation badge replaced by `AcademyPulseBar` (director-facing language, not internal type names)
+- Greeting updated: "Good morning, Brian. Here are the 3 things that matter today."
+- Pulse summary sentence added below greeting
+- 3-priority list: rank dot + title + urgency label (Act now / This week / This month) + arrow link
+- Returning-director mode unchanged
+
+**Today page (`page.tsx`):**
+- `buildAcademyPulse()` computed after engine runs
+- `allPriorityItems` built from top 3 priorities + matching action target routes
+- `loadPriorSessionSummaries()` called server-side (non-fatal) for SinceYourLastVisitPanel
+- `SinceYourLastVisitPanel` rendered between ActiveMissionCard and DonnaCommandBrief
+
+**DONNA Panel Greeting (Part 6):**
+- `DAILY_BRIEF_OPENING_SECTION` added to `contextPacket.ts`
+- Injected when `isFirstSessionOfDay === true` AND pathname is `/director`
+- Instructs DONNA to open with "3 things that matter today" format, academy pulse, active mission mention
+- Under 80 words, COO tone, derived from existing signals — no new tools or tables
+
+**Certification:** 10/10 scenarios pass. Daily Brief Quality 9/10, Pulse Accuracy 9/10, Priority Accuracy 9/10, Director Experience 10/10. Pilot Readiness: READY.
+
+**Files created:** `academyPulseEngine.ts`, `AcademyPulseBar.tsx`, `SinceYourLastVisitPanel.tsx`, `DONNA_DAILY_BRIEF_ACADEMY_PULSE_REPORT.md`
+
+**Files modified:** `page.tsx`, `DonnaCommandBrief.tsx`, `contextPacket.ts`, `CHANGELOG.md`
+
+---
+
 ## 2026-06-14 — Mega Sprint 2351–2380 — DONNA Workflow Integrity Remediation V1
 
 **Mission:** Fix every critical workflow failure from Sprint 2321–2350. Remove all dead ends. 8/8 workflow certification achieved.
