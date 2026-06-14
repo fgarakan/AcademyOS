@@ -42,6 +42,14 @@ import { buildAcademyPulse }         from '@/lib/donna/pulse/academyPulseEngine'
 import { loadPriorSessionSummaries } from '@/lib/donna/memory/donnaCrossSessionMemory'
 import { SinceYourLastVisitPanel }   from './_components/SinceYourLastVisitPanel'
 
+// ── Mega Sprint 2591–2620 — DONNA Proactive COO + Overnight Intelligence V1 ──
+import type { AcademyDailySnapshot, AcademyHealthSignal } from '@/lib/donna/coo/academyDailySnapshot'
+import { buildMorningBrief }    from '@/lib/donna/coo/morningBriefEngine'
+import { buildProactiveAlerts } from '@/lib/donna/coo/donnaProactiveAlerts'
+import { COOHeroBanner }        from './_components/COOHeroBanner'
+import { AcademyPulseTimeline } from './_components/AcademyPulseTimeline'
+import type { PulseTimelineWindow } from './_components/AcademyPulseTimeline'
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function isPending(status: string | null): boolean {
@@ -598,6 +606,80 @@ export default async function DirectorCommandCenter() {
   // ── Sprint 2381–2410 — Academy Pulse + Session Memory ────────────────────
   const pulse = buildAcademyPulse(situation, brief, attentionReport)
 
+  // ── Mega Sprint 2591–2620 — DONNA Proactive COO ──────────────────────────
+  const directorFirstName = directorDisplayName.split(' ')[0] ?? directorDisplayName
+
+  function pulseToHealthSignal(ps: typeof pulse.pulseStatus): AcademyHealthSignal {
+    if (ps === 'excellent')       return 'healthy'
+    if (ps === 'stable')          return 'stable'
+    if (ps === 'needs_attention') return 'needs_attention'
+    if (ps === 'critical')        return 'critical'
+    return 'no_data'
+  }
+
+  const cooSnapshot: AcademyDailySnapshot = {
+    generatedAt:         new Date().toISOString(),
+    healthSignal:        pulse.dataInsufficient ? 'no_data' : pulseToHealthSignal(pulse.pulseStatus),
+    healthSummary:       pulse.pulseSummary,
+    topPriorities:       todayResult.priorities.slice(0, 3).map((p, i) => ({
+      title:   p.title,
+      urgency: (p.urgency === 'immediate' ? 'critical'
+              : p.urgency === 'this_week'  ? 'medium'
+              : 'low') as 'critical' | 'high' | 'medium' | 'low',
+      route:   actionTargets[i]?.route ?? null,
+      ageDays: oldestPendingReviewAgeDays ?? 0,
+    })),
+    topRisk:             brief.alerts[0]
+      ? { label: brief.alerts[0].headline, route: '/director/review' }
+      : null,
+    topOpportunity:      brief.wins[0]
+      ? { label: brief.wins[0].headline, route: null }
+      : null,
+    attentionCount,
+    advancementCount:    advancementReadyCount,
+    parentFollowupCount: parentUpdatesPendingApproval,
+    pendingActionsCount: totalPendingReviews,
+    whatChanged,
+    directorFirstName,
+  }
+
+  const morningBrief    = buildMorningBrief(cooSnapshot)
+  const proactiveAlerts = buildProactiveAlerts(cooSnapshot)
+
+  // Pulse timeline: yesterday (inferred from changes), today (live), tomorrow (projected)
+  const hasNegativeChanges = whatChanged.changes.some(c => c.changeType === 'negative')
+  const hasPositiveChanges = whatChanged.changes.some(c => c.changeType === 'positive')
+  const yesterdaySignal: AcademyHealthSignal = hasNegativeChanges ? 'needs_attention' : hasPositiveChanges ? 'healthy' : cooSnapshot.healthSignal
+  const tomorrowSignal: AcademyHealthSignal  =
+    cooSnapshot.healthSignal === 'critical'        ? 'critical' :
+    cooSnapshot.healthSignal === 'needs_attention' ? 'stable'   :
+    cooSnapshot.healthSignal
+
+  const pulseYesterday: PulseTimelineWindow = {
+    label:     'Yesterday',
+    signal:    yesterdaySignal,
+    summary:   whatChanged.hasChanges
+      ? `${whatChanged.changes.length} change${whatChanged.changes.length !== 1 ? 's' : ''} detected`
+      : 'No significant changes logged',
+    itemCount: whatChanged.changes.length,
+  }
+  const pulseToday: PulseTimelineWindow = {
+    label:     'Today',
+    signal:    cooSnapshot.healthSignal,
+    summary:   cooSnapshot.healthSummary,
+    itemCount: totalPendingReviews,
+  }
+  const pulseTomorrow: PulseTimelineWindow = {
+    label:     'Tomorrow',
+    signal:    tomorrowSignal,
+    summary:   tomorrowSignal === 'critical'
+      ? 'Action required before it escalates further'
+      : cooSnapshot.healthSignal === 'needs_attention'
+        ? 'Projected stable if today\'s items are reviewed'
+        : 'On track — continue current pace',
+    itemCount: 0,
+  }
+
   const allPriorityItems: BriefPriorityItem[] = todayResult.priorities.slice(0, 3).map((p, i) => ({
     title:   p.title,
     route:   actionTargets[i]?.route ?? '/director/review',
@@ -794,6 +876,22 @@ export default async function DirectorCommandCenter() {
           {/* ── Active Mission Card — above fold when Director has a mission ─── */}
           {activeMission && (
             <ActiveMissionCard mission={activeMission} />
+          )}
+
+          {/* ── DONNA COO Hero — proactive morning brief (Sprint 2591–2620) ── */}
+          <COOHeroBanner
+            brief={morningBrief}
+            alerts={proactiveAlerts}
+            healthSignal={cooSnapshot.healthSignal}
+          />
+
+          {/* ── Academy Pulse Timeline — Yesterday / Today / Tomorrow ─────── */}
+          {!pulse.dataInsufficient && (
+            <AcademyPulseTimeline
+              yesterday={pulseYesterday}
+              today={pulseToday}
+              tomorrow={pulseTomorrow}
+            />
           )}
 
           {/* ── Since Your Last Visit — session memory panel (Sprint 2381) ─── */}
