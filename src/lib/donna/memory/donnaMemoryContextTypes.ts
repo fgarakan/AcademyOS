@@ -43,18 +43,40 @@ export interface DecisionMemoryContext {
 
 // ── Tier 3: Entity Memory ─────────────────────────────────────────────────────
 
+// Mega Sprint 2441–2470 — typed recommendation for entity context injection.
+// Compact version derived from player_recommendations DB rows via donnaRecommendationLoader.
+// Used in EntityMemoryContext.typedRecommendations when DB-backed data is available.
+export interface EntityRecommendation {
+  id: string
+  title: string
+  recommendationType: string
+  lifecycleStatus: string          // human-readable: 'Pending Review' | 'Approved' | 'In Progress' | etc.
+  confidenceLabel: 'High' | 'Medium' | 'Low'
+  confidenceScore: number          // 0–1
+  urgency: string
+  description: string | null
+  riskIfIgnored: string
+  expectedImpact: string
+  owner: 'director' | 'head_coach' | 'coach'
+  reviewDate: string | null
+  isOverdue: boolean
+  followUpRequired: boolean
+}
+
 export interface EntityMemoryContext {
   entityType: 'player' | 'group' | 'session' | 'curriculum_level' | 'coach' | 'parent' | 'template' | 'academy'
   entityLabel: string
   operatingSummary: string | null  // from donna_entity_summaries (kind: operating)
   activePriorities: string[]       // top 2–3 signals/metrics for this entity
   recentSignals: string[]          // last 3 signals (type + severity label)
-  activeRecommendations: string[]  // urgent/immediate recommendations for this entity
+  activeRecommendations: string[]  // urgent/immediate recommendations for this entity (plain text fallback)
   recentDecisions: string[]        // last 3 proposed_actions for this entity
   lastDiscussedAt: string | null   // when DONNA last discussed this entity
   // Mega Sprint 2411–2440 — Entity Intelligence V1
   healthScore?: number             // 0–10 computed from entity signals
   entityRoute?: string | null      // navigation target where applicable
+  // Mega Sprint 2441–2470 — Recommendation Reasoning V1
+  typedRecommendations?: EntityRecommendation[]  // DB-backed typed recommendations (players only in V1)
 }
 
 // ── Tier 4: Academy Memory ────────────────────────────────────────────────────

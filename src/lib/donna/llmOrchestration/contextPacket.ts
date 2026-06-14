@@ -45,6 +45,11 @@ import type {
 // Sprint 2291–2320 — DONNA Workflow Guidance
 import type { FormattedMission } from '../workflow/donnaMissionFormatter'
 import { buildWorkflowPromptSection } from '../workflow/donnaMissionFormatter'
+// Mega Sprint 2441–2470 — Recommendation Reasoning V1
+import {
+  buildRecommendationContextSection,
+  RECOMMENDATION_REASONING_INSTRUCTION,
+} from '../recommendation/donnaRecommendationContextSection'
 
 // Sprint 2381–2410 — Daily brief opening format (Today page, first session of day)
 const DAILY_BRIEF_OPENING_SECTION = `## Daily Brief Opening (first session today — Today page)
@@ -435,6 +440,13 @@ function buildSystemPrompt(
     if (entityMemoryContext.entityRoute) {
       lines.push(`Navigate: ${entityMemoryContext.entityRoute}`)
     }
+    // Mega Sprint 2441–2470 — Recommendation Reasoning V1: inject typed recommendation data
+    if (entityMemoryContext.typedRecommendations && entityMemoryContext.typedRecommendations.length > 0) {
+      lines.push(buildRecommendationContextSection(
+        entityMemoryContext.typedRecommendations,
+        entityMemoryContext.entityLabel,
+      ))
+    }
   }
 
   // Tier 4: Academy memory — inject only on first session of day (≤150 tokens)
@@ -662,6 +674,13 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
   // Tells DONNA to lead with "3 things that matter today" format when the director first opens the panel.
   if (input.isFirstSessionOfDay && (pathname === '/director' || pathname === '/director/today')) {
     systemPrompt = systemPrompt + '\n\n' + DAILY_BRIEF_OPENING_SECTION
+  }
+
+  // Mega Sprint 2441–2470 — inject recommendation reasoning instruction when typed recommendations are loaded.
+  // Tells DONNA how to answer "why?", "how confident?", "what if ignored?", "who should act?", "when to review?"
+  // questions from the evidence in the context packet — not from hallucinated reasoning.
+  if (input.entityMemoryContext?.typedRecommendations && input.entityMemoryContext.typedRecommendations.length > 0) {
+    systemPrompt = systemPrompt + '\n\n' + RECOMMENDATION_REASONING_INSTRUCTION
   }
 
   // Token budget estimation: compact (<500 chars input+history), standard (500-1500), extended (>1500)

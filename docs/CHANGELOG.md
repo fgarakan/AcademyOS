@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-06-14 — Mega Sprint 2441–2470 — DONNA Recommendation Reasoning + Follow-Up V1
+
+**Mission:** Transform DONNA from an intelligence system into a recommendation system. Director can ask "Why are you recommending this?", "How confident are you?", "What if we ignore it?", "Who should act?", "When should we review?" — and DONNA answers from real DB evidence, not hallucination.
+
+**New: `src/lib/donna/recommendation/` module (4 files):**
+- `donnaRecommendationLifecycle.ts` — maps `recommendation_status` DB enum to director-facing lifecycle stages; `confidenceScoreToLabel`, `recommendationOwner`, `expectedImpactForType`, `riskIfIgnoredForType`
+- `donnaRecommendationLoader.ts` — DB loader for `player_recommendations`; `loadPlayerRecommendations`, `loadStaleRecommendations`, `loadAcademyRecommendationOverview`; full typed `TypedRecommendation` with confidence, lifecycle, risk, owner, reviewDate
+- `donnaRecommendationExplainer.ts` — bridges `TypedRecommendation` → `EvidencedRecommendation`; wires existing evidence engine for pre-computed follow-up answers on all 9 question types
+- `donnaRecommendationContextSection.ts` — system prompt section builder; `buildRecommendationContextSection(EntityRecommendation[], entityLabel)` + `RECOMMENDATION_REASONING_INSTRUCTION` static instruction
+
+**`donnaMemoryContextTypes.ts` (modified):**
+- Added `EntityRecommendation` interface: compact type for DB-backed recommendations in entity context
+- Added `typedRecommendations?: EntityRecommendation[]` to `EntityMemoryContext`
+
+**`donnaEntityIntelligence.ts` (modified):**
+- `loadPlayerEntityContext` now calls `loadPlayerRecommendations` (5th DB query)
+- Returns `typedRecommendations: EntityRecommendation[]` in player entity context
+- DB recommendations take priority over signal-derived strings in `activeRecommendations`
+
+**`contextPacket.ts` (modified):**
+- Imports `buildRecommendationContextSection`, `RECOMMENDATION_REASONING_INSTRUCTION`
+- Tier 3 entity section: when `typedRecommendations` present, injects full recommendation evidence block (type, status, confidence, urgency, evidence, risk, impact, owner, reviewDate)
+- Post-processes system prompt: when entity has typed recommendations, appends `RECOMMENDATION_REASONING_INSTRUCTION` (tells DONNA to answer reasoning questions from context only)
+
+---
+
 ## 2026-06-14 — Mega Sprint 2411–2440 — DONNA Entity Intelligence V1
 
 **Mission:** Give DONNA server-side entity context for all academy entity types. Director asks "What's going on with Alex?" or "How is Coach Sarah doing?" from the Today page — DONNA loads real data and answers with signals, health score, and a navigation link.

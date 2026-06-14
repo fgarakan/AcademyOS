@@ -12,7 +12,7 @@
 //   - loadEntityContextFromPhrase() is the orchestrator entry point
 
 import type { DB } from '@/lib/types/db'
-import type { EntityMemoryContext } from './donnaMemoryContextTypes'
+import type { EntityMemoryContext, EntityRecommendation } from './donnaMemoryContextTypes'
 import {
   loadCoachesSummary,
   loadGroupsSummary,
@@ -20,6 +20,9 @@ import {
   loadCurriculumLevelsSummary,
   loadPlayerCurriculumStates,
 } from '@/lib/donna/extendedContextLoaders'
+// Mega Sprint 2441–2470 — load typed recommendations for player entity context
+import { loadPlayerRecommendations } from '@/lib/donna/recommendation/donnaRecommendationLoader'
+import { lifecycleLabel } from '@/lib/donna/recommendation/donnaRecommendationLifecycle'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -167,20 +170,46 @@ export async function loadPlayerEntityContext(
     const operatingSummary = (entitySummary?.summary_text as string | null)
       ?? `${entityLabel}. Status: ${playerStatus.replace(/_/g, ' ')}.${levelName ? ` Current level: ${levelName}.` : ''}${advancementEligible ? ' Advancement eligible.' : ''}`
 
+    // Mega Sprint 2441–2470 — load typed recommendations from DB
+    const typedRecs = await loadPlayerRecommendations(db, academyId, playerId, entityLabel, 3)
+    const typedRecommendations: EntityRecommendation[] = typedRecs.map(r => ({
+      id:                 r.id,
+      title:              r.title,
+      recommendationType: r.recommendationType,
+      lifecycleStatus:    lifecycleLabel(r.lifecycleStatus),
+      confidenceLabel:    r.confidenceLabel,
+      confidenceScore:    r.confidenceScore,
+      urgency:            r.urgency,
+      description:        r.description,
+      riskIfIgnored:      r.riskIfIgnored,
+      expectedImpact:     r.expectedImpact,
+      owner:              r.owner,
+      reviewDate:         r.reviewDate,
+      isOverdue:          r.isOverdue,
+      followUpRequired:   r.followUpRequired,
+    }))
+
+    // Merge DB recommendations with signal-derived ones; DB takes priority
+    const signalRecs: string[] = [
+      ...(advancementEligible ? [`Review advancement for ${entityLabel}`] : []),
+      ...(playerStatus === 'on_hold' ? [`Investigate on-hold status for ${entityLabel}`] : []),
+    ]
+    const activeRecommendations = typedRecs.length > 0
+      ? typedRecs.map(r => `${r.title} (${r.urgency})`)
+      : signalRecs
+
     return {
       entityType:            'player',
       entityLabel,
       operatingSummary:      operatingSummary.slice(0, 200),
       activePriorities:      activePriorities.slice(0, 3),
       recentSignals,
-      activeRecommendations: [
-        ...(advancementEligible ? [`Review advancement for ${entityLabel}`] : []),
-        ...(playerStatus === 'on_hold' ? [`Investigate on-hold status for ${entityLabel}`] : []),
-      ].slice(0, 3),
+      activeRecommendations: activeRecommendations.slice(0, 3),
       recentDecisions,
       lastDiscussedAt: null,
       healthScore:     playerHealthScore(playerStatus, advancementEligible, daysAtLevel),
       entityRoute:     `/director/players/${playerId}`,
+      typedRecommendations: typedRecommendations.length > 0 ? typedRecommendations : undefined,
     }
   } catch {
     return null
