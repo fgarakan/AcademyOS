@@ -16,6 +16,8 @@ export type KnowledgeSourceType =
   | 'coach_submission'
   | 'director_submission'
   | 'platform_curated'
+  // External AI-generated content — always enters as pending_review, never auto-approved
+  | 'ai_generated'
 
 export type KnowledgeDomain =
   | 'technical'
@@ -129,6 +131,7 @@ export function getKnowledgeSourceTypeLabel(sourceType: KnowledgeSourceType): st
     coach_submission: 'Coach submission',
     director_submission: 'Director submission',
     platform_curated: 'Platform curated',
+    ai_generated: 'AI-generated (pending review)',
   }
   return labels[sourceType]
 }

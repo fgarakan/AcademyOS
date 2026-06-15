@@ -95,14 +95,14 @@ function dnaScoreForDimension(
 
   const model = dna.inferredModel
 
-  const COMPETITIVE_MODEL = model === 'competitive_elite' || model === 'competitive_development'
+  const COMPETITIVE_MODEL = model === 'high_performance' || model === 'junior_development'
   const RECREATIONAL_MODEL = model === 'recreational'
 
   const scores: Record<IdentityDimensionKey, number> = {
     technique_focus:       COMPETITIVE_MODEL ? 75 : RECREATIONAL_MODEL ? 50 : 60,
     tactical_focus:        COMPETITIVE_MODEL ? 80 : RECREATIONAL_MODEL ? 45 : 60,
     game_based_learning:   RECREATIONAL_MODEL ? 80 : COMPETITIVE_MODEL ? 60 : 65,
-    competition_emphasis:  model === 'competitive_elite' ? 90 : model === 'competitive_development' ? 70 : RECREATIONAL_MODEL ? 30 : 50,
+    competition_emphasis:  model === 'high_performance' ? 90 : model === 'junior_development' ? 70 : RECREATIONAL_MODEL ? 30 : 50,
     assessment_rigor:      COMPETITIVE_MODEL ? 80 : RECREATIONAL_MODEL ? 45 : 60,
     coach_autonomy: (() => {
       if (dna.advancementApproval === 'coach_recommendation') return 75

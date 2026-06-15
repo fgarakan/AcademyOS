@@ -40,6 +40,7 @@ export function buildKnowledgeLibrarySummary(items: KnowledgeItem[]): KnowledgeL
   const bySourceType: Record<KnowledgeSourceType, number> = {
     research_paper: 0, coaching_manual: 0, itf_guideline: 0, usta_resource: 0,
     academy_internal: 0, coach_submission: 0, director_submission: 0, platform_curated: 0,
+    ai_generated: 0,
   }
 
   for (const item of items) {

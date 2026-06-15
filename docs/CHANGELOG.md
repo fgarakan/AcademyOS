@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-06-15 — Mega Sprint 2771–2800 — DONNA Academy DNA Foundation V1
+
+**Mission:** Deliver the Academy DNA layer — a structured identity system (DNA Model + Style Preset) that feeds into the existing AcademyIdentityProfile philosophy engine without creating any parallel systems. Fix critical production bug in `dnaScoreForDimension()` that caused all live academies to receive fallback philosophy scores.
+
+**Critical bug fix:**
+- `src/lib/donna/philosophy/academyIdentityProfile.ts` — `dnaScoreForDimension()` compared against non-existent model strings (`competitive_elite`, `competitive_development`). Fixed to use actual `InferredModel` values (`high_performance`, `junior_development`). Before: `competition_emphasis = 50` for all academies. After: `high_performance` → 90, `junior_development` → 70, `recreational` → 30.
+
+**New namespace: `src/lib/academyDNA/`** (separate from player-level `src/lib/blueprint/`):
+- `academyDNAModels.ts` — 4 DNA models: `12u_foundation`, `performance_12plus`, `college_placement`, `club_growth`. Each with InferredModel mapping, active stages, KPIs, red/green flags, DONNA tendencies.
+- `stylePresetLibrary.ts` — 6 style presets: `balanced`, `technical_first`, `game_based`, `competition_first`, `athletic_first`, `mental_first`. Reuses `rankingToWeights()` from `donnaOnboardingContextPack.ts`. `presetToStagePriorities()` + `presetToAggregateWeights()`.
+- `blueprintToDna.ts` — Mapper: `AcademyDNAModel + StylePreset → AcademyDnaSummary`. Output feeds directly into `buildAcademyIdentityProfile()`. No new philosophy engine. Settings keys for `academies.settings` JSON.
+- `operatingModelGenerator.ts` — Deterministic operating model generator (no AI required). Reuses `DEFAULTS_BY_MODEL`, `PORTAL_RULES_BY_TRANSPARENCY`, `COACHING_STYLE_BY_MODEL`.
+- `academyDNACertification.ts` — 3-scenario certification suite. Run: `npx tsx src/lib/academyDNA/academyDNACertification.ts`.
+
+**New AI provider interface:**
+- `src/lib/ai/aiReasoningProvider.ts` — `AIReasoningProvider` interface + `AnthropicAIProvider` implementation + `createAIReasoningProvider()` factory. Utility AI tasks only (summarize, classify, generate). DONNA orchestrator (`llmApiClient.ts`) untouched.
+
+**Knowledge Library extension:**
+- `src/lib/knowledge/knowledgeTypes.ts` — Added `'ai_generated'` to `KnowledgeSourceType`. Always enters as `pending_review`.
+- `src/lib/knowledge/knowledgeLibrary.ts` — Added `ai_generated: 0` to `bySourceType` Record.
+
+**Documentation:**
+- `docs/donna/DONNA_ACADEMY_DNA_AI_LEARNING_ARCHITECTURE_AUDIT_V1.md` — 646-line architecture audit (Sprint 2770A). Overall confidence: 94/100.
+- `docs/donna/DONNA_CONTEXT_FIREWALL_ARCHITECTURE_V1.md` — 5-layer firewall documentation. No new code.
+- `docs/donna/DONNA_ACADEMY_DNA_FOUNDATION_V1_REPORT.md` — This sprint's full report.
+
+**Certification: PASS** · **TypeScript: CLEAN** · **Duplicate systems: 0** · **InferredModel bug: FIXED**
+
+---
+
 ## 2026-06-14 — Mega Sprint 2711–2740 — DONNA Guided Execution OS V2
 
 **Mission:** Complete the guided execution loop — DONNA can now guide, help, verify, complete, and continue. Director operates using "What next?" / "Take me there." / "Help." / "Done." / "What else?".
