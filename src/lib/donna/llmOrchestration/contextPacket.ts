@@ -55,6 +55,9 @@ import type { ConversationOperatingContext } from '../conversation/donnaConversa
 import { buildConversationThreadSection } from '../conversation/donnaConversationOperatingContext'
 import { buildNavigationContextSection } from '../conversation/donnaConversationNavigation'
 import { buildProactiveCOOSection } from '../conversation/donnaProactiveCOODialogue'
+// Mega Sprint 2561–2590 — Academy Intelligence Engine V1
+import type { AcademyIntelligencePacket } from '../academy/academyIntelligenceEngine'
+import { buildAcademyIntelligenceSection } from '../academy/academyIntelligenceEngine'
 
 // Sprint 2381–2410 — Daily brief opening format (Today page, first session of day)
 const DAILY_BRIEF_OPENING_SECTION = `## Daily Brief Opening (first session today — Today page)
@@ -126,6 +129,9 @@ export interface ContextPacketInput {
   conversationOperatingContext?: ConversationOperatingContext | null
   /** Pre-computed proactive COO section (built in donnaOrchestratorAction) */
   proactiveCOOSection?: string
+  // Mega Sprint 2561–2590 — Academy Intelligence Engine V1
+  /** Live academy-wide intelligence packet for broad director queries */
+  academyIntelligencePacket?: AcademyIntelligencePacket | null
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -383,6 +389,7 @@ function buildSystemPrompt(
   activeWorkflowGuidance?: FormattedMission | null,
   conversationOperatingContext?: ConversationOperatingContext | null,
   proactiveCOOSection?: string,
+  academyIntelligencePacket?: AcademyIntelligencePacket | null,
 ): string {
   const lines: string[] = []
 
@@ -467,6 +474,11 @@ function buildSystemPrompt(
     if (threadSection) lines.push(threadSection)
     const navSection = buildNavigationContextSection(conversationOperatingContext)
     if (navSection) lines.push(navSection)
+  }
+
+  // Mega Sprint 2561–2590 — Academy Intelligence (injected for broad director queries)
+  if (academyIntelligencePacket) {
+    lines.push(buildAcademyIntelligenceSection(academyIntelligencePacket))
   }
 
   // Tier 4: Academy memory — inject only on first session of day (≤150 tokens)
@@ -684,6 +696,7 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     input.activeWorkflowGuidance ?? null,
     input.conversationOperatingContext ?? null,
     input.proactiveCOOSection,
+    input.academyIntelligencePacket ?? null,
   )
 
   // Sprint 1018 — inject curriculum strategy framing when user input or page is curriculum-strategic
