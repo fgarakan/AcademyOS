@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-06-15 — Mega Sprint 2801–2830 — DONNA Academy Operating Intelligence V1
+
+**Mission:** Make Academy DNA operational. Two academies with the same data but different DNA now receive different DONNA guidance. Recommendations are DNA-specific, explainable, and traceable. No AI required. No duplicate systems.
+
+**New files (`src/lib/academyDNA/`):**
+- `operatingModelContext.ts` — `OperatingModelContext`: unified context bundle (DNA model + style preset + identity profile + operating model + 5 derived domain contexts). `buildOperatingModelContext()` — deterministic, no AI.
+- `recommendationTrace.ts` — `RecommendationTrace`: explainability layer for every recommendation. `{ dataSignals, academyDNAInfluence, operatingModelInfluence, confidence, rationale, suggestedAction, riskIfIgnored, riskLevel }`.
+- `dnaRecommendationEngine.ts` — `buildDnaAwareRecommendations()`: deterministic rule engine with 4 model-specific rule sets. `answerCOOQuestion()`: answers all 8 director COO questions deterministically.
+- `dnaTodayInfluence.ts` — `applyDnaTodayInfluence()` (reorders existing attention items by DNA domain weights) + `buildDnaAttentionAdditions()` (DNA-specific alerts) + `buildDnaOpportunities()` (positive signals) + `buildDnaTodayContext()` (combined builder).
+- `dnaCurriculumBias.ts` — `buildDnaCurriculumBias()` (DNA curriculum emphasis), `evaluateCurriculumAlignment()` (checks coverage vs. DNA standards), `buildCurriculumPriorityRec()` (highest-priority curriculum action).
+- `dnaCoachAlignment.ts` — `evaluateCoachDnaAlignment()` (scores coach against DNA standards), `buildCoachAlignmentSummary()` (academy-wide), `buildCoachAlignmentRecommendation()`.
+- `dnaParentCommsStyle.ts` — DNA-appropriate parent communication guidance. 4 language styles (educational / accountability / recruiting / retention). `buildParentCommOpportunityGuidance()` for 5 opportunity types.
+- `dnaOperatingIntelligenceCertification.ts` — 3-scenario + 8 COO question certification suite. Run: `npx tsx src/lib/academyDNA/dnaOperatingIntelligenceCertification.ts`.
+
+**Documentation:**
+- `docs/donna/DONNA_ACADEMY_OPERATING_INTELLIGENCE_V1_REPORT.md` — Sprint report.
+
+**Certification: 104/104 PASS** · **TypeScript: CLEAN** · **Duplicate systems: 0** · **No AI required**
+
+---
+
 ## 2026-06-15 — Mega Sprint 2771–2800 — DONNA Academy DNA Foundation V1
 
 **Mission:** Deliver the Academy DNA layer — a structured identity system (DNA Model + Style Preset) that feeds into the existing AcademyIdentityProfile philosophy engine without creating any parallel systems. Fix critical production bug in `dnaScoreForDimension()` that caused all live academies to receive fallback philosophy scores.
