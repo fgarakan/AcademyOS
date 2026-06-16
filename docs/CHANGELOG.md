@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-06-16 — Mega Sprint 2831–2860 — DONNA Conversational Intelligence + Voice Trust + Learning Foundation V1
+
+**Mission:** Build the full conversational intelligence library layer: multi-role NLU (director/coach/parent/player), behavioral contract enforcement, concept-level meaning extraction, information-gain scored clarification questions, 4-stage conversation state machine, response style validation, in-memory learning capture, recurring concern detection, and an OpenAI teacher interface (advisory only). Sprint 2831A closed all 32 failing certification assertions.
+
+**New files (`src/lib/donna/conversation/`):**
+- `donnaConversationContract.ts` — 8 behavioral rules DONNA must satisfy per turn. `validateContractCompliance()` + `isClarificationAllowed()`. Completion states: answering/clarifying/acting/completing/blocked.
+- `donnaIntentInterpreter.ts` — Multi-role NLU. Director delegates to existing `donnaIntentEngine.ts`. Coach (7 intents), Parent (5 intents), Player (5 intents) use role-specific signal maps. Returns `possibleIntents[]`, confidence, `bestNextQuestion`, `extractedEntity`.
+- `donnaMeaningExtractor.ts` — Translates vague language into ranked AcademyOS concepts. 20 concept types, phrase-pattern scoring, ambiguity detection, recommended next step.
+- `donnaBestNextQuestion.ts` — Information-gain scored question selector. 12 question candidates weighted by: info gain (35%), confidence improvement (30%), speed to resolution (20%), actionability (15%). Always choice-based; returns null when confidence ≥ 0.75.
+- `donnaConversationNavigator.ts` — Immutable 4-stage state machine: question → understanding → action → completion. Enforces one-question-max contract rule. Produces completion messages with route suggestions.
+- `donnaResponseStyle.ts` — DONNA voice rules: data-first, short sentences, action-oriented, no preamble, no vague qualifiers. `validateResponseStyle()` + `applyRoleRegister()`.
+- `donnaConversationTeacher.ts` — OpenAI teacher interface (advisory only). 5 modes: intent interpretation, clarification generation, response drafting, pattern generation, language understanding. Only called when confidence < 0.50. Graceful fallback when key absent.
+- `conversationLearningRecord.ts` — In-memory conversation arc capture. Privacy-safe (no names, concept-level only). Status: `pending_review`. Pattern quality scoring.
+- `conversationMemoryHook.ts` — Recurring concern detection. Flags concepts mentioned ≥ 2 times. Generates human-readable memory callbacks. Surfaces unresolved topics.
+- `conversationalIntelligenceCertification.ts` — 226-assertion certification suite across Director (25 cases), Coach (25), Parent (25), Player (15), clarification quality, contract compliance, response style, learning capture, memory hooks, and training sandbox.
+
+**Files modified:**
+- `src/lib/donna/intent/donnaIntentEngine.ts` — Removed redundant `everything looking` signal from `general_help` (was inflating vague inputs to 100% confidence, blocking clarification). Lowered `orange 1/2/3`, `red 1/2`, `green 1/2` from `strong` to `medium`.
+- `src/lib/donna/conversation/donnaIntentInterpreter.ts` — Added 20+ signals: coach advancement/rough-session/boredom/group-dynamic; parent concerned-about/meet-with/what-to-say/at-home; player can't-get-better/same-mistakes/my-progress/can-i-compete.
+- `src/lib/donna/conversation/donnaMeaningExtractor.ts` — Added patterns to 12 concept types; added `attendance_issue` ConceptPattern block (type existed, patterns were missing).
+
+**Documentation:**
+- `docs/donna/DONNA_CONVERSATIONAL_INTELLIGENCE_V1_REPORT.md` — Full sprint report.
+
+**Certification: 226/226 PASS (100.0%)** · **TypeScript: CLEAN** · **No new dependencies** · **No DB changes** · **No migrations**
+
+---
+
 ## 2026-06-15 — Mega Sprint 2801–2830 — DONNA Academy Operating Intelligence V1
 
 **Mission:** Make Academy DNA operational. Two academies with the same data but different DNA now receive different DONNA guidance. Recommendations are DNA-specific, explainable, and traceable. No AI required. No duplicate systems.

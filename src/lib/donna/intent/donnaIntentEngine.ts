@@ -69,13 +69,13 @@ const INTENT_SIGNALS: Record<DirectorIntent, WeightedSignal[]> = {
     { signal: 'red ball',              weight: 'strong' },
     { signal: 'green ball',            weight: 'strong' },
     { signal: 'yellow ball',           weight: 'strong' },
-    { signal: 'orange 1',              weight: 'strong' },
-    { signal: 'orange 2',              weight: 'strong' },
-    { signal: 'orange 3',              weight: 'strong' },
-    { signal: 'red 1',                 weight: 'strong' },
-    { signal: 'red 2',                 weight: 'strong' },
-    { signal: 'green 1',               weight: 'strong' },
-    { signal: 'green 2',               weight: 'strong' },
+    { signal: 'orange 1',              weight: 'medium' },
+    { signal: 'orange 2',              weight: 'medium' },
+    { signal: 'orange 3',              weight: 'medium' },
+    { signal: 'red 1',                 weight: 'medium' },
+    { signal: 'red 2',                 weight: 'medium' },
+    { signal: 'green 1',               weight: 'medium' },
+    { signal: 'green 2',               weight: 'medium' },
     { signal: 'build a level',         weight: 'strong' },
     { signal: 'curriculum level',      weight: 'strong' },
     { signal: 'curriculum gap',        weight: 'strong' },
@@ -115,6 +115,7 @@ const INTENT_SIGNALS: Record<DirectorIntent, WeightedSignal[]> = {
     { signal: 'stalled',               weight: 'medium' },
     { signal: 'falling behind',        weight: 'medium' },
     { signal: 'not making progress',   weight: 'strong' },
+    { signal: 'enrollment',            weight: 'medium' },
   ],
 
   parent_communication: [
@@ -135,6 +136,9 @@ const INTENT_SIGNALS: Record<DirectorIntent, WeightedSignal[]> = {
     { signal: 'draft for parent',      weight: 'strong' },
     { signal: 'parent draft',          weight: 'strong' },
     { signal: 'communicate with parent', weight: 'medium' },
+    { signal: 'parents',               weight: 'medium' },
+    { signal: 'update the parent',     weight: 'strong' },
+    { signal: 'update parent',         weight: 'medium' },
   ],
 
   assessment: [
@@ -223,6 +227,9 @@ const INTENT_SIGNALS: Record<DirectorIntent, WeightedSignal[]> = {
     { signal: 'post-session',          weight: 'strong' },
     { signal: 'session done',          weight: 'medium' },
     { signal: 'recap',                 weight: 'medium' },
+    { signal: 'how did the session',   weight: 'strong' },
+    { signal: 'session go',            weight: 'medium' },
+    { signal: 'check on coach',        weight: 'medium' },
   ],
 
   review_queue: [
@@ -238,6 +245,8 @@ const INTENT_SIGNALS: Record<DirectorIntent, WeightedSignal[]> = {
     { signal: 'review items',          weight: 'strong' },
     { signal: 'pending items',         weight: 'medium' },
     { signal: "what's pending",        weight: 'medium' },
+    { signal: 'needs attention',       weight: 'medium' },
+    { signal: 'what needs',            weight: 'medium' },
   ],
 
   attendance: [
@@ -259,13 +268,15 @@ const INTENT_SIGNALS: Record<DirectorIntent, WeightedSignal[]> = {
     { signal: 'help',                  weight: 'medium' },
     { signal: 'guide me',              weight: 'medium' },
     { signal: 'what can you do',       weight: 'strong' },
-    { signal: 'what should i',         weight: 'weak' },
+    { signal: 'what should i',         weight: 'medium' },
     { signal: 'where do i start',      weight: 'medium' },
     { signal: 'getting started',       weight: 'weak' },
     { signal: 'show me',               weight: 'weak' },
     { signal: 'help me',               weight: 'medium' },
     { signal: 'i need help',           weight: 'medium' },
     { signal: 'assist',                weight: 'medium' },
+    { signal: "how's everything",      weight: 'medium' },
+    { signal: "don't know what",       weight: 'medium' },
   ],
 
   // unknown has no signals — it is the fallback
