@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-06-16 — Mega Sprint 2861–2890 — DONNA Learning Ledger V1
+
+**Mission:** Build the canonical learning layer for DONNA — a 13-module pipeline that captures, scores, clusters, deduplicates, reviews, and promotes learning from every conversation, observation, and direct teaching event. Brian Dabul is the highest-trust source (0.95 reliability); only approved learnings influence academy intelligence. OpenAI acts as teacher only (advisory, never source of truth).
+
+**New files (`src/lib/donna/learning/`):**
+- `learningEntryModel.ts` — Canonical `LearningEntry` type, `LearningStatus` state machine (captured→reviewing→approved→rejected→promoted→archived), `VALID_STATUS_TRANSITIONS`, `canTransition()`, `SCORE_THRESHOLDS`, `createLearningEntry()`.
+- `donnaSourceReliabilityEngine.ts` — Per-source reliability tiers: `brian_direct` 0.95, `director_voice` 0.85, `coach_observation`/`system_observation` 0.75, `conversation` 0.70, `parent_feedback` 0.65, `player_input` 0.55. Role adjustments for conversation source. `ActorReliabilityStore` tracks per-actor drift (Brian Dabul pre-registered).
+- `donnaLearningScoringEngine.ts` — 0–100 composite score: confidence 30%, sourceReliability 25%, importance 20%, evidenceQuality 15%, frequency 10%. `scoreLearningEntry()`, `applyScoreToEntry()`, `rankByScore()`. Evidence quality scored by word count + phrase count + specificity signals.
+- `donnaLearningLedger.ts` — In-memory singleton repository. Full CRUD with status-validated writes, audit log (capped at 2000 entries), `getStats()`, `getEntriesByStatus/Academy/Role/Topic/Domain/Concept/Cluster/Source`.
+- `donnaLearningClusterEngine.ts` — Groups similar entries by concept overlap + topic similarity. Detects emerging patterns (≥3 entries, growing trend). Returns `ClusterReport` with `emergingPatterns` and `topCluster`.
+- `donnaLearningDeduplicator.ts` — Flags entries semantically equivalent to an existing approved entry (≥75% combined similarity: concept 45% + topic 30% + summary 25%). Never deletes — marks `isDuplicate=true` and sets `canonicalEntryId`.
+- `donnaLearningTimeline.ts` — Builds human-readable lifecycle timeline from audit log. `buildLearningTimeline()`, `formatAge()`.
+- `donnaLearningAnalyzer.ts` — OpenAI enrichment (advisory only). Skips when `confidence ≥ 0.50` or no API key. Never modifies canonical fields — stores results in `metadata.openai_suggestion`. `isAdvisory: true` always.
+- `donnaLearningReviewQueue.ts` — Director review queue builder. Priority: `brian_direct` → high-score → reviewing status → age. Excludes duplicates and promoted/rejected entries.
+- `brianLearningProfile.ts` — Brian Dabul's learning profile + Brian Influence Score (0–100 weighted by count and score share of approved learnings).
+- `donnaLearningInsights.ts` — 5 insight types: `emerging_pattern`, `knowledge_gap`, `high_value_cluster`, `stale_review`, `owner_teaching_gap`. Ordered high→low severity.
+- `donnaLearningContradictionDetector.ts` — Detects opposite-sentiment entries sharing concept + domain. `detectContradictions()` (new vs. existing) + `scanForContradictions()` (full scan). Brian-direct learnings take precedence in auto-resolution.
+- `donnaLearningMemoryBridge.ts` — Bridges `ConversationLearningRecord` → `LearningEntry`. Maps role to source type, derives topic domain from concepts, applies scoring.
+- `donnaLearningCertification.ts` — 56-test certification suite (100% pass). Covers all 13 modules + 16 Brian-style learning events.
+- `index.ts` — Barrel export for all learning modules.
+
+**Certification: 56/56 PASS (100%)** · **TypeScript: CLEAN** · **No new dependencies** · **No DB changes** · **No migrations**
+
+---
+
 ## 2026-06-16 — Mega Sprint 2831–2860 — DONNA Conversational Intelligence + Voice Trust + Learning Foundation V1
 
 **Mission:** Build the full conversational intelligence library layer: multi-role NLU (director/coach/parent/player), behavioral contract enforcement, concept-level meaning extraction, information-gain scored clarification questions, 4-stage conversation state machine, response style validation, in-memory learning capture, recurring concern detection, and an OpenAI teacher interface (advisory only). Sprint 2831A closed all 32 failing certification assertions.
