@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-06-16 — Mega Sprint 2891–2920 — DONNA Knowledge Promotion Engine V1
+
+**Mission:** Build the promotion pipeline that converts approved learning entries into official DONNA knowledge. Learning is not truth — approved learning becomes knowledge only after a named human approver explicitly promotes it. AcademyOS is the source of truth. OpenAI may assist with draft wording only; OpenAI may not approve; OpenAI may not promote.
+
+**Core principle:** `LearningEntry → KnowledgePromotionCandidate → ApprovedKnowledgeEntry` — each step requires explicit human action.
+
+**New files (`src/lib/donna/knowledgePromotion/`):**
+- `knowledgePromotionCandidateModel.ts` — `KnowledgePromotionCandidate` type, `CandidateStatus` machine (candidate→in_review→approved→promoted/rejected→archived), `KnowledgeTargetScope` (7 scopes), `CANDIDATE_STATUS_TRANSITIONS`, `computePromotionScore()` (Brian +10 boost), `inferTargetScope()`, `createCandidate()`.
+- `donnaPromotionEligibilityEngine.ts` — 9 eligibility gates: status, learning_score (≥70), not_duplicate, source_reliability (≥0.60), frequency, has_evidence, has_summary, has_concepts, no_unresolved_contradiction. `checkPromotionEligibility()`, `findEligibleEntries()`. Eligibility does NOT mean automatic promotion.
+- `donnaKnowledgeDraftGenerator.ts` — Draft content for candidates. OpenAI `gpt-4o-mini` used when API key present; falls back to deterministic system draft. Draft always marked `isDraft:true`, `requiresApproval:true`. OpenAI never approves, never promotes — draft wording only.
+- `donnaKnowledgeApprovalWorkflow.ts` — Governs action transitions: approve, reject, request_revision, merge, defer, promote. `brian_philosophy_knowledge` and `global_platform_knowledge_candidate` scope require owner or `brian_dabul` approver role. All actions require named approver. `buildWorkflowSummary()`.
+- `donnaApprovedKnowledgeRegistry.ts` — In-memory singleton registry of promoted knowledge. `promote()`, `supersede()`, `archive()`, `recordReuse()`, lookup by academy/scope/concept/domain/source. Full audit log. Only active entries returned by queries. Rejected entries never enter the registry.
+- `donnaKnowledgeTargetRouter.ts` — Routes approved candidates to the registry. Validates `status=approved`. Detects supersede candidates (same source or same domain+concept+scope). Returns `PromotionReceipt` with full `PromotionTraceability`.
+- `brianKnowledgePromotionProfile.ts` — Brian Promoted Knowledge Influence Score (BPKIS): 50% count weight + 50% score weight. Brian entries: `scope=brian_philosophy_knowledge` OR source `LearningEntry.sourceType=brian_direct`. `buildBrianKnowledgePromotionProfile()`.
+- `donnaKnowledgeReuseEngine.ts` — Retrieval engine for DONNA answers. Active entries only; global scope excluded unless `includeGlobal=true`; Brian philosophy floated with `preferBrianPhilosophy=true`. Relevance scoring: concept match 40%, domain 25%, keyword 20%, reliability bonus 15%. `retrieveKnowledge()`, `recordKnowledgeReuse()`. Results include full `KnowledgeSourceTrace`.
+- `knowledgePromotionCertification.ts` — 36-test certification suite (100% pass). 10 scenario groups covering: Brian learning → candidate, low-score rejection, contradiction blocking, duplicate merging, owner approval, rejected non-reuse, retrieval, scope ranking, Brian profile, traceability.
+- `index.ts` — Barrel export for all promotion modules.
+
+**Certification: 36/36 PASS (100%)** · **TypeScript: CLEAN** · **No new dependencies** · **No DB changes** · **No migrations**
+
+---
+
 ## 2026-06-16 — Mega Sprint 2861–2890 — DONNA Learning Ledger V1
 
 **Mission:** Build the canonical learning layer for DONNA — a 13-module pipeline that captures, scores, clusters, deduplicates, reviews, and promotes learning from every conversation, observation, and direct teaching event. Brian Dabul is the highest-trust source (0.95 reliability); only approved learnings influence academy intelligence. OpenAI acts as teacher only (advisory, never source of truth).
