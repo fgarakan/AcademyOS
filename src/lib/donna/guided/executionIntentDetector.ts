@@ -49,6 +49,8 @@ const NEXT_BEST_ACTION_PATTERNS: RegExp[] = [
   /^where\s+(should|do)\s+i\s+start[.!?]?$/i,
   /^what('s|\s+is)\s+(my\s+)?next\s+(step|action|move)[.!?]?$/i,
   /^what\s+should\s+i\s+do\s+now[.!?]?$/i,
+  // "need to" variants — previously falling through all matchers
+  /^what\s+do\s+i\s+need\s+to\s+do\s+(next|now)[.!?]?$/i,
 ]
 
 const TASK_COMPLETED_PATTERNS: RegExp[] = [
@@ -81,6 +83,7 @@ const EXECUTION_HELP_PATTERNS: RegExp[] = [
   /^(can\s+you\s+)?help\s+me[.!?]?$/i,
   /^guide\s+me\s+through\s+(it|this)[.!?]?$/i,
   /^what\s+do\s+i\s+(click|do)\s+(on\s+this\s+page)?[.!?]?$/i,
+  /^help\s+me\s+finish\s+(this|it)[.!?]?$/i,
 ]
 
 const NAVIGATE_TO_ACTION_PATTERNS: RegExp[] = [

@@ -38,6 +38,7 @@ export type BrainRoutingStep =
   | 'check_brain_context'
   | 'build_reasoning'
   | 'build_response'
+  | 'certified_nlu'
   | 'route_coo_prompt'
   | 'god_mode'
 

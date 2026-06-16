@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-06-16 — Mega Sprint 2921–2950 — DONNA Conversational Loop Activation V1
+
+**Mission:** Wire the full certified conversational intelligence stack (Sprints 2831–2920) into the DONNA brain. Vague director inputs ("Orange seems weird", "Practice felt flat") now route through Step 15.5 — the certified NLU path — instead of falling through to the generic COO prompt chain. Phrase gaps for "what do I need to do next/now", "where do I start", and "help me finish this" fixed across all three matching layers.
+
+**Files modified:**
+- `src/lib/donna/brain/processDonnaMessage.ts` — +137 lines: Step 15.5 inserted between Steps 15 and 16; 7 certified module imports; `conversationNavigatorState` input field; `updatedNavigatorState` output field; clarification, meaning, and completion sub-paths
+- `src/lib/donna/directorNextActionEngine.ts` — +4 phrases to `WHAT_NEXT_PHRASES`: "what do i need to do next/now", "where do i start", "help me finish this"
+- `src/lib/donna/guided/executionIntentDetector.ts` — +2 regex patterns: "need to do next/now" → `next_best_action`; "help me finish this/it" → `execution_help`
+- `src/lib/donna/operating/directorOperatingQuestions.ts` — +1 regex to `what_next` block
+- `src/components/assistant/DonnaAssistantButton.tsx` — threads navigator state across turns
+- `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `certified_nlu` step
+
+**File created:**
+- `src/lib/donna/conversation/liveConversationLoopCertification.ts` — 13-section, 103-assertion certification harness
+
+**Certified module wiring (Step 15.5):** `interpretIntent` · `extractMeaning` · `selectBestNextQuestion` · `advanceConversation` · `createInitialNavigatorState` · `captureConversationLearning` · `bridgeConversationRecord` · `retrieveKnowledge`
+
+**Loop state persistence:** Navigator state threads across turns via `conversationNavigatorState` input / `updatedNavigatorState` output. Tracks: turnCount, topConcept, extractedEntity, clarificationCount, lastTurnAt, history[].
+
+**Certification: 103/103 PASS (100%)** · **TypeScript: CLEAN** · **No new dependencies** · **No DB changes** · **No migrations**
+
+---
+
 ## 2026-06-16 — Mega Sprint 2891–2920 — DONNA Knowledge Promotion Engine V1
 
 **Mission:** Build the promotion pipeline that converts approved learning entries into official DONNA knowledge. Learning is not truth — approved learning becomes knowledge only after a named human approver explicitly promotes it. AcademyOS is the source of truth. OpenAI may assist with draft wording only; OpenAI may not approve; OpenAI may not promote.

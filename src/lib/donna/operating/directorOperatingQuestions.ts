@@ -42,6 +42,7 @@ const OPERATING_QUESTION_PATTERNS: Array<{ type: OperatingQuestionType; patterns
     type: 'what_next',
     patterns: [
       /what\s+(should\s+i|do\s+i)\s+(do\s+)?(next|now)/i,
+      /what\s+do\s+i\s+need\s+to\s+do\s+(next|now)/i,
       /where\s+(should|do)\s+i\s+start/i,
       /what('s|\s+is)\s+(my\s+)?next\s+(step|action|move)/i,
     ],

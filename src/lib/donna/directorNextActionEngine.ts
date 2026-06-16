@@ -80,6 +80,10 @@ export interface DirectorNextActionInput {
 const WHAT_NEXT_PHRASES = [
   'what should i do next',
   'what do i do next',
+  'what do i need to do next',
+  'what do i need to do now',
+  'where do i start',
+  'help me finish this',
   'walk me through what to do',
   'what is the priority',
   "what's the priority",

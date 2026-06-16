@@ -112,6 +112,20 @@ import type { ExecutionIntentContext } from '@/lib/donna/execution/donnaDecision
 import { detectMemoryIntent } from '@/lib/donna/memory/donnaMemoryIntentDetector'
 import { isMemoryLearningPhrase } from '@/lib/donna/learning/donnaLearningAnswerBuilder'
 import { isInsightPhrase } from '@/lib/donna/insight/donnaInsightAnswerBuilder'
+// Mega Sprint 2921–2950 — Certified conversational intelligence activation
+import { interpretIntent } from '@/lib/donna/conversation/donnaIntentInterpreter'
+import type { InterpreterRole } from '@/lib/donna/conversation/donnaIntentInterpreter'
+import { extractMeaning } from '@/lib/donna/conversation/donnaMeaningExtractor'
+import { selectBestNextQuestion } from '@/lib/donna/conversation/donnaBestNextQuestion'
+import {
+  advanceConversation,
+  createInitialNavigatorState,
+} from '@/lib/donna/conversation/donnaConversationNavigator'
+import type { ConversationNavigatorState } from '@/lib/donna/conversation/donnaConversationNavigator'
+import { captureConversationLearning } from '@/lib/donna/conversation/conversationLearningRecord'
+import { bridgeConversationRecord } from '@/lib/donna/learning/donnaLearningMemoryBridge'
+import { donnaLearningLedger } from '@/lib/donna/learning/donnaLearningLedger'
+import { retrieveKnowledge } from '@/lib/donna/knowledgePromotion/donnaKnowledgeReuseEngine'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -137,6 +151,8 @@ export interface DonnaMessageInput {
   entityContext?: AcademyEntityContext | null
   /** Pending disambiguation question from previous turn (optional) */
   pendingDisambiguation?: DisambiguationQuestion | null
+  /** Active conversation navigator state from previous turn (null = start of arc) */
+  conversationNavigatorState?: ConversationNavigatorState | null
 }
 
 // ── Action contract ───────────────────────────────────────────────────────────
@@ -209,6 +225,8 @@ export interface DonnaMessageResult {
   disambiguationQuestion: DisambiguationQuestion | null
   /** Dev-only decision log */
   debugLog: BrainDecisionLog
+  /** Updated conversation navigator state after this turn (null when Step 15.5 did not fire) */
+  updatedNavigatorState: ConversationNavigatorState | null
 }
 
 // ── Phrase detectors (inlined to avoid React component dependency) ─────────────
@@ -384,6 +402,7 @@ function makeResult(
     resolvedEntityV2: partial.resolvedEntityV2 ?? null,
     unifiedAnswer: partial.unifiedAnswer ?? null,
     disambiguationQuestion: partial.disambiguationQuestion ?? null,
+    updatedNavigatorState: partial.updatedNavigatorState ?? null,
     debugLog,
   }
 }
@@ -1238,6 +1257,124 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       entity: entityResult,
       goal: goalResult,
       confidence: goalResult.confidence,
+    }, debugLog)
+  }
+
+  // ── Step 15.5: Certified NLU — vague inputs that fell through all deterministic matchers ──
+  // Activates the certified conversational intelligence stack (Sprint 2831–2860) for inputs
+  // that carry meaning but don't match any deterministic phrase, entity, or goal pattern.
+  //
+  // Examples: "Orange seems weird", "Parents seem frustrated", "Practice felt flat"
+  //
+  // The certified interpreter becomes the preferred path for these inputs.
+  // No new NLU system — activating the existing certified one.
+  logStep(debugLog, 'certified_nlu')
+  const interpreterRole: InterpreterRole = role as InterpreterRole
+  const certifiedIntent   = interpretIntent(messageToProcess, interpreterRole, route)
+  const certifiedMeaning  = extractMeaning(messageToProcess, interpreterRole)
+  const inboundNavState   = input.conversationNavigatorState ?? null
+
+  // Approved knowledge reuse — retrieves academy-specific knowledge only.
+  // Returns empty when no knowledge has been promoted yet (current state).
+  const knowledgeResult = retrieveKnowledge({
+    academyId: 'academy-default',
+    concepts:  certifiedMeaning.topConcept ? [certifiedMeaning.topConcept] : undefined,
+    maxResults: 3,
+  })
+
+  // ── Clarification path: ask exactly one question when confidence is too low ──
+  const canAskClarification = (
+    certifiedIntent.clarificationNeeded &&
+    (inboundNavState === null || inboundNavState.clarificationCount === 0)
+  )
+
+  if (canAskClarification) {
+    const bestQ = selectBestNextQuestion({
+      role:              interpreterRole,
+      topConcepts:       certifiedMeaning.topConcept ? [certifiedMeaning.topConcept] : [],
+      currentConfidence: certifiedMeaning.topConfidence,
+    })
+
+    if (bestQ !== null) {
+      const navState = inboundNavState ?? createInitialNavigatorState(interpreterRole)
+      const navOutput = advanceConversation(navState, {
+        userText:         messageToProcess,
+        topConcept:       certifiedMeaning.topConcept,
+        intentConfidence: certifiedMeaning.topConfidence,
+        extractedEntity:  certifiedIntent.extractedEntity ?? null,
+        donnaQuestionAsked: true,
+      })
+
+      const choicesText = bestQ.choices && bestQ.choices.length > 0
+        ? '\n\n' + bestQ.choices.map((c, i) => `${i + 1}. ${c}`).join('\n')
+        : ''
+      const clarifyResponse = bestQ.question + choicesText
+
+      finalizeLog(debugLog, 'certified_nlu', 'respond')
+      emitDebugLog(debugLog)
+      return makeResult('respond', {
+        response:               clarifyResponse,
+        spokenResponse:         bestQ.question,
+        confidence:             certifiedMeaning.topConfidence,
+        updatedNavigatorState:  navOutput.updatedState,
+      }, debugLog)
+    }
+  }
+
+  // ── Meaning path: enough signal to frame the issue and propose next action ──
+  if (certifiedMeaning.topConcept && certifiedMeaning.topConfidence >= 0.25) {
+    const navState  = inboundNavState ?? createInitialNavigatorState(interpreterRole)
+    const navOutput = advanceConversation(navState, {
+      userText:         messageToProcess,
+      topConcept:       certifiedMeaning.topConcept,
+      intentConfidence: certifiedMeaning.topConfidence,
+      extractedEntity:  certifiedIntent.extractedEntity ?? null,
+    })
+
+    // ── Completion: capture learning and bridge to ledger ──
+    if (navOutput.stage === 'completion') {
+      const allConceptsFromMeaning = certifiedMeaning.interpretations.map(i => i.concept)
+      const stagesVisited = Array.from(
+        new Set([...navState.history.map(h => h.stage), navOutput.stage])
+      )
+      const learningRecord = captureConversationLearning({
+        originalStatement:   messageToProcess,
+        role:                interpreterRole,
+        interpretedTopConcept: certifiedMeaning.topConcept,
+        allConcepts:         allConceptsFromMeaning,
+        initialConfidence:   certifiedMeaning.topConfidence,
+        finalConfidence:     certifiedIntent.confidence,
+        clarificationAsked:  null,
+        clarificationResponse: null,
+        stagesVisited,
+        finalUnderstanding:  navOutput.donnaResponse,
+        actionTaken:         navOutput.actionProposed,
+        completedSuccessfully: true,
+      })
+      const bridgeResult = bridgeConversationRecord(learningRecord)
+      donnaLearningLedger.addEntry(bridgeResult.entry)
+    }
+
+    let responseText = navOutput.donnaResponse
+    // Append approved knowledge citation if available
+    if (knowledgeResult.usedKnowledge && knowledgeResult.topResult) {
+      const k = knowledgeResult.topResult
+      responseText += `\n\n*${k.scopeLabel}: ${k.entry.title}*`
+    }
+
+    // Append next route hint if navigator suggests one
+    if (navOutput.suggestedRoute && navOutput.stage === 'action') {
+      responseText += `\n\nTo continue: navigate to **${navOutput.suggestedRoute}** or I can take you there.`
+    }
+
+    finalizeLog(debugLog, 'certified_nlu', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:              responseText,
+      spokenResponse:        navOutput.donnaResponse,
+      confidence:            certifiedMeaning.topConfidence,
+      updatedNavigatorState: navOutput.updatedState,
+      navigateTo:            navOutput.stage === 'completion' ? (navOutput.suggestedRoute ?? null) : null,
     }, debugLog)
   }
 

@@ -371,6 +371,7 @@ import {
 } from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
 import type { COOOrchestrationState, COOPriorityItem } from '@/lib/donna/guidance/donnaCOOOrchestrationMemory'
 // Mega Sprint 2501–2530 — DONNA Conversational OS V2: client-side thread wiring + fast paths
+import type { ConversationNavigatorState } from '@/lib/donna/conversation/donnaConversationNavigator'
 import type { ConversationOperatingContext } from '@/lib/donna/conversation/donnaConversationOperatingContext'
 import { updateConversationOperatingContext, isContextThreadActive } from '@/lib/donna/conversation/donnaConversationOperatingContext'
 import { resolveEntityFollowUp } from '@/lib/donna/conversation/donnaConversationFollowUp'
@@ -587,6 +588,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const workflowStateRef = useRef<DonnaWorkflowState | null>(null)
   // Mega Sprint 2501–2530 — DONNA Conversational OS V2: round-trip thread context
   const conversationOperatingContextRef = useRef<ConversationOperatingContext | null>(null)
+  // Mega Sprint 2921–2950 — Conversational Loop Activation: certified navigator state persisted across turns
+  const conversationNavigatorStateRef = useRef<ConversationNavigatorState | null>(null)
   const [conversationThreadInfo, setConversationThreadInfo] = useState<{
     entityLabel: string
     recommendationTitle: string | null
@@ -4312,6 +4315,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       })),
       entityContext: entityContext ?? null,
       pendingDisambiguation: pendingDisambiguation ?? null,
+      conversationNavigatorState: conversationNavigatorStateRef.current,
     })
 
     switch (brainResult.action) {
