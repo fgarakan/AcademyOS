@@ -20,6 +20,8 @@ export type BrainRoutingStep =
   | 'check_attention'
   | 'check_academy_overview'
   | 'check_coo_intelligence'
+  | 'check_page_context'
+  | 'check_arc_continuation'
   | 'check_disambiguation'
   | 'check_relationship_intelligence'
   | 'check_entity_intent'
@@ -40,6 +42,8 @@ export type BrainRoutingStep =
   | 'build_reasoning'
   | 'build_response'
   | 'certified_nlu'
+  | 'live_ai_check'
+  | 'strategic_ai_check'
   | 'route_coo_prompt'
   | 'god_mode'
 

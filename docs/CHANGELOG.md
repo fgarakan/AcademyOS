@@ -2,6 +2,119 @@
 
 ---
 
+## 2026-06-17 — Mega Sprint 3061–3090 — DONNA Conversational Continuity & Guided Completion Repair V1
+
+**Mission:** Fix the two architectural bugs that prevented DONNA's multi-turn operating loop from working on the live Curriculum page. Page-confusion phrases were being intercepted by earlier brain steps before reaching `check_page_context`, and the acknowledgment intercept was dead code because Step 15 always returned first.
+
+**Bug 1 fixed:** `check_goal_workflow_intent` (Step 0b) and `check_daily_brief` (Step 5) now yield to `check_page_context` when `pageIntelligence !== null && isPageConfusionPhrase(lower)`. "What should I focus on here?" now routes to `check_page_context` and returns a page-aware response instead of launching a goal session or returning the daily brief.
+
+**Bug 2 fixed:** New **Step 7.7 `check_arc_continuation`** inserted immediately after `check_page_context` falls through, before ambiguity resolution and all NLU steps. When a navigator arc is active: acknowledgment phrases ("yes", "okay", "got it") and completion phrases ("done", "finished") now fire the continuation handler BEFORE Steps 14/15/15.5. The acknowledgment intercept in `certified_nlu` (Step 15.5) was effectively dead code — it lived after Step 15 which always returned first for low-confidence inputs.
+
+**Part 3 — Page guidance state machine:** Step traversal driven by `arcNavState.turnCount`. turnCount=1 → Step 1, turnCount=2 → Step 2, ..., beyond `allSteps.length` → completion message. No new types needed — uses existing `ConversationNavigatorState.turnCount` as step pointer.
+
+**Part 4 — Yes/Okay/Done behavior:** Both ack and completion phrases advance through the page guidance steps. Final step shows "This is the final step" footer. Post-completion returns "This page guidance path is complete" with goal achieved + completion condition.
+
+**Part 5 — Help behavior:** "help", "explain" in active page guidance arc re-explains the current step without advancing `turnCount`.
+
+**Files created:**
+- `src/lib/donna/operating/donnaGuidedContinuityCertification.ts` — Part 6: 53-assertion harness (53/53 PASS)
+
+**Files modified:**
+- `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_arc_continuation'` to `BrainRoutingStep` union
+- `src/lib/donna/brain/processDonnaMessage.ts` — Bug 1: page-confusion guard on `check_goal_workflow_intent` and `check_daily_brief`; Bug 2: new Step 7.7 `check_arc_continuation` with full page guidance step traversal + general arc ack/completion handling
+
+**Regression:** `donnaPageAwareOperatingCertification.ts` — 51/51 PASS (no regressions)
+
+**Certification:** 53/53 (guided continuity) + 51/51 (page-aware, regression) — 100% CERTIFIED
+
+---
+
+## 2026-06-17 — Mega Sprint 3031–3060 — DONNA Page-Aware Operating Layer V1
+
+**Mission:** Transform DONNA from a floating chatbot into a page-aware operating guide. DONNA previously received a `route` string but never used it — all 10 fields in each DonnaContextPack were loaded and silently discarded, and every AI teacher call was page-blind. This sprint resolves the architectural gap end-to-end.
+
+**Core architecture:** New **Step 0** resolves `PageIntelligence` before all other brain steps. New **Step 7.6** intercepts page-confusion queries (17 trigger phrases: "what do I do here", "don't know what needs to be done", "what am I looking at", etc.) and returns a direct, page-specific response with completion path — bypassing generic clarification. Both AI pipelines (live AI + strategic AI) now inject page context into every teacher call. A new `page_guidance` navigator arc carries the conversation forward after the page-aware response without restarting.
+
+**Core principle:** DONNA knows where the director is → the response is always grounded in that context.
+
+**Files created:**
+- `src/lib/donna/operating/pageContextResolver.ts` — Part 1: canonical `PageIntelligence` registry; 14+ routes covered; `resolvePageIntelligence(pathname)` regex matcher; `formatPageIntelligenceForTeacher()` (300-char cap)
+- `src/lib/donna/operating/pageOperatingContext.ts` — Part 2: `PageOperatingContext` with `currentState`, `blockers`, `opportunities`, `nextActions`, `completionPath`; `buildPageOperatingContext()` + `formatOperatingContextForAI()`
+- `src/lib/donna/operating/pageTaskResolver.ts` — Part 3: `PageTask` with urgency tiers; `resolvePageTask()` uses live `pendingReviews` signal for review queue tasks; ROUTE_TASKS record keyed by route
+- `src/lib/donna/operating/pageCompletionEngine.ts` — Part 4: `CompletionPath` with `goal`, `currentStep`, `nextStep`, `remainingSteps`, `completionCondition`; `buildCompletionPath()` + `formatCompletionPathForResponse()`
+- `src/lib/donna/operating/donnaPageAwareOperatingCertification.ts` — Part 10: 51-assertion certification harness (51/51 PASS)
+
+**Files modified:**
+- `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_page_context'` to `BrainRoutingStep` union
+- `src/lib/donna/brain/processDonnaMessage.ts` — Step 0: `resolvePageIntelligence(route)` before all steps; Step 7.6: page-confusion intercept with direct page-specific response + completion path; `pageIntelligence: PageIntelligence | null` added to `DonnaMessageResult`; `isPageConfusionPhrase()` + `buildPageConfusionResponse()` helpers
+- `src/lib/donna/conversation/donnaAcknowledgmentHandler.ts` — added `page_guidance` case to `buildActionStageResponse()`: continues page walkthrough arc rather than restarting interpretation
+- `src/lib/donna/brain/donnaStrategicAIContextBuilder.ts` — `formatContextForTeacher()` accepts optional `pageContext?: string` parameter; injected at 80-char cap before 250-char total cap
+- `src/lib/donna/brain/donnaLiveAIConversationBrain.ts` — both `processLiveAIConversation()` and `processStrategicAIConversation()` now resolve page intel and inject into teacher `academyContext`
+- `src/app/director/_actions/donnaLiveConversationAction.ts` — added `pageIntelligence: null` to `errorResult()` to satisfy updated `DonnaMessageResult` type
+- `src/app/director/_actions/donnaStrategicConversationAction.ts` — same as above
+- `src/lib/donna/operating/pageOperatingContext.ts` — `Set` spread replaced with `Array.from(new Set(...))` for ES5 target compatibility
+
+**Certification:** 51/51 — 100% CERTIFIED
+
+---
+
+## 2026-06-17 — Mega Sprint 3001–3030 — DONNA Strategic AI Augmentation V1
+
+**Mission:** Transform OpenAI from a failure fallback into a strategic reasoning layer. Strategic domain questions (retention analysis, curriculum design, summer camp planning, staffing decisions, player development, parent communication strategy, coach performance, program growth, academy operations, academy strategy, academy health) that previously returned generic clarification or navigation responses now route to OpenAI for structured strategic reasoning — before Steps 14/15 intercept them.
+
+**Core architecture:** New `'strategic_ai_assist'` action type. Brain Step 13.5 inserted between high-confidence workflow routing (Step 13) and navigation (Step 14). Fires when `goalConfidence` is in the strategic zone (0.35–0.72) AND a strategic domain signal + modifier are both detected AND the input is not a navigation/data-query/action request. `DonnaAssistantButton` routes to `donnaStrategicConversationAction` (server action, director + head_coach only) → `processStrategicAIConversation()` async pipeline.
+
+**Core principle:** DONNA talks to OpenAI → OpenAI never talks directly to the user → AcademyOS remains the source of truth → Academy DNA always wins.
+
+**Files created:**
+- `src/lib/donna/brain/donnaStrategicAIEligibility.ts` — Part 2: 11 strategic domains; confidence zone 0.35–0.72; requires both signal + modifier match; disqualifies navigation/data-query/action requests
+- `src/lib/donna/brain/donnaStrategicAIContextBuilder.ts` — Part 4: domain-specific context packets (signals, framing, data points, privacy note); formatted for teacher call (250-char cap, no PII)
+- `src/app/director/_actions/donnaStrategicConversationAction.ts` — server action: auth, role gate (director + head_coach), DNA context from DB, calls `processStrategicAIConversation()`
+- `src/lib/donna/brain/donnaStrategicAIAugmentationCertification.ts` — Part 8: 35-assertion certification harness (35/35 PASS)
+- `docs/donna/DONNA_STRATEGIC_AI_AUGMENTATION_V1_REPORT.md` — Part 10: full sprint report
+
+**Files modified:**
+- `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'strategic_ai_check'` to `BrainRoutingStep` union
+- `src/lib/donna/brain/processDonnaMessage.ts` — added `'strategic_ai_assist'` to `DonnaMessageAction`; added `strategicContext: StrategicContext | null` to `DonnaMessageResult`; added Step 13.5 gate
+- `src/lib/donna/brain/donnaLiveAIConversationBrain.ts` — added `processStrategicAIConversation()` export (full pipeline: brain → context builder → OpenAI → personality → DNA → learning → replay → metrics)
+- `src/lib/donna/conversation/donnaConversationTeacher.ts` — added `'strategic_reasoning'` to `TeacherMode`; 250-token limit; 250-char context window; fallback for new mode
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `handleStrategicAIAssist()`; `case 'strategic_ai_assist'`; import from new server action
+- `src/lib/donna/brain/donnaLiveAIConversationCertification.ts` — Part 9: 3 regression assertions added (assertions 40–42); total now 42/42 PASS
+- `src/app/director/_actions/donnaLiveConversationAction.ts` — added `strategicContext: null` to `errorResult()` to satisfy updated `DonnaMessageResult` type
+
+**Certification:** 35/35 (strategic) + 42/42 (live AI regression) — 100% CERTIFIED
+
+**TypeScript:** Clean — `npx tsc --noEmit` 0 errors.
+
+---
+
+## 2026-06-17 — Mega Sprint 2971–3000 — DONNA Live AI Conversation + Learning Router V1
+
+**Mission:** Transform DONNA from a purely deterministic brain into a conversational operating partner. When vague, qualitative inputs fall through all deterministic steps, DONNA routes to an OpenAI teacher for language interpretation — then applies DONNA's voice, checks Academy DNA, captures learning with quality scoring, and records replay turns. OpenAI never talks directly to the user.
+
+**Core architecture:** New `'live_ai_assist'` action type. Brain Step 15.6 fires when Step 15.5 falls through with topConfidence < 0.25 for eligible inputs. `DonnaAssistantButton` routes this to `donnaLiveConversationAction` (server action, director + head_coach only) → `processLiveAIConversation()` async pipeline.
+
+**Files created:**
+- `src/lib/donna/brain/donnaBrainConfidenceEvaluator.ts` — Part 1: eligibility gate for AI assist (disqualifies data queries, action requests, long inputs)
+- `src/lib/donna/conversation/donnaPersonalityLayer.ts` — Part 4: strips banned openers, enforces DONNA voice, truncates to 50 words
+- `src/lib/donna/conversation/donnaAcademyDNAGuard.ts` — Part 6: blocks mutation instructions, AI self-identification; flags DNA-sensitive topics
+- `src/lib/donna/conversation/donnaConversationReplayDataset.ts` — Part 7: in-memory replay dataset (circular buffer, 200 turns max)
+- `src/lib/donna/conversation/donnaAIUsageMetrics.ts` — AI usage tracker (calls, tokens, quality scores, DNA conflicts by role)
+- `src/lib/donna/learning/donnaLearningQualityScorer.ts` — Part 5.5: 0–100 quality score for AI-assisted learning entries
+- `src/lib/donna/brain/donnaLiveAIConversationBrain.ts` — Parts 2+5+8: async pipeline (brain → OpenAI → personality → DNA → learning → replay → metrics)
+- `src/app/director/_actions/donnaLiveConversationAction.ts` — Part 8: server action (auth + role gate + academy DNA context from DB)
+- `src/lib/donna/brain/donnaLiveAIConversationCertification.ts` — Part 9: 39-assertion certification harness (39/39 PASS)
+- `docs/donna/DONNA_LIVE_AI_CONVERSATION_V1_REPORT.md` — Part 10: full sprint report
+
+**Files modified:**
+- `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'live_ai_check'` to `BrainRoutingStep` union
+- `src/lib/donna/brain/processDonnaMessage.ts` — added `'live_ai_assist'` to `DonnaMessageAction`; added Step 15.6 after Step 15.5 fallthrough
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `handleLiveAIAssist()` async handler + `case 'live_ai_assist'` in brain result switch + import
+
+**TypeScript:** Clean — `npx tsc --noEmit` 0 errors.
+
+---
+
 ## 2026-06-17 — Mega Sprint 2961–2970 — Academy Setup Consolidation V1
 
 **Mission:** Eliminate duplicate Academy Setup flows. One onboarding path, one settings path. DONNA routes setup requests to the correct canonical destination based on runtime onboarding completion state.

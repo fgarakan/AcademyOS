@@ -28,6 +28,7 @@ export type TeacherMode =
   | 'response_drafting'        // draft a short DONNA response
   | 'pattern_generation'       // generate training examples for a concept
   | 'language_understanding'   // explain what a vague phrase might mean
+  | 'strategic_reasoning'      // structured strategic reasoning with signals and next action
 
 // ── Input / output ────────────────────────────────────────────────────────────
 
@@ -87,6 +88,14 @@ Format: one example per line.`,
     language_understanding: `Explain in plain language what the user's statement likely means in the context of a tennis academy.
 Be concrete. Name the likely underlying concern.
 Keep it under 50 words.`,
+
+    strategic_reasoning: `You are providing structured strategic reasoning for a tennis academy director.
+Structure your response EXACTLY in this format:
+[1–2 sentence direct answer]
+Top signals: [2–3 bullet points, each under 15 words]
+Next action: [1 concrete sentence]
+Follow-up: [1 focused question]
+Under 90 words total. Be specific to the domain. No preamble. Start with the direct answer.`,
   }
 
   return `${BASE_SYSTEM}\n\n${MODE_INSTRUCTIONS[mode]}`
@@ -149,6 +158,7 @@ function buildFallbackResult(
     response_drafting: `Let me pull the current data. What specifically concerns you most?`,
     pattern_generation: `Enrollment is low. Numbers seem off. The group looks light. Not many players showing up. Something feels wrong with intake.`,
     language_understanding: `This likely refers to a concern about the current state of the group or program — possibly enrollment, engagement, or progression.`,
+    strategic_reasoning: `Three signals worth checking: 1. Progression delays in your longest-tenured players. 2. Attendance patterns in the past 60 days. 3. Parent communication recency. Start with the group that has the most stalled players.`,
   }
 
   return {
@@ -234,11 +244,15 @@ export async function askConversationTeacher(
 
   // Build the prompt
   const systemPrompt = buildSystemPrompt(input.mode, input.role)
-  const maxTokens = input.mode === 'pattern_generation' ? 200 : 100
+  const maxTokens =
+    input.mode === 'pattern_generation' ? 200
+    : input.mode === 'strategic_reasoning' ? 250
+    : 100
 
   // Build the user message — only include non-sensitive context
+  const contextLimit = input.mode === 'strategic_reasoning' ? 250 : 100
   const contextPart = input.academyContext
-    ? `Academy context: ${input.academyContext.slice(0, 100)}`
+    ? `Context: ${input.academyContext.slice(0, contextLimit)}`
     : ''
   const conceptPart = input.currentConcepts?.length
     ? `Current concept matches: ${input.currentConcepts.slice(0, 3).join(', ')}`

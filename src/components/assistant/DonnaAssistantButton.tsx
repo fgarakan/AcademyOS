@@ -341,6 +341,9 @@ import { getWorkflow } from '@/lib/donna/guidedCompletion/guidedCompletionRegist
 // Sprint 1911 — Unified DONNA Brain: primary decision layer for general conversational input
 import { processDonnaMessage } from '@/lib/donna/brain/processDonnaMessage'
 import type { DonnaResponseRole } from '@/lib/donna/brain/donnaRoleResponsePolicy'
+// Mega Sprint 2971–3000 — Live AI Conversation: async server action for vague inputs
+import { donnaLiveConversationAction } from '@/app/director/_actions/donnaLiveConversationAction'
+import { donnaStrategicConversationAction } from '@/app/director/_actions/donnaStrategicConversationAction'
 import { recordConversationTurn } from '@/lib/donna/brain/donnaConversationState'
 import { getCurrentGoalState, updateLastEntity } from '@/lib/donna/memory/donnaGoalMemory'
 import type { EntityType } from '@/lib/donna/entities/donnaEntityResolver'
@@ -3860,6 +3863,115 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     })
   }
 
+  // Mega Sprint 2971–3000 — Live AI assist handler.
+  // Called when processDonnaMessage returns 'live_ai_assist' (Step 15.6).
+  // Passes the same input to the server action which runs: brain → OpenAI → personality → DNA → learning.
+  // Falls back to commandResponse error display on failure. Never throws.
+  async function handleLiveAIAssist(text: string): Promise<void> {
+    try {
+      const result = await donnaLiveConversationAction({
+        userMessage: text,
+        role: uiActionRole as DonnaResponseRole,
+        route: pathname,
+        activeGuidedWorkflowId: activeGuidedCompletion?.workflowId ?? null,
+        cooState: getCOOState(),
+        goalMemory: getCurrentGoalState(),
+        firstName: firstName ?? null,
+        pendingReviews: reviewQueuePendingCount,
+        conversationHistory: godModeHistory.slice(-5).map(t => ({
+          role: (t.role === 'user' ? 'user' : 'donna') as 'user' | 'donna',
+          content: t.content,
+        })),
+        entityContext: entityContext ?? null,
+        pendingDisambiguation: pendingDisambiguation ?? null,
+        conversationNavigatorState: conversationNavigatorStateRef.current,
+        onboardingComplete: onboardingComplete ?? false,
+      })
+
+      setCommandResponse({ message: result.response, type: 'info', label: 'DONNA' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: result.response, type: 'info' as const }])
+      if (result.shouldSpeak) speakDonna(result.spokenResponse || result.response)
+      recordPrompt(text)
+      recordSummary(result.response)
+      recordTurn(text, result.response, { domain: 'general' })
+      recordSignal('command_issued')
+      recordConversationTurn({
+        userMessage: text,
+        donnaResponse: result.response,
+        intentDetected: result.intent,
+        entityLabel: null,
+        goalLabel: null,
+        followUpQuestion: result.followUpQuestion,
+      })
+      if (result.updatedNavigatorState) {
+        conversationNavigatorStateRef.current = result.updatedNavigatorState
+      }
+    } catch {
+      setCommandResponse({ message: 'Something went wrong. Try rephrasing your question.', type: 'info', label: 'DONNA' })
+      recordSignal('command_unrecognized')
+    } finally {
+      setIsProcessingCommand(false)
+      if (processingClearTimerRef.current) {
+        clearTimeout(processingClearTimerRef.current)
+        processingClearTimerRef.current = null
+      }
+    }
+  }
+
+  // Mega Sprint 3001–3030 — Strategic AI assist handler.
+  // Called when processDonnaMessage returns 'strategic_ai_assist' (Step 13.5).
+  // Routes to strategic reasoning pipeline: brain → context packet → OpenAI → personality → DNA → learning.
+  async function handleStrategicAIAssist(text: string): Promise<void> {
+    try {
+      const result = await donnaStrategicConversationAction({
+        userMessage: text,
+        role: uiActionRole as DonnaResponseRole,
+        route: pathname,
+        activeGuidedWorkflowId: activeGuidedCompletion?.workflowId ?? null,
+        cooState: getCOOState(),
+        goalMemory: getCurrentGoalState(),
+        firstName: firstName ?? null,
+        pendingReviews: reviewQueuePendingCount,
+        conversationHistory: godModeHistory.slice(-5).map(t => ({
+          role: (t.role === 'user' ? 'user' : 'donna') as 'user' | 'donna',
+          content: t.content,
+        })),
+        entityContext: entityContext ?? null,
+        pendingDisambiguation: pendingDisambiguation ?? null,
+        conversationNavigatorState: conversationNavigatorStateRef.current,
+        onboardingComplete: onboardingComplete ?? false,
+      })
+
+      setCommandResponse({ message: result.response, type: 'info', label: 'DONNA' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: result.response, type: 'info' as const }])
+      if (result.shouldSpeak) speakDonna(result.spokenResponse || result.response)
+      recordPrompt(text)
+      recordSummary(result.response)
+      recordTurn(text, result.response, { domain: 'general' })
+      recordSignal('command_issued')
+      recordConversationTurn({
+        userMessage: text,
+        donnaResponse: result.response,
+        intentDetected: result.intent,
+        entityLabel: null,
+        goalLabel: null,
+        followUpQuestion: result.followUpQuestion,
+      })
+      if (result.updatedNavigatorState) {
+        conversationNavigatorStateRef.current = result.updatedNavigatorState
+      }
+    } catch {
+      setCommandResponse({ message: 'Something went wrong with strategic analysis. Try rephrasing.', type: 'info', label: 'DONNA' })
+      recordSignal('command_unrecognized')
+    } finally {
+      setIsProcessingCommand(false)
+      if (processingClearTimerRef.current) {
+        clearTimeout(processingClearTimerRef.current)
+        processingClearTimerRef.current = null
+      }
+    }
+  }
+
   // Sprint 1011 — God Mode: LLM orchestrator call for unrecognized inputs.
   // Called as the final fallback when no existing deterministic handler claims the input.
   // Never throws — falls back to commandResponse on any error.
@@ -4453,6 +4565,16 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         } else { recordSignal('command_issued') }
         break
       }
+
+      case 'live_ai_assist':
+        // Vague qualitative input — route to async OpenAI interpretation pipeline
+        void handleLiveAIAssist(text)
+        break
+
+      case 'strategic_ai_assist':
+        // Medium-confidence strategic question — route to strategic reasoning pipeline
+        void handleStrategicAIAssist(text)
+        break
 
       case 'god_mode':
         recordSignal('command_unrecognized')

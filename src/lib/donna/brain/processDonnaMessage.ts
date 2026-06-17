@@ -136,6 +136,18 @@ import { captureConversationLearning } from '@/lib/donna/conversation/conversati
 import { bridgeConversationRecord } from '@/lib/donna/learning/donnaLearningMemoryBridge'
 import { donnaLearningLedger } from '@/lib/donna/learning/donnaLearningLedger'
 import { retrieveKnowledge } from '@/lib/donna/knowledgePromotion/donnaKnowledgeReuseEngine'
+// Mega Sprint 2971–3000 — Live AI assist eligibility gate (Step 15.6)
+import { evaluateAIAssistEligibility } from '@/lib/donna/brain/donnaBrainConfidenceEvaluator'
+// Mega Sprint 3001–3030 — Strategic AI assist gate (Step 13.5)
+import { evaluateStrategicAIEligibility } from '@/lib/donna/brain/donnaStrategicAIEligibility'
+import type { StrategicContext } from '@/lib/donna/brain/donnaStrategicAIEligibility'
+// Mega Sprint 3031–3060 — Page-Aware Operating Layer V1 (Step 7.6)
+import {
+  resolvePageIntelligence,
+  formatPageIntelligenceForTeacher,
+} from '@/lib/donna/operating/pageContextResolver'
+import type { PageIntelligence } from '@/lib/donna/operating/pageContextResolver'
+import { buildCompletionPath, formatCompletionPathForResponse } from '@/lib/donna/operating/pageCompletionEngine'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -185,6 +197,8 @@ export type DonnaMessageAction =
   | 'fetch_learning'           // Memory-based learning → runDonnaMemoryLearningAction
   | 'fetch_insight'            // Insight analysis → runDonnaInsightAction
   | 'route_coo_prompt'         // Complex COO question → existing handleDonnaCooPrompt chain
+  | 'live_ai_assist'           // Vague input eligible for OpenAI interpretation → donnaLiveConversationAction
+  | 'strategic_ai_assist'     // Medium-confidence strategic question → donnaStrategicConversationAction
   | 'god_mode'                 // Route to LLM God Mode
 
 // ── Result type ───────────────────────────────────────────────────────────────
@@ -239,6 +253,10 @@ export interface DonnaMessageResult {
   debugLog: BrainDecisionLog
   /** Updated conversation navigator state after this turn (null when Step 15.5 did not fire) */
   updatedNavigatorState: ConversationNavigatorState | null
+  /** Strategic AI assist context (non-null when action === 'strategic_ai_assist') */
+  strategicContext: StrategicContext | null
+  /** Page intelligence resolved at Step 0 for the current route (null for unknown routes) */
+  pageIntelligence: PageIntelligence | null
 }
 
 // ── Phrase detectors (inlined to avoid React component dependency) ─────────────
@@ -369,6 +387,51 @@ function isSetLevelPromotionQuery(lower: string): boolean {
   return false
 }
 
+// Mega Sprint 3031–3060 — Page-confusion detector for Step 7.6.
+// Detects meta-questions about the page itself, not about academy data.
+// Must fire before intent classification so generic NLU does not swallow these.
+function isPageConfusionPhrase(lower: string): boolean {
+  if (lower.includes("don't know what needs to be done")) return true
+  if (lower.includes("not sure what needs to be done")) return true
+  if (lower.includes("what do i do here")) return true
+  if (lower.includes("what needs to be done on this page")) return true
+  if (lower.includes("help me with this page")) return true
+  if (lower.includes("what is this page for")) return true
+  if (lower.includes("what should i focus on here")) return true
+  if (lower.includes("what am i looking at")) return true
+  if (lower.includes("how do i use this page")) return true
+  if (lower.includes("what can i do here")) return true
+  if (lower.includes("guide me through this")) return true
+  if (lower.includes("walk me through this")) return true
+  if (lower.includes("where do i start")) return true
+  if (lower.includes("not sure what to do")) return true
+  if (lower.includes("confused about this page")) return true
+  if (lower.includes("help me navigate this")) return true
+  if (lower.includes("what should i do on this page")) return true
+  return false
+}
+
+// Build a page-aware DONNA response for page-confusion phrases.
+// Returns a complete response string — caller wraps in makeResult.
+function buildPageConfusionResponse(intel: PageIntelligence): string {
+  const goalLines = intel.completionGoals.slice(0, 3).map(g => `• ${g}`).join('\n')
+  const warningLine = intel.warnings.length > 0
+    ? `\n\n**Note:** ${intel.warnings[0]}`
+    : ''
+  const completionSection = goalLines ? `\n\n**To complete this page:**\n${goalLines}` : ''
+  return [
+    `You are on **${intel.pageName}**.`,
+    '',
+    intel.pagePurpose,
+    '',
+    `**Highest-impact action:** ${intel.recommendedNextAction}`,
+    completionSection,
+    warningLine,
+    '',
+    'Would you like me to walk you through it step by step?',
+  ].join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 function isReviewQueuePhrase(lower: string): boolean {
   return (
     lower.includes('show review queue') ||
@@ -415,6 +478,8 @@ function makeResult(
     unifiedAnswer: partial.unifiedAnswer ?? null,
     disambiguationQuestion: partial.disambiguationQuestion ?? null,
     updatedNavigatorState: partial.updatedNavigatorState ?? null,
+    strategicContext: partial.strategicContext ?? null,
+    pageIntelligence: partial.pageIntelligence ?? null,
     debugLog,
   }
 }
@@ -435,6 +500,11 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   const lower = userMessage.toLowerCase().trim()
 
   const debugLog = createDebugLog(userMessage, role, route)
+
+  // ── Step 0: Page intelligence resolution ────────────────────────────────────
+  // Resolves before all other steps so every subsequent step can use page context.
+  // Null for unknown routes — all downstream steps handle null gracefully.
+  const pageIntelligence = resolvePageIntelligence(route)
 
   // ── Step 0a: Active goal session — route session commands first ──────────────
   // When a goal session is active, interpret short phrases ("yes", "skip",
@@ -507,18 +577,23 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   // take precedence over form-filling workflows.
   logStep(debugLog, 'check_goal_workflow_intent')
   if (activeGoalSession === null && activeGuidedWorkflowId === null) {
-    const goalWorkflow = detectGoalWorkflowIntent(userMessage)
-    if (goalWorkflow) {
-      finalizeLog(debugLog, 'check_goal_workflow_intent', 'start_goal_session')
-      emitDebugLog(debugLog)
-      return makeResult('start_goal_session', {
-        confidence: 0.92,
-        startGoalType: goalWorkflow.id,
-        response: goalWorkflow.openingMessage,
-        spokenResponse: goalWorkflow.openingMessage,
-        followUpQuestion: `Would you like me to walk you through **${goalWorkflow.label}** now?`,
-        navigateTo: goalWorkflow.fallbackRoute,
-      }, debugLog)
+    // Mega Sprint 3061–3090: yield to check_page_context (Step 7.6) when on a known page
+    // and the message is a page-confusion phrase. "What should I focus on here?" must receive
+    // a page-aware response, not launch a generic goal session.
+    if (!(pageIntelligence !== null && isPageConfusionPhrase(lower))) {
+      const goalWorkflow = detectGoalWorkflowIntent(userMessage)
+      if (goalWorkflow) {
+        finalizeLog(debugLog, 'check_goal_workflow_intent', 'start_goal_session')
+        emitDebugLog(debugLog)
+        return makeResult('start_goal_session', {
+          confidence: 0.92,
+          startGoalType: goalWorkflow.id,
+          response: goalWorkflow.openingMessage,
+          spokenResponse: goalWorkflow.openingMessage,
+          followUpQuestion: `Would you like me to walk you through **${goalWorkflow.label}** now?`,
+          navigateTo: goalWorkflow.fallbackRoute,
+        }, debugLog)
+      }
     }
   }
 
@@ -623,7 +698,8 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
 
   // ── Step 5: Daily brief intent ───────────────────────────────────────────────
   logStep(debugLog, 'check_daily_brief')
-  if (matchesDailyBriefIntent(userMessage)) {
+  // Mega Sprint 3061–3090: yield to check_page_context on a known page with a confusion phrase.
+  if (!(pageIntelligence !== null && isPageConfusionPhrase(lower)) && matchesDailyBriefIntent(userMessage)) {
     finalizeLog(debugLog, 'check_daily_brief', 'fetch_brief')
     emitDebugLog(debugLog)
     return makeResult('fetch_brief', { confidence: 0.95 }, debugLog)
@@ -660,6 +736,198 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     finalizeLog(debugLog, 'check_coo_intelligence', 'fetch_coo_intelligence')
     emitDebugLog(debugLog)
     return makeResult('fetch_coo_intelligence', { confidence: 0.92 }, debugLog)
+  }
+
+  // ── Step 7.6: Page-confusion intercept ──────────────────────────────────────
+  // Fires before intent classification when the director asks a meta-question about
+  // the current page ("what do I do here?", "I don't know what needs to be done").
+  // Requires page intelligence — falls through silently for unknown routes.
+  // Sets navigator stage to 'action' so subsequent "yes/okay" continues the arc.
+  logStep(debugLog, 'check_page_context')
+  if (pageIntelligence !== null && isPageConfusionPhrase(lower)) {
+    const confusionResponse = buildPageConfusionResponse(pageIntelligence)
+    const completionPath = buildCompletionPath(pageIntelligence)
+    const completionFragment = formatCompletionPathForResponse(completionPath)
+    const fullResponse = `${confusionResponse}\n\n${completionFragment}`
+    const spokenSummary = `You are on ${pageIntelligence.pageName}. ${pageIntelligence.recommendedNextAction}`
+
+    // Set navigator state to 'action' so acknowledgments continue the page guidance arc
+    const navState = createInitialNavigatorState(role as import('@/lib/donna/conversation/donnaIntentInterpreter').InterpreterRole)
+    const navOutput = advanceConversation(navState, {
+      userText:           userMessage,
+      topConcept:         null,
+      intentConfidence:   0.90,
+      extractedEntity:    pageIntelligence.pageName,
+      donnaQuestionAsked: false,
+    })
+
+    finalizeLog(debugLog, 'check_page_context', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:              fullResponse,
+      spokenResponse:        spokenSummary,
+      confidence:            0.92,
+      pageIntelligence,
+      updatedNavigatorState: {
+        ...navOutput.updatedState,
+        stage:                'action',
+        proposedActionType:   'page_guidance',
+        intentConfidence:     0.90,
+        extractedEntity:      pageIntelligence.pageName,
+      },
+    }, debugLog)
+  }
+
+  // ── Step 7.7: Active arc continuation intercept ─────────────────────────────
+  // Fires when a conversational arc is live (non-null, non-completion navigator state).
+  // Handles yes/okay/done/help BEFORE ambiguity resolution and before Step 14/15 NLU
+  // so low-confidence ack phrases never trigger generic clarification while an arc is active.
+  //
+  // Page guidance arc: drives step-by-step traversal using turnCount as step index.
+  //   turnCount=1 → Step 1, turnCount=2 → Step 2, ... beyond allSteps → completion.
+  // General arc: delegates to buildAcknowledgmentContinuationResponse / buildCompletionResponse.
+  logStep(debugLog, 'check_arc_continuation')
+  {
+    const arcNavState: ConversationNavigatorState | null =
+      (input.conversationNavigatorState?.stage === 'completion')
+        ? null
+        : (input.conversationNavigatorState ?? null)
+
+    if (arcNavState !== null) {
+      const isAck        = isAcknowledgmentPhrase(lower)
+      const isCompl      = isCompletionPhrase(lower)
+      const isHelpSignal = lower === 'help' || lower === 'help.' ||
+                           lower === 'explain' || lower === 'explain.' ||
+                           lower.startsWith('explain ') || lower.includes('what do i do now')
+
+      // ── Page guidance step traversal ────────────────────────────────────────
+      if (arcNavState.proposedActionType === 'page_guidance' && pageIntelligence !== null) {
+        if (isAck || isCompl || isHelpSignal) {
+          const guidancePath = buildCompletionPath(pageIntelligence)
+          const allSteps    = [guidancePath.nextStep, ...guidancePath.remainingSteps]
+          const stepIndex   = arcNavState.turnCount - 1  // 0-based; initial turnCount=1 → stepIndex=0
+
+          if (isHelpSignal) {
+            // Re-explain the step the director is currently working on — no advance
+            const workingIndex   = Math.max(0, Math.min(stepIndex - 1, allSteps.length - 1))
+            const currentStepTxt = allSteps[workingIndex]
+            const stepNum        = Math.max(1, stepIndex)
+            const helpResponse   = [
+              `Here is Step ${stepNum}: **${currentStepTxt}**`,
+              '',
+              guidancePath.completionCondition,
+              '',
+              'Say **Done** when complete, or ask another question.',
+            ].join('\n')
+            finalizeLog(debugLog, 'check_arc_continuation', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response:              helpResponse,
+              spokenResponse:        `Step ${stepNum}: ${currentStepTxt}`,
+              confidence:            arcNavState.intentConfidence,
+              updatedNavigatorState: arcNavState,  // no advance on help
+            }, debugLog)
+          }
+
+          if (stepIndex < allSteps.length) {
+            // Show the next step in the sequence
+            const stepNum    = stepIndex + 1
+            const stepText   = allSteps[stepIndex]
+            const prefix     = isAck ? 'Great.' : 'Good.'
+            const hasMore    = stepIndex + 1 < allSteps.length
+            const footer     = hasMore
+              ? `Say **Done** when you've completed this, or **Help** for more detail.`
+              : `This is the final step. Say **Done** when complete.`
+            const response   = `${prefix} **Step ${stepNum}:** ${stepText}\n\n${footer}`
+
+            const navOutput  = advanceConversation(arcNavState, {
+              userText:           userMessage,
+              topConcept:         arcNavState.topConcept,
+              intentConfidence:   arcNavState.intentConfidence,
+              extractedEntity:    arcNavState.extractedEntity,
+              donnaQuestionAsked: false,
+            })
+            finalizeLog(debugLog, 'check_arc_continuation', 'respond')
+            emitDebugLog(debugLog)
+            return makeResult('respond', {
+              response,
+              spokenResponse:        `Step ${stepNum}: ${stepText}`,
+              confidence:            arcNavState.intentConfidence,
+              updatedNavigatorState: {
+                ...navOutput.updatedState,
+                stage:              'action',
+                proposedActionType: 'page_guidance',
+                extractedEntity:    arcNavState.extractedEntity,
+              },
+            }, debugLog)
+          }
+
+          // All steps exhausted → completion
+          const completionMsg = [
+            `This page guidance path is complete.`,
+            '',
+            `**Goal achieved:** ${guidancePath.goal}`,
+            '',
+            `**Completion condition:** ${guidancePath.completionCondition}`,
+          ].join('\n')
+          const navOutput = advanceConversation(arcNavState, {
+            userText:       userMessage,
+            topConcept:     arcNavState.topConcept,
+            intentConfidence: arcNavState.intentConfidence,
+            extractedEntity: arcNavState.extractedEntity,
+            hasDraftOutput: true,
+          })
+          finalizeLog(debugLog, 'check_arc_continuation', 'respond')
+          emitDebugLog(debugLog)
+          return makeResult('respond', {
+            response:              completionMsg,
+            spokenResponse:        'This page guidance path is complete.',
+            confidence:            arcNavState.intentConfidence,
+            updatedNavigatorState: { ...navOutput.updatedState, stage: 'completion', proposedActionType: null },
+          }, debugLog)
+        }
+      }
+
+      // ── General arc acknowledgment ───────────────────────────────────────────
+      if (isAck) {
+        const ackResponse  = buildAcknowledgmentContinuationResponse(arcNavState)
+        const ackNavOutput = advanceConversation(arcNavState, {
+          userText:           userMessage,
+          topConcept:         arcNavState.topConcept,
+          intentConfidence:   arcNavState.intentConfidence,
+          extractedEntity:    arcNavState.extractedEntity,
+          donnaQuestionAsked: true,
+        })
+        finalizeLog(debugLog, 'check_arc_continuation', 'respond')
+        emitDebugLog(debugLog)
+        return makeResult('respond', {
+          response:              ackResponse,
+          spokenResponse:        ackResponse,
+          confidence:            arcNavState.intentConfidence,
+          updatedNavigatorState: ackNavOutput.updatedState,
+        }, debugLog)
+      }
+
+      // ── General arc completion ───────────────────────────────────────────────
+      if (isCompl) {
+        const completionResp    = buildCompletionResponse(arcNavState)
+        const completionNavOut  = advanceConversation(arcNavState, {
+          userText:           userMessage,
+          topConcept:         arcNavState.topConcept,
+          intentConfidence:   arcNavState.intentConfidence,
+          extractedEntity:    arcNavState.extractedEntity,
+          hasDraftOutput:     true,
+        })
+        finalizeLog(debugLog, 'check_arc_continuation', 'respond')
+        emitDebugLog(debugLog)
+        return makeResult('respond', {
+          response:              completionResp.full,
+          spokenResponse:        completionResp.confirmation,
+          confidence:            arcNavState.intentConfidence,
+          updatedNavigatorState: completionNavOut.updatedState,
+        }, debugLog)
+      }
+    }
   }
 
   // ── Step 8: Ambiguity resolution ─────────────────────────────────────────────
@@ -1255,6 +1523,34 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     }
   }
 
+  // ── Step 13.5: Strategic AI assist gate ─────────────────────────────────────
+  // Fires when confidence is in the strategic zone (0.35–0.72) AND a strategic
+  // domain is detected in the message (retention, curriculum, staffing, etc.).
+  // Routes to strategic_ai_assist instead of generic navigation or clarification.
+  // Preserves: setup routing (Step 0.25), guided workflows (Step 1), acknowledgments
+  // (Step 15.5), live_ai_assist (Step 15.6). Only intercepts strategic planning inputs.
+  logStep(debugLog, 'strategic_ai_check')
+  {
+    const strategicEligibility = evaluateStrategicAIEligibility(messageToProcess, goalResult.confidence)
+    if (strategicEligibility.eligible && strategicEligibility.domain !== null) {
+      finalizeLog(debugLog, 'strategic_ai_check', 'strategic_ai_assist')
+      emitDebugLog(debugLog)
+      return makeResult('strategic_ai_assist', {
+        intent: intentResult.intent,
+        entity: entityResult,
+        goal: goalResult,
+        confidence: goalResult.confidence,
+        strategicContext: {
+          strategicDomain: strategicEligibility.domain,
+          detectedGoal: goalResult.goal,
+          detectedIntent: intentResult.intent,
+          confidence: goalResult.confidence,
+          reason: strategicEligibility.reason,
+        },
+      }, debugLog)
+    }
+  }
+
   // ── Step 14: Medium-confidence goal → navigate + respond ─────────────────────
   if (goalResult.confidence >= 0.55 && goalResult.recommendedRoute) {
     const inferenceMsg = buildGoalInferenceMessage(goalResult)
@@ -1502,6 +1798,23 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       updatedNavigatorState: navOutput.updatedState,
       navigateTo:            navOutput.stage === 'completion' ? (navOutput.suggestedRoute ?? null) : null,
     }, debugLog)
+  }
+
+  // ── Step 15.6: Live AI assist — vague input, no clear concept, short enough for AI ──
+  // Fires when Step 15.5's meaning path fell through (topConfidence < 0.25).
+  // Short, qualitative, non-data-query inputs are routed to the OpenAI teacher
+  // via donnaLiveConversationAction (async server action).
+  // Data queries, action requests, and long inputs defer to Step 16.
+  logStep(debugLog, 'live_ai_check')
+  {
+    const aiEligibility = evaluateAIAssistEligibility(messageToProcess, certifiedMeaning.topConfidence)
+    if (aiEligibility.eligible) {
+      finalizeLog(debugLog, 'live_ai_check', 'live_ai_assist')
+      emitDebugLog(debugLog)
+      return makeResult('live_ai_assist', {
+        confidence: certifiedMeaning.topConfidence,
+      }, debugLog)
+    }
   }
 
   // ── Step 16: Route to existing COO prompt chain (complex/unknown questions) ───

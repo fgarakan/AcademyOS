@@ -88,6 +88,14 @@ function buildActionStageResponse(state: ConversationNavigatorState): string {
   const entity = state.extractedEntity
   const proposed = state.proposedActionType
 
+  // Mega Sprint 3031–3060 — Page guidance continuation.
+  // When Step 7.6 set the arc to page_guidance, acknowledgments advance
+  // the page walkthrough rather than restarting interpretation.
+  if (proposed === 'page_guidance') {
+    const pageName = entity ?? 'this page'
+    return `Great. Let's work through it together. Let me know when you've completed the first step, or say "help" if you'd like guidance on any part. Say "done" when you're finished with ${pageName}.`
+  }
+
   if (proposed && entity) {
     return `Got it${entity ? ` — continuing with ${entity}` : ''}. Ready to proceed when you are.`
   }
