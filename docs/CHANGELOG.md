@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-06-17 — Mega Sprint 2951–2960 — DONNA Conversational Continuity + Completion Repair V1
+
+**Mission:** Fix the navigator state persistence bug (state was never written back to `conversationNavigatorStateRef`) and wire the acknowledgment + completion handlers into the DONNA brain. Conversational arcs now survive across turns; "Okay" advances the arc; "Done" closes it with a learning record and next-priority suggestion. Phrase gaps for "seems weird" / "feels weird" added to meaning extractor.
+
+**Root cause:** `DonnaAssistantButton.tsx` `respond` case never wrote `brainResult.updatedNavigatorState` back to `conversationNavigatorStateRef.current` — every turn received `null` as inbound state.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — persist `updatedNavigatorState` to ref in `respond` case
+- `src/lib/donna/brain/processDonnaMessage.ts` — import + wire acknowledgment/completion intercepts; fix `inboundNavState` to reset on completed arcs; set `donnaQuestionAsked: true` in ack intercept and second-turn meaning path; add `AcademyOSConcept` + `ConversationStage` type imports
+- `src/lib/donna/conversation/donnaAcknowledgmentHandler.ts` — remove invalid `parent_concern_signal` key from `CONCEPT_LABELS`
+- `src/lib/donna/conversation/donnaCompletionDetector.ts` — remove invalid `case 'parent_concern_signal':` from `getNextPriority`
+- `src/lib/donna/conversation/donnaMeaningExtractor.ts` — add "seems weird" / "feels weird" to `enrollment_issue`; add "seems weird" to `grouping_issue`
+- `docs/CHANGELOG.md` — this entry
+
+**Files created:**
+- `src/lib/donna/conversation/donnaAcknowledgmentHandler.ts` — stage-aware ack detection + continuation builder
+- `src/lib/donna/conversation/donnaCompletionDetector.ts` — completion phrase detection + two-part response builder
+- `src/lib/donna/conversation/conversationalLoopRepairCertification.ts` — 12-section, 56-assertion certification harness
+- `docs/donna/DONNA_CONVERSATIONAL_LOOP_REPAIR_V1_REPORT.md` — full audit report
+
+**Certification:** 56/56 assertions — 100% CERTIFIED
+
+---
+
 ## 2026-06-16 — Mega Sprint 2921–2950 — DONNA Conversational Loop Activation V1
 
 **Mission:** Wire the full certified conversational intelligence stack (Sprints 2831–2920) into the DONNA brain. Vague director inputs ("Orange seems weird", "Practice felt flat") now route through Step 15.5 — the certified NLU path — instead of falling through to the generic COO prompt chain. Phrase gaps for "what do I need to do next/now", "where do I start", and "help me finish this" fixed across all three matching layers.

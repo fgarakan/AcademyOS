@@ -116,12 +116,22 @@ import { isInsightPhrase } from '@/lib/donna/insight/donnaInsightAnswerBuilder'
 import { interpretIntent } from '@/lib/donna/conversation/donnaIntentInterpreter'
 import type { InterpreterRole } from '@/lib/donna/conversation/donnaIntentInterpreter'
 import { extractMeaning } from '@/lib/donna/conversation/donnaMeaningExtractor'
+import type { AcademyOSConcept } from '@/lib/donna/conversation/donnaMeaningExtractor'
 import { selectBestNextQuestion } from '@/lib/donna/conversation/donnaBestNextQuestion'
 import {
   advanceConversation,
   createInitialNavigatorState,
 } from '@/lib/donna/conversation/donnaConversationNavigator'
-import type { ConversationNavigatorState } from '@/lib/donna/conversation/donnaConversationNavigator'
+import type { ConversationNavigatorState, ConversationStage } from '@/lib/donna/conversation/donnaConversationNavigator'
+// Mega Sprint 2951–2960 — Conversational continuity + completion repair
+import {
+  isAcknowledgmentPhrase,
+  buildAcknowledgmentContinuationResponse,
+} from '@/lib/donna/conversation/donnaAcknowledgmentHandler'
+import {
+  isCompletionPhrase,
+  buildCompletionResponse,
+} from '@/lib/donna/conversation/donnaCompletionDetector'
 import { captureConversationLearning } from '@/lib/donna/conversation/conversationLearningRecord'
 import { bridgeConversationRecord } from '@/lib/donna/learning/donnaLearningMemoryBridge'
 import { donnaLearningLedger } from '@/lib/donna/learning/donnaLearningLedger'
@@ -1272,7 +1282,81 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   const interpreterRole: InterpreterRole = role as InterpreterRole
   const certifiedIntent   = interpretIntent(messageToProcess, interpreterRole, route)
   const certifiedMeaning  = extractMeaning(messageToProcess, interpreterRole)
-  const inboundNavState   = input.conversationNavigatorState ?? null
+
+  // If the prior arc reached completion, treat it as null so new input starts a fresh arc.
+  const inboundNavState: ConversationNavigatorState | null =
+    (input.conversationNavigatorState?.stage === 'completion')
+      ? null
+      : (input.conversationNavigatorState ?? null)
+
+  // ── Acknowledgment intercept — advance arc without restarting interpretation ──
+  // Fires when the director says "okay", "got it", etc. while a navigator arc is active.
+  // Advances the stage without re-running concept extraction from scratch.
+  // donnaQuestionAsked:true counts DONNA's prior response as a clarification turn so the
+  // 'question' → 'understanding' gate fires on the first ack.
+  if (inboundNavState !== null && isAcknowledgmentPhrase(lower)) {
+    const ackResponse = buildAcknowledgmentContinuationResponse(inboundNavState)
+    const ackNavOutput = advanceConversation(inboundNavState, {
+      userText:           messageToProcess,
+      topConcept:         inboundNavState.topConcept,
+      intentConfidence:   inboundNavState.intentConfidence,
+      extractedEntity:    inboundNavState.extractedEntity,
+      donnaQuestionAsked: true,
+    })
+    finalizeLog(debugLog, 'certified_nlu', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:              ackResponse,
+      spokenResponse:        ackResponse,
+      confidence:            inboundNavState.intentConfidence,
+      updatedNavigatorState: ackNavOutput.updatedState,
+    }, debugLog)
+  }
+
+  // ── Completion intercept — close arc and capture learning ──
+  // Fires when the director says "done", "handled", etc. while a navigator arc is active.
+  // Closes the arc, captures learning, and suggests the next priority.
+  if (inboundNavState !== null && isCompletionPhrase(lower)) {
+    const completionResp = buildCompletionResponse(inboundNavState)
+    const completionNavOutput = advanceConversation(inboundNavState, {
+      userText:         messageToProcess,
+      topConcept:       inboundNavState.topConcept,
+      intentConfidence: inboundNavState.intentConfidence,
+      extractedEntity:  inboundNavState.extractedEntity,
+      hasDraftOutput:   true,
+    })
+    const allConceptsFromNav = inboundNavState.history
+      .map(h => h.conceptDetected)
+      .filter((c): c is AcademyOSConcept => c !== null)
+    const stagesVisited = Array.from(
+      new Set([...inboundNavState.history.map(h => h.stage), 'completion' as ConversationStage]),
+    )
+    const learningRecord = captureConversationLearning({
+      originalStatement:     inboundNavState.history[0]?.userText ?? messageToProcess,
+      role:                  interpreterRole,
+      interpretedTopConcept: inboundNavState.topConcept,
+      allConcepts:           allConceptsFromNav,
+      initialConfidence:     inboundNavState.history[0]?.confidence ?? 0,
+      finalConfidence:       inboundNavState.intentConfidence,
+      clarificationAsked:    null,
+      clarificationResponse: null,
+      stagesVisited,
+      finalUnderstanding:    completionResp.confirmation,
+      actionTaken:           inboundNavState.proposedActionType,
+      completedSuccessfully: true,
+    })
+    const bridgeResult = bridgeConversationRecord(learningRecord)
+    donnaLearningLedger.addEntry(bridgeResult.entry)
+    finalizeLog(debugLog, 'certified_nlu', 'respond')
+    emitDebugLog(debugLog)
+    return makeResult('respond', {
+      response:              completionResp.full,
+      spokenResponse:        completionResp.confirmation,
+      confidence:            1.0,
+      updatedNavigatorState: completionNavOutput.updatedState,
+      navigateTo:            completionResp.suggestedRoute,
+    }, debugLog)
+  }
 
   // Approved knowledge reuse — retrieves academy-specific knowledge only.
   // Returns empty when no knowledge has been promoted yet (current state).
@@ -1324,11 +1408,15 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   // ── Meaning path: enough signal to frame the issue and propose next action ──
   if (certifiedMeaning.topConcept && certifiedMeaning.topConfidence >= 0.25) {
     const navState  = inboundNavState ?? createInitialNavigatorState(interpreterRole)
+    // When a prior turn left the arc at 'question' stage, treat this response as a
+    // completed clarification exchange so the 'question'→'understanding' gate fires.
+    const alreadyAskedClarification = inboundNavState !== null && inboundNavState.stage === 'question'
     const navOutput = advanceConversation(navState, {
-      userText:         messageToProcess,
-      topConcept:       certifiedMeaning.topConcept,
-      intentConfidence: certifiedMeaning.topConfidence,
-      extractedEntity:  certifiedIntent.extractedEntity ?? null,
+      userText:           messageToProcess,
+      topConcept:         certifiedMeaning.topConcept,
+      intentConfidence:   certifiedMeaning.topConfidence,
+      extractedEntity:    certifiedIntent.extractedEntity ?? null,
+      donnaQuestionAsked: alreadyAskedClarification,
     })
 
     // ── Completion: capture learning and bridge to ledger ──

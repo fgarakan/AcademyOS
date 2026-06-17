@@ -4496,6 +4496,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           const entityType: EntityType = kindToV1[ev2.kind] ?? 'unknown'
           updateLastEntity(ev2.displayName, entityType)
         }
+        // Mega Sprint 2951–2960 — persist navigator state across turns for conversational continuity.
+        // updatedNavigatorState is non-null only when Step 15.5 (certified NLU) ran.
+        if (brainResult.updatedNavigatorState !== null) {
+          conversationNavigatorStateRef.current = brainResult.updatedNavigatorState
+        }
         break
       }
     }
