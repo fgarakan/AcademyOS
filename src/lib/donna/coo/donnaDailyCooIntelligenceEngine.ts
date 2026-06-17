@@ -494,8 +494,8 @@ function buildSetupItems(input: DailyCOOIntelligenceInput): COOIntelligenceItem[
       confidence:      'high',
       urgency:         'critical',
       priority:        'urgent',
-      recommendedAction: 'Start with DONNA Setup to configure your academy — ask DONNA "walk me through academy setup".',
-      route:           '/director/setup',
+      recommendedAction: 'Complete Academy Onboarding to configure your academy — go to Onboarding or ask DONNA "help me finish academy setup".',
+      route:           '/director/onboarding',
     })
   } else if (input.onboardingReadinessLevel === 'partial') {
     items.push({

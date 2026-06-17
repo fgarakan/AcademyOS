@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-06-17 — Mega Sprint 2961–2970 — Academy Setup Consolidation V1
+
+**Mission:** Eliminate duplicate Academy Setup flows. One onboarding path, one settings path. DONNA routes setup requests to the correct canonical destination based on runtime onboarding completion state.
+
+**Core change:** `processDonnaMessage` Step 0.25 — a setup routing intercept inserted before Step 0b (goal workflow intent) that catches all setup phrases ("help me finish academy setup", "finish setup", "set up my academy", etc.) and routes to `/director/onboarding` when incomplete or `/director/settings` when complete.
+
+**Files modified:**
+- `src/lib/donna/brain/donnaBrainDebugLog.ts` — added `'check_setup_routing'` to `BrainRoutingStep` union
+- `src/lib/donna/brain/processDonnaMessage.ts` — added `onboardingComplete?: boolean` to `DonnaMessageInput`; added Step 0.25 setup routing intercept
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `onboardingComplete` prop; threaded into `processDonnaMessage` call
+- `src/app/director/layout.tsx` — passed `onboardingComplete={!onboardingIncomplete}` to `<DonnaAssistantButton />`
+- `src/lib/donna/coo/donnaDailyCooIntelligenceEngine.ts` — stale `route: '/director/setup'` → `'/director/onboarding'`; updated `recommendedAction` text
+- `src/lib/donna/setup/donnaAcademySetupCompletionEngine.ts` — stale route text `Navigate to /director/setup` → `Navigate to /director/onboarding`
+- `src/lib/donna/donnaMissingContextEngine.ts` — `label: 'Academy Setup'` → `'Academy Onboarding'`
+- `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — removed `/director/setup` from `pageRoutes`; label → `'Academy Onboarding'`; updated `openingMessage`, `endGoal`, `safeActions`, `approvalGatedActions`
+- `src/lib/donna/intent/donnaClarificationEngine.ts` — `SETUP_OPTIONS` label → `'Continue Academy Onboarding'`
+- `src/app/director/_components/TodaySetupCard.tsx` — header label `"Academy Setup"` → `"Academy Onboarding"`
+- `src/app/director/setup/AcademySetupDonnaBanner.tsx` — `@deprecated` header added (orphaned, V2 deletion candidate)
+- `src/app/director/_actions/donnaSaveAcademySetupDraftAction.ts` — `@deprecated` header added (orphaned)
+- `src/app/director/_actions/approveDonnaAcademySetupDraftAction.ts` — `@deprecated` header added (orphaned)
+
+**Files created:**
+- `src/lib/donna/setup/academySetupConsolidationCertification.ts` — 18-assertion certification harness
+- `docs/donna/ACADEMY_SETUP_CONSOLIDATION_V1_REPORT.md` — full audit report
+
+**Certification:** 18/18 assertions — 100% CERTIFIED
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-06-17 — Mega Sprint 2951–2960 — DONNA Conversational Continuity + Completion Repair V1
 
 **Mission:** Fix the navigator state persistence bug (state was never written back to `conversationNavigatorStateRef`) and wire the acknowledgment + completion handlers into the DONNA brain. Conversational arcs now survive across turns; "Okay" advances the arc; "Done" closes it with a learning record and next-priority suggestion. Phrase gaps for "seems weird" / "feels weird" added to meaning extractor.

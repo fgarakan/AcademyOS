@@ -240,7 +240,7 @@ export function buildSetupMissingFieldRecommendation(
     category: 'academy_health',
     alternatives: [
       'Continue the guided setup to answer the remaining questions.',
-      `Navigate to /director/setup to complete the missing steps manually (${validMissing.length} remaining).`,
+      `Navigate to /director/onboarding to complete the missing steps manually (${validMissing.length} remaining).`,
     ],
   })
 }

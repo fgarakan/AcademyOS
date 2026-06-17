@@ -1,5 +1,21 @@
 'use client'
 
+// @deprecated — Mega Sprint 2961–2970 — Academy Setup Consolidation V1
+//
+// This component is ORPHANED and NEVER RENDERED.
+// /director/setup/page.tsx contains only `redirect('/director/onboarding')` — it never mounts this banner.
+//
+// The donna_setup_draft parallel path this banner implements has been retired:
+//   - "help me finish academy setup" now routes via processDonnaMessage Step 0.25
+//   - Incomplete onboarding → /director/onboarding
+//   - Complete onboarding   → /director/settings
+//
+// This file is a V2 DELETION CANDIDATE.
+// Safe to delete once confirmed no new entry points reach /director/setup with this component mounted.
+// Do NOT re-activate this component or the donna_setup_draft write path.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+// Original headers preserved for audit trail:
 // Mega Sprint 1265–1294 — DONNA Academy Setup Completion V1
 // Mega Sprint 1295–1324 — DONNA Setup Completion Authority V1 (approval flow added)
 //

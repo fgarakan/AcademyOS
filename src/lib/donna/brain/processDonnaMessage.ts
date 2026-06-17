@@ -163,6 +163,8 @@ export interface DonnaMessageInput {
   pendingDisambiguation?: DisambiguationQuestion | null
   /** Active conversation navigator state from previous turn (null = start of arc) */
   conversationNavigatorState?: ConversationNavigatorState | null
+  /** Whether all 7 academy onboarding steps are marked complete — used for setup routing */
+  onboardingComplete?: boolean
 }
 
 // ── Action contract ───────────────────────────────────────────────────────────
@@ -461,6 +463,42 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       confidence: 0.9,
       goalSessionCommand: null,
     }, debugLog)
+  }
+
+  // ── Step 0.25: Academy setup routing intercept ──────────────────────────────
+  // Intercepts "help me finish academy setup" and all setup trigger phrases before
+  // Step 0b so the legacy academy_setup_completion DONNA draft workflow is never
+  // activated. Routes to the canonical path based on onboarding completion state:
+  //   incomplete → /director/onboarding
+  //   complete   → /director/settings
+  // This is the single source of truth for all setup routing decisions.
+  logStep(debugLog, 'check_setup_routing')
+  if (activeGoalSession === null && activeGuidedWorkflowId === null) {
+    const SETUP_ROUTING_PATTERN = /\b(help\s+(me\s+)?(finish|complete)\s+(academy\s+)?setup|finish\s+setup|complete(\s+my)?\s+setup|help\s+(me\s+)?set\s+up\s+(my|the)\s+academy|walk\s+me\s+through\s+(academy\s+)?setup|guide\s+me\s+through\s+setup|set\s+up\s+(my|the)\s+academy|start\s+academy\s+setup|begin\s+academy\s+setup|let'?s\s+set\s+up(\s+(the|my))?\s+academy|academy\s+setup)\b/i
+    if (SETUP_ROUTING_PATTERN.test(lower)) {
+      const isComplete = input.onboardingComplete ?? false
+      if (isComplete) {
+        const msg = 'Academy setup is complete. You can edit details in Academy Settings.'
+        finalizeLog(debugLog, 'check_setup_routing', 'navigate')
+        emitDebugLog(debugLog)
+        return makeResult('navigate', {
+          response:      msg,
+          spokenResponse: msg,
+          navigateTo:    '/director/settings',
+          confidence:    0.95,
+        }, debugLog)
+      } else {
+        const msg = "Let's continue Academy Onboarding."
+        finalizeLog(debugLog, 'check_setup_routing', 'navigate')
+        emitDebugLog(debugLog)
+        return makeResult('navigate', {
+          response:      msg,
+          spokenResponse: msg,
+          navigateTo:    '/director/onboarding',
+          confidence:    0.95,
+        }, debugLog)
+      }
+    }
   }
 
   // ── Step 0b: Goal workflow intent detection ──────────────────────────────────

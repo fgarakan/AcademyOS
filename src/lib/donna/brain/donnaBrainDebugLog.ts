@@ -10,6 +10,7 @@
 export type BrainRoutingStep =
   | 'check_goal_session'
   | 'check_goal_workflow_intent'
+  | 'check_setup_routing'
   | 'check_guided_workflow'
   | 'check_coo_control'
   | 'check_continuity'

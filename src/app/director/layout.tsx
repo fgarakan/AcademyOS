@@ -106,6 +106,7 @@ export default async function DirectorLayout({
           <DonnaAssistantButton
             academyId={academyId}
             directorName={userDisplayName || undefined}
+            onboardingComplete={!onboardingIncomplete}
           />
         )}
         {/* Hey DONNA wake word layer (desktop only, opt-in) — single voice activation system */}

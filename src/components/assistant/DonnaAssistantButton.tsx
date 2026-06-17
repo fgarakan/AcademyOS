@@ -528,9 +528,11 @@ interface Props {
   directorName?: string
   /** Role context for greeting and priority routing. Defaults to 'director'. */
   role?: DonnaRole
+  /** Whether all 7 academy onboarding steps are complete — drives setup routing in the brain. */
+  onboardingComplete?: boolean
 }
 
-export function DonnaAssistantButton({ academyId, directorName, role = 'director' }: Props) {
+export function DonnaAssistantButton({ academyId, directorName, role = 'director', onboardingComplete }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   // Sprint 686 — panelOpen lifted to DonnaSessionContextProvider; survives route changes
@@ -4316,6 +4318,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       entityContext: entityContext ?? null,
       pendingDisambiguation: pendingDisambiguation ?? null,
       conversationNavigatorState: conversationNavigatorStateRef.current,
+      onboardingComplete: onboardingComplete ?? false,
     })
 
     switch (brainResult.action) {

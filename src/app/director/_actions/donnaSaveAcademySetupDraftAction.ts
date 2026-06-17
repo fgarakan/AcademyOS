@@ -1,5 +1,19 @@
 'use server'
 
+// @deprecated — Mega Sprint 2961–2970 — Academy Setup Consolidation V1
+//
+// This server action is ORPHANED. Its only caller was AcademySetupDonnaBanner.tsx,
+// which is itself orphaned (never rendered — /director/setup redirects to /director/onboarding).
+//
+// The donna_setup_draft parallel setup path has been retired.
+// "Help me finish academy setup" now routes to /director/onboarding (incomplete)
+// or /director/settings (complete) via processDonnaMessage Step 0.25.
+//
+// This file is a V2 DELETION CANDIDATE.
+// Do NOT add new callers. Do NOT write to donna_setup_draft from live setup flows.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+// Original header preserved for audit trail:
 // Mega Sprint 1265–1294 — DONNA Academy Setup Completion V1
 //
 // Saves the 10-field DONNA-collected setup draft to academies.settings.donna_setup_draft.

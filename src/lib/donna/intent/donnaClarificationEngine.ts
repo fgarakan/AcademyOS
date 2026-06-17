@@ -162,7 +162,7 @@ const SESSION_OPTIONS: ClarificationOption[] = [
 
 const SETUP_OPTIONS: ClarificationOption[] = [
   {
-    label: 'Finish academy setup',
+    label: 'Continue Academy Onboarding',
     goalHint: 'academy_setup_completion',
     triggerPhrase: 'help me finish academy setup',
   },

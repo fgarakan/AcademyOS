@@ -194,27 +194,26 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
   //
   // Page state sync: donnaPageStateSync maps all 10 fields to setup/onboarding
   // page fields. Pages receive patches via donna:page-state-patch browser event.
+  // ── 2. Academy Setup ───────────────────────────────────────────────────────
+  //
+  // Sprint 2961–2970 — Academy Setup Consolidation V1
+  //
+  // CANONICAL ROUTING (enforced in processDonnaMessage Step 0.25):
+  //   Incomplete → "Let's continue Academy Onboarding." → /director/onboarding
+  //   Complete   → "Academy setup is complete. You can edit details in Academy Settings." → /director/settings
+  //
+  // This workflow definition is kept for registry consumers (goal engine, clarification engine).
+  // The 10-question DONNA draft interview (donna_setup_draft) is retired.
+  // /director/setup is removed — it was a redirect-only shell to /director/onboarding.
   {
     id: 'academy_setup_completion',
-    label: 'Academy Setup',
-    endGoal: 'Collect academy name, timezone, programs, levels, groups, staff, schedule, parent communication preferences, curriculum starting point, and setup notes — ready for director review and save.',
-    triggerPhrases: [
-      'help me finish academy setup',
-      'walk me through academy setup',
-      'complete my setup',
-      'help me set up my academy',
-      'guide me through setup',
-      'finish setup',
-      'complete academy setup',
-      'academy setup',
-      'set up the academy',
-      'set up my academy',
-      'start academy setup',
-      'begin academy setup',
-      'let\'s set up the academy',
-    ],
+    label: 'Academy Onboarding',
+    endGoal: 'Route the director to Academy Onboarding (/director/onboarding) when setup is incomplete, or to Academy Settings (/director/settings) when setup is already complete.',
+    // Routing authority retired.
+    // Academy setup routing is owned exclusively by
+    // processDonnaMessage Step 0.25.
+    triggerPhrases: [],
     pageRoutes: [
-      '/director/setup',
       '/director/onboarding',
       '/director/onboarding/interview',
       '/director/onboarding/curriculum',
@@ -305,20 +304,17 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
     optionalSteps: [],
     completionCriteria: 'All 10 required answers collected. Setup draft ready for director to review and confirm before saving.',
     safeActions: [
-      'ask setup questions one at a time',
-      'collect and display answers for review',
-      'explain what each setting does and why it matters',
-      'show progress through the 10 setup steps',
-      'use Evidence Reasoning Engine to explain missing or weak answers',
+      'route director to /director/onboarding when setup is incomplete',
+      'route director to /director/settings when setup is already complete',
+      'explain what each onboarding step does and why it matters',
     ],
     approvalGatedActions: [
-      'save academy setup draft to the database',
       'activate coach accounts',
       'enable parent or player portal access',
       'publish any academy-level settings',
       'set director_interview_completed or any existing completion flag',
     ],
-    openingMessage: "Let's set up your academy together. I'll ask 10 questions — one at a time. Nothing is saved until you review and confirm the full setup draft.\n\nStep 1 of 10:",
+    openingMessage: "Let's continue Academy Onboarding. Taking you there now.",
   },
 
   // ── 3. Player Onboarding ───────────────────────────────────────────────────

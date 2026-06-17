@@ -25,7 +25,7 @@ export function TodaySetupCard({ steps }: Props) {
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
           <span className="text-[10px] uppercase tracking-widest text-lime font-semibold">
-            Academy Setup
+            Academy Onboarding
           </span>
         </div>
         <span className="font-mono text-[11px] font-bold text-text-muted">

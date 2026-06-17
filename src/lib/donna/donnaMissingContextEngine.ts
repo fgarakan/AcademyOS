@@ -62,7 +62,7 @@ const NAV_PAGE_MAP: Array<{ pattern: RegExp; href: string; label: string }> = [
   { pattern: /\b(add players?|players? (placement|setup))\b/i, href: '/director/onboarding/players-placement', label: 'Add Players' },
   { pattern: /\b(add coaches?|add a coach)\b/i, href: '/director/onboarding/coaches-permissions', label: 'Add Coaches' },
   { pattern: /\b(curriculum setup|curriculum page)\b/i, href: '/director/onboarding/curriculum', label: 'Curriculum Setup' },
-  { pattern: /\b(onboard(ing)?( setup)?|academy setup)\b/i, href: '/director/onboarding', label: 'Academy Setup' },
+  { pattern: /\b(onboard(ing)?( setup)?|academy setup)\b/i, href: '/director/onboarding', label: 'Academy Onboarding' },
   { pattern: /\b(templates?( page)?)\b/i, href: '/director/templates', label: 'Templates' },
   { pattern: /\b(sessions?( page| schedule)?|schedule)\b/i, href: '/director/sessions', label: 'Sessions' },
   { pattern: /\b(players?( page| list)?)\b/i, href: '/director/players', label: 'Players' },
