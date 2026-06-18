@@ -158,6 +158,45 @@ const ROUTE_COMPLETION_PATHS: Record<string, CompletionPath> = {
     completionCondition: 'All 7 steps marked complete; DNA, curriculum, and groups configured',
     summary: 'DNA → curriculum → groups → coaches → players → finalize',
   },
+
+  // ── Mega Sprint 3121–3150 — New route completion paths ────────────────────────
+
+  '/coach': {
+    goal: 'All sessions wrapped up, players observed, attention flags addressed',
+    currentStep: 'Check for sessions with pending wrap-ups',
+    nextStep: 'Submit wrap-up for any completed session that is still open',
+    remainingSteps: [
+      'Review players with attention signals',
+      'Prepare for next session',
+    ],
+    completionCondition: 'No pending wrap-ups; no unaddressed attention flags',
+    summary: 'Submit wrap-ups → address attention flags → prepare next session',
+  },
+
+  '/director/sessions/new': {
+    goal: 'New session created and ready for delivery',
+    currentStep: 'Select the session template',
+    nextStep: 'Assign a coach to this session',
+    remainingSteps: [
+      'Confirm the player group',
+      'Set the session date and time',
+      'Save and publish the session',
+    ],
+    completionCondition: 'Template assigned; coach assigned; group confirmed; session scheduled',
+    summary: 'Select template → assign coach → confirm group → schedule → publish',
+  },
+
+  '/director/coaches': {
+    goal: 'All coaches assigned to groups; no coverage gaps',
+    currentStep: 'Review coaches without an assigned group',
+    nextStep: 'Assign each unassigned coach to a group',
+    remainingSteps: [
+      'Verify coach-to-player ratios are within healthy range',
+      'Confirm each coach has sessions scheduled',
+    ],
+    completionCondition: 'All coaches assigned; no groups without a coach; ratios within range',
+    summary: 'Assign coaches → verify ratios → confirm sessions',
+  },
 }
 
 // ── Dynamic route completion paths ────────────────────────────────────────────
@@ -218,6 +257,36 @@ const DYNAMIC_COMPLETION_PATHS: Array<{ prefix: string; path: CompletionPath }> 
       ],
       completionCondition: 'All blocks have activities and cues; curriculum level set; published',
       summary: 'Flow check → fill blocks → assign level → publish',
+    },
+  },
+  // ── Coach session paths (Mega Sprint 3121–3150) ────────────────────────────────
+  // IMPORTANT: '/coach/sessions/' must appear before '/coach/' so more specific prefix matches first.
+  {
+    prefix: '/coach/sessions/',
+    path: {
+      goal: 'Session fully executed and wrapped up',
+      currentStep: 'Mark attendance for all players in this session',
+      nextStep: 'Add at least one observation per player',
+      remainingSteps: [
+        'Review and complete the session summary',
+        'Submit wrap-up for director review',
+      ],
+      completionCondition: 'Attendance marked; observations added; wrap-up submitted',
+      summary: 'Mark attendance → add observations → submit wrap-up',
+    },
+  },
+  {
+    prefix: '/coach/',
+    path: {
+      goal: 'All sessions wrapped up, players observed, attention flags addressed',
+      currentStep: 'Check for sessions with pending wrap-ups',
+      nextStep: 'Submit wrap-up for any completed session that is still open',
+      remainingSteps: [
+        'Review players with attention signals',
+        'Prepare for next session',
+      ],
+      completionCondition: 'No pending wrap-ups; no unaddressed attention flags',
+      summary: 'Submit wrap-ups → address attention flags → prepare next session',
     },
   },
 ]

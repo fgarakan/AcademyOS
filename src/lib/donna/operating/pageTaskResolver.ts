@@ -57,16 +57,33 @@ const ROUTE_TASKS: Record<string, (signals: TaskSignals) => PageTask> = {
     actionRoute: '/director/review',
   }),
 
-  '/director/review': (signals) => ({
-    highestPriorityTask: signals.pendingReviews && signals.pendingReviews > 0
-      ? `Act on ${signals.pendingReviews} pending approval${signals.pendingReviews > 1 ? 's' : ''}`
-      : 'Review any items in the queue',
-    reason: 'Items in the queue have no effect until the director explicitly approves, rejects, or defers each one.',
-    urgency: signals.pendingReviews && signals.pendingReviews > 0 ? 'high' : 'low',
-    estimatedImpact: 'Each approval immediately unblocks the associated coach or player action.',
-    completionCriteria: 'All items reviewed; none older than 7 days remaining.',
-    actionRoute: null,
-  }),
+  '/director/review': (signals) => {
+    const live = signals.liveState
+    const parentApprovals = live?.pendingParentApprovals ?? null
+    const total = signals.pendingReviews ?? 0
+
+    if (parentApprovals !== null && parentApprovals > 0) {
+      return {
+        highestPriorityTask: `Review ${parentApprovals} parent-visible item${parentApprovals > 1 ? 's' : ''} first — these affect what families see`,
+        reason: 'Parent-visible items affect family experience the moment they are approved. Review these before coach or curriculum items.',
+        urgency: 'high' as TaskUrgency,
+        estimatedImpact: 'High — each approval immediately updates what parents can see.',
+        completionCriteria: 'All parent-visible items reviewed; remaining items triaged.',
+        actionRoute: null,
+      }
+    }
+
+    return {
+      highestPriorityTask: total > 0
+        ? `Act on ${total} pending approval${total > 1 ? 's' : ''}`
+        : 'Review any items in the queue',
+      reason: 'Items in the queue have no effect until the director explicitly approves, rejects, or defers each one.',
+      urgency: (total > 0 ? 'high' : 'low') as TaskUrgency,
+      estimatedImpact: 'Each approval immediately unblocks the associated coach or player action.',
+      completionCriteria: 'All items reviewed; none older than 7 days remaining.',
+      actionRoute: null,
+    }
+  },
 
   '/director/kpi': (_signals) => ({
     highestPriorityTask: 'Act on attention signals — open each flagged player profile',
@@ -77,14 +94,31 @@ const ROUTE_TASKS: Record<string, (signals: TaskSignals) => PageTask> = {
     actionRoute: '/director/players',
   }),
 
-  '/director/players': (_signals) => ({
-    highestPriorityTask: 'Resolve players with missing curriculum levels or unresolved attention flags',
-    reason: 'Players without curriculum levels cannot track progression. Flagged players need director action.',
-    urgency: 'high',
-    estimatedImpact: 'Assigns development context to players currently invisible to the curriculum system.',
-    completionCriteria: 'All active players have curriculum levels; no unresolved attention flags.',
-    actionRoute: null,
-  }),
+  '/director/players': (signals) => {
+    const live = signals.liveState
+    const attention = live?.playersNeedingAttention ?? null
+    const noAssessment = live?.playersWithoutAssessment ?? null
+
+    if (attention !== null && attention > 0) {
+      return {
+        highestPriorityTask: `Review ${attention} player${attention > 1 ? 's' : ''} with active attention flags`,
+        reason: `${attention} player${attention > 1 ? 's' : ''} have signals that need follow-up. ${noAssessment !== null && noAssessment > 0 ? `Additionally, ${noAssessment} player${noAssessment > 1 ? 's' : ''} have not been assessed in 90+ days.` : ''}`.trim(),
+        urgency: 'high' as TaskUrgency,
+        estimatedImpact: 'Early intervention on attention signals prevents attendance drop and disengagement.',
+        completionCriteria: 'Every flagged player has a next action recorded or a follow-up plan set.',
+        actionRoute: null,
+      }
+    }
+
+    return {
+      highestPriorityTask: 'Resolve players with missing curriculum levels or unresolved attention flags',
+      reason: `Players without curriculum levels cannot track progression. Flagged players need director action.${noAssessment !== null && noAssessment > 0 ? ` ${noAssessment} player${noAssessment > 1 ? 's' : ''} also have overdue assessments.` : ''}`,
+      urgency: 'high' as TaskUrgency,
+      estimatedImpact: 'Assigns development context to players currently invisible to the curriculum system.',
+      completionCriteria: 'All active players have curriculum levels; no unresolved attention flags.',
+      actionRoute: null,
+    }
+  },
 
   '/director/curriculum': (signals) => {
     const live = signals.liveState
@@ -250,6 +284,25 @@ const ROUTE_TASKS: Record<string, (signals: TaskSignals) => PageTask> = {
       actionRoute: null,
     }
   },
+
+  // ── Coach routes (Mega Sprint 3121–3150) ──────────────────────────────────────
+  '/coach': (_signals) => ({
+    highestPriorityTask: 'Check pending wrap-ups and review sessions scheduled for today',
+    reason: 'Sessions without submitted wrap-ups have no development record. Each day without a wrap-up widens the coaching intelligence gap.',
+    urgency: 'high' as TaskUrgency,
+    estimatedImpact: 'Each wrap-up submitted creates an attendance record and session intelligence for the director review queue.',
+    completionCriteria: 'All completed sessions have submitted wrap-ups; no players with unaddressed attention flags.',
+    actionRoute: null,
+  }),
+
+  '/director/sessions/new': (_signals) => ({
+    highestPriorityTask: 'Complete session setup — assign template, coach, group, and schedule',
+    reason: 'A session is not operational until it has a template, an assigned coach, a group, and a scheduled time.',
+    urgency: 'high' as TaskUrgency,
+    estimatedImpact: 'Creates a trackable session with curriculum alignment and coach accountability.',
+    completionCriteria: 'Template assigned; coach assigned; group confirmed; session scheduled.',
+    actionRoute: null,
+  }),
 }
 
 // Dynamic route task builders
@@ -273,6 +326,30 @@ const DYNAMIC_ROUTE_TASKS: Array<{ prefix: string; build: (signals: TaskSignals)
       urgency: 'medium',
       estimatedImpact: 'Enables curriculum-aligned session delivery and progression tracking for all players in the group.',
       completionCriteria: 'Coach assigned; curriculum level defined; all players have assigned levels.',
+      actionRoute: null,
+    }),
+  },
+  // ── Coach session dynamic entry (Mega Sprint 3121–3150) ───────────────────────
+  {
+    prefix: '/coach/sessions/',
+    build: (_signals) => ({
+      highestPriorityTask: 'Mark attendance, add observations, then submit the wrap-up',
+      reason: 'A session is only closed when the wrap-up is submitted. Until then, no development record exists for this session.',
+      urgency: 'high' as TaskUrgency,
+      estimatedImpact: 'High — creates a session development record for every player present.',
+      completionCriteria: 'Attendance marked; at least one observation per player; wrap-up submitted.',
+      actionRoute: null,
+    }),
+  },
+  // ── Coach home fallback (must appear after /coach/sessions/) ─────────────────
+  {
+    prefix: '/coach/',
+    build: (_signals) => ({
+      highestPriorityTask: 'Submit pending wrap-ups and check players needing attention',
+      reason: 'Unsubmitted wrap-ups leave sessions without development records. Players with attention signals need follow-up.',
+      urgency: 'high' as TaskUrgency,
+      estimatedImpact: 'Closes open session loops and surfaces players at risk.',
+      completionCriteria: 'No pending wrap-ups; no unaddressed attention flags.',
       actionRoute: null,
     }),
   },

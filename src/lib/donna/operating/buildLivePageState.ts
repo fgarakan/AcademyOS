@@ -1,6 +1,8 @@
 // Mega Sprint 3091–3120 — DONNA Live State-Aware Completion Engine V1
 // Part 3 — Live Page State Builder
 //
+// Mega Sprint 3121–3150 — Expanded with new live state signals
+//
 // Builds a LivePageState from values already available in the UI/action layer.
 // Only uses values that have already been loaded — does not add new DB queries.
 // Null is the correct return for any field that is not yet available.
@@ -29,6 +31,52 @@ export interface LivePageStateInput {
   activePlayerCount?: number | null
   /** Active coach count if already known */
   activeCoachCount?: number | null
+
+  // ── Expanded signals (Mega Sprint 3121–3150) ──────────────────────────────────
+
+  // Curriculum
+  /** 0–100 pct of curriculum levels with content defined */
+  curriculumProgress?: number | null
+  /** Review queue items of type curriculum */
+  pendingCurriculumReviews?: number | null
+
+  // Placement
+  /** Review queue items of type placement */
+  pendingPlacementReviews?: number | null
+
+  // Level Up
+  /** Players eligible for promotion */
+  promotionQueueCount?: number | null
+  /** Promotion proposals in review queue */
+  pendingPromotionApprovals?: number | null
+
+  // Sessions
+  /** Sessions scheduled in next 7 days */
+  upcomingSessions?: number | null
+  /** Sessions with no coach assigned */
+  unassignedSessions?: number | null
+  /** Coaches with session coverage gaps */
+  coachCoverageIssues?: number | null
+
+  // Approvals breakdown
+  /** Parent-visible items in the review queue */
+  pendingParentApprovals?: number | null
+  /** Coach-facing items in the review queue */
+  pendingCoachApprovals?: number | null
+
+  // Players
+  /** Players with attention flags set */
+  playersNeedingAttention?: number | null
+  /** Players with no assessment in the last 90 days */
+  playersWithoutAssessment?: number | null
+  /** Players in intake (unplaced) */
+  playersWithoutPlacement?: number | null
+
+  // Groups
+  /** Groups below minimum enrollment */
+  underfilledGroups?: number | null
+  /** Groups above maximum enrollment */
+  overfilledGroups?: number | null
 }
 
 /**
@@ -47,6 +95,22 @@ export function buildLivePageState(input: LivePageStateInput): LivePageState {
     levelUpQueueCount = null,
     activePlayerCount = null,
     activeCoachCount = null,
+    // Expanded signals
+    curriculumProgress = null,
+    pendingCurriculumReviews = null,
+    pendingPlacementReviews = null,
+    promotionQueueCount = null,
+    pendingPromotionApprovals = null,
+    upcomingSessions = null,
+    unassignedSessions = null,
+    coachCoverageIssues = null,
+    pendingParentApprovals = null,
+    pendingCoachApprovals = null,
+    playersNeedingAttention = null,
+    playersWithoutAssessment = null,
+    playersWithoutPlacement = null,
+    underfilledGroups = null,
+    overfilledGroups = null,
   } = input
 
   // Derive onboardingProgress from onboardingComplete where possible.
@@ -64,5 +128,21 @@ export function buildLivePageState(input: LivePageStateInput): LivePageState {
     levelUpQueueCount,
     activePlayerCount,
     activeCoachCount,
+    // Expanded signals
+    curriculumProgress,
+    pendingCurriculumReviews,
+    pendingPlacementReviews,
+    promotionQueueCount,
+    pendingPromotionApprovals,
+    upcomingSessions,
+    unassignedSessions,
+    coachCoverageIssues,
+    pendingParentApprovals,
+    pendingCoachApprovals,
+    playersNeedingAttention,
+    playersWithoutAssessment,
+    playersWithoutPlacement,
+    underfilledGroups,
+    overfilledGroups,
   })
 }

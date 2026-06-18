@@ -189,6 +189,30 @@ const COMPLETION_INTELLIGENCE: Record<string, CompletionIntelligence> = {
       'Groups and curriculum depend on onboarding completion',
     ],
   },
+
+  // ── Coach routes (Mega Sprint 3121–3150) ──────────────────────────────────────
+
+  '/coach/': {
+    completionGoals: [
+      'All sessions have submitted wrap-ups',
+      'Observations recorded for active players',
+      'No attention flags unaddressed',
+    ],
+    recommendedNextAction: 'Check pending wrap-ups — each unsubmitted wrap-up leaves a session without a development record.',
+    warnings: [],
+  },
+
+  '/coach/sessions/[sessionId]/wrap-up': {
+    completionGoals: [
+      'Attendance marked for all players',
+      'At least one observation submitted per player',
+      'Wrap-up submitted to director review queue',
+    ],
+    recommendedNextAction: 'Complete attendance marking, then add observations, then submit the wrap-up.',
+    warnings: [
+      'Wrap-up cannot be submitted until attendance is marked for all players',
+    ],
+  },
 }
 
 // ── Dynamic route completion intelligence ─────────────────────────────────────
@@ -287,6 +311,79 @@ const DYNAMIC_PAGE_REGISTRY: DynamicCompletionEntry[] = [
     recommendedNextAction: 'Verify the coach assignment and curriculum alignment before scheduling sessions for this group.',
     warnings: [],
   },
+
+  // ── Coach routes (Mega Sprint 3121–3150) ─────────────────────────────────────
+  // IMPORTANT: '/coach/sessions/' must appear BEFORE '/coach/' so the more specific
+  // prefix matches first (array iteration is first-match).
+  {
+    prefix: '/coach/sessions/',
+    pageName: 'Coach Session',
+    pagePurpose: "Session execution and wrap-up. Coach manages attendance, records observations, and submits the wrap-up to close the session loop.",
+    visibleData: [
+      'Assigned players',
+      'Session plan and template blocks',
+      'Attendance status',
+      'Observation drafts',
+      'Wrap-up status',
+    ],
+    keyMetrics: [
+      { id: 'attendance_marked', label: 'Attendance Marked', description: 'Whether attendance has been recorded for this session.' },
+      { id: 'observations_added', label: 'Observations Added', description: 'Number of player observations recorded in this session.' },
+      { id: 'wrap_up_submitted', label: 'Wrap-Up Submitted', description: 'Whether the session wrap-up has been submitted for director review.' },
+    ],
+    availableActions: [
+      'Mark attendance for each player',
+      'Add player observations',
+      'Review session plan',
+      'Submit wrap-up',
+    ],
+    approvalActions: [
+      'Wrap-up submission goes to director review queue',
+      'Level-up observations require director approval',
+    ],
+    missingData: 'Session data may still be loading. I can explain each section while it loads.',
+    completionGoals: [
+      'Attendance marked for all players',
+      'At least one observation per player',
+      'Wrap-up submitted',
+    ],
+    recommendedNextAction: 'Mark attendance first, then add observations for each player, then submit the wrap-up.',
+    warnings: [],
+  },
+  {
+    prefix: '/coach/',
+    pageName: 'Coach Home',
+    pagePurpose: "Coach operating home. Shows today's sessions, player attention signals, wrap-ups pending, and DONNA-assisted session preparation.",
+    visibleData: [
+      "Today's sessions",
+      'Players needing attention',
+      'Pending wrap-ups',
+      'Recent observations',
+    ],
+    keyMetrics: [
+      { id: 'sessions_today', label: 'Sessions Today', description: 'Number of sessions scheduled for today.' },
+      { id: 'wrap_ups_pending', label: 'Wrap-Ups Pending', description: 'Sessions completed but not yet wrapped up.' },
+      { id: 'players_flagged', label: 'Players Flagged', description: 'Players with attention signals this week.' },
+    ],
+    availableActions: [
+      "Review today's sessions",
+      'Check players needing attention',
+      'Submit pending wrap-ups',
+      'Prepare for next session',
+    ],
+    approvalActions: [
+      'Wrap-up submissions require director review',
+      'Level recommendations require director approval',
+    ],
+    missingData: 'Session and player data may still be loading.',
+    completionGoals: [
+      'All sessions have submitted wrap-ups',
+      'No players with unaddressed attention flags',
+      'Observations recorded for active players',
+    ],
+    recommendedNextAction: 'Check your pending wrap-ups — each unsubmitted wrap-up leaves a session without a development record.',
+    warnings: [],
+  },
 ]
 
 // ── Lookup helpers ────────────────────────────────────────────────────────────
@@ -298,6 +395,21 @@ function getCompletionIntelligence(pathname: string): CompletionIntelligence | n
   const stripped = pathname.replace(/\/[a-f0-9-]{32,}$/i, '/[templateId]')
     .replace(/\/[a-f0-9-]{32,}$/i, '/[id]')
   if (COMPLETION_INTELLIGENCE[stripped]) return COMPLETION_INTELLIGENCE[stripped]
+  // Coach session wrap-up normalization: /coach/sessions/<id>/wrap-up → canonical key
+  if (pathname.startsWith('/coach/sessions/') && pathname.endsWith('/wrap-up')) {
+    const canonical = COMPLETION_INTELLIGENCE['/coach/sessions/[sessionId]/wrap-up']
+    if (canonical) return canonical
+  }
+  // Coach home prefix: /coach/* (non-session) → /coach/
+  if (pathname.startsWith('/coach/') && !pathname.startsWith('/coach/sessions/')) {
+    const coachBase = COMPLETION_INTELLIGENCE['/coach/']
+    if (coachBase) return coachBase
+  }
+  // Exact coach home
+  if (pathname === '/coach') {
+    const coachBase = COMPLETION_INTELLIGENCE['/coach/']
+    if (coachBase) return coachBase
+  }
   return null
 }
 
@@ -411,6 +523,70 @@ function applyLiveStateOverrides(
           `${count} player${count > 1 ? 's' : ''} in intake cannot track progression until placed.`,
           ...intel.warnings,
         ].slice(0, 3),
+      }
+    }
+  }
+
+  // Players list page — live attention and assessment signals
+  if (route === '/director/players') {
+    const attention = liveState.playersNeedingAttention ?? null
+    const noAssessment = liveState.playersWithoutAssessment ?? null
+    let updatedAction = intel.recommendedNextAction
+    const updatedWarnings = [...intel.warnings]
+
+    if (attention !== null && attention > 0) {
+      updatedAction = `Review ${attention} player${attention > 1 ? 's' : ''} with attention flags — each has a specific signal that needs a follow-up action.`
+      updatedWarnings.unshift(`${attention} player${attention > 1 ? 's' : ''} have active attention flags.`)
+    }
+    if (noAssessment !== null && noAssessment > 0) {
+      updatedWarnings.push(`${noAssessment} player${noAssessment > 1 ? 's' : ''} have not been assessed in the last 90 days.`)
+    }
+
+    if (attention !== null || noAssessment !== null) {
+      return {
+        ...intel,
+        recommendedNextAction: updatedAction,
+        warnings: updatedWarnings.slice(0, 3),
+      }
+    }
+  }
+
+  // Director home — surface player attention signals in warnings
+  if (route === '/director') {
+    const attention = liveState.playersNeedingAttention ?? null
+    if (attention !== null && attention > 0) {
+      return {
+        ...intel,
+        warnings: [
+          `${attention} player${attention > 1 ? 's' : ''} have active attention flags requiring follow-up.`,
+          ...intel.warnings,
+        ].slice(0, 3),
+      }
+    }
+  }
+
+  // Director review page — surface parent/coach approval breakdown
+  if (route === '/director/review') {
+    const parentApprovals = liveState.pendingParentApprovals ?? null
+    const coachApprovals = liveState.pendingCoachApprovals ?? null
+    const updatedWarnings = [...intel.warnings]
+
+    if (parentApprovals !== null && parentApprovals > 0) {
+      updatedWarnings.unshift(`${parentApprovals} parent-visible item${parentApprovals > 1 ? 's' : ''} need review first — these affect what families see.`)
+    }
+
+    let updatedAction = intel.recommendedNextAction
+    if (parentApprovals !== null && parentApprovals > 0 && coachApprovals !== null && coachApprovals > 0) {
+      updatedAction = `Review ${parentApprovals} parent-visible item${parentApprovals > 1 ? 's' : ''} first, then ${coachApprovals} coach-facing item${coachApprovals > 1 ? 's' : ''}.`
+    } else if (parentApprovals !== null && parentApprovals > 0) {
+      updatedAction = `Start with ${parentApprovals} parent-visible item${parentApprovals > 1 ? 's' : ''} — they affect what families see once approved.`
+    }
+
+    if (updatedWarnings.length !== intel.warnings.length || updatedAction !== intel.recommendedNextAction) {
+      return {
+        ...intel,
+        recommendedNextAction: updatedAction,
+        warnings: updatedWarnings.slice(0, 3),
       }
     }
   }

@@ -53,6 +53,52 @@ export interface LivePageState {
   /** Total active coaches in the academy */
   activeCoachCount: number | null
 
+  // ── Mega Sprint 3121–3150 — Expanded live state signals ──────────────────────
+
+  // Curriculum
+  /** 0–100 pct of curriculum levels that have content defined */
+  curriculumProgress?: number | null
+  /** Review queue items of type curriculum */
+  pendingCurriculumReviews?: number | null
+
+  // Placement
+  /** Review queue items of type placement */
+  pendingPlacementReviews?: number | null
+
+  // Level Up
+  /** Players eligible for promotion (broader alias for levelUpQueueCount) */
+  promotionQueueCount?: number | null
+  /** Promotion proposals currently in the review queue */
+  pendingPromotionApprovals?: number | null
+
+  // Sessions
+  /** Sessions scheduled in next 7 days */
+  upcomingSessions?: number | null
+  /** Sessions with no coach assigned */
+  unassignedSessions?: number | null
+  /** Coaches with session coverage gaps */
+  coachCoverageIssues?: number | null
+
+  // Approvals breakdown
+  /** Parent-visible items in the review queue */
+  pendingParentApprovals?: number | null
+  /** Coach-facing items in the review queue */
+  pendingCoachApprovals?: number | null
+
+  // Players
+  /** Players with attention flags set */
+  playersNeedingAttention?: number | null
+  /** Players with no assessment in the last 90 days */
+  playersWithoutAssessment?: number | null
+  /** Players in intake (unplaced) */
+  playersWithoutPlacement?: number | null
+
+  // Groups
+  /** Groups below minimum enrollment */
+  underfilledGroups?: number | null
+  /** Groups above maximum enrollment */
+  overfilledGroups?: number | null
+
   /** ISO 8601 timestamp when this state was last updated */
   lastUpdatedAt: string | null
 }
@@ -76,6 +122,22 @@ export function createPartialLivePageState(
     levelUpQueueCount: null,
     activePlayerCount: null,
     activeCoachCount: null,
+    // Expanded signals (3121–3150) — all null by default
+    curriculumProgress: null,
+    pendingCurriculumReviews: null,
+    pendingPlacementReviews: null,
+    promotionQueueCount: null,
+    pendingPromotionApprovals: null,
+    upcomingSessions: null,
+    unassignedSessions: null,
+    coachCoverageIssues: null,
+    pendingParentApprovals: null,
+    pendingCoachApprovals: null,
+    playersNeedingAttention: null,
+    playersWithoutAssessment: null,
+    playersWithoutPlacement: null,
+    underfilledGroups: null,
+    overfilledGroups: null,
     lastUpdatedAt: new Date().toISOString(),
     ...overrides,
   }

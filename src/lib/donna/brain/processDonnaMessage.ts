@@ -149,6 +149,8 @@ import {
 import type { PageIntelligence } from '@/lib/donna/operating/pageContextResolver'
 import { buildCompletionPath, formatCompletionPathForResponse } from '@/lib/donna/operating/pageCompletionEngine'
 import type { LivePageState } from '@/lib/donna/operating/livePageState'
+// Mega Sprint 3121–3150 — Universal operating phrase library
+import { detectOperatingIntent, getOperatingIntentPrompt } from '@/lib/donna/operating/donnaOperatingPhraseLibrary'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -406,11 +408,27 @@ function isPageConfusionPhrase(lower: string): boolean {
   if (lower.includes("what can i do here")) return true
   if (lower.includes("guide me through this")) return true
   if (lower.includes("walk me through this")) return true
+  if (lower.includes("walk me through")) return true
   if (lower.includes("where do i start")) return true
   if (lower.includes("not sure what to do")) return true
   if (lower.includes("confused about this page")) return true
   if (lower.includes("help me navigate this")) return true
   if (lower.includes("what should i do on this page")) return true
+  // Mega Sprint 3121–3150 — Universal operating phrases
+  if (lower.includes("what should i do here")) return true
+  if (lower.includes("what should i do")) return true
+  if (lower.includes("what should i focus on")) return true
+  if (lower.includes("what's next")) return true
+  if (lower.includes("what is next")) return true
+  if (lower.includes("take me to completion")) return true
+  if (lower.includes("what is blocking this page")) return true
+  if (lower.includes("what is blocking")) return true
+  if (lower.includes("help me finish")) return true
+  if (lower.includes("what matters most")) return true
+  if (lower.includes("what matters here")) return true
+  if (lower.includes("how do i finish this")) return true
+  if (lower.includes("how do i complete this")) return true
+  if (lower.includes("step by step")) return true
   return false
 }
 
@@ -751,7 +769,12 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     const confusionResponse = buildPageConfusionResponse(pageIntelligence)
     const completionPath = buildCompletionPath(pageIntelligence, undefined, input.livePageState)
     const completionFragment = formatCompletionPathForResponse(completionPath)
-    const fullResponse = `${confusionResponse}\n\n${completionFragment}`
+    // Mega Sprint 3121–3150: Detect specific operating intent to add targeted framing
+    const operatingIntent = detectOperatingIntent(lower)
+    const intentPrefix = operatingIntent
+      ? getOperatingIntentPrompt(operatingIntent, pageIntelligence.pageName) + '\n\n'
+      : ''
+    const fullResponse = `${intentPrefix}${confusionResponse}\n\n${completionFragment}`
     const spokenSummary = `You are on ${pageIntelligence.pageName}. ${pageIntelligence.recommendedNextAction}`
 
     // Set navigator state to 'action' so acknowledgments continue the page guidance arc
