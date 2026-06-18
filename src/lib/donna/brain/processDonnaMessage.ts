@@ -148,6 +148,7 @@ import {
 } from '@/lib/donna/operating/pageContextResolver'
 import type { PageIntelligence } from '@/lib/donna/operating/pageContextResolver'
 import { buildCompletionPath, formatCompletionPathForResponse } from '@/lib/donna/operating/pageCompletionEngine'
+import type { LivePageState } from '@/lib/donna/operating/livePageState'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -177,6 +178,8 @@ export interface DonnaMessageInput {
   conversationNavigatorState?: ConversationNavigatorState | null
   /** Whether all 7 academy onboarding steps are marked complete — used for setup routing */
   onboardingComplete?: boolean
+  /** Live academy state — when provided, page intelligence and completion paths use real counts */
+  livePageState?: LivePageState | null
 }
 
 // ── Action contract ───────────────────────────────────────────────────────────
@@ -504,7 +507,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   // ── Step 0: Page intelligence resolution ────────────────────────────────────
   // Resolves before all other steps so every subsequent step can use page context.
   // Null for unknown routes — all downstream steps handle null gracefully.
-  const pageIntelligence = resolvePageIntelligence(route)
+  const pageIntelligence = resolvePageIntelligence(route, input.livePageState)
 
   // ── Step 0a: Active goal session — route session commands first ──────────────
   // When a goal session is active, interpret short phrases ("yes", "skip",
@@ -746,7 +749,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   logStep(debugLog, 'check_page_context')
   if (pageIntelligence !== null && isPageConfusionPhrase(lower)) {
     const confusionResponse = buildPageConfusionResponse(pageIntelligence)
-    const completionPath = buildCompletionPath(pageIntelligence)
+    const completionPath = buildCompletionPath(pageIntelligence, undefined, input.livePageState)
     const completionFragment = formatCompletionPathForResponse(completionPath)
     const fullResponse = `${confusionResponse}\n\n${completionFragment}`
     const spokenSummary = `You are on ${pageIntelligence.pageName}. ${pageIntelligence.recommendedNextAction}`
@@ -803,7 +806,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       // ── Page guidance step traversal ────────────────────────────────────────
       if (arcNavState.proposedActionType === 'page_guidance' && pageIntelligence !== null) {
         if (isAck || isCompl || isHelpSignal) {
-          const guidancePath = buildCompletionPath(pageIntelligence)
+          const guidancePath = buildCompletionPath(pageIntelligence, undefined, input.livePageState)
           const allSteps    = [guidancePath.nextStep, ...guidancePath.remainingSteps]
           const stepIndex   = arcNavState.turnCount - 1  // 0-based; initial turnCount=1 → stepIndex=0
 

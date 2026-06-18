@@ -12,6 +12,7 @@
 //   - formatContextForTeacher() caps output at 250 chars — safe for teacher academyContext.
 
 import type { StrategicAIDomain } from './donnaStrategicAIEligibility'
+import type { LivePageState } from '@/lib/donna/operating/livePageState'
 
 // ── Context packet ────────────────────────────────────────────────────────────
 
@@ -257,14 +258,29 @@ export function buildStrategicContextPacket(
  * Capped at 250 chars — safe for the OpenAI teacher call.
  *
  * @param pageContext - Optional page context from PageIntelligence (injected by AI brain).
+ * @param liveState   - Optional live academy state for real-count signal injection.
  */
 export function formatContextForTeacher(
   packet: StrategicContextPacket,
   userQuestion: string,
   pageContext?: string,
+  liveState?: LivePageState | null,
 ): string {
   const topSignals = packet.signalsToConsider.slice(0, 3).join('; ')
   const pageStr = pageContext ? ` | Page: ${pageContext.slice(0, 80)}` : ''
-  const raw = `Domain: ${packet.domainLabel}. Signals: ${topSignals}. Question: ${userQuestion}${pageStr}`
+  const liveStr = formatLiveSignals(liveState)
+  const raw = `Domain: ${packet.domainLabel}. Signals: ${topSignals}. Question: ${userQuestion}${pageStr}${liveStr}`
   return raw.slice(0, 250)
+}
+
+function formatLiveSignals(live: LivePageState | null | undefined): string {
+  if (!live) return ''
+  const parts: string[] = []
+  if (live.pendingReviewCount !== null) parts.push(`pending=${live.pendingReviewCount}`)
+  if (live.playersMissingCurriculumLevel !== null) parts.push(`missing-levels=${live.playersMissingCurriculumLevel}`)
+  if (live.levelUpQueueCount !== null) parts.push(`level-up-queue=${live.levelUpQueueCount}`)
+  if (live.placementQueueCount !== null) parts.push(`placement-queue=${live.placementQueueCount}`)
+  if (live.curriculumSpineActive !== null) parts.push(`spine=${live.curriculumSpineActive ? 'active' : 'inactive'}`)
+  if (parts.length === 0) return ''
+  return ` | Live: ${parts.join(', ')}`
 }

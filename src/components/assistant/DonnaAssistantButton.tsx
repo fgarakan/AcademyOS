@@ -340,6 +340,8 @@ import { getWorkflow } from '@/lib/donna/guidedCompletion/guidedCompletionRegist
 
 // Sprint 1911 — Unified DONNA Brain: primary decision layer for general conversational input
 import { processDonnaMessage } from '@/lib/donna/brain/processDonnaMessage'
+// Mega Sprint 3091–3120 — Live state builder: populates LivePageState from already-loaded UI values
+import { buildLivePageState } from '@/lib/donna/operating/buildLivePageState'
 import type { DonnaResponseRole } from '@/lib/donna/brain/donnaRoleResponsePolicy'
 // Mega Sprint 2971–3000 — Live AI Conversation: async server action for vague inputs
 import { donnaLiveConversationAction } from '@/app/director/_actions/donnaLiveConversationAction'
@@ -3886,6 +3888,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         pendingDisambiguation: pendingDisambiguation ?? null,
         conversationNavigatorState: conversationNavigatorStateRef.current,
         onboardingComplete: onboardingComplete ?? false,
+        livePageState: buildLivePageState({ route: pathname, onboardingComplete, pendingReviewCount: reviewQueuePendingCount }),
       })
 
       setCommandResponse({ message: result.response, type: 'info', label: 'DONNA' })
@@ -3940,6 +3943,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         pendingDisambiguation: pendingDisambiguation ?? null,
         conversationNavigatorState: conversationNavigatorStateRef.current,
         onboardingComplete: onboardingComplete ?? false,
+        livePageState: buildLivePageState({ route: pathname, onboardingComplete, pendingReviewCount: reviewQueuePendingCount }),
       })
 
       setCommandResponse({ message: result.response, type: 'info', label: 'DONNA' })
@@ -4431,6 +4435,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       pendingDisambiguation: pendingDisambiguation ?? null,
       conversationNavigatorState: conversationNavigatorStateRef.current,
       onboardingComplete: onboardingComplete ?? false,
+      livePageState: buildLivePageState({ route: pathname, onboardingComplete, pendingReviewCount: reviewQueuePendingCount }),
     })
 
     switch (brainResult.action) {

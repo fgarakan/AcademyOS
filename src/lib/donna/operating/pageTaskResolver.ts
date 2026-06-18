@@ -4,13 +4,17 @@
 // Determines the highest-priority task for a given route.
 // Answers: What needs to be done here?
 //
+// Mega Sprint 3091–3120 — Live State-Aware Completion Engine V1
+// Extended to accept LivePageState signals so task selection reflects
+// actual academy reality rather than static defaults.
+//
 // Design rules:
 //   - Pure TypeScript. No DB, no API, no React, no side effects.
-//   - Uses static route intelligence — no live data fabrication.
-//   - pendingReviews and similar signals from DonnaMessageInput can be passed
-//     in to sharpen task selection when available.
+//   - Live state is optional — falls back to static when null.
+//   - Null counts in liveState mean unknown, not zero.
 
 import type { PageIntelligence } from './pageContextResolver'
+import type { LivePageState } from './livePageState'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,6 +39,8 @@ export interface PageTask {
 
 export interface TaskSignals {
   pendingReviews?: number
+  /** Live academy state — when provided, task selection uses real counts instead of static defaults */
+  liveState?: LivePageState | null
 }
 
 // ── Task definitions per route ────────────────────────────────────────────────
@@ -80,32 +86,125 @@ const ROUTE_TASKS: Record<string, (signals: TaskSignals) => PageTask> = {
     actionRoute: null,
   }),
 
-  '/director/curriculum': (_signals) => ({
-    highestPriorityTask: 'Activate the curriculum spine — define levels and assign all active players',
-    reason: 'Curriculum spine is the backbone of progression tracking. Without it, player development data is unstructured and cannot drive advancement decisions.',
-    urgency: 'critical',
-    estimatedImpact: 'High — enables progression tracking, assessment evidence, and advancement decisions for all active players.',
-    completionCriteria: 'Curriculum spine active; all players assigned a curriculum level; assessment criteria defined per level.',
-    actionRoute: null,
-  }),
+  '/director/curriculum': (signals) => {
+    const live = signals.liveState
+    const spineActive = live?.curriculumSpineActive ?? null
+    const missing = live?.playersMissingCurriculumLevel ?? null
 
-  '/director/level-up': (_signals) => ({
-    highestPriorityTask: 'Review advancement candidates — check evidence, then approve or defer',
-    reason: 'Advancement-eligible players are waiting for director review. Delays beyond 14 days stall player momentum.',
-    urgency: 'high',
-    estimatedImpact: 'Each approved advancement moves a player to the next curriculum level and activates new development criteria.',
-    completionCriteria: 'All candidates reviewed; level decisions recorded; no candidates waiting longer than 14 days.',
-    actionRoute: null,
-  }),
+    if (spineActive === false) {
+      return {
+        highestPriorityTask: 'Activate the curriculum spine — define and activate your curriculum levels',
+        reason: 'No curriculum levels are active. Player progression cannot be tracked until the spine is live.',
+        urgency: 'critical' as TaskUrgency,
+        estimatedImpact: 'High — enables progression tracking for all active players.',
+        completionCriteria: 'At least one curriculum level defined and active.',
+        actionRoute: null,
+      }
+    }
 
-  '/director/placement': (_signals) => ({
-    highestPriorityTask: 'Complete placement for all intake players',
-    reason: 'Intake players cannot participate in tracked sessions or build curriculum records until placed.',
-    urgency: 'critical',
-    estimatedImpact: 'High — unblocks each player from the development record system.',
-    completionCriteria: 'All intake players have a curriculum level and group assigned; finalize_player_placement() called for each.',
-    actionRoute: null,
-  }),
+    if (spineActive === true && missing !== null && missing > 0) {
+      return {
+        highestPriorityTask: `Assign curriculum levels to ${missing} player${missing > 1 ? 's' : ''}`,
+        reason: `${missing} active player${missing > 1 ? 's' : ''} cannot track progression without a curriculum level.`,
+        urgency: (missing > 5 ? 'high' : 'medium') as TaskUrgency,
+        estimatedImpact: `High — unblocks ${missing} player${missing > 1 ? 's' : ''} from the development record system.`,
+        completionCriteria: 'All active players have a curriculum level assigned.',
+        actionRoute: null,
+      }
+    }
+
+    if (spineActive === true && missing === 0) {
+      return {
+        highestPriorityTask: 'Review assessment criteria and coach-curriculum alignment',
+        reason: 'Spine is active and all players are assigned. The next quality layer is assessment standards.',
+        urgency: 'medium' as TaskUrgency,
+        estimatedImpact: 'Medium — improves progression decision quality across all levels.',
+        completionCriteria: 'Assessment criteria defined per level; coach alignment reviewed.',
+        actionRoute: null,
+      }
+    }
+
+    return {
+      highestPriorityTask: 'Activate the curriculum spine — define levels and assign all active players',
+      reason: 'Curriculum spine is the backbone of progression tracking. Without it, player development data is unstructured.',
+      urgency: 'critical' as TaskUrgency,
+      estimatedImpact: 'High — enables progression tracking, assessment evidence, and advancement decisions.',
+      completionCriteria: 'Curriculum spine active; all players assigned; assessment criteria defined.',
+      actionRoute: null,
+    }
+  },
+
+  '/director/level-up': (signals) => {
+    const live = signals.liveState
+    const count = live?.levelUpQueueCount ?? null
+
+    if (count === 0) {
+      return {
+        highestPriorityTask: 'No advancement candidates at this time',
+        reason: 'The level-up review queue is currently empty.',
+        urgency: 'low' as TaskUrgency,
+        estimatedImpact: 'Low — check back after the next assessment cycle.',
+        completionCriteria: 'Queue is empty. Monitor for new candidates.',
+        actionRoute: null,
+      }
+    }
+
+    if (count !== null && count > 0) {
+      return {
+        highestPriorityTask: `Review ${count} advancement candidate${count > 1 ? 's' : ''}`,
+        reason: `${count} player${count > 1 ? 's are' : ' is'} eligible for advancement. Delays beyond 14 days stall player momentum.`,
+        urgency: (count > 3 ? 'high' : 'medium') as TaskUrgency,
+        estimatedImpact: 'Each approved advancement moves a player to the next curriculum level.',
+        completionCriteria: `All ${count} candidate${count > 1 ? 's' : ''} reviewed; decisions recorded.`,
+        actionRoute: null,
+      }
+    }
+
+    return {
+      highestPriorityTask: 'Review advancement candidates — check evidence, then approve or defer',
+      reason: 'Advancement-eligible players are waiting for director review. Delays beyond 14 days stall player momentum.',
+      urgency: 'high' as TaskUrgency,
+      estimatedImpact: 'Each approved advancement moves a player to the next curriculum level.',
+      completionCriteria: 'All candidates reviewed; no candidates waiting longer than 14 days.',
+      actionRoute: null,
+    }
+  },
+
+  '/director/placement': (signals) => {
+    const live = signals.liveState
+    const count = live?.placementQueueCount ?? null
+
+    if (count === 0) {
+      return {
+        highestPriorityTask: 'Placement queue is clear — no intake players waiting',
+        reason: 'All intake players have been placed and activated.',
+        urgency: 'low' as TaskUrgency,
+        estimatedImpact: 'Low — no action needed now.',
+        completionCriteria: 'Queue empty.',
+        actionRoute: null,
+      }
+    }
+
+    if (count !== null && count > 0) {
+      return {
+        highestPriorityTask: `Complete placement for ${count} intake player${count > 1 ? 's' : ''}`,
+        reason: `${count} player${count > 1 ? 's' : ''} cannot participate in tracked sessions until placed.`,
+        urgency: 'critical' as TaskUrgency,
+        estimatedImpact: `High — unblocks ${count} player${count > 1 ? 's' : ''} from the development record system.`,
+        completionCriteria: `All ${count} intake player${count > 1 ? 's' : ''} placed; finalize_player_placement() called.`,
+        actionRoute: null,
+      }
+    }
+
+    return {
+      highestPriorityTask: 'Complete placement for all intake players',
+      reason: 'Intake players cannot participate in tracked sessions or build curriculum records until placed.',
+      urgency: 'critical' as TaskUrgency,
+      estimatedImpact: 'High — unblocks each player from the development record system.',
+      completionCriteria: 'All intake players have a curriculum level and group assigned; finalize_player_placement() called.',
+      actionRoute: null,
+    }
+  },
 
   '/director/parents': (_signals) => ({
     highestPriorityTask: 'Review and dispatch pending parent update drafts',
@@ -125,14 +224,32 @@ const ROUTE_TASKS: Record<string, (signals: TaskSignals) => PageTask> = {
     actionRoute: '/director/review',
   }),
 
-  '/director/onboarding': (_signals) => ({
-    highestPriorityTask: 'Complete all 7 onboarding steps — start with Academy DNA selection',
-    reason: 'Academy DNA drives all curriculum, coaching, and assessment decisions. DONNA cannot give academy-specific guidance until it is set.',
-    urgency: 'critical',
-    estimatedImpact: 'High — completing onboarding unlocks full operating mode and academy-specific DONNA intelligence.',
-    completionCriteria: 'All 7 steps completed; DNA model selected; first curriculum level created; first group created.',
-    actionRoute: null,
-  }),
+  '/director/onboarding': (signals) => {
+    const live = signals.liveState
+    const complete = live?.onboardingComplete ?? null
+    const progress = live?.onboardingProgress ?? null
+
+    if (complete === true) {
+      return {
+        highestPriorityTask: 'Onboarding is complete — no further setup actions required',
+        reason: 'All onboarding steps have been completed. The academy is operating in full mode.',
+        urgency: 'low' as TaskUrgency,
+        estimatedImpact: 'Low — focus shifts to day-to-day operations and curriculum quality.',
+        completionCriteria: 'Already complete.',
+        actionRoute: null,
+      }
+    }
+
+    const progressLabel = progress !== null ? ` (${progress}/7 complete)` : ''
+    return {
+      highestPriorityTask: `Continue academy onboarding${progressLabel} — next step awaits`,
+      reason: 'Academy DNA drives all curriculum, coaching, and assessment decisions. DONNA cannot give academy-specific guidance until onboarding is complete.',
+      urgency: 'critical' as TaskUrgency,
+      estimatedImpact: 'High — completing onboarding unlocks full operating mode and academy-specific DONNA intelligence.',
+      completionCriteria: 'All 7 steps completed; DNA model selected; first curriculum level created; first group created.',
+      actionRoute: null,
+    }
+  },
 }
 
 // Dynamic route task builders

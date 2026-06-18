@@ -14,6 +14,7 @@
 
 import type { PageIntelligence } from './pageContextResolver'
 import type { PageTask } from './pageTaskResolver'
+import type { LivePageState } from './livePageState'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -225,15 +226,26 @@ const DYNAMIC_COMPLETION_PATHS: Array<{ prefix: string; path: CompletionPath }> 
 
 /**
  * Build a completion path for a given page.
- * Uses intel and task to provide a contextual step-by-step guide.
+ * Uses intel, task, and optional live academy state to select the correct
+ * first-incomplete step rather than always starting from step 1.
  */
 export function buildCompletionPath(
   intel: PageIntelligence,
   task?: PageTask,
+  liveState?: LivePageState | null,
 ): CompletionPath {
   const route = intel.route
 
-  // Exact route match
+  // Live-state-aware overrides for specific routes
+  if (route === '/director/curriculum' && liveState) {
+    return buildCurriculumCompletionPath(liveState)
+  }
+
+  if (route === '/director/onboarding' && liveState) {
+    return buildOnboardingCompletionPath(liveState)
+  }
+
+  // Exact route match (static)
   if (ROUTE_COMPLETION_PATHS[route]) {
     return ROUTE_COMPLETION_PATHS[route]
   }
@@ -258,6 +270,79 @@ export function buildCompletionPath(
     remainingSteps: [secondGoal, ...remaining].filter(s => s !== firstGoal).slice(0, 3),
     completionCondition: intel.completionGoals.join('; ') || `${intel.pageName} fully reviewed`,
     summary: intel.completionGoals.slice(0, 3).join(' → '),
+  }
+}
+
+function buildCurriculumCompletionPath(live: LivePageState): CompletionPath {
+  const spineActive = live.curriculumSpineActive
+  const missing = live.playersMissingCurriculumLevel
+
+  if (spineActive === true && missing === 0) {
+    return {
+      goal: 'Active curriculum spine with all players assigned and assessment criteria defined',
+      currentStep: 'Curriculum spine is active and all players are assigned',
+      nextStep: 'Define assessment criteria per curriculum level',
+      remainingSteps: ['Review coach-curriculum alignment'],
+      completionCondition: 'Assessment criteria set per level; coach alignment reviewed',
+      summary: 'Define criteria → review alignment',
+    }
+  }
+
+  if (spineActive === true && missing !== null && missing > 0) {
+    return {
+      goal: 'Active curriculum spine with all players assigned and assessment criteria defined',
+      currentStep: `Curriculum spine is active — ${missing} player${missing > 1 ? 's' : ''} still need a level assignment`,
+      nextStep: `Assign curriculum levels to all ${missing} unassigned player${missing > 1 ? 's' : ''}`,
+      remainingSteps: [
+        'Define assessment criteria per level',
+        'Review coach-curriculum alignment',
+      ],
+      completionCondition: 'All players assigned; assessment criteria set per level',
+      summary: 'Assign players → define criteria → review alignment',
+    }
+  }
+
+  // spineActive=false or null — start from the top
+  return ROUTE_COMPLETION_PATHS['/director/curriculum']
+}
+
+function buildOnboardingCompletionPath(live: LivePageState): CompletionPath {
+  if (live.onboardingComplete === true) {
+    return {
+      goal: 'Academy fully configured',
+      currentStep: 'All 7 onboarding steps are complete',
+      nextStep: 'Monitor curriculum quality and coach performance in daily operations',
+      remainingSteps: [],
+      completionCondition: 'Already complete — academy is in full operating mode',
+      summary: 'Onboarding complete → daily operations',
+    }
+  }
+
+  const progress = live.onboardingProgress
+
+  // Map progress count to the step that is next
+  const allSteps = [
+    'Choose the Academy DNA model that describes your development philosophy',
+    'Define your first curriculum level',
+    'Create your first player group',
+    'Invite your first coach',
+    'Enroll your first player',
+    'Complete placement for enrolled players',
+    'Finalize academy configuration',
+  ]
+
+  const stepIndex = progress !== null ? Math.min(progress, allSteps.length - 1) : 0
+  const currentLabel = progress !== null
+    ? `Onboarding step ${progress + 1} of 7`
+    : 'Begin onboarding — start with Academy DNA selection'
+
+  return {
+    goal: 'All 7 onboarding steps complete; academy fully configured',
+    currentStep: currentLabel,
+    nextStep: allSteps[stepIndex] ?? 'Finalize remaining onboarding steps',
+    remainingSteps: allSteps.slice(stepIndex + 1, stepIndex + 4),
+    completionCondition: 'All 7 steps marked complete; DNA, curriculum, and groups configured',
+    summary: allSteps.slice(stepIndex, stepIndex + 3).join(' → '),
   }
 }
 

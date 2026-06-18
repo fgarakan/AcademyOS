@@ -47,6 +47,28 @@ import { recordAIUsage } from '@/lib/donna/conversation/donnaAIUsageMetrics'
 import { createLearningEntry } from '@/lib/donna/learning/learningEntryModel'
 import { donnaLearningLedger } from '@/lib/donna/learning/donnaLearningLedger'
 import type { InterpreterRole } from '@/lib/donna/conversation/donnaIntentInterpreter'
+import type { LivePageState } from '@/lib/donna/operating/livePageState'
+
+// ── Live state context formatter ──────────────────────────────────────────────
+
+function formatLiveStateForAI(live: LivePageState | null | undefined): string {
+  if (!live) return ''
+  const parts: string[] = []
+  if (live.pendingReviewCount !== null) parts.push(`${live.pendingReviewCount} pending reviews`)
+  if (live.playersMissingCurriculumLevel !== null && live.playersMissingCurriculumLevel > 0) {
+    parts.push(`${live.playersMissingCurriculumLevel} players missing curriculum level`)
+  }
+  if (live.levelUpQueueCount !== null && live.levelUpQueueCount > 0) {
+    parts.push(`${live.levelUpQueueCount} in level-up queue`)
+  }
+  if (live.placementQueueCount !== null && live.placementQueueCount > 0) {
+    parts.push(`${live.placementQueueCount} in placement queue`)
+  }
+  if (live.curriculumSpineActive === false) parts.push('curriculum spine inactive')
+  if (live.onboardingComplete === false) parts.push('onboarding incomplete')
+  if (parts.length === 0) return ''
+  return `Live: ${parts.join('; ')}`
+}
 
 // ── Main function ─────────────────────────────────────────────────────────────
 
@@ -89,11 +111,14 @@ export async function processLiveAIConversation(
     // Step 4: OpenAI teacher call (Part 2)
     // privacyGuard() runs inside askConversationTeacher — no pre-check needed here.
     // Mega Sprint 3031–3060: inject page context so the teacher knows what page is open.
-    const pageIntel = resolvePageIntelligence(input.route)
+    // Mega Sprint 3091–3120: inject live academy state so teacher uses real counts.
+    const pageIntel = resolvePageIntelligence(input.route, input.livePageState)
     const pageCtxStr = pageIntel ? formatPageIntelligenceForTeacher(pageIntel) : undefined
+    const liveStateStr = formatLiveStateForAI(input.livePageState)
     const combinedContext = [
-      academyDNAContext?.slice(0, 100),
-      pageCtxStr?.slice(0, 150),
+      academyDNAContext?.slice(0, 80),
+      pageCtxStr?.slice(0, 100),
+      liveStateStr?.slice(0, 100) || undefined,
     ].filter(Boolean).join(' | ') || undefined
 
     const teacherOutput = await askConversationTeacher({
@@ -270,7 +295,7 @@ export async function processStrategicAIConversation(
       ? formatPageIntelligenceForTeacher(strategicPageIntel)
       : undefined
     const contextPacket = buildStrategicContextPacket(strategicDomain, academyDNAContext ?? null)
-    const contextForTeacher = formatContextForTeacher(contextPacket, message, strategicPageCtx)
+    const contextForTeacher = formatContextForTeacher(contextPacket, message, strategicPageCtx, input.livePageState)
 
     // Step 4: OpenAI teacher call (strategic_reasoning mode)
     const teacherOutput = await askConversationTeacher({

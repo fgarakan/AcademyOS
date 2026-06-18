@@ -435,7 +435,7 @@ export function resolvePageIntelligence(pathname: string, livePageState?: LivePa
   const completion = getCompletionIntelligence(pathname)
 
   if (pack) {
-    return {
+    const intel: PageIntelligence = {
       route:               pack.route,
       pageName:            pack.pageName,
       pagePurpose:         pack.pagePurpose,
@@ -449,13 +449,14 @@ export function resolvePageIntelligence(pathname: string, livePageState?: LivePa
       recommendedNextAction: completion?.recommendedNextAction
         ?? (pack.commonCommands[0]?.phrase ?? 'Review the items on this page.'),
     }
+    return livePageState ? applyLiveStateOverrides(intel, livePageState) : intel
   }
 
   // Dynamic route registry (player profiles, groups)
   const dynamic = getDynamicEntry(pathname)
   if (dynamic) {
     const dynCompletion = getCompletionIntelligence(pathname)
-    return {
+    const intel: PageIntelligence = {
       route:               pathname,
       pageName:            dynamic.pageName,
       pagePurpose:         dynamic.pagePurpose,
@@ -468,6 +469,7 @@ export function resolvePageIntelligence(pathname: string, livePageState?: LivePa
       completionGoals:     dynCompletion?.completionGoals ?? dynamic.completionGoals,
       recommendedNextAction: dynCompletion?.recommendedNextAction ?? dynamic.recommendedNextAction,
     }
+    return livePageState ? applyLiveStateOverrides(intel, livePageState) : intel
   }
 
   // Static new routes (curriculum, placement, level-up, onboarding)
@@ -476,10 +478,9 @@ export function resolvePageIntelligence(pathname: string, livePageState?: LivePa
     const lastSegment = segments[segments.length - 1] ?? 'page'
     const pageName = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ')
 
-    // Build minimal visibleData and keyMetrics from route type
     const pageDefaults = STATIC_PAGE_DEFAULTS[pathname] ?? null
 
-    return {
+    const intel: PageIntelligence = {
       route:               pathname,
       pageName:            pageDefaults?.pageName ?? pageName,
       pagePurpose:         pageDefaults?.pagePurpose ?? `${pageName} management area.`,
@@ -492,6 +493,7 @@ export function resolvePageIntelligence(pathname: string, livePageState?: LivePa
       completionGoals:     completion.completionGoals,
       recommendedNextAction: completion.recommendedNextAction,
     }
+    return livePageState ? applyLiveStateOverrides(intel, livePageState) : intel
   }
 
   return null
