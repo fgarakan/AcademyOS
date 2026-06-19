@@ -13,6 +13,9 @@
 
 import type { StrategicAIDomain } from './donnaStrategicAIEligibility'
 import type { LivePageState } from '@/lib/donna/operating/livePageState'
+// Mega Sprint 3151–3180 — Reality Synchronization Engine V1
+import type { RealitySnapshot } from '@/lib/donna/reality/realitySnapshot'
+import { formatSnapshotForAI } from '@/lib/donna/reality/realityAdapter'
 
 // ── Context packet ────────────────────────────────────────────────────────────
 
@@ -258,17 +261,22 @@ export function buildStrategicContextPacket(
  * Capped at 250 chars — safe for the OpenAI teacher call.
  *
  * @param pageContext - Optional page context from PageIntelligence (injected by AI brain).
- * @param liveState   - Optional live academy state for real-count signal injection.
+ * @param liveState   - Optional raw live state (legacy path, used when no snapshot available).
+ * @param snapshot    - Optional reality snapshot (preferred — only fresh signals emitted).
+ *                      When both liveState and snapshot are provided, snapshot takes precedence.
  */
 export function formatContextForTeacher(
   packet: StrategicContextPacket,
   userQuestion: string,
   pageContext?: string,
   liveState?: LivePageState | null,
+  snapshot?: RealitySnapshot | null,
 ): string {
   const topSignals = packet.signalsToConsider.slice(0, 3).join('; ')
   const pageStr = pageContext ? ` | Page: ${pageContext.slice(0, 80)}` : ''
-  const liveStr = formatLiveSignals(liveState)
+  // Prefer snapshot (freshness-aware) over raw live state
+  const snapshotStr = snapshot ? formatSnapshotForAI(snapshot) : ''
+  const liveStr = snapshotStr ? ` | ${snapshotStr}` : formatLiveSignals(liveState)
   const raw = `Domain: ${packet.domainLabel}. Signals: ${topSignals}. Question: ${userQuestion}${pageStr}${liveStr}`
   return raw.slice(0, 250)
 }

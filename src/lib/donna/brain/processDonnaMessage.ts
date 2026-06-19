@@ -151,6 +151,9 @@ import { buildCompletionPath, formatCompletionPathForResponse } from '@/lib/donn
 import type { LivePageState } from '@/lib/donna/operating/livePageState'
 // Mega Sprint 3121–3150 — Universal operating phrase library
 import { detectOperatingIntent, getOperatingIntentPrompt } from '@/lib/donna/operating/donnaOperatingPhraseLibrary'
+// Mega Sprint 3151–3180 — Reality Synchronization Engine V1
+import type { RealitySnapshot } from '@/lib/donna/reality/realitySnapshot'
+import { livePageStateToSnapshot, projectSnapshotToLiveState } from '@/lib/donna/reality/realityAdapter'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -182,6 +185,9 @@ export interface DonnaMessageInput {
   onboardingComplete?: boolean
   /** Live academy state — when provided, page intelligence and completion paths use real counts */
   livePageState?: LivePageState | null
+  /** Pre-built reality snapshot — when provided, takes precedence over livePageState.
+   *  When absent and livePageState is present, the brain builds one automatically. */
+  realitySnapshot?: RealitySnapshot | null
 }
 
 // ── Action contract ───────────────────────────────────────────────────────────
@@ -262,6 +268,10 @@ export interface DonnaMessageResult {
   strategicContext: StrategicContext | null
   /** Page intelligence resolved at Step 0 for the current route (null for unknown routes) */
   pageIntelligence: PageIntelligence | null
+  /** Reality snapshot built (or forwarded) during this brain turn.
+   *  Non-null when livePageState or realitySnapshot was present in the input.
+   *  Available to downstream AI pipelines for freshness-aware context building. */
+  realitySnapshot: RealitySnapshot | null
 }
 
 // ── Phrase detectors (inlined to avoid React component dependency) ─────────────
@@ -501,6 +511,7 @@ function makeResult(
     updatedNavigatorState: partial.updatedNavigatorState ?? null,
     strategicContext: partial.strategicContext ?? null,
     pageIntelligence: partial.pageIntelligence ?? null,
+    realitySnapshot: partial.realitySnapshot ?? null,
     debugLog,
   }
 }
@@ -522,10 +533,30 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
 
   const debugLog = createDebugLog(userMessage, role, route)
 
+  // ── Reality synchronization — runs before Step 0 ────────────────────────────
+  // Build a RealitySnapshot from the live page state (if provided).
+  // The snapshot applies freshness rules: signals older than their domain TTL are
+  // marked stale. We then project the snapshot back to a LivePageState shape that
+  // contains ONLY fresh values — stale signals become null.
+  //
+  // This ensures page resolvers, task resolvers, and completion paths never receive
+  // outdated counts as if they were current reality.
+  const realitySnapshot: RealitySnapshot | null =
+    input.realitySnapshot ??
+    (input.livePageState ? livePageStateToSnapshot(input.livePageState) : null)
+
+  // effectiveLiveState: freshness-filtered live state derived from the snapshot.
+  // Falls back to raw livePageState when no snapshot is available (backward compat).
+  const effectiveLiveState: LivePageState | null =
+    realitySnapshot
+      ? projectSnapshotToLiveState(realitySnapshot)
+      : (input.livePageState ?? null)
+
   // ── Step 0: Page intelligence resolution ────────────────────────────────────
   // Resolves before all other steps so every subsequent step can use page context.
   // Null for unknown routes — all downstream steps handle null gracefully.
-  const pageIntelligence = resolvePageIntelligence(route, input.livePageState)
+  // Uses effectiveLiveState so stale signals cannot distort page-aware responses.
+  const pageIntelligence = resolvePageIntelligence(route, effectiveLiveState)
 
   // ── Step 0a: Active goal session — route session commands first ──────────────
   // When a goal session is active, interpret short phrases ("yes", "skip",
@@ -767,7 +798,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   logStep(debugLog, 'check_page_context')
   if (pageIntelligence !== null && isPageConfusionPhrase(lower)) {
     const confusionResponse = buildPageConfusionResponse(pageIntelligence)
-    const completionPath = buildCompletionPath(pageIntelligence, undefined, input.livePageState)
+    const completionPath = buildCompletionPath(pageIntelligence, undefined, effectiveLiveState)
     const completionFragment = formatCompletionPathForResponse(completionPath)
     // Mega Sprint 3121–3150: Detect specific operating intent to add targeted framing
     const operatingIntent = detectOperatingIntent(lower)
@@ -794,6 +825,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       spokenResponse:        spokenSummary,
       confidence:            0.92,
       pageIntelligence,
+      realitySnapshot,
       updatedNavigatorState: {
         ...navOutput.updatedState,
         stage:                'action',
@@ -829,7 +861,7 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       // ── Page guidance step traversal ────────────────────────────────────────
       if (arcNavState.proposedActionType === 'page_guidance' && pageIntelligence !== null) {
         if (isAck || isCompl || isHelpSignal) {
-          const guidancePath = buildCompletionPath(pageIntelligence, undefined, input.livePageState)
+          const guidancePath = buildCompletionPath(pageIntelligence, undefined, effectiveLiveState)
           const allSteps    = [guidancePath.nextStep, ...guidancePath.remainingSteps]
           const stepIndex   = arcNavState.turnCount - 1  // 0-based; initial turnCount=1 → stepIndex=0
 

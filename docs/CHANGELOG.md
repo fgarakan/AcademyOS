@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-06-19 — Mega Sprint 3151–3180 — DONNA Reality Synchronization Engine V1
+
+**Mission:** Complete the Reality Layer architectural gap. Parts 1, 2, and 4 (RealitySnapshot, RealitySynchronizationEngine, RealityFreshnessRules) existed but were disconnected from the DONNA brain. This sprint wires them end-to-end.
+
+**Part 3 — Reality Adapter (`realityAdapter.ts`):**
+- `livePageStateToSnapshot()` — converts LivePageState to RealitySnapshot with `source='ui_prop'`, timestamps all signals, applies domain freshness rules immediately
+- `projectSnapshotToLiveState()` — extracts only fresh values from a snapshot back to LivePageState shape; stale signals project as null — page resolvers never receive outdated counts
+- `formatSnapshotForAI()` — freshness-aware context string for AI teacher calls; stale signals silently omitted; format: `"Live (snapshot): pending=3; missing-levels=4"`
+
+**Brain wiring (`processDonnaMessage.ts`):**
+- `realitySnapshot?: RealitySnapshot | null` added to `DonnaMessageInput`
+- `realitySnapshot: RealitySnapshot | null` added to `DonnaMessageResult`
+- Reality synchronization block runs before Step 0: builds snapshot from livePageState → projects to `effectiveLiveState` (freshness-filtered)
+- All 3 `input.livePageState` usages replaced with `effectiveLiveState` (Step 0, Step 7.6, Step 7.7)
+- Step 7.6 page-confusion result includes `realitySnapshot` for downstream AI pipelines
+
+**AI pipeline wiring:**
+- `donnaLiveAIConversationBrain.ts` — both `processLiveAIConversation` and `processStrategicAIConversation` now build snapshot from `brainResult.realitySnapshot ?? livePageStateToSnapshot(livePageState)` and use `formatSnapshotForAI` instead of raw live state formatter
+- `donnaStrategicAIContextBuilder.ts` — `formatContextForTeacher` accepts optional `snapshot?: RealitySnapshot | null`; uses snapshot when present, falls back to `formatLiveSignals(liveState)` for backward compatibility
+- `donnaLiveConversationAction.ts`, `donnaStrategicConversationAction.ts` — `errorResult()` patched with `realitySnapshot: null`
+
+**Part 5 — Certification (`donnaRealityIntegrationCertification.ts`):** 61-assertion harness covering adapter round-trip, stale gate invariant, AI formatter, brain integration, page resolver regression.
+
+**Regressions:** 124/124 (Atomic Loop) + 51/51 (Page-Aware Operating) + 53/53 (Guided Continuity) — all PASS.
+
+**Certification:** 61/61 — 100% CERTIFIED
+
+---
+
 ## 2026-06-17 — Mega Sprint 3061–3090 — DONNA Conversational Continuity & Guided Completion Repair V1
 
 **Mission:** Fix the two architectural bugs that prevented DONNA's multi-turn operating loop from working on the live Curriculum page. Page-confusion phrases were being intercepted by earlier brain steps before reaching `check_page_context`, and the acknowledgment intercept was dead code because Step 15 always returned first.

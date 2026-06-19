@@ -50,6 +50,7 @@ function errorResult(message: string, inputMessage = ''): DonnaMessageResult {
     updatedNavigatorState: null,
     strategicContext: null,
     pageIntelligence: null,
+    realitySnapshot: null,
     debugLog: createDebugLog(inputMessage, 'director', '/director'),
   }
 }

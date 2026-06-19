@@ -48,8 +48,12 @@ import { createLearningEntry } from '@/lib/donna/learning/learningEntryModel'
 import { donnaLearningLedger } from '@/lib/donna/learning/donnaLearningLedger'
 import type { InterpreterRole } from '@/lib/donna/conversation/donnaIntentInterpreter'
 import type { LivePageState } from '@/lib/donna/operating/livePageState'
+// Mega Sprint 3151–3180 — Reality Synchronization Engine V1
+import { livePageStateToSnapshot, formatSnapshotForAI } from '@/lib/donna/reality/realityAdapter'
 
-// ── Live state context formatter ──────────────────────────────────────────────
+// ── Live state context formatter (legacy fallback) ────────────────────────────
+// Used only when no snapshot is available. Prefer formatSnapshotForAI() which
+// respects freshness rules and omits stale signals.
 
 function formatLiveStateForAI(live: LivePageState | null | undefined): string {
   if (!live) return ''
@@ -112,9 +116,11 @@ export async function processLiveAIConversation(
     // privacyGuard() runs inside askConversationTeacher — no pre-check needed here.
     // Mega Sprint 3031–3060: inject page context so the teacher knows what page is open.
     // Mega Sprint 3091–3120: inject live academy state so teacher uses real counts.
+    // Mega Sprint 3151–3180: prefer reality snapshot over raw live state — only fresh signals reach the teacher.
+    const snapshot = brainResult.realitySnapshot ?? (input.livePageState ? livePageStateToSnapshot(input.livePageState) : null)
     const pageIntel = resolvePageIntelligence(input.route, input.livePageState)
     const pageCtxStr = pageIntel ? formatPageIntelligenceForTeacher(pageIntel) : undefined
-    const liveStateStr = formatLiveStateForAI(input.livePageState)
+    const liveStateStr = snapshot ? formatSnapshotForAI(snapshot) : formatLiveStateForAI(input.livePageState)
     const combinedContext = [
       academyDNAContext?.slice(0, 80),
       pageCtxStr?.slice(0, 100),
@@ -290,12 +296,14 @@ export async function processStrategicAIConversation(
   try {
     // Step 3: Build strategic context packet (domain signals + framing, no PII)
     // Mega Sprint 3031–3060: inject page context into strategic teacher call.
+    // Mega Sprint 3151–3180: pass reality snapshot so only fresh signals reach the teacher.
+    const strategicSnapshot = brainResult.realitySnapshot ?? (input.livePageState ? livePageStateToSnapshot(input.livePageState) : null)
     const strategicPageIntel = resolvePageIntelligence(input.route)
     const strategicPageCtx = strategicPageIntel
       ? formatPageIntelligenceForTeacher(strategicPageIntel)
       : undefined
     const contextPacket = buildStrategicContextPacket(strategicDomain, academyDNAContext ?? null)
-    const contextForTeacher = formatContextForTeacher(contextPacket, message, strategicPageCtx, input.livePageState)
+    const contextForTeacher = formatContextForTeacher(contextPacket, message, strategicPageCtx, input.livePageState, strategicSnapshot)
 
     // Step 4: OpenAI teacher call (strategic_reasoning mode)
     const teacherOutput = await askConversationTeacher({
