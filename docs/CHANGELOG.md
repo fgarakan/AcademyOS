@@ -2,6 +2,88 @@
 
 ---
 
+## 2026-06-20 — Mega Sprint 3181–3210 — DONNA Live Signal Wiring & Atomic Loop Activation V1
+
+**Mission:** Close the final gap between the Live State-Aware Completion Engine (3091–3120) and real academy data. Prior to this sprint, all `buildLivePageState` calls received null for every signal — `resolvePageIntelligence`, `resolvePageTask`, and all live-branching completion paths always fell through to static defaults. This sprint wires the 12-signal server action end-to-end, extends the loop to cover the coaches page, adds the `level_up_review_completion` guided workflow, and promotes two new GoalTypes for the next execution sprint.
+
+**Architecture goal:** Every DONNA response on every live director route is now grounded in real academy counts — not static copy. The atomic loop (panel open → live query → LivePageState → brain → page-specific response) is fully operational.
+
+**Live signal pipeline:**
+- New server action `getDonnaAcademySignalsAction()` runs 6 parallel Supabase queries on panel open (director role only), RLS-scoped by `academy_id` from server-side auth
+- Returns 12 signals: `curriculumSpineActive`, `playersMissingCurriculumLevel`, `placementQueueCount`, `levelUpQueueCount`, `playersNeedingAttention`, `playersWithoutAssessment`, `pendingParentApprovals`, `pendingCoachApprovals`, `activePlayerCount`, `activeCoachCount`, `upcomingSessions`, `unassignedSessions`
+- Runs in parallel with the existing `getDonnaReviewQueueAction()` fetch — zero added latency to panel open
+- All signals fail-safe: returns `emptySignals()` (all null) on any error — DONNA degrades to static guidance, never crashes
+- `DonnaAssistantButton` stores signals in `useState<DonnaAcademySignals | null>` and passes all 12 into both `buildLivePageState` call sites (lines 3896 and 3968)
+
+**Routes now live-signal-activated:**
+
+| Route | Signals consumed | Live branch behavior |
+|---|---|---|
+| `/director` | `playersNeedingAttention` | Warning count injected into page intelligence |
+| `/director/review` | `pendingParentApprovals`, `pendingCoachApprovals` | Task prioritizes parent-visible items when count > 0 |
+| `/director/players` | `playersNeedingAttention`, `playersWithoutAssessment` | Task urgency and wording driven by live counts |
+| `/director/curriculum` | `curriculumSpineActive`, `playersMissingCurriculumLevel` | 3-branch: spine inactive → active+missing → active+complete |
+| `/director/level-up` | `levelUpQueueCount` | Critical/medium/low based on queue depth |
+| `/director/placement` | `placementQueueCount` | Critical when > 0, clear when = 0 |
+| `/director/onboarding` | `onboardingComplete`, `onboardingProgress` | Step count in recommended action |
+| `/director/coaches` | `activeCoachCount`, `unassignedSessions` | 3-branch: no coaches → unassigned sessions → verify group assignments |
+| `/director/players/[id]` | (static — dynamic profile page) | Static completion intelligence |
+| `/director/groups/[id]` | (static — dynamic group page) | Static completion intelligence |
+| `/coach`, `/coach/sessions/[id]` | (static — coach role) | Static completion intelligence |
+
+**New guided workflow — `level_up_review_completion`:**
+- Trigger phrases: `"review level up"`, `"who is ready to move up"`, `"level up queue"`, `"approve level up"`, `"players ready for promotion"`, and 7 more
+- 3 required steps: confirm queue → first candidate → approve/defer/evidence decision
+- 1 optional step: coaching notes to attach
+- Safe actions: queue retrieval, candidate summary, draft building (all read-only)
+- Approval-gated: level-up proposal creation, `execute_approved_action()` call, coach notification
+- Completion actions: `Review advancement queue` (read-only), `Approve level-up` (approval-required), `Defer candidate`, `Request more evidence`
+- Routes: `/director/players`, `/director/level-up`, `/director/review`
+
+**GoalType additions:**
+- `'level_up_review'` — maps to `level_up_review_completion` workflow; no session factory yet
+- `'player_profile_review'` — declared for next sprint; no workflow or session factory yet
+
+**Files added:**
+- `src/app/director/_actions/getDonnaAcademySignalsAction.ts` — server action: 6 parallel queries, 12 signals, RLS-scoped, fail-safe
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `academySignals` state; parallel fetch on panel open; 12 signals passed into both `buildLivePageState` calls
+- `src/lib/donna/guidedCompletion/guidedCompletionRegistry.ts` — `'level_up_review_completion'` added to `GuidedWorkflowId`; full workflow definition (3 required + 1 optional steps, trigger phrases, routes, safety contract)
+- `src/lib/donna/guidedCompletion/guidedCompletionStepRunner.ts` — `buildActions()` switch: `level_up_review_completion` case added (4 completion actions)
+- `src/lib/donna/goalSessions/donnaGoalSessionRuntime.ts` — `WORKFLOW_DRAFT_TYPE`: `level_up_review_completion → 'level_up_review_draft'`
+- `src/lib/donna/workflows/donnaGoalCompletionModel.ts` — `GoalType` union: `'level_up_review'` and `'player_profile_review'` added
+- `src/lib/donna/workflows/donnaWorkflowExecutionEngine.ts` — `WORKFLOW_META`: `level_up_review_completion` entry (entityType, nextAction, nextRoute); `WORKFLOW_DRAFT_TYPE`: `level_up_review_completion` entry
+- `src/lib/donna/operating/pageContextResolver.ts` — `/director/coaches` added to `COMPLETION_INTELLIGENCE` and `STATIC_PAGE_DEFAULTS`
+- `src/lib/donna/operating/pageTaskResolver.ts` — `/director/coaches` added to `ROUTE_TASKS` with 3 live-state branches
+
+**Excluded from this commit (held for separate sprint):**
+- `src/lib/donna/operating/operatingSession.ts` — unstaged; requires its own sprint review
+- `supabase/migrations/083_player_evidence_records.sql` — unstaged; migration requires explicit sprint approval
+
+**TypeScript:** Clean — `npx tsc --noEmit` 0 errors. The 4 pre-existing errors (exhaustive `Record<GuidedWorkflowId, ...>` maps missing `level_up_review_completion`) were resolved as part of this sprint's certification pass.
+
+**DONNA safety certification:**
+- All 12 signals read-only — no mutations in server action ✓
+- RLS enforced via `academy_id` from `supabase.auth.getUser()` ✓
+- Director-only fetch gate — non-director roles receive `[null, null]` ✓
+- All approval-gated actions named explicitly in workflow safety contract ✓
+- `execute_approved_action()` is the only named execution path for level changes ✓
+- No fabricated values — null = unknown throughout; DONNA falls back to static guidance ✓
+- proposed_actions pipeline respected for all level movement ✓
+
+**Atomic loop improvements:** Prior to this sprint: 0 of 12 signals were populated at runtime (all null). After this sprint: all 12 signals live on every director panel open. Every live-branching path in `resolvePageIntelligence` and `resolvePageTask` now executes against real data.
+
+**Remaining limitations:**
+- `level_up_review` and `player_profile_review` GoalTypes declared but no session factory maps to them yet — requires next guided execution sprint
+- `operatingSession.ts` exists but is not wired — held for its own sprint
+- `curriculumSpineActive` is a proxy signal (derived from `player_curriculum_states.length > 0`) rather than a direct query against `curriculum_levels.is_active` — accurate for V1 but may over-report as `true` if stale states exist
+- Coach routes (`/coach`, `/coach/sessions/`) receive static completion intelligence only — no live signals for coach role yet
+
+**Next recommended sprint:** Goal Session Factory for `level_up_review` — wire `level_up_review_completion` workflow to a `startGoalSession()` call triggered by the guided completion engine, so the director can run the level-up review loop end-to-end from DONNA without leaving the panel.
+
+---
+
 ## 2026-06-19 — Mega Sprint 3151–3180 — DONNA Reality Synchronization Engine V1
 
 **Mission:** Complete the Reality Layer architectural gap. Parts 1, 2, and 4 (RealitySnapshot, RealitySynchronizationEngine, RealityFreshnessRules) existed but were disconnected from the DONNA brain. This sprint wires them end-to-end.
