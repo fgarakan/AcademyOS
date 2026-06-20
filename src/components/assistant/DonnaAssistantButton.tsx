@@ -54,6 +54,9 @@ import { runDonnaCOOIntelligenceAction } from '@/app/director/_actions/donnaCOOI
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 // Sprint 273 — Review Queue Command Center
 import { getDonnaReviewQueueAction } from '@/app/director/_actions/donnaReviewQueueActions'
+// Mega Sprint 3181–3210 — Academy-wide live signals (activated on panel open)
+import { getDonnaAcademySignalsAction } from '@/app/director/_actions/getDonnaAcademySignalsAction'
+import type { DonnaAcademySignals } from '@/app/director/_actions/getDonnaAcademySignalsAction'
 // Sprint 274 — Attendance Exception Workflow
 import { saveAttendanceExceptionDraftAction } from '@/app/director/_actions/donnaAttendanceActions'
 // Sprint 275-277 — Director Intelligence Layer
@@ -918,6 +921,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [isAttentionLoading, setIsAttentionLoading] = useState(false)
   // Sprint 373 — Review queue pending count (fetched on panel open)
   const [reviewQueuePendingCount, setReviewQueuePendingCount] = useState<number>(0)
+  // Mega Sprint 3181–3210 — Academy-wide live signals (fetched on panel open in parallel)
+  const [academySignals, setAcademySignals] = useState<DonnaAcademySignals | null>(null)
   // Sprint 375 — Rule-based recommendation set (computed from signals on panel open)
   const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
   // Sprint 377 — Preference memory (loaded from localStorage on mount)
@@ -3888,7 +3893,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         pendingDisambiguation: pendingDisambiguation ?? null,
         conversationNavigatorState: conversationNavigatorStateRef.current,
         onboardingComplete: onboardingComplete ?? false,
-        livePageState: buildLivePageState({ route: pathname, onboardingComplete, pendingReviewCount: reviewQueuePendingCount }),
+        livePageState: buildLivePageState({
+          route: pathname,
+          onboardingComplete,
+          pendingReviewCount: reviewQueuePendingCount,
+          // Mega Sprint 3181–3210 — academy-wide signals from getDonnaAcademySignalsAction
+          curriculumSpineActive:         academySignals?.curriculumSpineActive         ?? null,
+          playersMissingCurriculumLevel: academySignals?.playersMissingCurriculumLevel ?? null,
+          placementQueueCount:           academySignals?.placementQueueCount           ?? null,
+          levelUpQueueCount:             academySignals?.levelUpQueueCount             ?? null,
+          playersNeedingAttention:       academySignals?.playersNeedingAttention       ?? null,
+          playersWithoutAssessment:      academySignals?.playersWithoutAssessment      ?? null,
+          pendingParentApprovals:        academySignals?.pendingParentApprovals        ?? null,
+          pendingCoachApprovals:         academySignals?.pendingCoachApprovals         ?? null,
+          activePlayerCount:             academySignals?.activePlayerCount             ?? null,
+          activeCoachCount:              academySignals?.activeCoachCount              ?? null,
+          upcomingSessions:              academySignals?.upcomingSessions              ?? null,
+          unassignedSessions:            academySignals?.unassignedSessions            ?? null,
+        }),
       })
 
       setCommandResponse({ message: result.response, type: 'info', label: 'DONNA' })
@@ -3943,7 +3965,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         pendingDisambiguation: pendingDisambiguation ?? null,
         conversationNavigatorState: conversationNavigatorStateRef.current,
         onboardingComplete: onboardingComplete ?? false,
-        livePageState: buildLivePageState({ route: pathname, onboardingComplete, pendingReviewCount: reviewQueuePendingCount }),
+        livePageState: buildLivePageState({
+          route: pathname,
+          onboardingComplete,
+          pendingReviewCount: reviewQueuePendingCount,
+          // Mega Sprint 3181–3210 — academy-wide signals from getDonnaAcademySignalsAction
+          curriculumSpineActive:         academySignals?.curriculumSpineActive         ?? null,
+          playersMissingCurriculumLevel: academySignals?.playersMissingCurriculumLevel ?? null,
+          placementQueueCount:           academySignals?.placementQueueCount           ?? null,
+          levelUpQueueCount:             academySignals?.levelUpQueueCount             ?? null,
+          playersNeedingAttention:       academySignals?.playersNeedingAttention       ?? null,
+          playersWithoutAssessment:      academySignals?.playersWithoutAssessment      ?? null,
+          pendingParentApprovals:        academySignals?.pendingParentApprovals        ?? null,
+          pendingCoachApprovals:         academySignals?.pendingCoachApprovals         ?? null,
+          activePlayerCount:             academySignals?.activePlayerCount             ?? null,
+          activeCoachCount:              academySignals?.activeCoachCount              ?? null,
+          upcomingSessions:              academySignals?.upcomingSessions              ?? null,
+          unassignedSessions:            academySignals?.unassignedSessions            ?? null,
+        }),
       })
 
       setCommandResponse({ message: result.response, type: 'info', label: 'DONNA' })
@@ -4749,25 +4788,25 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
           // Sprint 373: fetch review queue count on panel open (director only — Sprint 657 regression fix)
           // Sprint 375: also evaluate rule-based recommendations from returned signals
-          void (role === 'director' ? getDonnaReviewQueueAction() : Promise.resolve(null)).then((data) => {
-            const pendingCount = data?.totalCount ?? 0
-            if (pendingCount > 0) {
-              setReviewQueuePendingCount(pendingCount)
-              // Sprint 1058: badge in header already surfaces review queue count — card is duplicate noise
-            } else {
-              setReviewQueuePendingCount(0)
-            }
+          // Mega Sprint 3181–3210: run academy signals fetch in parallel with review queue
+          void (role === 'director'
+            ? Promise.all([getDonnaReviewQueueAction(), getDonnaAcademySignalsAction()])
+            : Promise.resolve([null, null] as [null, null])
+          ).then(([queueData, acadSignals]) => {
+            const pendingCount = queueData?.totalCount ?? 0
+            setReviewQueuePendingCount(pendingCount)
+            if (acadSignals) setAcademySignals(acadSignals)
             // Sprint 375: evaluate recommendations synchronously from available signals
             // Sprint 376: record each recommendation shown as a learning signal
             setConvState(prev => {
-              const signals: RecommendationSignals = {
+              const recSignals: RecommendationSignals = {
                 pendingReviewCount: pendingCount,
-                pendingPlacementCount: 0,   // not yet fetched separately; engine handles 0 gracefully
-                todaySessionCount: 0,        // not yet fetched separately
+                pendingPlacementCount: acadSignals?.placementQueueCount ?? 0,
+                todaySessionCount: 0,
                 hasActiveDraft: prev.activeDraft !== null,
                 currentPathname: pathname,
               }
-              const recSet = evaluateRecommendations(signals)
+              const recSet = evaluateRecommendations(recSignals)
               setRecommendationSet(recSet)
               recSet.recommendations.forEach(rec => {
                 recordSignal('recommendation_shown', { category: rec.category, recommendationId: rec.id })

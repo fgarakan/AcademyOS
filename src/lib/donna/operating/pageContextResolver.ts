@@ -190,6 +190,18 @@ const COMPLETION_INTELLIGENCE: Record<string, CompletionIntelligence> = {
     ],
   },
 
+  // ── Coaches management page (Mega Sprint 3181–3210) ─────────────────────────
+
+  '/director/coaches': {
+    completionGoals: [
+      'All active coaches have an assigned group or session',
+      'No coaches without a role assignment',
+      'Coach profile information complete',
+    ],
+    recommendedNextAction: 'Review active coaches and verify each has at least one assigned group or session.',
+    warnings: [],
+  },
+
   // ── Coach routes (Mega Sprint 3121–3150) ──────────────────────────────────────
 
   '/coach/': {
@@ -789,6 +801,33 @@ const STATIC_PAGE_DEFAULTS: Record<string, StaticPageDefault> = {
       'All setup changes are director decisions — nothing is automatic',
     ],
     missingData: 'Setup progress may not be loaded yet. I can explain what each step does while it loads.',
+  },
+
+  // Mega Sprint 3181–3210
+  '/director/coaches': {
+    pageName: 'Coaches',
+    pagePurpose: 'Coach roster management. View, invite, and manage coaches. Verify group assignments, role definitions, and session coverage. A coach without a group assignment creates a scheduling gap.',
+    visibleData: [
+      'Active coach roster',
+      'Coach role (head_coach / coach)',
+      'Assigned groups and sessions',
+      'Coach invitation status',
+    ],
+    keyMetrics: [
+      { id: 'active_coaches', label: 'Active Coaches', description: 'Coaches with active academy membership.' },
+      { id: 'unassigned_coaches', label: 'Unassigned Coaches', description: 'Active coaches not linked to any group or session.' },
+    ],
+    availableActions: [
+      'Review active coach roster',
+      'Invite a new coach by email',
+      'Verify group assignments per coach',
+      'Check coverage gaps',
+    ],
+    approvalActions: [
+      'Coach role changes require director confirmation',
+      'Removing a coach requires reassigning their groups and sessions first',
+    ],
+    missingData: 'Coach roster may not be loaded yet. I can explain how coach management works while it loads.',
   },
 }
 

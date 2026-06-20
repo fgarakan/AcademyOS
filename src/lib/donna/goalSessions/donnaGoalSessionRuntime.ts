@@ -153,6 +153,7 @@ const WORKFLOW_DRAFT_TYPE: Record<GuidedWorkflowId, string> = {
   template_builder_completion:           'class_template_draft',
   coach_creation_completion:             'coach_invite_draft',
   fitness_template_builder_completion:   'fitness_template_draft',
+  level_up_review_completion:            'level_up_review_draft',
 }
 
 // ── Main runtime ───────────────────────────────────────────────────────────────

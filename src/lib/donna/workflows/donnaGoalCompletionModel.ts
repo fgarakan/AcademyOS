@@ -28,6 +28,9 @@ export type GoalType =
   | 'coach_recap_review'
   | 'parent_update_review'
   | 'academy_health_action'
+  // Mega Sprint 3181–3210 — level-up and player profile review loops
+  | 'level_up_review'
+  | 'player_profile_review'
 
 // ── Session status ─────────────────────────────────────────────────────────────
 

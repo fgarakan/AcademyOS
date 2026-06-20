@@ -236,6 +236,12 @@ const WORKFLOW_META: Record<GuidedWorkflowId, WorkflowMeta> = {
     nextAction:  'View templates',
     nextRoute:   '/director/templates/fitness',
   },
+  level_up_review_completion: {
+    entityType:  'level_up_review',
+    entityLabel: 'Level-Up Review',
+    nextAction:  'Review queue',
+    nextRoute:   '/director/review',
+  },
 }
 
 // ── ID generator ───────────────────────────────────────────────────────────────
@@ -412,6 +418,7 @@ const WORKFLOW_DRAFT_TYPE: Record<GuidedWorkflowId, string> = {
   academy_setup_completion:              'academy_setup_draft',
   coach_creation_completion:             'coach_invite_draft',
   fitness_template_builder_completion:   'fitness_template_draft',
+  level_up_review_completion:            'level_up_review_draft',
 }
 
 function buildCompletionMessage(

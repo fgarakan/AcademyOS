@@ -21,6 +21,8 @@ export type GuidedWorkflowId =
   | 'template_builder_completion'
   | 'coach_creation_completion'
   | 'fitness_template_builder_completion'
+  // Mega Sprint 3181–3210 — Level-up review loop
+  | 'level_up_review_completion'
 
 // ── Step ─────────────────────────────────────────────────────────────────────
 
@@ -816,6 +818,84 @@ const WORKFLOWS: GuidedCompletionWorkflow[] = [
       'assign template to sessions',
     ],
     openingMessage: "Let's build a fitness template. I'll ask 4 quick questions — then you review.\n\nStep 1 of 4:",
+  },
+
+  // ── 9. Level-Up Review (Mega Sprint 3181–3210) ────────────────────────────
+  //
+  // Guides the director through reviewing players flagged as advancement-eligible.
+  // Loop: confirm queue → review first candidate → approve / defer / request more evidence.
+  // No level change is made without explicit director approval via execute_approved_action().
+  {
+    id: 'level_up_review_completion',
+    label: 'Level-Up Review',
+    endGoal: 'Review each player in the advancement queue and either approve their level-up, defer, or flag for more evidence.',
+    triggerPhrases: [
+      'review level up',
+      'level up review',
+      'review level-up',
+      'who is ready to move up',
+      'check level up queue',
+      'level up queue',
+      'approve level up',
+      'player advancement',
+      'advancement queue',
+      'players ready for promotion',
+      'who should move up',
+      'level ups pending',
+    ],
+    pageRoutes: [
+      '/director/players',
+      '/director/level-up',
+      '/director/review',
+    ],
+    requiredSteps: [
+      {
+        stepId: 'confirm_queue',
+        order: 1,
+        question: 'There are players flagged as advancement-eligible. Would you like to review them now? (yes / show me the list)',
+        fieldId: 'confirm_queue',
+        hint: 'I\'ll walk you through each candidate one at a time.',
+        required: true,
+      },
+      {
+        stepId: 'review_first_candidate',
+        order: 2,
+        question: 'Who is the first player you\'d like to review for level advancement?',
+        fieldId: 'player_name',
+        hint: 'I\'ll pull their current level, coach, and recent performance signals.',
+        required: true,
+      },
+      {
+        stepId: 'advancement_decision',
+        order: 3,
+        question: 'For this player: approve advancement, defer, or request more evidence?',
+        fieldId: 'advancement_decision',
+        hint: '"Approve" queues a level-up proposal for your confirmation. "Defer" sets a follow-up flag. "Evidence" opens an assessment draft.',
+        required: true,
+      },
+    ],
+    optionalSteps: [
+      {
+        stepId: 'advancement_note',
+        order: 4,
+        question: 'Any coaching notes to attach to this advancement decision?',
+        fieldId: 'advancement_note',
+        hint: 'Visible to the assigned coach. Helps document the reasoning.',
+        required: false,
+      },
+    ],
+    completionCriteria: 'All advancement-eligible players reviewed. Each has a decision: approved, deferred, or flagged for evidence. All approved proposals queued for director confirmation — no level changes made without approval.',
+    safeActions: [
+      'retrieve advancement queue from player_curriculum_states',
+      'summarise each player\'s current level, signals, and coach',
+      'build a level-up proposal draft for review',
+    ],
+    approvalGatedActions: [
+      'submit level-up proposal (creates a proposed_action)',
+      'execute level change (execute_approved_action — only after proposal approved)',
+      'notify coach of advancement decision',
+    ],
+    openingMessage: "Let's work through the level-up queue together. I'll review each eligible player one at a time — you decide: approve, defer, or request more evidence. No changes are made until you confirm.\n\nStep 1 of 3:",
   },
 ]
 

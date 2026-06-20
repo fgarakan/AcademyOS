@@ -303,6 +303,44 @@ const ROUTE_TASKS: Record<string, (signals: TaskSignals) => PageTask> = {
     completionCriteria: 'Template assigned; coach assigned; group confirmed; session scheduled.',
     actionRoute: null,
   }),
+
+  // Mega Sprint 3181–3210
+  '/director/coaches': (signals) => {
+    const live = signals.liveState
+    const coachCount = live?.activeCoachCount ?? null
+    const unassigned = live?.unassignedSessions ?? null
+
+    if (coachCount !== null && coachCount === 0) {
+      return {
+        highestPriorityTask: 'No active coaches yet — invite your first coach',
+        reason: 'The academy has no active coaches. Sessions and curriculum delivery depend on at least one coach.',
+        urgency: 'critical' as TaskUrgency,
+        estimatedImpact: 'High — enables session delivery and curriculum tracking.',
+        completionCriteria: 'At least one coach invited and active.',
+        actionRoute: null,
+      }
+    }
+
+    if (unassigned !== null && unassigned > 0) {
+      return {
+        highestPriorityTask: `Assign coaches to ${unassigned} unassigned session${unassigned > 1 ? 's' : ''}`,
+        reason: `${unassigned} upcoming session${unassigned > 1 ? 's' : ''} have no coach assigned. Sessions cannot run without coach assignment.`,
+        urgency: 'high' as TaskUrgency,
+        estimatedImpact: 'Ensures session delivery accountability and curriculum tracking.',
+        completionCriteria: 'All upcoming sessions have assigned coaches.',
+        actionRoute: null,
+      }
+    }
+
+    return {
+      highestPriorityTask: 'Review active coaches and verify group assignments',
+      reason: 'A coach without a group assignment creates a scheduling gap. Verify coverage before the next session cycle.',
+      urgency: 'medium' as TaskUrgency,
+      estimatedImpact: 'Ensures all sessions have coaching coverage and curriculum alignment.',
+      completionCriteria: 'All active coaches have at least one assigned group or session.',
+      actionRoute: null,
+    }
+  },
 }
 
 // Dynamic route task builders

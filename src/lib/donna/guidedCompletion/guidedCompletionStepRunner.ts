@@ -290,6 +290,13 @@ function buildActions(workflowId: GuidedWorkflowId): CompletionAction[] {
         { label: 'Edit a field',                  requiresApproval: false, note: 'Change any answer.' },
         { label: 'Save fitness template draft',   requiresApproval: true,  note: 'Saves fitness draft for director review before use.' },
       ]
+    case 'level_up_review_completion':
+      return [
+        { label: 'Review advancement queue',   requiresApproval: false, note: 'See all candidates before deciding.' },
+        { label: 'Approve level-up',           requiresApproval: true,  note: 'Creates a level-up proposal for director confirmation.' },
+        { label: 'Defer candidate',            requiresApproval: false, note: 'Sets a follow-up flag — no level change.' },
+        { label: 'Request more evidence',      requiresApproval: false, note: 'Opens an assessment draft for the candidate.' },
+      ]
   }
 }
 
