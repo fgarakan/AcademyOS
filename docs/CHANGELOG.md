@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-06-20 — Mega Sprint 3301–3330 — DONNA Adaptive COO Operating Day V1
+
+**Mission:** Prove DONNA can operate an academy day with minimal director input — reducing the director to approve / reject / adjust / prioritize / override / ask-why / done. Operating behavior over the ONE DONNA pipeline (3271–3300). No new intelligence engines, no new architecture, no dashboards, no migration.
+
+**Created:**
+- `src/lib/donna/brain/donnaOperatingDay.ts` — thin operating layer over existing engines: `buildDailyOperatingBrief` (proactive COO brief — top priority · why · blocker · first action · approval needed, reusing the attention engine); exception detection + deterministic playbooks (coach/player absence, parent concern, missed wrap-up, level-up blocker, curriculum gap, session issue — each: what happened · why · what's next · who approves · how to complete); `detectDirectMutationRequest` + `buildApprovalRequiredResponse` (Part 5 guardrail); `scoreDirectorInputBurden` (Director Input Burden Score).
+- `src/lib/donna/certification/donnaAdaptiveCOOOperatingDayCertification.ts` — 20-step operating-day simulation + approval guardrails + burden score. **144/144 — 100% CERTIFIED; burden 100/100 → low_input.**
+- `docs/donna/DONNA_ADAPTIVE_COO_OPERATING_DAY_V1_REPORT.md`.
+
+**Modified:**
+- `src/lib/donna/brain/donnaCanonicalRouter.ts` — added `daily_brief` + `exception` stages and a strengthened direct-mutation `safety_block` (closes a real gap: the intent classifier alone missed phrasings like "send the parent message", "approve the promotion", "publish the curriculum", "assign a coach"). Broadened the focus-today helper ("focus on first").
+- `src/lib/donna/certification/oneDonnaOperatingSystemCertification.ts` — added the two new stages to the valid-stage list (still 45/45).
+
+**Validation:** `npx tsc --noEmit` clean. New cert 144/144. DONNA cert suite 32/33 (the 1 failure, `philosophyCertification`, is pre-existing and unrelated — imports none of the touched files). 3271 + 3211 certs still pass.
+
+**Deferred (documented):** per-exception live entity lookups (name the specific coach/sessions/players/parent); promote `adjust session` / `summarize wrap-ups` to guided-completion workflows; durable learning persistence (migration-gated).
+
+---
+
 ## 2026-06-20 — Mega Sprint 3271–3300 — ONE DONNA Operating System Convergence V1
 
 **Mission:** Make every piece of already-built DONNA intelligence feel like ONE adaptive COO. The audits proved fragmentation, not missing intelligence: the floating DONNA (every page) ran a thin path while the rich engines lived only behind `/director/donna`. This sprint converges them — no new intelligence, no new orchestration, no second brain, no migration.

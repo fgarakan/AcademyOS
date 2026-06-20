@@ -58,7 +58,7 @@ function runExecutiveDay(): void {
   process.stdout.write('\n── The executive day (single pipeline) ──\n')
   for (const utterance of EXECUTIVE_DAY) {
     const res = route(utterance, '/director')
-    const validStage: DonnaRouterStage[] = ['safety_block','review','players','focus_today','proactive','assumption','guided_completion','clarify','defer_to_brain']
+    const validStage: DonnaRouterStage[] = ['safety_block','daily_brief','exception','review','players','focus_today','proactive','assumption','guided_completion','clarify','defer_to_brain']
     check(`"${utterance}" → ${res.stage} (${res.engineId})`, validStage.includes(res.stage))
   }
 }

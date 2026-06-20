@@ -33,11 +33,21 @@ import {
 } from '@/lib/donna/proactive/focusTodayAnswerEngine'
 import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
 import { detectGuidedCompletionIntent } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
+import {
+  detectDailyBriefIntent,
+  buildDailyOperatingBrief,
+  detectOperatingException,
+  buildExceptionResponse,
+  detectDirectMutationRequest,
+  buildApprovalRequiredResponse,
+} from '@/lib/donna/brain/donnaOperatingDay'
 
 // ── Result contract ───────────────────────────────────────────────────────────
 
 export type DonnaRouterStage =
   | 'safety_block'        // unsafe/mutation request — routed to review, never executed
+  | 'daily_brief'         // morning / overnight / "what changed" → proactive COO brief
+  | 'exception'           // operating exception (coach/player absence, parent concern, …)
   | 'review'              // review-queue answer
   | 'players'             // player/roster attention answer
   | 'focus_today'         // "what should I do today / what matters most"
@@ -69,6 +79,7 @@ function isFocusTodayIntent(t: string): boolean {
   return (
     detectFocusTodayQuestion(t) ||
     /what should (i|we|brian) do( today)?/.test(t) ||
+    /what should i focus on( first| now)?|where should i (start|begin)/.test(t) ||
     /what matters( most)?|what'?s most important/.test(t)
   )
 }
@@ -111,6 +122,20 @@ export function routeDonnaConversation(params: {
   })
 
   // ── Step 1 — Safety / permission first (Part: permission validation) ──────────
+  // Direct-mutation guardrail (Sprint 3301–3330) — imperative approval-bypass requests
+  // are blocked and routed to review, never executed. Drafting is allowed downstream.
+  if (detectDirectMutationRequest(text)) {
+    return {
+      matched: true,
+      stage: 'safety_block',
+      engineId: 'donnaOperatingDay.approvalRequired',
+      answer: buildApprovalRequiredResponse(text),
+      needsOpenAI: false,
+      requiresApproval: true,
+      realityGrounded: false,
+    }
+  }
+
   // Blocked = unsafe or direct-mutation request. Always intercepted, never executed.
   const guard = tryDirectorClarificationOrBlock(text)
   if (guard && guard.actionId.startsWith('blocked')) {
@@ -129,7 +154,25 @@ export function routeDonnaConversation(params: {
   // Defer to the brain (which carries its own demo/insufficient honesty).
   if (!ctx) return defer(true)
 
-  // ── Step 2 — Best existing intelligence engine (reality-first order) ──────────
+  // ── Step 2 — Operating layer (Sprint 3301–3330): COO brief + exceptions ───────
+  // Reuses existing engines. Reality-grounded, recommend/draft/route only.
+
+  // Proactive COO daily brief — morning, overnight, "what changed", end-of-day.
+  if (detectDailyBriefIntent(t)) {
+    const answer = buildDailyOperatingBrief(ctx)
+    return { matched: true, stage: 'daily_brief', engineId: 'donnaOperatingDay.dailyBrief', answer, needsOpenAI: false, requiresApproval: false, realityGrounded: groundedFrom(answer, ctx) }
+  }
+
+  // Operating exceptions — coach/player absence, parent concern, missed wrap-up, etc.
+  const exceptionType = detectOperatingException(t)
+  if (exceptionType) {
+    const answer = buildExceptionResponse(exceptionType, ctx)
+    // Parent/level/curriculum/session exceptions imply an approval-gated draft downstream.
+    const requiresApproval = exceptionType === 'parent_concern' || exceptionType === 'level_up_blocker' || exceptionType === 'curriculum_gap'
+    return { matched: true, stage: 'exception', engineId: `donnaOperatingDay.${exceptionType}`, answer, needsOpenAI: false, requiresApproval, realityGrounded: groundedFrom(answer, ctx) }
+  }
+
+  // ── Step 3 — Best existing intelligence engine (reality-first order) ──────────
 
   // Completion intent goes to the brain's guided/goal completion engine (single
   // completion engine, shared by all surfaces). Checked before assumption because
