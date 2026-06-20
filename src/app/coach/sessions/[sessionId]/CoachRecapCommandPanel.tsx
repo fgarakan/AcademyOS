@@ -215,10 +215,10 @@ export function CoachRecapCommandPanel({
                 )}
                 <p className="text-text-muted text-[10px]">All fields require director review — no records updated.</p>
                 <a
-                  href="/director/review"
+                  href="/coach/sessions"
                   className="inline-flex items-center gap-1 text-lime text-[11px] hover:underline"
                 >
-                  View in Director Review Queue <ExternalLink className="w-3 h-3" />
+                  View your sessions <ExternalLink className="w-3 h-3" />
                 </a>
               </>
             ) : (

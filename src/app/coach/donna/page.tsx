@@ -78,8 +78,8 @@ export default async function CoachDonnaPage() {
       icon: <FileText className="w-4 h-4" />,
     },
     {
-      label: 'Review Queue',
-      href: '/director/review',
+      label: 'My Sessions',
+      href: '/coach/sessions',
       icon: <ClipboardList className="w-4 h-4" />,
     },
   ]

@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-06-20 — Mega Sprint 3331–3360 — Atomic Loop Usability Test Mode V1
+
+**Mission:** Make AcademyOS ready for hands-on testing of all 10 atomic loops. Usability/testability/pilot readiness — no new intelligence engines, no new architecture, no dashboards, no migration. Fix only blockers that prevent testing.
+
+**Created:**
+- `src/lib/donna/certification/atomicLoopUsabilityCertification.ts` — structural cert for the 10 loops (route · primary action · DONNA guidance · completion path · approval guardrails · no fake completion). **60/60 — 10/10 loops fully ready.**
+- `docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md` — per-loop manual test steps, pass/fail, severity, DONNA-quality + cognitive-load scoring.
+- `docs/testing/BRIAN_DABUL_PILOT_TEST_SCRIPT.md` — plain-English pilot walkthrough for Brian.
+- `docs/testing/ATOMIC_LOOP_TEST_READINESS_REPORT.md` — readiness, blockers, limitations, recommendation (**test now**).
+
+**Fixed (Part 4 — broken links only):**
+- `src/app/coach/donna/page.tsx` — coach "Review Queue" quick action pointed at `/director/review` (middleware-blocked for coaches) → now `/coach/sessions` ("My Sessions").
+- `src/app/coach/sessions/[sessionId]/CoachRecapCommandPanel.tsx` — coach recap link "View in Director Review Queue" → `/director/review` (dead for coaches) → now `/coach/sessions` ("View your sessions").
+
+**Validation:** `npx tsc --noEmit` clean. Atomic loop cert 60/60. DONNA cert suite unchanged (pre-existing `philosophyCertification` failure is unrelated).
+
+**Verdict:** Test now. No blockers prevent the pilot. Known limitations documented (no dedicated coach-reassignment screen; exception specificity; durable learning persistence) — all deferred, not pilot blockers.
+
+---
+
 ## 2026-06-20 — Mega Sprint 3301–3330 — DONNA Adaptive COO Operating Day V1
 
 **Mission:** Prove DONNA can operate an academy day with minimal director input — reducing the director to approve / reject / adjust / prioritize / override / ask-why / done. Operating behavior over the ONE DONNA pipeline (3271–3300). No new intelligence engines, no new architecture, no dashboards, no migration.
