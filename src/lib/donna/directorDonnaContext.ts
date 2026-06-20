@@ -152,7 +152,9 @@ export interface DirectorDonnaContext {
 
 // ── Demo fallback ─────────────────────────────────────────────────────────────
 
-function buildDemoContext(): DirectorDonnaContext {
+// Exported (Sprint 3211–3240) so the executive-experience certification can reuse
+// the canonical demo context instead of hand-rolling a fixture. No behavior change.
+export function buildDemoContext(): DirectorDonnaContext {
   return {
     pendingReviews: 3,
     missingWrapUps: 2,

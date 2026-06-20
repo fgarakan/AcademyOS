@@ -150,3 +150,68 @@ export function buildProactiveNoticeAnswer(ctx: DirectorDonnaContext): DonnaSafe
     isAnswerable: true,
   }
 }
+
+// ─── Executive assumption layer (Sprint 3211–3240) ───────────────────────────────
+// Part 2 — when the director is vague but the request is safe, DONNA makes the best
+// COO assumption instead of asking a clarification question. Reality-aware, ends with
+// a recommended action and a completion offer. No fabricated facts — uses live counts
+// and the honest demo prefix.
+
+export function detectVagueExecutiveInput(text: string): boolean {
+  const t = text.toLowerCase().trim()
+  return (
+    /this seems off|something('?s| is)? off|seems off|looks off|feels off/.test(t) ||
+    /i don'?t know what to do|not sure what to do|where do i (start|begin)/.test(t) ||
+    /what would (an? )?(elite |great )?coo do/.test(t) ||
+    /help me finish( this)?|take me to completion|walk me through it|take me there/.test(t) ||
+    /what'?s next|whats next/.test(t) ||
+    /explain this simply|in simple terms/.test(t)
+  )
+}
+
+export function buildExecutiveAssumptionAnswer(
+  ctx: DirectorDonnaContext,
+  _text: string,
+): DonnaSafeReadAnswer {
+  const report = buildAcademyAttentionReport(ctx)
+  const prefix = ctx.isLive ? '' : '[Demo] '
+
+  if (report.isEmpty) {
+    return {
+      actionId:    'exec_assumption_clear',
+      text:        `${prefix}I'll read this like a COO: nothing is blocking you right now. The academy is operating normally. Good time to review curriculum coverage or check player progress.`,
+      confidence:  ctx.confidence,
+      sourceNote:  report.sourceNote,
+      followUp:    'Review curriculum coverage',
+      href:        '/director/donna',
+      isAnswerable: true,
+    }
+  }
+
+  const top = report.topAction!
+  const blocker = report.hasApprovalItems
+    ? 'The blocker is decisions waiting on you.'
+    : `The blocker is ${top.whyItMatters.split('.')[0].toLowerCase()}.`
+
+  const lines: string[] = [
+    `${prefix}I'll prioritize this like a COO — what's urgent, what blocks progress, and what affects players first.`,
+    '',
+    `Start here: ${top.label}.`,
+    `This matters because ${top.whyItMatters.split('.')[0].toLowerCase()}.`,
+    blocker,
+    `Evidence: ${top.evidence}`,
+    top.href
+      ? `I can take you there and walk you through it.`
+      : `I can walk you through it.`,
+  ]
+
+  return {
+    actionId:    `exec_assumption_${top.id}`,
+    text:        lines.join('\n'),
+    confidence:  ctx.confidence,
+    sourceNote:  report.sourceNote,
+    followUp:    top.href ? 'Take me to completion' : 'Walk me through it',
+    href:        top.href ?? null,
+    isAnswerable: true,
+  }
+}

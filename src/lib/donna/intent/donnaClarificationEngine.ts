@@ -201,7 +201,9 @@ function buildQuestionPrefix(
   entity: string | null,
   entityType: EntityType | null,
 ): string {
-  if (!entity) return "I want to make sure I understand. Would you like to:"
+  // Sprint 3211–3240 — executive experience: lead like a COO, not a chatbot.
+  // No "I want to make sure I understand" preamble — offer the likely paths directly.
+  if (!entity) return "Here's where I'd focus. Which of these do you mean:"
   switch (entityType) {
     case 'player':   return `I see you're asking about **${entity}**. Would you like to:`
     case 'coach':    return `I see you're asking about **${entity}**. Would you like to:`

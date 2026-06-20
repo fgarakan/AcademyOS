@@ -124,11 +124,17 @@ export const CHATBOT_ANTI_PATTERNS = [
   'might be',
   'could potentially',
   'perhaps consider',
+  'you may want to',
+  'you might want to',
   // Filler phrases
   "let me help you",
   'i\'m here to help',
   'allow me to',
   'please note that',
+  // Unnecessary clarification preambles (Sprint 3211–3240 — executive experience)
+  'i want to make sure i understand',
+  'i want to make sure i',
+  'just to make sure i understand',
 ] as const
 
 // ── Response templates ────────────────────────────────────────────────────────

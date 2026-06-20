@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-06-20 — Mega Sprint 3211–3240 — DONNA Executive Experience V1
+
+**Mission:** Make DONNA *feel* like an elite academy COO for the director — without building new architecture. The Today engine, response-style validator, and OpenAI/RealitySnapshot COO routing already existed; this sprint sharpened the experience with three surgical improvements and added a runnable executive-experience certification + report.
+
+**Changes (surgical, additive, pure TypeScript — no schema/RLS/package changes):**
+- `src/lib/donna/conversation/donnaResponseStyle.ts` — added premium anti-patterns the validator was missing: `"i want to make sure i understand"`, `"you may want to"`, `"you might want to"`, `"just to make sure i understand"`.
+- `src/lib/donna/intent/donnaClarificationEngine.ts` — replaced the default clarification preamble (the banned phrase *"I want to make sure I understand."*) with a direct COO prefix: *"Here's where I'd focus. Which of these do you mean:"*.
+- `src/lib/donna/proactive/focusTodayAnswerEngine.ts` — added `detectVagueExecutiveInput()` + `buildExecutiveAssumptionAnswer()`: the Part 2 assumption layer. When the director is vague but the request is safe, DONNA makes the best COO assumption (no clarification question), grounded in live counts, ending with a recommended action and a completion offer. Honest empty/`[Demo]` states preserved.
+- `src/lib/donna/directorDonnaContext.ts` — exported the existing `buildDemoContext()` (no behavior change) so the certification reuses the canonical fixture.
+
+**New deliverables:**
+- `src/lib/donna/experience/donnaExecutiveExperienceCertification.ts` — 12 sprint prompts (+2 all-clear honesty checks) routed through the existing engines, each verified against 7 executive criteria. **Result: 87/87 — 100% CERTIFIED.** Run: `npx tsx src/lib/donna/experience/donnaExecutiveExperienceCertification.ts`.
+- `docs/donna/DONNA_EXECUTIVE_EXPERIENCE_V1_REPORT.md` — before/after, route/phrase scores, remaining gaps, next-sprint recommendation.
+
+**Validation:** `npx tsc --noEmit` clean. DONNA certification suite: 30/31 pass; the 1 failure (`philosophyCertification.ts`) is pre-existing and unrelated (imports none of the touched files).
+
+**Not built (deliberately — mission forbids new architecture):** Today engine, response-style system, OpenAI COO routing, intent classification, attention/priority engines. **Not yet wired:** the assumption layer is built + certified but not yet routed in the live director shell (recommended V2).
+
+---
+
 ## 2026-06-20 — Mega Sprint 3181–3210 — DONNA Live Signal Wiring & Atomic Loop Activation V1
 
 **Mission:** Close the final gap between the Live State-Aware Completion Engine (3091–3120) and real academy data. Prior to this sprint, all `buildLivePageState` calls received null for every signal — `resolvePageIntelligence`, `resolvePageTask`, and all live-branching completion paths always fell through to static defaults. This sprint wires the 12-signal server action end-to-end, extends the loop to cover the coaches page, adds the `level_up_review_completion` guided workflow, and promotes two new GoalTypes for the next execution sprint.
