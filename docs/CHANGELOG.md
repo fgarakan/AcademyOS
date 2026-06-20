@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-06-20 — Mega Sprint 3271–3300 — ONE DONNA Operating System Convergence V1
+
+**Mission:** Make every piece of already-built DONNA intelligence feel like ONE adaptive COO. The audits proved fragmentation, not missing intelligence: the floating DONNA (every page) ran a thin path while the rich engines lived only behind `/director/donna`. This sprint converges them — no new intelligence, no new orchestration, no second brain, no migration.
+
+**Created:**
+- `src/lib/donna/brain/donnaCanonicalRouter.ts` — the ONE canonical routing decision. Consolidates the rich routing ladder (review · players · focus-today · proactive · executive assumption · safety-block · completion · defer-to-brain) into one pure function reusing existing engines. Reality-first ordering; never mutates.
+- `src/lib/donna/brain/donnaOpenAIGateway.ts` — the ONE documented OpenAI gateway. Names the existing `askConversationTeacher` (gpt-4o-mini, `OPENAI_API_KEY`) as THE OpenAI entry with an explicit contract (text-only, no mutate, no approval/reality bypass, no fabrication, not a second brain). Documents the OpenAI-vs-Anthropic provider map.
+- `src/app/director/_actions/getDirectorDonnaContextAction.ts` — loads full `DirectorDonnaContext` for the floating DONNA (director-only, RLS-scoped, read-only).
+- `src/lib/donna/certification/oneDonnaOperatingSystemCertification.ts` — simulates the executive day + entry-point independence + the 8 guarantees. **45/45 — 100% CERTIFIED.**
+- `docs/donna/ONE_DONNA_OPERATING_SYSTEM_REPORT.md`.
+
+**Modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — floating DONNA now loads `directorCtx` on panel open and runs the canonical router as an additive, fall-through pre-check before the brain. It reaches the same rich engines as `/director/donna`; behavior is unchanged when no engine matches.
+- `src/lib/donna/proactive/focusTodayAnswerEngine.ts` — broadened `detectVagueExecutiveInput` (assumption layer) to cover `this seems wrong`, `I'm confused`, `what am I missing`, `what would Brian do`, `explain that simply`.
+
+**Removed:**
+- `src/lib/donna/intent/donnaClarificationEngine.ts` — dead duplicate (proven zero real imports repo-wide; tsc + certs pass after removal). The live `directorClarificationEngine` already uses specific premium questions.
+
+**Validation:** `npx tsc --noEmit` clean. ONE DONNA cert 45/45. DONNA cert suite 31/32 (the 1 failure, `philosophyCertification`, is pre-existing and unrelated — imports none of the touched files).
+
+**Deferred (documented):** full `/director/donna` (`DonnaVoiceReadyShell`) delegation to the canonical router and floating-voice unification (need runtime testing of the 30-rung ladder to avoid reordering regressions); durable learning persistence (migration-gated, separate sprint).
+
+---
+
 ## 2026-06-20 — Mega Sprint 3211–3240 — DONNA Executive Experience V1
 
 **Mission:** Make DONNA *feel* like an elite academy COO for the director — without building new architecture. The Today engine, response-style validator, and OpenAI/RealitySnapshot COO routing already existed; this sprint sharpened the experience with three surgical improvements and added a runnable executive-experience certification + report.

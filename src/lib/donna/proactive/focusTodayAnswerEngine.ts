@@ -160,12 +160,15 @@ export function buildProactiveNoticeAnswer(ctx: DirectorDonnaContext): DonnaSafe
 export function detectVagueExecutiveInput(text: string): boolean {
   const t = text.toLowerCase().trim()
   return (
-    /this seems off|something('?s| is)? off|seems off|looks off|feels off/.test(t) ||
-    /i don'?t know what to do|not sure what to do|where do i (start|begin)/.test(t) ||
-    /what would (an? )?(elite |great )?coo do/.test(t) ||
-    /help me finish( this)?|take me to completion|walk me through it|take me there/.test(t) ||
+    /this (seems|is) (off|wrong)|something('?s| is)? (off|wrong)|seems (off|wrong)|looks off|feels off/.test(t) ||
+    /i don'?t know( what to do( next)?)?|not sure what to do|where do i (start|begin)/.test(t) ||
+    /i'?m confused|^confused|i'?m lost/.test(t) ||
+    /what am i missing|what'?s missing/.test(t) ||
+    /^help[.!]?$|^i need help|^help me\b/.test(t) ||
+    /what would (an? )?(elite |great )?coo do|what would (brian|an? executive) do/.test(t) ||
+    /help me finish( this)?|take me to completion|walk me through( it| this)?|take me there/.test(t) ||
     /what'?s next|whats next/.test(t) ||
-    /explain this simply|in simple terms/.test(t)
+    /explain (this|that|it) simply|in simple terms|simply put/.test(t)
   )
 }
 

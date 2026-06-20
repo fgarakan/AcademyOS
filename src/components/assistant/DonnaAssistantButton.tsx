@@ -57,6 +57,10 @@ import { getDonnaReviewQueueAction } from '@/app/director/_actions/donnaReviewQu
 // Mega Sprint 3181–3210 — Academy-wide live signals (activated on panel open)
 import { getDonnaAcademySignalsAction } from '@/app/director/_actions/getDonnaAcademySignalsAction'
 import type { DonnaAcademySignals } from '@/app/director/_actions/getDonnaAcademySignalsAction'
+// Mega Sprint 3271–3300 — ONE DONNA: canonical router + full director context
+import { getDirectorDonnaContextAction } from '@/app/director/_actions/getDirectorDonnaContextAction'
+import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+import { routeDonnaConversation } from '@/lib/donna/brain/donnaCanonicalRouter'
 // Sprint 274 — Attendance Exception Workflow
 import { saveAttendanceExceptionDraftAction } from '@/app/director/_actions/donnaAttendanceActions'
 // Sprint 275-277 — Director Intelligence Layer
@@ -923,6 +927,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [reviewQueuePendingCount, setReviewQueuePendingCount] = useState<number>(0)
   // Mega Sprint 3181–3210 — Academy-wide live signals (fetched on panel open in parallel)
   const [academySignals, setAcademySignals] = useState<DonnaAcademySignals | null>(null)
+  // Mega Sprint 3271–3300 — full director context for the ONE DONNA canonical router (fetched on panel open)
+  const [directorCtx, setDirectorCtx] = useState<DirectorDonnaContext | null>(null)
   // Sprint 375 — Rule-based recommendation set (computed from signals on panel open)
   const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
   // Sprint 377 — Preference memory (loaded from localStorage on mount)
@@ -4453,6 +4459,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setIsProcessingCommand(true)
     processingClearTimerRef.current = setTimeout(() => setIsProcessingCommand(false), 600)
 
+    // Mega Sprint 3271–3300 — ONE DONNA canonical routing. Additive pre-check so the
+    // floating DONNA reaches the same rich engines as /director/donna (review, players,
+    // focus-today, proactive, executive assumption, safety block). Falls through to the
+    // brain below when no deterministic engine matches. Never mutates.
+    if (directorCtx) {
+      const routed = routeDonnaConversation({ text, directorCtx, route: pathname })
+      if (routed.matched && routed.answer) {
+        const ans = routed.answer
+        setCommandResponse({ message: ans.text, type: 'info', label: 'DONNA' })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: ans.text, type: 'info' as const }])
+        return
+      }
+    }
+
     // Sprint 1911 — DONNA Unified Brain: primary decision layer for all general conversational input.
     // Runs after active-state matchers (guided completion, COO control, multi-step, template, attendance).
     // Brain decides the routing action; this execution layer calls the appropriate React handler.
@@ -4787,6 +4807,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           }
 
           // Sprint 373: fetch review queue count on panel open (director only — Sprint 657 regression fix)
+          // Mega Sprint 3271–3300: load full director context so the floating DONNA
+          // runs the same canonical router (rich engines) as /director/donna.
+          if (role === 'director') {
+            void getDirectorDonnaContextAction().then(ctx => { if (ctx) setDirectorCtx(ctx) })
+          }
           // Sprint 375: also evaluate rule-based recommendations from returned signals
           // Mega Sprint 3181–3210: run academy signals fetch in parallel with review queue
           void (role === 'director'
