@@ -1,25 +1,76 @@
 # Current Build Target
 
-**Last updated:** 2026-06-05
-**Current phase:** Mega Sprint 554–603 COMPLETE — Curriculum-Centered V1 Productization
+**Last updated:** 2026-06-21
+**Current phase:** Director Pilot Readiness — Brian Dabul (Dabul Tennis Academy) Pilot
 
 ---
 
 ## Active target
 
-**Mega Sprint 554–603 — Curriculum-Centered V1 Productization — COMPLETE (2026-05-21)**
+**Latest completed: Mega Sprint 3361–3390 — ONE DONNA Executive Experience Convergence V1 (2026-06-21, commit `740612f8`)**
 
-All 50 sprints across 5 phases complete and pushed.
+Final convergence pass before the Director Pilot. Convergence over creation — no new engine/router/gateway/store/memory, no dashboards, no migration. The DONNA architecture is now unified across every entry point and certified pilot-ready.
 
-| Phase | Sprints | Content |
+### Recent completed arc
+
+| Sprint | Title | Theme |
 |---|---|---|
-| Phase 1 (554–563) | Curriculum Node Drawer + Content Types | CurriculumNodeDrawer, 10 content type models, DONNA context, coach cue video pairing |
-| Phase 2 (564–573) | Curriculum Coverage + Health Dashboard | Coverage model, gap analysis, level health, template connections, health dashboard |
-| Phase 3 (574–583) | Player Assessment + Placement System | 4-domain rubrics (skill/competition/fitness/mental), voice structuring, placement recommendation, director assessment UI, cadence model |
-| Phase 4 (584–593) | Coach Mobile + Curriculum/Assessment Capture | On-court action hub, session focus card, attendance exception draft, quick capture V2, voice-to-curriculum, voice-to-assessment, recap polish, observation draft review, curriculum feedback loop |
-| Phase 5 (594–603) | Player/Parent Portal + Licensing | Badge system wired (player wins, wins page, celebration), progress indicators, parent badge visibility, pilot readiness dashboard, skill-path progress, mission engine recommendation |
+| 3271–3300 | ONE DONNA OS Convergence | One canonical router, brain, gateway, RealitySnapshot, layered memory |
+| 3301–3330 | Adaptive COO Operating Day | DONNA operates the day; director reduced to approve / reject / adjust / prioritize / override / ask-why / done |
+| 3331–3360 | Atomic Loop Usability Test Mode | 10 atomic loops made structurally test-ready; Brian pilot test script written |
+| 3361–3390 | ONE DONNA Executive Experience Convergence | Executive Communication refinement layer wired fail-open; 51/51 certified |
 
-**Next up:** Director Dashboard and Curriculum UX Reimagination — implement the specs in `docs/ux/` (Director Homepage Reimagination, Curriculum Command Center Reimagination). No migrations pending. All 83 migrations confirmed live as of 2026-06-05 (`docs/qa/BUILD_TARGET_STALENESS_AUDIT_V1.md`).
+### Current truth
+
+- **ONE DONNA pipeline is converged** — every entry point (floating widget, expanded `/director/donna`, coach, voice, page panels, both live server actions) runs the same pipeline: one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`).
+- **OpenAI Executive Communication Layer is wired live** — `donnaExecutiveCommunicationLayer.ts` runs as a presentation-only, fact-preserving final step in both director conversation actions. Fail-open: no API key / timeout / error → original grounded answer (worst case = today's experience).
+- **RealitySnapshot remains the source of truth** — refinement is presentation-only and may never alter facts, reality, or recommendations.
+- **10 atomic loops are structurally test-ready** — route · primary action · DONNA guidance · completion path · approval guardrails · no fake completion, all certified (60/60).
+- **Next priority is hands-on guided-completion testing, not more architecture** — the spine is converged and certified; the gap now is real-world usability validation, not new engines.
+
+**Next recommended action:** Run an internal guided-completion test pass across all 10 atomic loops (`docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md`), then run the Brian Dabul pilot (`docs/testing/BRIAN_DABUL_PILOT_TEST_SCRIPT.md`). No migrations pending.
+
+> Note: the historical sections below (Mega Sprint 554–603 and earlier) are retained for reference. They predate the 3000-series convergence work and do not describe the current target. Trust this header and `docs/CHANGELOG.md`.
+
+---
+
+## Director Pilot Readiness — Brian Dabul (Dabul Tennis Academy)
+
+**Status: SHIP-READY for hands-on pilot testing. The active work is real-world usability validation, not new architecture.**
+
+### Why the spine is done
+- ONE DONNA pipeline converged across every entry point — one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`), one `realitySnapshot`, layered memory.
+- Executive Communication refinement runs by default in Pilot Mode, fail-open and fact-preserving — worst case (no key / timeout / error / fact-altering rewrite) falls back to today's grounded answer.
+- RealitySnapshot is the authoritative source of truth — refinement is presentation-only.
+
+### Certification (all green)
+| Certification | Result |
+|---|---|
+| `pilotModeExecutiveRefinementCertification` | 36/36 |
+| `oneDonnaExecutiveConversationCertification` | 51/51 |
+| `atomicLoopUsabilityCertification` (10 loops) | 60/60 |
+| `oneDonnaOperatingSystem` | 45/45 |
+| `adaptiveCOOOperatingDay` | 144/144 |
+| `donnaExecutiveExperience` | 87/87 |
+
+Only known red: `philosophyCertification` 36/37 — pre-existing, unrelated (imports none of the converged files).
+
+### Pilot test artifacts (use these to run the pilot)
+- `docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md` — per-loop manual steps, pass/fail, severity, DONNA-quality + cognitive-load scoring.
+- `docs/testing/BRIAN_DABUL_PILOT_TEST_SCRIPT.md` — plain-English pilot walkthrough for Brian.
+- `docs/testing/ATOMIC_LOOP_TEST_READINESS_REPORT.md` — readiness, blockers, limitations, recommendation (**test now**).
+
+### Known limitations (deferred — not pilot blockers)
+- No dedicated coach-reassignment screen.
+- Exception specificity is coarse in places.
+- Durable learning persistence is not yet wired.
+- `OPENAI_API_KEY` unset → safe fallback (grounded answer, no refinement).
+- DONNA answers > ~480 chars skip executive refinement (size-bounded guard).
+
+### Next recommended action
+1. Run an internal guided-completion pass across all 10 atomic loops (`ATOMIC_LOOP_USABILITY_TEST_PLAN.md`).
+2. Run the Brian Dabul pilot (`BRIAN_DABUL_PILOT_TEST_SCRIPT.md`).
+No migrations pending.
 
 ---
 
@@ -115,9 +166,9 @@ All phases: pure TypeScript — no migrations, no RLS changes, no new dependenci
 
 ---
 
-## What still needs UI wiring
+## UI wiring status (historical reference — superseded by the pilot-readiness section above)
 
-Verified status as of 2026-06-05 (`docs/qa/BUILD_TARGET_STALENESS_AUDIT_V1.md`):
+> This table predates the 3000-series convergence and is no longer the active work plan. It is kept only as a wiring map. Verified status as of 2026-06-05 (`docs/qa/BUILD_TARGET_STALENESS_AUDIT_V1.md`):
 
 | Module | Wires to | Status |
 |---|---|---|
@@ -167,4 +218,4 @@ Evidence queries, development profile queries, player/parent portal queries, dem
 
 ## How to confirm the current target before starting
 
-Read this file. The active work is UI wiring — connecting the `src/lib/` modules built in Mega Sprint 452–502 to the existing route pages. No new library modules are required to begin wiring.
+Read this file's header and the **Director Pilot Readiness** section above, then `docs/CHANGELOG.md`. The active work is **hands-on pilot usability testing** of the 10 atomic loops — not new architecture and not the historical UI-wiring plan below. Start from `docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md`. No migrations pending.
