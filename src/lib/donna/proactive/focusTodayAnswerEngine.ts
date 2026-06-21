@@ -160,7 +160,7 @@ export function buildProactiveNoticeAnswer(ctx: DirectorDonnaContext): DonnaSafe
 export function detectVagueExecutiveInput(text: string): boolean {
   const t = text.toLowerCase().trim()
   return (
-    /this (seems|is) (off|wrong)|something('?s| is)? (off|wrong)|seems (off|wrong)|looks off|feels off/.test(t) ||
+    /this (seems|is|feels) (off|wrong)|something('?s| is| feels| seems)? (off|wrong)|seems (off|wrong)|looks (off|wrong)|feels (off|wrong)/.test(t) ||
     /i don'?t know( what to do( next)?)?|not sure what to do|where do i (start|begin)/.test(t) ||
     /i'?m confused|^confused|i'?m lost/.test(t) ||
     /what am i missing|what'?s missing/.test(t) ||

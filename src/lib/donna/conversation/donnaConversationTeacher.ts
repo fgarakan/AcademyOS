@@ -29,6 +29,7 @@ export type TeacherMode =
   | 'pattern_generation'       // generate training examples for a concept
   | 'language_understanding'   // explain what a vague phrase might mean
   | 'strategic_reasoning'      // structured strategic reasoning with signals and next action
+  | 'executive_refinement'     // presentation-only: refine an already-grounded answer's tone (no fact changes)
 
 // ── Input / output ────────────────────────────────────────────────────────────
 
@@ -96,6 +97,13 @@ Top signals: [2–3 bullet points, each under 15 words]
 Next action: [1 concrete sentence]
 Follow-up: [1 focused question]
 Under 90 words total. Be specific to the domain. No preamble. Start with the direct answer.`,
+
+    executive_refinement: `You are a presentation editor for DONNA, an elite tennis-academy COO assistant.
+Rewrite the DRAFT response so it reads like a calm, confident, concise executive speaking naturally — never robotic.
+You may improve ONLY: tone, flow, clarity, concision, and the phrasing of assumptions, explanations, follow-up questions, and completion guidance.
+You must PRESERVE EXACTLY, with zero changes: every fact, number, name, date, level, recommendation, next step, and any question already asked.
+Do NOT add new facts, figures, names, or recommendations. Do NOT invent academy information. Do NOT remove the next step or the question.
+If the draft is already excellent, return it unchanged. Return ONLY the rewritten response text — no preamble, no quotes, no labels.`,
   }
 
   return `${BASE_SYSTEM}\n\n${MODE_INSTRUCTIONS[mode]}`
@@ -159,6 +167,9 @@ function buildFallbackResult(
     pattern_generation: `Enrollment is low. Numbers seem off. The group looks light. Not many players showing up. Something feels wrong with intake.`,
     language_understanding: `This likely refers to a concern about the current state of the group or program — possibly enrollment, engagement, or progression.`,
     strategic_reasoning: `Three signals worth checking: 1. Progression delays in your longest-tenured players. 2. Attendance patterns in the past 60 days. 3. Parent communication recency. Start with the group that has the most stalled players.`,
+    // Presentation-only mode: the executive communication layer ignores any non-'openai'
+    // source and returns the original grounded answer unchanged, so this is never shown.
+    executive_refinement: ``,
   }
 
   return {
@@ -247,6 +258,7 @@ export async function askConversationTeacher(
   const maxTokens =
     input.mode === 'pattern_generation' ? 200
     : input.mode === 'strategic_reasoning' ? 250
+    : input.mode === 'executive_refinement' ? 300
     : 100
 
   // Build the user message — only include non-sensitive context

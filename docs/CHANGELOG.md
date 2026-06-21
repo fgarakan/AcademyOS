@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-06-21 — Mega Sprint 3361–3390 — ONE DONNA Executive Experience Convergence V1
+
+**Mission:** Final convergence before Director Pilot. Not more intelligence — ONE DONNA everywhere, so every conversation feels like an elite COO. Convergence over creation; no new engine/router/gateway/store/memory, no dashboards, no migration.
+
+**Audit (Parts 1–2, 5, 7):** Confirmed the architecture was already converged by sprints 3271–3300 / 3301–3360 — one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`), one `realitySnapshot`, layered (not duplicated) memory. Every entry point (floating, expanded `/director/donna`, coach, voice, page panels, both live server actions) runs the same pipeline. **Zero safe deletions:** the one automated "legacy" flag (`donnaLiveAIConversationBrain.ts`) is live — imported by both director conversation actions — so it was **retained**.
+
+**Created:**
+- `src/lib/donna/brain/donnaExecutiveCommunicationLayer.ts` — **Part 3.** The canonical Executive Communication layer: a final, presentation-only refinement step over the *existing* gateway. Fail-open (no key/timeout/error/fact-altering → original grounded answer, immediately), fact-preserving (size-bounded guard, contract forbids changing facts/reality/recommendations), uses `callDonnaOpenAIGateway` only (no second OpenAI pathway). Exports `EXECUTIVE_COMMUNICATION_CONTRACT`, `buildExecutiveRefinementInstruction`, `refineExecutiveResponse`, `applyExecutiveRefinement`.
+- `src/lib/donna/certification/oneDonnaExecutiveConversationCertification.ts` — **Part 6.** Runs the complete director day through the one pipeline + certifies ONE DONNA, RealitySnapshot grounding, same history, same gateway, executive tone, minimal clarification, completion guidance, approval safety, no fabricated facts, and the refinement contract. **51/51 — 100% CERTIFIED.**
+- `docs/donna/ONE_DONNA_EXECUTIVE_EXPERIENCE_REPORT.md` — **Part 8.** Audit table, pipeline diagram, reality/OpenAI flow, continuity results, scores, latency/fallback, pilot readiness.
+
+**Modified:**
+- `src/lib/donna/conversation/donnaConversationTeacher.ts` — added the additive `executive_refinement` TeacherMode (mode union + system prompt + 300-token branch + fallback entry). Existing modes untouched — same `callOpenAI`, same provider; not a second pathway.
+- `src/app/director/_actions/donnaLiveConversationAction.ts` + `donnaStrategicConversationAction.ts` — wired `applyExecutiveRefinement` as the fail-open final presentation step after the brain (role-mapped director/coach).
+- `src/lib/donna/proactive/focusTodayAnswerEngine.ts` — broadened `detectVagueExecutiveInput` to cover "something feels wrong / it feels off" (was "seems wrong/off" only). Closed the one real Part 4 gap (assume like a COO, don't defer).
+
+**Validation:** `npx tsc --noEmit` clean. New cert 51/51. No regressions: oneDonnaOperatingSystem 45/45, adaptiveCOOOperatingDay 144/144, atomicLoopUsability 60/60, donnaExecutiveExperience 87/87. Only pre-existing/unrelated failure: `philosophyCertification` 36/37 (imports none of the touched files).
+
+**Pilot readiness:** Ship. ONE DONNA from every entry point; reality authoritative; refinement fail-open (worst case = today's experience). Non-blockers: `OPENAI_API_KEY` unset → safe fallback; answers > 480 chars skip refinement.
+
+---
+
 ## 2026-06-20 — Mega Sprint 3331–3360 — Atomic Loop Usability Test Mode V1
 
 **Mission:** Make AcademyOS ready for hands-on testing of all 10 atomic loops. Usability/testability/pilot readiness — no new intelligence engines, no new architecture, no dashboards, no migration. Fix only blockers that prevent testing.

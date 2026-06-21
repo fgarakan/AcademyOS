@@ -19,6 +19,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { processStrategicAIConversation } from '@/lib/donna/brain/donnaLiveAIConversationBrain'
 import type { DonnaMessageInput, DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
 import { createDebugLog } from '@/lib/donna/brain/donnaBrainDebugLog'
+import { applyExecutiveRefinement } from '@/lib/donna/brain/donnaExecutiveCommunicationLayer'
 
 const ALLOWED_ROLES = ['academy_director', 'head_coach'] as const
 type AllowedRole = typeof ALLOWED_ROLES[number]
@@ -99,12 +100,18 @@ export async function donnaStrategicConversationAction(
       ? `${academy.name as string}${dnaModelId ? ` — DNA: ${dnaModelId}` : ''}`
       : null
 
-    // Run strategic AI brain
-    return await processStrategicAIConversation(
+    // Run strategic AI brain (RealitySnapshot → router → brain → canonical gateway)
+    const result = await processStrategicAIConversation(
       { ...input, userMessage: msg },
       academyId,
       academyDNAContext,
     )
+
+    // Final presentation layer (Part 3) — executive-tone refinement only.
+    // Fail-open: returns the grounded result unchanged if refinement is
+    // unavailable. Never alters facts, recommendations, or permissions.
+    const role = membership.role === 'head_coach' ? 'coach' : 'director'
+    return await applyExecutiveRefinement(result, role)
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
