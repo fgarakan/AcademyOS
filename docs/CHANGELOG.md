@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-21 — Executive Communication Policy — Pilot Mode Refinement V1
+
+**Mission:** Make OpenAI executive refinement run by default during Pilot Mode on every *eligible* DONNA response, with an explicit eligibility contract and certification. No new architecture, no migration — additive policy + eligibility gate over the existing fail-open Executive Communication layer.
+
+**Modified:**
+- `src/lib/donna/brain/donnaExecutiveCommunicationLayer.ts`:
+  - Added `EXECUTIVE_COMMUNICATION_POLICY` (Pilot Mode ON + `refineByDefault`; eligibility, `mayImprove`, `mayNever`, `onFailure`, `realityAlwaysWins`) and `PILOT_MODE_REFINEMENT_DEFAULT_ON`.
+  - Added `isExecutiveRefinementEligible()` — eligible only when: action is `respond`, a grounded answer exists, not safety-blocked, not a mutation/approval-gated, short enough to refine.
+  - `applyExecutiveRefinement()` now gates on Pilot Mode + eligibility and accepts an injectable `refine` (for certification). Now strictly safer: safety-blocked and mutation responses are never reworded.
+  - Strengthened the fact-preservation guard (`isRefinementFactPreserving`, exported): rejects any rewrite that changes/adds numbers (facts) or over-expands. Wired into `refineExecutiveResponse`.
+
+**Created:**
+- `src/lib/donna/certification/pilotModeExecutiveRefinementCertification.ts` — proves all 8 policy properties (Pilot Mode default ON · every eligible response attempts refinement · safety-blocked not refined · mutations not refined · failed refinement returns original · facts preserved · completion guidance preserved · RealitySnapshot stays source of truth). **36/36 — 100% CERTIFIED.**
+
+**Validation:** `npx tsc --noEmit` clean. New cert 36/36. No regression: `oneDonnaExecutiveConversationCertification` 51/51.
+
 ## 2026-06-21 — Mega Sprint 3361–3390 — ONE DONNA Executive Experience Convergence V1
 
 **Mission:** Final convergence before Director Pilot. Not more intelligence — ONE DONNA everywhere, so every conversation feels like an elite COO. Convergence over creation; no new engine/router/gateway/store/memory, no dashboards, no migration.
