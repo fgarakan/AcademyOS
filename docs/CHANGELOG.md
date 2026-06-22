@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-22 — Mega Sprint 3391–3420 — ONE DONNA Guided Completion Convergence V1
+
+**Mission:** Converge the three existing completion systems (Form Guided, Goal Session, Page Execution Guidance) behind one canonical behavioral contract so the director never has to know multiple systems exist, and guarantee Operating Law #1 — *never answer and leave*. No new engine, router, or OpenAI pathway. Pure-TypeScript, additive, fact-preserving, fail-safe.
+
+**Added:**
+- `src/lib/donna/completion/donnaCompletionContract.ts` — Part 1, the canonical contract. `DonnaCompletionContract` type; five terminal states (`COMPLETE`/`WAITING`/`APPROVAL`/`BLOCKED`/`FOLLOW_UP`) + two active states (`PROPOSED`/`ACTIVE`); `isTerminalState`. Universal phrase layer: `CompletionIntent`, `resolveCompletionIntent`, `isControlPhrase`, `requiresExplicitCancelConfirmation` — conservative (≤6-word) classification so real answers containing a keyword are never misread. Executive guidance verbs + `classifyGuidanceVerb` (total over every state). No DB, no React, no network, no mutations.
+- `src/lib/donna/completion/donnaCompletionConvergence.ts` — Part 2, adapters + the live-pipeline guarantor. `guidedCompletionToContract` / `goalSessionToContract` / `summaryToContract` / `pageGuidanceToContract`; `resolveCompletionTurn` (total over intent×contract — structural proof of "no dangling conversations"); `deriveCompletionContract`; `enforceCompletionContract` — wired into the live pipeline before the Executive layer. Read-only/additive: only ever fills a missing `nextAction`/`followUpQuestion` when state ≠ COMPLETE; never alters `response`, recommendations, `requiresApproval`, `action`, `confidence`, navigation, or safety. Idempotent; on any error returns the original result unchanged.
+
+**Modified:**
+- `src/app/director/_actions/donnaLiveConversationAction.ts` — inserts `enforceCompletionContract(result, …)` between `processLiveAIConversation` and `applyExecutiveRefinement`.
+- `src/app/director/_actions/donnaStrategicConversationAction.ts` — same wiring for the strategic pipeline.
+- `src/lib/donna/guidedCompletion/guidedCompletionSessionMemory.ts` — `recordAnswer()` now guards with `isControlPhrase`: control phrases ("I don't know", "I'm stuck", "continue", "cancel") are never stored as field data and never advance the step.
+
+**Safety:** No migration. No new tables. No OpenAI pathway added. OpenAI executive-refinement eligibility is preserved — the contract layer never touches any field the eligibility gate reads (`action`, `response`, safety, `requiresApproval`, length).
+
+---
+
 ## 2026-06-21 — Executive Communication Policy — Pilot Mode Refinement V1
 
 **Mission:** Make OpenAI executive refinement run by default during Pilot Mode on every *eligible* DONNA response, with an explicit eligibility contract and certification. No new architecture, no migration — additive policy + eligibility gate over the existing fail-open Executive Communication layer.

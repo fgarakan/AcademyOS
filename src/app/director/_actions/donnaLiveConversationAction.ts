@@ -19,6 +19,7 @@ import { processLiveAIConversation } from '@/lib/donna/brain/donnaLiveAIConversa
 import type { DonnaMessageInput, DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
 import { createDebugLog } from '@/lib/donna/brain/donnaBrainDebugLog'
 import { applyExecutiveRefinement } from '@/lib/donna/brain/donnaExecutiveCommunicationLayer'
+import { enforceCompletionContract } from '@/lib/donna/completion/donnaCompletionConvergence'
 
 const ALLOWED_ROLES = ['academy_director', 'head_coach'] as const
 type AllowedRole = typeof ALLOWED_ROLES[number]
@@ -106,11 +107,18 @@ export async function donnaLiveConversationAction(
       academyDNAContext,
     )
 
+    // ONE DONNA Completion Contract (Mega Sprint 3391–3420) — the canonical
+    // behavioral interface. Every response must satisfy the contract (one goal,
+    // one state, one next action; never dangling) BEFORE the Executive layer.
+    // Fact-preserving + fail-safe: never alters facts, recommendations, approval,
+    // or the action; only guarantees the conversation is never left hanging.
+    const grounded = enforceCompletionContract(result, { route: input.route, lastUserAction: msg })
+
     // Final presentation layer (Part 3) — executive-tone refinement only.
     // Fail-open: returns the grounded result unchanged if refinement is
     // unavailable. Never alters facts, recommendations, or permissions.
     const role = membership.role === 'head_coach' ? 'coach' : 'director'
-    return await applyExecutiveRefinement(result, role)
+    return await applyExecutiveRefinement(grounded, role)
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

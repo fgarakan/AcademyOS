@@ -14,6 +14,7 @@
 
 import type { GuidedWorkflowId } from './guidedCompletionRegistry'
 import { getWorkflow, requiredStepCount } from './guidedCompletionRegistry'
+import { isControlPhrase } from '@/lib/donna/completion/donnaCompletionContract'
 
 // ── State shape ───────────────────────────────────────────────────────────────
 
@@ -152,6 +153,16 @@ export function recordAnswer(
 ): GuidedCompletionSessionState | null {
   const state = readFromStorage()
   if (!state) return null
+
+  // Completion-contract guard (Mega Sprint 3391–3420): control phrases like
+  // "I don't know", "I'm stuck", "continue", and "cancel" are guidance signals,
+  // NOT field data. Never store them as an answer and never advance the step on
+  // them — the conversation pipeline routes them to help/guidance/resume instead.
+  if (isControlPhrase(answer)) {
+    const touched: GuidedCompletionSessionState = { ...state, updatedAt: Date.now() }
+    writeToStorage(touched)
+    return touched
+  }
 
   const updatedAnswers = { ...state.answers, [fieldId]: answer.trim() }
   const pct = computeCompletionPct(state.workflowId, updatedAnswers)
