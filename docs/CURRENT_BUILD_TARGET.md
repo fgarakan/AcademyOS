@@ -7,9 +7,12 @@
 
 ## Active target
 
-**Latest completed: Mega Sprint 3481–3510 — DONNA COO Presence V1 (2026-06-22, commit `7921906e`)**
+**Latest completed: Mega Sprint 3511–3540 — Director Operating Session V1 / Executive Partnership (2026-06-22, uncommitted)**
 
-Surfaced DONNA's existing COO intelligence (Opinion · Tradeoff · Memory · Proactive) by default on every director turn, no longer gated behind magic phrases. One convergence layer (`enforceExecutivePresence`) consumes the intelligence already built — no new reasoning engine, no new memory system, no second conversation layer, no OpenAI wiring change, no migration. The DONNA architecture remains unified across every entry point and certified pilot-ready.
+Promoted the canonical concept to the **Executive Partnership** layer. Every way a director begins a session — floating widget, full `/director/donna` page, a typed "good morning", "I'm back" after lunch, "ready", "let's begin", a return tomorrow — converges on ONE composer (`resumeExecutivePartnership`) and resumes the same executive working relationship: situation awareness → recommended first action → guide-to-completion. The Operating Session is simply the mechanism by which the partnership resumes. Convergence over creation — no new lifecycle, no duplicated state, no second greeting system, no OpenAI pathway, no migration. Reuses the three existing lifecycle stores (`donnaDailyGreeting`, `donnaLastSessionStore`, `donnaChatSessionMemory`), RealitySnapshot, the Completion Contract, Executive Presence, and Conversation DNA.
+
+> **Operating Principle (permanent):** "DONNA maintains continuous executive partnerships, not isolated conversations."
+> **Operating Law #2:** "Every interaction resumes an executive operating relationship, never a chat session." (companion to Law #1 — "never answer and leave").
 
 ### Recent completed arc
 
@@ -22,6 +25,7 @@ Surfaced DONNA's existing COO intelligence (Opinion · Tradeoff · Memory · Pro
 | 3391–3420 | ONE DONNA Guided Completion Convergence | Three completion systems converged behind one contract; "never answer and leave" guaranteed in the director pipeline |
 | 3451–3480 | ONE DONNA Conversation Convergence | One Conversation DNA so every DONNA reply sounds like the same academy COO; 30/30 certified |
 | 3481–3510 | DONNA COO Presence | COO intelligence (Opinion · Tradeoff · Memory · Proactive) surfaced by default on every director turn, no magic phrases; 21/21 certified |
+| 3511–3540 | Director Operating Session / Executive Partnership | Every entry point resumes one executive partnership via a single composer; greeting → situation awareness → first action → guide-to-completion; 47/47 certified |
 
 ### Current truth
 
@@ -31,6 +35,7 @@ Surfaced DONNA's existing COO intelligence (Opinion · Tradeoff · Memory · Pro
 - **Conversation DNA is live** — one canonical voice contract (`donnaConversationDNA.ts`) applied through the Executive Communication Layer, so every DONNA reply sounds like the same experienced academy COO (first-person, 5-beat rhythm Acknowledge→Interpret→Recommend→Explain→Guide). Fact-preserving and fail-open; 30/30 certified.
 - **Executive Presence is live by default** — `enforceExecutivePresence` (`donnaExecutivePresenceContract.ts`) runs between the Completion Contract and the Executive Communication Layer on every director turn. Pipeline: processDonnaMessage → completion → executive presence → executive refinement → director. Additive, relevance-gated, idempotent, fail-safe; never alters facts, recommendations, `action`, `requiresApproval`, navigation, or any structured field. 21/21 certified.
 - **COO intelligence is surfaced without magic phrases** — Opinion · Tradeoff · Memory · Proactive are now presented by default on every relevant turn, no longer gated behind prompts like "what should I do today" / "give me COO insights". The intelligence was already built; this convergence layer just surfaces it.
+- **Every interaction resumes an executive partnership** — Operating Law #2. A greeting / "I'm back" / "ready" / "let's begin" / first-open-of-day / return-after-inactivity is never a chat start; it resumes the same working relationship via one canonical composer (`resumeExecutivePartnership`, `src/lib/donna/conversation/donnaExecutivePartnership.ts`) across the floating widget, the `/director/donna` page, and the server pipeline. Reuses the three existing lifecycle stores — no new lifecycle, no duplicated state, no second greeting system.
 - **DONNA should never answer and leave** — Operating Law #1. The completion contract makes "no dangling conversations" a structural guarantee (`resolveCompletionTurn` is total over intent × contract), not a per-prompt hope.
 - **RealitySnapshot remains the source of truth** — refinement, completion, and presence are presentation/guidance-only and may never alter facts, reality, or recommendations.
 - **10 atomic loops are structurally test-ready** — route · primary action · DONNA guidance · completion path · approval guardrails · no fake completion, all certified (60/60).

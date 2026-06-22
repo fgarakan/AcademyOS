@@ -28,7 +28,7 @@ const CTX = buildDemoContext()
 const ENTRY_ROUTES = ['/director', '/director/players', '/director/curriculum', '/director/sessions', '/director/donna']
 
 const VALID_STAGES: DonnaRouterStage[] = [
-  'safety_block', 'daily_brief', 'exception', 'review', 'players', 'focus_today',
+  'safety_block', 'operating_session', 'daily_brief', 'exception', 'review', 'players', 'focus_today',
   'proactive', 'assumption', 'guided_completion', 'clarify', 'defer_to_brain',
 ]
 

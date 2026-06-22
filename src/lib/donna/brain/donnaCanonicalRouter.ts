@@ -32,6 +32,10 @@ import {
   buildExecutiveAssumptionAnswer,
 } from '@/lib/donna/proactive/focusTodayAnswerEngine'
 import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
+import {
+  isOperatingSessionResume,
+  resumeExecutivePartnership,
+} from '@/lib/donna/conversation/donnaExecutivePartnership'
 import { detectGuidedCompletionIntent } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
 import {
   detectDailyBriefIntent,
@@ -46,6 +50,7 @@ import {
 
 export type DonnaRouterStage =
   | 'safety_block'        // unsafe/mutation request — routed to review, never executed
+  | 'operating_session'   // greeting / "I'm back" / "ready" → resume the executive partnership
   | 'daily_brief'         // morning / overnight / "what changed" → proactive COO brief
   | 'exception'           // operating exception (coach/player absence, parent concern, …)
   | 'review'              // review-queue answer
@@ -153,6 +158,26 @@ export function routeDonnaConversation(params: {
   // Without live context the deterministic answer engines cannot ground a reply.
   // Defer to the brain (which carries its own demo/insufficient honesty).
   if (!ctx) return defer(true)
+
+  // ── Step 1.5 — Operating Session resume (Mega Sprint 3511–3540) ────────────────
+  // A greeting / "I'm back" / "ready" / "let's begin" is never an ambiguous request —
+  // it resumes the executive partnership. Highest-priority reality-grounded intent,
+  // so the director never gets a clarification menu when they simply arrive. The
+  // server path resumes without client continuity (restored context is gathered on
+  // the client and rendered there); the partnership still opens with situation
+  // awareness + a recommended first action + a guide-to-completion offer.
+  if (isOperatingSessionResume(text)) {
+    const answer = resumeExecutivePartnership(ctx)
+    return {
+      matched: true,
+      stage: 'operating_session',
+      engineId: 'donnaExecutivePartnership',
+      answer,
+      needsOpenAI: false,
+      requiresApproval: false,
+      realityGrounded: groundedFrom(answer, ctx),
+    }
+  }
 
   // ── Step 2 — Operating layer (Sprint 3301–3330): COO brief + exceptions ───────
   // Reuses existing engines. Reality-grounded, recommend/draft/route only.

@@ -75,6 +75,7 @@ import { resolveGoalSessionCommand, detectGoalWorkflowIntent } from '@/lib/donna
 import type { GoalSessionCommand } from '@/lib/donna/workflows/donnaWorkflowRegistry'
 import { getDonnaContextPackForRoute, lookupAnswerInContextPack } from '@/lib/donna/donnaContextPackRegistry'
 import { matchesDailyBriefIntent } from '@/lib/donna/donnaIntentClassifier'
+import { isOperatingSessionResume } from '@/lib/donna/conversation/donnaExecutivePartnership'
 import { CONFIDENCE_ACT_THRESHOLD } from '@/lib/donna/intent/confidenceScoring'
 import { buildChatGptLikeResponse, applyRolePolicy } from './donnaRoleResponsePolicy'
 import type { DonnaResponseRole } from './donnaRoleResponsePolicy'
@@ -748,10 +749,16 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     return makeResult('route_coo_prompt', { confidence: 0.95 }, debugLog)
   }
 
-  // ── Step 5: Daily brief intent ───────────────────────────────────────────────
+  // ── Step 5: Daily brief intent + Operating Session resume ─────────────────────
   logStep(debugLog, 'check_daily_brief')
   // Mega Sprint 3061–3090: yield to check_page_context on a known page with a confusion phrase.
-  if (!(pageIntelligence !== null && isPageConfusionPhrase(lower)) && matchesDailyBriefIntent(userMessage)) {
+  // Mega Sprint 3511–3540: a session opening (greeting / "I'm back" / "ready" /
+  // "let's begin") is never an ambiguous request — it resumes the executive
+  // partnership via the same brief path, so the brain never clarifies on arrival.
+  if (
+    !(pageIntelligence !== null && isPageConfusionPhrase(lower)) &&
+    (matchesDailyBriefIntent(userMessage) || isOperatingSessionResume(userMessage))
+  ) {
     finalizeLog(debugLog, 'check_daily_brief', 'fetch_brief')
     emitDebugLog(debugLog)
     return makeResult('fetch_brief', { confidence: 0.95 }, debugLog)

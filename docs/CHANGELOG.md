@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-06-22 — Mega Sprint 3511–3540 — Director Operating Session V1 (Executive Partnership)
+
+**Mission:** Promote the canonical concept to the **Executive Partnership** layer. Every way a director begins a session — the floating widget, the full `/director/donna` page, a typed "good morning", "I'm back" after lunch, "ready", "let's begin", a return tomorrow — converges on ONE composer and resumes the same executive working relationship. The director never starts a chat; they always continue the work. Convergence over creation — no new lifecycle, no duplicated state, no second greeting system, no OpenAI pathway, no migration.
+
+**New permanent AcademyOS Operating Principle:** *"DONNA maintains continuous executive partnerships, not isolated conversations."*
+**Operating Law #2** (companion to Law #1 "never answer and leave"): *"Every interaction resumes an executive operating relationship, never a chat session."*
+
+**Added:**
+- `src/lib/donna/conversation/donnaExecutivePartnership.ts` — the canonical Executive Partnership layer. `resumeExecutivePartnership(ctx, restored?)` is a pure composer that returns a `DonnaSafeReadAnswer` (the currency every surface already renders): time-of-day salutation → **"I've already reviewed today's academy"** → situation awareness (reuses `buildAcademyAttentionReport`) → recommended first action → why → guide-to-completion. When `restored` continuity is present it resumes the relationship ("picking up where we left off", prior page, unresolved decision). `buildRestoredPartnershipContext()` is the SSR-guarded gatherer that **reuses** the three existing lifecycle stores (`donnaDailyGreeting`, `donnaLastSessionStore`, `donnaChatSessionMemory`) — no new state. `isOperatingSessionResume(text)` unifies the triggers (greeting ∪ "I'm back"/"ready"/"let's begin"/"welcome back"), tightly anchored to avoid colliding with real intents.
+- `src/lib/donna/certification/directorOperatingSessionCertification.ts` — 47-check cert: every greeting + each lifecycle trigger resumes the partnership with no clarification/disambiguation/menu, an "already reviewed" confirmation, a recommended first action, and a guide-to-completion; relationship-restore on return; facts preserved; deterministic (**47/47 PASS**).
+
+**Modified — convergence wiring (every entry point → one composer):**
+- `src/lib/donna/brain/donnaCanonicalRouter.ts` — new `operating_session` stage; a session resume is intercepted before all other engines (highest-priority reality-grounded intent). Covers the live + strategic server-action pipeline.
+- `src/lib/donna/brain/processDonnaMessage.ts` — Step 5 routes a session resume to `fetch_brief`; the brain never clarifies on arrival.
+- `src/components/donna/DonnaVoiceReadyShell.tsx` (`/director/donna`) — the "Hey Donna" branch and a new director-only session-open effect both resume through the canonical composer (reusing the existing detectors via `buildRestoredPartnershipContext`).
+- `src/components/assistant/DonnaAssistantButton.tsx` (floating widget) — when live director context resolves while the opening is showing, the greeting upgrades to the canonical partnership resume.
+- Cert stage-list updates for the new `operating_session` stage (no behavior masking): `oneDonnaExecutiveConversationCertification.ts`, `oneDonnaOperatingSystemCertification.ts`, `donnaAdaptiveCOOOperatingDayCertification.ts` (greeting scenario now accepts `operating_session`).
+
+**Reused, never duplicated:** the three lifecycle stores, RealitySnapshot → `buildAcademyAttentionReport`, the Completion Contract (guide-to-completion), Executive Presence (continuous partnership, every turn), and `saveLastSession` (session-closed). `donnaIntentClassifier.ts`, the lifecycle stores, and `/api/donna/brief` are untouched. All new branches are `role === 'director'`-gated — coach/player/parent unchanged.
+
+**Validation:** `npx tsc --noEmit` clean. Certs: new 47/47; operating-system 45/45; executive-conversation 51/51; adaptive-COO 144/144; COO-presence 21/21; conversation-convergence 30/30; pilot-refinement 36/36; atomic-loop 60/60; executive-experience 87/87. Zero net regressions.
+
+**Known deferred (not pilot blockers):** the floating widget and the chat shell still use two separate localStorage greeting-dedup keys; unifying them is a deeper refactor left out of scope to avoid dedup regression. On the server pipeline, restored client continuity (last page / unresolved decision) is gathered client-side, so a typed greeting routed purely server-side resumes with situation awareness but without the client continuity line.
+
+---
+
 ## 2026-06-22 — Mega Sprint 3481–3510 — DONNA COO Presence V1
 
 **Mission:** Make a director feel they're working alongside an exceptional COO. The Phase 0 audit (`docs/donna/DONNA_COO_PRESENCE_AUDIT.md`) found DONNA's COO reasoning is ~90% already built but gated behind magic phrases. This sprint adds ONE convergence layer that surfaces the existing intelligence by default on every director turn. No new reasoning engine, no new memory system, no second conversation layer, no OpenAI wiring change, no migration.

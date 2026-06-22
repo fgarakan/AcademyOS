@@ -29,7 +29,7 @@ function route(text: string): DonnaRouterResult {
   return routeDonnaConversation({ text, directorCtx: CTX, route: '/director' })
 }
 
-const VALID_STAGES: DonnaRouterStage[] = ['safety_block','daily_brief','exception','review','players','focus_today','proactive','assumption','guided_completion','clarify','defer_to_brain']
+const VALID_STAGES: DonnaRouterStage[] = ['safety_block','operating_session','daily_brief','exception','review','players','focus_today','proactive','assumption','guided_completion','clarify','defer_to_brain']
 
 // A pipeline-handled stage is anything other than a dead-end; defer/guided/clarify
 // are all "handled by ONE DONNA" (the brain or a focused question), not director search.
@@ -66,7 +66,7 @@ interface DayStep {
 }
 
 const DAY: DayStep[] = [
-  { n: 1,  utterance: 'Good morning, Donna.',          accept: ['daily_brief'],                      expectCompletion: true },
+  { n: 1,  utterance: 'Good morning, Donna.',          accept: ['operating_session','daily_brief'],  expectCompletion: true },
   { n: 2,  utterance: 'What happened overnight?',      accept: ['daily_brief'],                      expectCompletion: true },
   { n: 3,  utterance: 'What should I focus on first?', accept: ['focus_today'],                      expectCompletion: true },
   { n: 4,  utterance: 'Why?',                          accept: ['defer_to_brain'],                   expectCompletion: false },

@@ -289,6 +289,11 @@ import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOpera
 import type { UIActionRole, UIActionSafetyClass } from '@/lib/donna/donnaUIActionRegistry'
 // Sprint 780 — Daily brief intent registry (replaces inline isDailyBriefPhrase)
 import { matchesDailyBriefIntent } from '@/lib/donna/donnaIntentClassifier'
+// Mega Sprint 3511–3540 — the one canonical Executive Partnership layer.
+import {
+  resumeExecutivePartnership,
+  buildRestoredPartnershipContext,
+} from '@/lib/donna/conversation/donnaExecutivePartnership'
 // Sprint 784 — Cross-session memory (localStorage-backed, safe page context only)
 import { loadLastSession, saveLastSession, buildCrossSessionWelcome } from '@/lib/donna/donnaLastSessionStore'
 import type { DonnaLastSession } from '@/lib/donna/donnaLastSessionStore'
@@ -929,6 +934,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [academySignals, setAcademySignals] = useState<DonnaAcademySignals | null>(null)
   // Mega Sprint 3271–3300 — full director context for the ONE DONNA canonical router (fetched on panel open)
   const [directorCtx, setDirectorCtx] = useState<DirectorDonnaContext | null>(null)
+  // Mega Sprint 3511–3540: upgrade the opening to the canonical partnership resume once.
+  const partnershipUpgradedRef = useRef(false)
   // Sprint 375 — Rule-based recommendation set (computed from signals on panel open)
   const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
   // Sprint 377 — Preference memory (loaded from localStorage on mount)
@@ -1250,6 +1257,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   useEffect(() => {
     setLastSessionData(loadLastSession(academyId))
   }, [academyId])
+
+  // Mega Sprint 3511–3540 — Operating Session opening (floating widget).
+  // When live director context resolves while the opening greeting is showing,
+  // upgrade that greeting to the canonical Executive Partnership resume — the SAME
+  // composer the /director/donna page and the server pipeline use, so the director
+  // cannot tell which entry point they used. Reuses the existing lifecycle stores
+  // via buildRestoredPartnershipContext (no new state, no new greeting system).
+  // Director-only; runs once per mount; fail-safe if context never arrives.
+  useEffect(() => {
+    if (role !== 'director') return
+    if (!directorCtx) return
+    if (partnershipUpgradedRef.current) return
+    if (!dailyGreetingState) return
+    partnershipUpgradedRef.current = true
+    const restored = buildRestoredPartnershipContext({ academyId, firstName })
+    const answer = resumeExecutivePartnership(directorCtx, restored)
+    setDailyGreetingState({
+      isFirstOpenToday: dailyGreetingState.isFirstOpenToday,
+      primaryText: answer.text,
+      followUp: answer.followUp ?? dailyGreetingState.followUp,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, directorCtx, dailyGreetingState])
 
   // Sprint 787 — Restore panel open state from sessionStorage on mount (within-session persistence).
   // If the director had the panel open and navigated or refreshed, re-open it automatically.

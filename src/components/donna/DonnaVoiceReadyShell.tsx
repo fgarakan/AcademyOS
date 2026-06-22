@@ -50,6 +50,13 @@ import { dispatchSafeReadAction, tryAnswerKpiQuestion, type DonnaSafeReadAnswer 
 import { tryAnswerDashboardPriorityQuestion } from '@/lib/donna/directorDashboardDonnaAnswer'
 import { tryAnswerRosterAttentionQuestion } from '@/lib/donna/directorPlayersDonnaIntelligence'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
+// Mega Sprint 3511–3540 — the one canonical Executive Partnership layer.
+import {
+  isOperatingSessionResume,
+  resumeExecutivePartnership,
+  buildRestoredPartnershipContext,
+} from '@/lib/donna/conversation/donnaExecutivePartnership'
+import { markGreetedToday } from '@/lib/donna/donnaDailyGreeting'
 import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
 import { tryAnswerCoachHealthQuestion } from '@/lib/donna/coachHealthDonnaAnswer'
 import { tryBuildActionPreview } from '@/lib/donna/directorActionPreview'
@@ -264,11 +271,32 @@ export function DonnaVoiceReadyShell({
   const lastPersistedDonnaIdRef = useRef<string | null>(null)
   // Sprint 914.4: stores the most recently assembled context packet summary
   const lastContextPacketRef = useRef<ContextPacketSummary | null>(null)
+  // Mega Sprint 3511–3540: ensures the Operating Session opens exactly once per mount.
+  const partnershipOpenedRef = useRef(false)
 
   // Initialize session
   useEffect(() => {
     ensureChatSession(donnaRole)
   }, [donnaRole])
+
+  // Mega Sprint 3511–3540 — Operating Session opening.
+  // Landing in the DONNA workspace resumes the executive partnership through the
+  // SAME canonical composer used by the floating widget and the server pipeline,
+  // so the director cannot tell which entry point they used. Reuses the existing
+  // lifecycle stores via buildRestoredPartnershipContext (no new state, no new
+  // greeting system). Director-only; fail-safe when context is unavailable.
+  useEffect(() => {
+    if (plainRole !== 'director') return
+    if (partnershipOpenedRef.current) return
+    if (!directorCtx) return
+    partnershipOpenedRef.current = true
+    const answer = resumeExecutivePartnership(directorCtx, buildRestoredPartnershipContext())
+    const openingMsg = buildChatMessageFromAnswer(answer)
+    setMessages(prev => (prev.length === 0 ? [openingMsg] : prev))
+    recordTurn(null, answer.text, { domain: 'general', confidence: answer.confidence, sourceNote: answer.sourceNote ?? 'operating_session_open' })
+    markGreetedToday()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plainRole, directorCtx])
 
   // Sprint 914.3: Initialize backend spine session on mount (fire-and-forget).
   // Sprint 914.5: After session is obtained, restore last_curriculum_draft
@@ -1166,8 +1194,24 @@ export function DonnaVoiceReadyShell({
     // Fires BEFORE all domain interceptors. "hey donna" / "hi donna" / standalone
     // "donna" produces a greeting that references current page + entity context.
     // Never generic. Never "How can I help?".
+    // Mega Sprint 3511–3540 — a greeting / "I'm back" / "ready" / "let's begin" is
+    // never an ambiguous request. It resumes the executive partnership through the
+    // ONE canonical composer, so this entry point is indistinguishable from the
+    // floating widget or the server pipeline. Falls back to the legacy context
+    // greeting only when live director context is unavailable.
     const HEY_DONNA_PATTERN = /^(hey donna|hi donna|hello donna|donna[,.]?\s*$|donna\s+here)/i
-    if (plainRole === 'director' && HEY_DONNA_PATTERN.test(trimmed)) {
+    if (plainRole === 'director' && (isOperatingSessionResume(trimmed) || HEY_DONNA_PATTERN.test(trimmed))) {
+      if (directorCtx) {
+        const answer = resumeExecutivePartnership(directorCtx, buildRestoredPartnershipContext())
+        const resumeMsg = buildChatMessageFromAnswer(answer)
+        setTimeout(() => {
+          setMessages(prev => [...prev, resumeMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, answer.text, { domain: 'general', confidence: answer.confidence, sourceNote: answer.sourceNote ?? 'operating_session' })
+        }, 300)
+        markGreetedToday()
+        return
+      }
       const liveCtx = buildDonnaLiveContext({
         pathname:          pathname ?? '/director',
         role:              'director',
