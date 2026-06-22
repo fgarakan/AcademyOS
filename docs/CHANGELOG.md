@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-06-22 — Mega Sprint 3481–3510 — DONNA COO Presence V1
+
+**Mission:** Make a director feel they're working alongside an exceptional COO. The Phase 0 audit (`docs/donna/DONNA_COO_PRESENCE_AUDIT.md`) found DONNA's COO reasoning is ~90% already built but gated behind magic phrases. This sprint adds ONE convergence layer that surfaces the existing intelligence by default on every director turn. No new reasoning engine, no new memory system, no second conversation layer, no OpenAI wiring change, no migration.
+
+**Added:**
+- `src/lib/donna/conversation/donnaExecutivePresenceContract.ts` — the Executive Presence Contract. `enforceExecutivePresence(result, ctx)` surfaces the audited 80/20 subset (Opinion · Tradeoff · Memory · Proactive) by consuming the EXISTING operating-partner intelligence (`buildAcademyAttentionReport` — same ranked signals the COO engines use) and the conversation state already on the request. Additive, relevance-gated (no non-sequiturs), idempotent, fail-safe; never alters facts, recommendations, `action`, `requiresApproval`, navigation, or any structured field. Exports predicates `hasExecutiveOpinion`, `hasTradeoff`, `isExecutivePresenceRelevant`, `isExecutivePresenceEligible`.
+- `src/lib/donna/certification/donnaCOOPresenceCertification.ts` — 21-check cert across the 10 COO dimensions + invariants (**21/21 PASS**).
+- `docs/donna/DONNA_COO_PRESENCE_AUDIT.md` (Phase 0) and `docs/donna/DONNA_COO_PRESENCE_REPORT.md` (before/after).
+
+**Modified:**
+- `src/app/director/_actions/donnaLiveConversationAction.ts` and `donnaStrategicConversationAction.ts` — load the existing `DirectorDonnaContext` (fail-safe) and run `enforceExecutivePresence` by default between the Completion Contract and the Executive Communication Layer. Pipeline: processDonnaMessage → completion → **executive presence** → executive refinement → director.
+
+**Locked requirement met:** executive presence is now DEFAULT — surfaced on every relevant turn, not gated behind phrases like "what should I do today" / "give me COO insights".
+
+**Validation:** `npx tsc --noEmit` clean. Certs: new 21/21; conversation-convergence 30/30; executive-conversation 51/51; pilot-refinement 36/36; atomic-loop 60/60; adaptive-COO 144/144; operating-system 45/45. Zero regressions.
+
+---
+
 ## 2026-06-22 — Mega Sprint 3451–3480 — ONE DONNA Conversation Convergence V1
 
 **Mission:** Make every DONNA conversation feel like the same experienced academy COO. Convergence over rewriting — one Conversation DNA, applied live through the existing Executive Communication Layer; only templates that structurally cannot inherit were fixed at source. No second assistant, router, OpenAI pathway, or reasoning layer. No migration. Fact-preserving and fail-open throughout.

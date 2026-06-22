@@ -20,6 +20,8 @@ import type { DonnaMessageInput, DonnaMessageResult } from '@/lib/donna/brain/pr
 import { createDebugLog } from '@/lib/donna/brain/donnaBrainDebugLog'
 import { applyExecutiveRefinement } from '@/lib/donna/brain/donnaExecutiveCommunicationLayer'
 import { enforceCompletionContract } from '@/lib/donna/completion/donnaCompletionConvergence'
+import { enforceExecutivePresence } from '@/lib/donna/conversation/donnaExecutivePresenceContract'
+import { loadDirectorDonnaContext, type DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 
 const ALLOWED_ROLES = ['academy_director', 'head_coach'] as const
 type AllowedRole = typeof ALLOWED_ROLES[number]
@@ -114,11 +116,29 @@ export async function donnaLiveConversationAction(
     // or the action; only guarantees the conversation is never left hanging.
     const grounded = enforceCompletionContract(result, { route: input.route, lastUserAction: msg })
 
+    // ONE DONNA Executive Presence (Mega Sprint 3481–3510) — by default, surface
+    // the COO intelligence that already exists (opinion · tradeoff · memory ·
+    // proactive) on every relevant turn, BEFORE the Executive layer. Convergence
+    // only: it consumes the existing operating-partner reality bundle, never
+    // reasons new facts, and is additive/relevance-gated/fail-safe.
+    let directorCtx: DirectorDonnaContext | null = null
+    try {
+      directorCtx = await loadDirectorDonnaContext(supabase, academyId)
+    } catch {
+      directorCtx = null // fail-safe — presence simply no-ops without context
+    }
+    const present = enforceExecutivePresence(grounded, {
+      directorCtx,
+      navigatorState: input.conversationNavigatorState ?? null,
+      conversationHistory: input.conversationHistory ?? null,
+      userMessage: msg,
+    })
+
     // Final presentation layer (Part 3) — executive-tone refinement only.
-    // Fail-open: returns the grounded result unchanged if refinement is
-    // unavailable. Never alters facts, recommendations, or permissions.
+    // Fail-open: returns the result unchanged if refinement is unavailable.
+    // Never alters facts, recommendations, or permissions.
     const role = membership.role === 'head_coach' ? 'coach' : 'director'
-    return await applyExecutiveRefinement(grounded, role)
+    return await applyExecutiveRefinement(present, role)
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
