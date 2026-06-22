@@ -139,17 +139,16 @@ function getNextPriority(
 function buildConfirmation(
   concept: AcademyOSConcept | null,
   entity: string | null,
-  turnCount: number,
+  _turnCount: number,
 ): string {
   const entityPart = entity ? ` on ${entity}` : ''
-  const arcLength = turnCount > 1 ? ` across ${turnCount} turns` : ''
 
   if (concept) {
     const label = concept.replace(/_/g, ' ')
-    return `Got it — marking the ${label} concern${entityPart} as handled${arcLength}. Learning captured.`
+    return `Done — I'll treat the ${label}${entityPart} as handled, and I'll keep what worked in mind.`
   }
 
-  return `Done${entityPart}. Arc closed${arcLength}. Learning captured.`
+  return `Done${entityPart} — I'll keep what worked in mind for next time.`
 }
 
 // ── Main completion response builder ─────────────────────────────────────────

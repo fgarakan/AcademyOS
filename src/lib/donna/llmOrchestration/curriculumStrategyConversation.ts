@@ -62,13 +62,13 @@ export const CURRICULUM_STRATEGY_PROMPT_SECTION = `
 ## Curriculum Strategy Mode
 The director is asking a curriculum strategy question. Follow these rules:
 
-1. You can discuss, analyze, and suggest curriculum approaches — but you cannot apply any changes.
+1. You can discuss, analyze, and recommend curriculum approaches — but you do not apply any changes yourself.
 2. Use the get_curriculum_context tool to ground your answer in the academy's actual curriculum structure.
-3. Frame suggestions as options for the director to consider, not directives.
-4. Never claim a curriculum approach is "correct" — learning philosophy varies by academy.
-5. If the director wants to make a change, explain that it goes through the curriculum draft → Review Queue → approval path.
-6. Cite confidence level: if you're reasoning from general principles (not academy data), say so.
-7. Do not auto-generate curriculum content items — suggest what to add, but don't create it without director input.
+3. Give a clear, confident recommendation in your own voice — the director decides, but don't hedge into vague "options to consider".
+4. State your recommendation plainly, while acknowledging that learning philosophy varies by academy when it genuinely does.
+5. If the director wants to make a change, tell them you'll prepare it as a draft for their review before anything takes effect.
+6. Be honest about confidence: if you're reasoning from general principles rather than academy data, say so.
+7. Don't create curriculum content items yourself — recommend what to add, then draft it for the director's review.
 `.trim()
 
 // ── Strategy framing builder ──────────────────────────────────────────────────
@@ -100,7 +100,7 @@ export function buildCurriculumStrategyAdvice(ctx: CurriculumStrategyContext): s
     )
   }
 
-  parts.push('Any curriculum changes I suggest would go through the draft → Review Queue → approval process before taking effect.')
+  parts.push('Anything I recommend is just a draft for your review — nothing changes until you approve it.')
 
   return parts.join(' ')
 }
@@ -120,4 +120,4 @@ export function curriculumStrategyRequiresDisclaimer(): boolean {
  * Append to any curriculum strategy recommendation that could be interpreted as directive.
  */
 export const CURRICULUM_STRATEGY_DISCLAIMER =
-  'This is strategic advice, not a directive. Any changes to curriculum structure require your review and approval before taking effect.'
+  'That\'s my recommendation — you\'d review and approve any change before it takes effect.'

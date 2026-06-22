@@ -175,7 +175,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Open Sessions and follow up with coaches to submit wrap-ups before end of day.',
       href: '/director/sessions',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not submit wrap-ups or contact coaches automatically.',
+      donnaWillNotDo: 'I will not submit wrap-ups or contact coaches automatically.',
     })
   }
 
@@ -204,7 +204,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Review the flagged player profiles, check recent coach notes, and decide if a parent update or coaching intervention is needed.',
       href: '/director/players',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not publish parent updates or initiate coaching conversations automatically.',
+      donnaWillNotDo: 'I will not publish parent updates or initiate coaching conversations automatically.',
     })
   }
 
@@ -224,7 +224,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Open the Review Center and review each attendance exception carefully before approving.',
       href: '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not approve, modify, or apply attendance records automatically.',
+      donnaWillNotDo: 'I will not approve, modify, or apply attendance records automatically.',
     })
   }
 
@@ -247,7 +247,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Open the Review Center and clear the oldest items first — prioritize anything affecting parent communications or player advancement.',
       href: '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not approve or process any review items automatically.',
+      donnaWillNotDo: 'I will not approve or process any review items automatically.',
     })
   } else if (ctx.pendingReviews > 0) {
     // ── 5. Pending review queue (fresh, not stale) ───────────────────────────
@@ -264,7 +264,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Open the Review Center and work through the pending items.',
       href: '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not approve or apply any review items automatically.',
+      donnaWillNotDo: 'I will not approve or apply any review items automatically.',
     })
   }
 
@@ -287,7 +287,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Review the flagged player profiles and decide whether to act now or continue monitoring.',
       href: '/director/players',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not create or publish parent communications automatically.',
+      donnaWillNotDo: 'I will not create or publish parent communications automatically.',
     })
   }
 
@@ -306,7 +306,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Review the advancement-eligible player profiles and make level movement decisions.',
       href: '/director/players',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not move players to a new level. Level changes require explicit director approval through the Review Center.',
+      donnaWillNotDo: 'I will not move players to a new level. Level changes require explicit director approval through the Review Center.',
     })
   }
 
@@ -331,7 +331,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Review the stalled player profiles, check recent coach notes for progress signals, and decide whether to schedule an assessment or update the development plan.',
       href: '/director/players',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not move stalled players to a new level or modify their development records automatically.',
+      donnaWillNotDo: 'I will not move stalled players to a new level or modify their development records automatically.',
     })
   }
 
@@ -359,7 +359,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Review player assessment records. Schedule assessments for players with gaps before making level movement decisions.',
       href: '/director/players',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not schedule assessments or modify assessment records automatically.',
+      donnaWillNotDo: 'I will not schedule assessments or modify assessment records automatically.',
     })
   }
 
@@ -384,7 +384,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Open Templates and create or assign session templates for the affected curriculum levels.',
       href: '/director/templates',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not create or assign templates automatically. Templates require director creation and review.',
+      donnaWillNotDo: 'I will not create or assign templates automatically. Templates require director creation and review.',
     })
   }
 
@@ -403,7 +403,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Open the Curriculum Builder and review the pending drafts. Approve those that are correct, reject those that need revision.',
       href: '/director/curriculum/builder',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not approve or apply curriculum changes automatically.',
+      donnaWillNotDo: 'I will not approve or apply curriculum changes automatically.',
     })
   }
 
@@ -426,7 +426,7 @@ export function buildAttentionPriorities(
       bestNextAction: "Open the Curriculum Builder to review the gaps. Ask DONNA to draft new drills or gates to fill them — they'll go through the approval flow.",
       href: '/director/curriculum/builder',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not add curriculum content automatically. Any additions go through draft → review → approval.',
+      donnaWillNotDo: 'I will not add curriculum content automatically. Any additions go through draft → review → approval.',
     })
   }
 
@@ -452,7 +452,7 @@ export function buildAttentionPriorities(
       bestNextAction: `Open the DONNA curriculum improvement analysis for ${ctx.mostBlockedLevelName} to identify root causes and draft changes for director review.`,
       href,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not move players between levels automatically. Curriculum changes require director approval.',
+      donnaWillNotDo: 'I will not move players between levels automatically. Curriculum changes require director approval.',
     })
   }
 
@@ -477,7 +477,7 @@ export function buildAttentionPriorities(
       bestNextAction: `Review coach observations tagged "${concern}" and consider whether the related curriculum level needs a drill or gate adjustment.`,
       href,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not modify curriculum content automatically. Curriculum changes go through draft → review → director approval.',
+      donnaWillNotDo: 'I will not modify curriculum content automatically. Curriculum changes go through draft → review → director approval.',
     })
   }
 
@@ -506,7 +506,7 @@ export function buildAttentionPriorities(
       bestNextAction: 'Complete the remaining setup steps in Academy Setup.',
       href: '/director/onboarding',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not complete setup steps automatically. Each step requires director confirmation on the setup screen.',
+      donnaWillNotDo: 'I will not complete setup steps automatically. Each step requires director confirmation on the setup screen.',
     })
   }
 

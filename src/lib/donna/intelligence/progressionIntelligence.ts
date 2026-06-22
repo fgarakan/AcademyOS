@@ -216,7 +216,7 @@ export function buildWhoIsReadyAnswer(ctx: DirectorDonnaContext): DonnaSafeReadA
     : '\n\nAll eligible players have assessment evidence on file.'
   return {
     actionId: 'who_is_ready',
-    text: `**${eligible.length} player${eligible.length !== 1 ? 's' : ''} ready to advance:**\n\n${rows}${evidenceNote}\n\nDirector confirmation required — DONNA will not advance anyone automatically.`,
+    text: `**${eligible.length} player${eligible.length !== 1 ? 's' : ''} ready to advance:**\n\n${rows}${evidenceNote}\n\nDirector confirmation required — I will not advance anyone automatically.`,
     confidence: ctx.playerProgressContextAvailable ? 'high' : 'partial',
     sourceNote: 'Player curriculum states',
     followUp: 'Take me to Players', href: '/director/players', isAnswerable: true,

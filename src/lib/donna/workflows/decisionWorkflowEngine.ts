@@ -131,7 +131,7 @@ export function buildPromotionReviewWorkflow(
       actionLabel:  'Open Assessment',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not score or modify assessments.',
+      donnaWillNotDo: 'I will not score or modify assessments.',
     },
     {
       stepNumber:   2,
@@ -142,7 +142,7 @@ export function buildPromotionReviewWorkflow(
       actionLabel:  'View Evidence',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not add or modify evidence records.',
+      donnaWillNotDo: 'I will not add or modify evidence records.',
     },
     {
       stepNumber:   3,
@@ -153,7 +153,7 @@ export function buildPromotionReviewWorkflow(
       actionLabel:  'Check Readiness',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not move the player to a new level.',
+      donnaWillNotDo: 'I will not move the player to a new level.',
     },
     {
       stepNumber:   4,
@@ -164,18 +164,18 @@ export function buildPromotionReviewWorkflow(
       actionLabel:  'View Recommendation',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not apply the recommendation automatically.',
+      donnaWillNotDo: 'I will not apply the recommendation automatically.',
     },
     {
       stepNumber:   5,
       title:        'Your Decision',
-      description:  `Approve or reject the promotion. This is your decision — DONNA will not act until you approve. Once approved, the record is updated.`,
+      description:  `Approve or reject the promotion. This is your decision — I will not act until you approve. Once approved, the record is updated.`,
       route:        '/director/review',
       focusId:      'review-queue-primary',
       actionLabel:  'Go to Review Center',
       actionHref:   '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not promote the player without your explicit approval in the Review Center.',
+      donnaWillNotDo: 'I will not promote the player without your explicit approval in the Review Center.',
     },
   ]
 
@@ -188,7 +188,7 @@ export function buildPromotionReviewWorkflow(
     openingMessage:   `Let me walk you through the promotion review for ${playerLabel}. We'll go step by step: assessment scores, evidence, readiness, recommendation, then your decision. Nothing changes until you approve.`,
     completionMessage: `Promotion review for ${playerLabel} is complete. Your decision has been recorded and the record will update after approval is processed.`,
     hasApprovalStep:  true,
-    safetyNote:       'DONNA will not move this player to a new level without your approval.',
+    safetyNote:       'I will not move this player to a new level without your approval.',
   }
 }
 
@@ -207,7 +207,7 @@ export function buildPlacementReviewWorkflow(
       actionLabel:  'View Assessment',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not modify assessment scores.',
+      donnaWillNotDo: 'I will not modify assessment scores.',
     },
     {
       stepNumber:   2,
@@ -218,7 +218,7 @@ export function buildPlacementReviewWorkflow(
       actionLabel:  'View Recommendation',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not assign the level automatically.',
+      donnaWillNotDo: 'I will not assign the level automatically.',
     },
     {
       stepNumber:   3,
@@ -229,7 +229,7 @@ export function buildPlacementReviewWorkflow(
       actionLabel:  'View Evidence',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not add evidence records.',
+      donnaWillNotDo: 'I will not add evidence records.',
     },
     {
       stepNumber:   4,
@@ -240,7 +240,7 @@ export function buildPlacementReviewWorkflow(
       actionLabel:  'Go to Review Center',
       actionHref:   '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not place the player in a curriculum level without your explicit approval.',
+      donnaWillNotDo: 'I will not place the player in a curriculum level without your explicit approval.',
     },
   ]
 
@@ -253,7 +253,7 @@ export function buildPlacementReviewWorkflow(
     openingMessage:   `Let's review the placement for ${playerLabel}. I'll show you assessment results, the recommended level, supporting evidence, and then you make the final call. Nothing is applied until you approve.`,
     completionMessage: `Placement review for ${playerLabel} is complete. The player will be enrolled in the approved curriculum level.`,
     hasApprovalStep:  true,
-    safetyNote:       'DONNA will not place any player in a curriculum level without director approval.',
+    safetyNote:       'I will not place any player in a curriculum level without director approval.',
   }
 }
 
@@ -268,7 +268,7 @@ export function buildParentUpdateReviewWorkflow(): DecisionWorkflow {
       actionLabel:  'Open Review Center',
       actionHref:   '/director/review',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not send this communication.',
+      donnaWillNotDo: 'I will not send this communication.',
     },
     {
       stepNumber:   2,
@@ -279,7 +279,7 @@ export function buildParentUpdateReviewWorkflow(): DecisionWorkflow {
       actionLabel:  'Check Evidence',
       actionHref:   '/director/review',
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not expose internal coach notes to parents.',
+      donnaWillNotDo: 'I will not expose internal coach notes to parents.',
     },
     {
       stepNumber:   3,
@@ -290,7 +290,7 @@ export function buildParentUpdateReviewWorkflow(): DecisionWorkflow {
       actionLabel:  'Make Decision',
       actionHref:   '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not send parent communications without your explicit approval.',
+      donnaWillNotDo: 'I will not send parent communications without your explicit approval.',
     },
   ]
 
@@ -303,7 +303,7 @@ export function buildParentUpdateReviewWorkflow(): DecisionWorkflow {
     openingMessage:   "Let me guide you through the parent update review. We'll check the draft, verify the evidence it references, and then you decide whether to approve or reject. Nothing is sent without your approval.",
     completionMessage: 'Parent update review complete. The approved communication will be available for delivery.',
     hasApprovalStep:  true,
-    safetyNote:       'DONNA will not send any parent communication without your explicit approval.',
+    safetyNote:       'I will not send any parent communication without your explicit approval.',
   }
 }
 
@@ -323,7 +323,7 @@ export function buildCurriculumReviewWorkflow(
       actionLabel:  'Open Curriculum',
       actionHref:   curriculumRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not modify the curriculum.',
+      donnaWillNotDo: 'I will not modify the curriculum.',
     },
     {
       stepNumber:   2,
@@ -334,7 +334,7 @@ export function buildCurriculumReviewWorkflow(
       actionLabel:  'View Evidence',
       actionHref:   curriculumRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not add evidence records.',
+      donnaWillNotDo: 'I will not add evidence records.',
     },
     {
       stepNumber:   3,
@@ -345,7 +345,7 @@ export function buildCurriculumReviewWorkflow(
       actionLabel:  'View Gap Analysis',
       actionHref:   curriculumRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not change any curriculum content.',
+      donnaWillNotDo: 'I will not change any curriculum content.',
     },
     {
       stepNumber:   4,
@@ -356,7 +356,7 @@ export function buildCurriculumReviewWorkflow(
       actionLabel:  'View Suggestion',
       actionHref:   curriculumRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not apply the suggested change.',
+      donnaWillNotDo: 'I will not apply the suggested change.',
     },
     {
       stepNumber:   5,
@@ -367,7 +367,7 @@ export function buildCurriculumReviewWorkflow(
       actionLabel:  'View Impact',
       actionHref:   curriculumRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not notify coaches or parents automatically.',
+      donnaWillNotDo: 'I will not notify coaches or parents automatically.',
     },
     {
       stepNumber:   6,
@@ -378,7 +378,7 @@ export function buildCurriculumReviewWorkflow(
       actionLabel:  'Go to Review Center',
       actionHref:   '/director/review',
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not publish curriculum changes without your explicit approval in the Review Center.',
+      donnaWillNotDo: 'I will not publish curriculum changes without your explicit approval in the Review Center.',
     },
   ]
 
@@ -391,7 +391,7 @@ export function buildCurriculumReviewWorkflow(
     openingMessage:   `Let me guide you through the ${levelLabel} curriculum review. We'll look at the current state, evidence signals, the identified gap, DONNA's suggestion, impact, and then you decide whether to draft and approve the change. Nothing is applied until you approve.`,
     completionMessage: `Curriculum review for ${levelLabel} is complete. Approved changes will be reflected in the curriculum after processing.`,
     hasApprovalStep:  true,
-    safetyNote:       'DONNA will not modify curriculum content without your approval.',
+    safetyNote:       'I will not modify curriculum content without your approval.',
   }
 }
 
@@ -410,7 +410,7 @@ export function buildAssessmentReviewWorkflow(
       actionLabel:  'Open Profile',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not modify the player profile.',
+      donnaWillNotDo: 'I will not modify the player profile.',
     },
     {
       stepNumber:   2,
@@ -421,7 +421,7 @@ export function buildAssessmentReviewWorkflow(
       actionLabel:  'Open Assessment Form',
       actionHref:   profileRoute,
       requiresApproval: false,
-      donnaWillNotDo: 'DONNA will not score the assessment.',
+      donnaWillNotDo: 'I will not score the assessment.',
     },
     {
       stepNumber:   3,
@@ -432,7 +432,7 @@ export function buildAssessmentReviewWorkflow(
       actionLabel:  'View Results',
       actionHref:   profileRoute,
       requiresApproval: true,
-      donnaWillNotDo: 'DONNA will not submit assessment results without your review.',
+      donnaWillNotDo: 'I will not submit assessment results without your review.',
     },
   ]
 
@@ -445,7 +445,7 @@ export function buildAssessmentReviewWorkflow(
     openingMessage:   `Let me walk you through the assessment for ${playerLabel}. We'll review their context, complete the four-domain assessment, and then confirm the results.`,
     completionMessage: `Assessment review for ${playerLabel} is complete. Results are recorded and will feed into the readiness and evidence engines.`,
     hasApprovalStep:  true,
-    safetyNote:       'DONNA will not score or submit assessments without your review.',
+    safetyNote:       'I will not score or submit assessments without your review.',
   }
 }
 

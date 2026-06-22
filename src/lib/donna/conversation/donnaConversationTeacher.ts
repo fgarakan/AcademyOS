@@ -19,6 +19,7 @@
 
 import type { InterpreterRole } from './donnaIntentInterpreter'
 import type { AcademyOSConcept } from './donnaMeaningExtractor'
+import { buildConversationDNAInstruction } from './donnaConversationDNA'
 
 // ── Teacher mode ──────────────────────────────────────────────────────────────
 
@@ -98,12 +99,20 @@ Next action: [1 concrete sentence]
 Follow-up: [1 focused question]
 Under 90 words total. Be specific to the domain. No preamble. Start with the direct answer.`,
 
-    executive_refinement: `You are a presentation editor for DONNA, an elite tennis-academy COO assistant.
-Rewrite the DRAFT response so it reads like a calm, confident, concise executive speaking naturally — never robotic.
+    executive_refinement: `You are the presentation voice of DONNA — rewrite the DRAFT so it sounds like the one experienced academy COO speaking naturally.
+Apply the Conversation DNA above: first person ("I", never "DONNA" in the third person), calm and warm, speak don't print (no numbered lists, bullets, or bold field labels — use short spoken sentences), recommend decisively ("I'd recommend…", never "you may wish to consider…"), and end by guiding the next step.
+Replace any robotic or internal wording (e.g. "arc closed", "learning captured", "DONNA cannot", processing/status narration) with natural first-person phrasing. Drop approval boilerplate unless this answer involves an action that genuinely needs approval.
 You may improve ONLY: tone, flow, clarity, concision, and the phrasing of assumptions, explanations, follow-up questions, and completion guidance.
 You must PRESERVE EXACTLY, with zero changes: every fact, number, name, date, level, recommendation, next step, and any question already asked.
 Do NOT add new facts, figures, names, or recommendations. Do NOT invent academy information. Do NOT remove the next step or the question.
 If the draft is already excellent, return it unchanged. Return ONLY the rewritten response text — no preamble, no quotes, no labels.`,
+  }
+
+  // Sprint 3451–3480: the executive-refinement voice is the Conversation DNA. Fold
+  // the ONE canonical DNA instruction into the live gateway prompt so every refined
+  // response inherits the same COO identity (single source — donnaConversationDNA.ts).
+  if (mode === 'executive_refinement') {
+    return `${BASE_SYSTEM}\n\n${buildConversationDNAInstruction(role)}\n\n${MODE_INSTRUCTIONS[mode]}`
   }
 
   return `${BASE_SYSTEM}\n\n${MODE_INSTRUCTIONS[mode]}`
@@ -207,9 +216,13 @@ function privacyGuard(input: ConversationTeacherInput): string | null {
     }
   }
 
-  // Enforce max length to prevent large context leakage
-  if (input.userText.length > 500) {
-    return 'Privacy guard blocked: user text exceeds 500 character safety limit for teacher calls'
+  // Enforce max length to prevent large context leakage. Mode-aware (Sprint
+  // 3451–3480): executive_refinement receives DONNA's OWN already-grounded,
+  // already-safe answer (not raw user input), so longer structured answers may be
+  // humanized; the sensitive-pattern checks above still apply unchanged.
+  const lengthLimit = input.mode === 'executive_refinement' ? 1600 : 500
+  if (input.userText.length > lengthLimit) {
+    return `Privacy guard blocked: text exceeds ${lengthLimit} character safety limit for teacher calls`
   }
 
   return null

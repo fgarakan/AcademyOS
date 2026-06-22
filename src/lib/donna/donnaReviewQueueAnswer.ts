@@ -107,7 +107,7 @@ export function buildReviewQueueAnswer(ctx: DirectorDonnaContext): DonnaSafeRead
     priorityNote = ' Evidence drafts affect player advancement readiness — worth reviewing before advancement decisions.'
   }
 
-  const safetyNote = ' DONNA will not approve, reject, or apply any item — your explicit action in the Review Center is required.'
+  const safetyNote = ' I won\'t approve or reject anything myself — that\'s your call in the Review Center.'
 
   const text =
     `${prefix}Review Queue: ${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} pending${breakdownText}.${staleWarning}${priorityNote}` +

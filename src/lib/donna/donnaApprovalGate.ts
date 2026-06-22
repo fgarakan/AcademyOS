@@ -88,8 +88,8 @@ export function assertDonnaApprovalAllowed(
     none:              'No approval required.',
     confirmation:      'Requires director confirmation before execution.',
     review_queue:      'Must go through the Review Center before any effect.',
-    director_approval: 'Requires explicit director approval — DONNA cannot execute automatically.',
-    platform_owner:    'Requires platform owner authorization beyond director scope.',
+    director_approval: 'Requires your explicit approval — I can\'t run this on my own.',
+    platform_owner:    'Requires platform owner authorization, beyond director scope.',
   }
 
   const paths: Record<DonnaApprovalLevel, string | null> = {
@@ -157,8 +157,8 @@ export function blockUnsafeDonnaAction(
     none:              'This action is read-only.',
     confirmation:      'This action requires your confirmation before DONNA can proceed.',
     review_queue:      'This action must go through the Review Center. DONNA will create a draft for your review.',
-    director_approval: `This action requires your explicit approval${context ? ` (${context})` : ''}. DONNA cannot execute it automatically.`,
-    platform_owner:    'This action requires platform owner authorization. DONNA cannot initiate it.',
+    director_approval: `This needs your explicit approval${context ? ` (${context})` : ''} — I can't run it on my own.`,
+    platform_owner:    'This needs platform owner authorization, which is beyond what I can start.',
   }
 
   const alternatives: Record<DonnaApprovalLevel, string | null> = {

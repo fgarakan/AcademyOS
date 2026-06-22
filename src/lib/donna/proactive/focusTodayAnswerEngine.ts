@@ -63,38 +63,30 @@ export function buildFocusTodayAnswer(ctx: DirectorDonnaContext): DonnaSafeReadA
   const top = report.topAction!
 
   // ── Build the 5-field structured response ─────────────────────────────────
+  // Spoken prose, not a dashboard (Sprint 3451–3480) — the old bold-numbered
+  // scaffolding both read robotically and defeated the executive-layer fact guard
+  // (the "1./2./3." digits counted as facts). This reads as one COO speaking and
+  // is now eligible for executive refinement.
   const lines: string[] = [
-    `${prefix}Here's what I'd focus on today:`,
-    '',
-    `**1. Highest leverage action:**`,
-    `${top.label}`,
-    '',
-    `**2. Why it matters:**`,
-    `${top.whyItMatters}`,
-    '',
-    `**3. Evidence:**`,
-    `${top.evidence}`,
-    '',
-    `**4. Where to go:**`,
-    top.href ? `${top.bestNextAction} → ${top.href}` : top.bestNextAction,
-    '',
-    `**5. Your role:**`,
+    `${prefix}Here's where I'd focus today: ${top.label}.`,
+    `Why it matters: ${top.whyItMatters}`,
+    `What the data shows: ${top.evidence}`,
+    top.href
+      ? `When you're ready, I'll take you to ${top.bestNextAction}.`
+      : `Next: ${top.bestNextAction}`,
     top.requiresApproval
-      ? `Director approval required — ${top.donnaWillNotDo}`
-      : `No approval needed for viewing. ${top.donnaWillNotDo}`,
+      ? `This one needs your approval — ${top.donnaWillNotDo}`
+      : `You can review this yourself — no approval needed. ${top.donnaWillNotDo}`,
   ]
 
   // ── Supporting items (max 3, excluding top) ────────────────────────────────
   const supporting = report.allItems.slice(1, 4)
   if (supporting.length > 0) {
-    lines.push('')
-    lines.push('**Also worth noting:**')
-    supporting.forEach((item, i) => {
-      lines.push(`${i + 2}. ${item.label}`)
-    })
-    if (report.totalCount > 4) {
-      lines.push(`…and ${report.totalCount - 4} more item${report.totalCount - 4 !== 1 ? 's' : ''} in your attention queue.`)
-    }
+    const also = supporting.map(item => item.label).join('; ')
+    const more = report.totalCount > 4
+      ? `, plus ${report.totalCount - 4} more in your attention queue`
+      : ''
+    lines.push(`Also worth a look: ${also}${more}.`)
   }
 
   return {
@@ -127,18 +119,15 @@ export function buildProactiveNoticeAnswer(ctx: DirectorDonnaContext): DonnaSafe
   }
 
   const itemLines = report.allItems.slice(0, 5).map(
-    (item, i) => `${i + 1}. **${item.label}** — ${item.whyItMatters.split('.')[0]}.`
+    item => `${item.label} — ${item.whyItMatters.split('.')[0]}`
   )
 
   const text = [
-    `${prefix}Here's what I'm noticing across your academy:`,
-    '',
-    itemLines.join('\n'),
-    '',
+    `${prefix}Here's what I'm noticing across your academy: ${itemLines.join('; ')}.`,
     report.hasApprovalItems
-      ? 'Some of these require your approval before anything changes.'
-      : 'None of these require your approval yet — you can review at your own pace.',
-  ].join('\n')
+      ? 'A few of these need your approval before anything changes.'
+      : 'None of these need your approval yet — review them at your own pace.',
+  ].join(' ')
 
   return {
     actionId:    'proactive_notice',

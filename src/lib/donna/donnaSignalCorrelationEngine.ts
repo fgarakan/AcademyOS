@@ -82,7 +82,7 @@ export function buildSignalCorrelations(
         whyItMatters: 'A player who is both stalled in development and showing concern signals may need a priority review — not just a routine level check.',
         recommendedAction: `Review ${first.playerName}'s player profile, check recent coach notes, and assess whether intervention or updated evidence is needed before making any level or parent communication decision.`,
         href: '/director/players',
-        donnaWillNotDo: 'DONNA will not move the player to a new level or contact their parent automatically.',
+        donnaWillNotDo: 'I will not move the player to a new level or contact their parent automatically.',
       })
     }
   }
@@ -120,7 +120,7 @@ export function buildSignalCorrelations(
         whyItMatters: 'Stalled players at a level with assessment gaps may be stuck partly because the evidence base for advancement decisions is incomplete.',
         recommendedAction: `Review the assessment coverage for ${level} and schedule or record assessments before making advancement decisions for stalled players.`,
         href: '/director/players',
-        donnaWillNotDo: 'DONNA will not schedule assessments or modify assessment records automatically.',
+        donnaWillNotDo: 'I will not schedule assessments or modify assessment records automatically.',
       })
     }
   }
@@ -157,7 +157,7 @@ export function buildSignalCorrelations(
         whyItMatters: 'A level lacking both structured delivery and assessment coverage has compounded execution risk: coaches may lack a plan, and advancement decisions lack evidence.',
         recommendedAction: `Assign a session template to ${level} and schedule assessments to close both gaps. Address the template first since it affects ongoing delivery.`,
         href: '/director/templates',
-        donnaWillNotDo: 'DONNA will not create or assign templates or assessments automatically.',
+        donnaWillNotDo: 'I will not create or assign templates or assessments automatically.',
       })
     }
   }
@@ -184,7 +184,7 @@ export function buildSignalCorrelations(
       whyItMatters: 'A stale review queue alongside active high-impact signals suggests workflow bottlenecks are blocking the decisions that matter most.',
       recommendedAction: 'Open the Review Center, prioritize items connected to high-risk players or attendance exceptions, and clear them before the backlog grows further.',
       href: '/director/review',
-      donnaWillNotDo: 'DONNA will not approve or process any review items automatically.',
+      donnaWillNotDo: 'I will not approve or process any review items automatically.',
     })
   }
 
@@ -203,7 +203,7 @@ export function buildSignalCorrelations(
       whyItMatters: 'Advancing players without assessment evidence weakens the credibility of level decisions and may not support parent or player trust in the curriculum.',
       recommendedAction: 'Review assessment records for the advancement-eligible players. Schedule or record promotion-ready assessments before approving level movement.',
       href: '/director/players',
-      donnaWillNotDo: 'DONNA will not advance players, schedule assessments, or modify assessment records automatically.',
+      donnaWillNotDo: 'I will not advance players, schedule assessments, or modify assessment records automatically.',
     })
   }
 
@@ -225,7 +225,7 @@ export function buildSignalCorrelations(
       whyItMatters: 'Without players and coaches, sessions cannot run, observations cannot be captured, and operating intelligence has nothing to analyze. Setup is blocking the entire intelligence layer.',
       recommendedAction: 'Complete Academy Setup — add coaches first, then players. Each step requires director confirmation on the setup screen.',
       href: '/director/onboarding',
-      donnaWillNotDo: 'DONNA will not add coaches or players automatically. Each setup step requires director confirmation.',
+      donnaWillNotDo: 'I will not add coaches or players automatically. Each setup step requires director confirmation.',
     })
   }
 

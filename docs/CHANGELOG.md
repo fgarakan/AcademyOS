@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-06-22 — Mega Sprint 3451–3480 — ONE DONNA Conversation Convergence V1
+
+**Mission:** Make every DONNA conversation feel like the same experienced academy COO. Convergence over rewriting — one Conversation DNA, applied live through the existing Executive Communication Layer; only templates that structurally cannot inherit were fixed at source. No second assistant, router, OpenAI pathway, or reasoning layer. No migration. Fact-preserving and fail-open throughout.
+
+**Added:**
+- `src/lib/donna/conversation/donnaConversationDNA.ts` — the canonical voice contract: `DONNA_CONVERSATION_DNA` (identity, voice contract, 5-beat rhythm Acknowledge→Interpret→Recommend→Explain→Guide, forbidden phrasings, invariants), `buildConversationDNAInstruction(role)`, and pure predicates (`hasThirdPersonSelfReference`, `hasRoboticCompletionPhrase`, `hasRoboticSafetyBoilerplate`, `hasDashboardSpeech`, `isDecisiveRecommendation`, `endsWithGuidance`, `conformsToConversationDNA`). No DB/React/network.
+- `src/lib/donna/certification/oneDonnaConversationConvergenceCertification.ts` — 30-check convergence certification (**30/30 PASS**).
+- `docs/donna/ONE_DONNA_CONVERSATION_CONVERGENCE_REPORT.md` — 33 before/after examples incl. a 20-conversation side-by-side across all 10 domains, convergence ledger, files changed, pilot readiness.
+
+**Modified — DNA wiring (live):**
+- `src/lib/donna/brain/donnaExecutiveCommunicationLayer.ts` — folds the DNA into `buildExecutiveRefinementInstruction`; raised `MAX_REFINABLE_CHARS` 480→900 so long answers humanize (fact guard unchanged).
+- `src/lib/donna/conversation/donnaConversationTeacher.ts` — DNA folded into the live `executive_refinement` gateway prompt (first-person, speak-don't-print, robotic-phrase rejection); mode-aware privacy length cap (1600) for refinement of DONNA's own grounded output. OpenAI model/temperature/pathway unchanged.
+- `src/lib/donna/donnaPersonality.ts` — first-person voice principle + pointer to the canonical DNA.
+
+**Modified — source fixes (only templates that cannot inherit):**
+- `donnaUIGuidedOperators.ts` (28 third-person phrases → first person; removed `execute_approved_action()` leak), `donnaApprovalGate.ts`, `donnaReviewQueueAnswer.ts`, `conversation/donnaCompletionDetector.ts` ("Arc closed/Learning captured" → natural), `proactive/focusTodayAnswerEngine.ts` (bold-numbered dashboard → prose, now eligible), `llmOrchestration/curriculumStrategyConversation.ts` (decisive + natural).
+- Third-person `donnaWillNotDo`/"DONNA cannot" source leak fixed in `donnaAttentionRankingEngine.ts`, `donnaSignalCorrelationEngine.ts`, `workflows/decisionWorkflowEngine.ts`, `setup/donnaAcademySetupCompletionEngine.ts`, `intelligence/progressionIntelligence.ts` (~53 phrases → first person).
+
+**Convergence outcome:** 6 of 13 audit templates required source rewriting (46%, under half). The rest inherit the one voice via the Executive Layer. Long-tail third-person strings in internal registries/contracts/tests were intentionally left — they are not live conversation text or inherit at runtime.
+
+**Validation:** `npx tsc --noEmit` clean. Certs: new 30/30; `oneDonnaExecutiveConversation` 51/51; `pilotModeExecutiveRefinement` 36/36; `atomicLoopUsability` 60/60; `adaptiveCOOOperatingDay` 144/144. Zero regressions.
+
+---
+
 ## 2026-06-22 — Mega Sprint 3391–3420 — ONE DONNA Guided Completion Convergence V1
 
 **Mission:** Converge the three existing completion systems (Form Guided, Goal Session, Page Execution Guidance) behind one canonical behavioral contract so the director never has to know multiple systems exist, and guarantee Operating Law #1 — *never answer and leave*. No new engine, router, or OpenAI pathway. Pure-TypeScript, additive, fact-preserving, fail-safe.

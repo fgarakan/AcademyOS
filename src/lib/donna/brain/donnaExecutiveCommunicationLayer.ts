@@ -31,6 +31,7 @@ import {
 } from '@/lib/donna/brain/donnaOpenAIGateway'
 import type { InterpreterRole } from '@/lib/donna/conversation/donnaIntentInterpreter'
 import type { DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
+import { buildConversationDNAInstruction } from '@/lib/donna/conversation/donnaConversationDNA'
 
 // ── Contract (Part 3) ────────────────────────────────────────────────────────────
 
@@ -122,8 +123,15 @@ export const PILOT_MODE_REFINEMENT_DEFAULT_ON: boolean =
 /** Hard ceiling on the refinement call. On timeout → original answer. */
 const DEFAULT_REFINE_TIMEOUT_MS = 4000
 
-/** Above this length the gateway privacy guard would block anyway; skip the call. */
-const MAX_REFINABLE_CHARS = 480
+/**
+ * Length ceiling for refinement. Raised (Sprint 3451–3480) so long, structured
+ * answers — the ones that most need humanizing — become eligible. The gateway's
+ * privacy guard length limit is mode-aware for `executive_refinement` (the draft
+ * is DONNA's own already-grounded, already-safe output), so this no longer has to
+ * stay under the old 500-char user-input cap. The fact-preservation guard
+ * (number multiset + growth ratio) still protects every fact regardless of length.
+ */
+const MAX_REFINABLE_CHARS = 900
 
 /** Refined text longer than original × this (+ slack) is treated as fact-altering. */
 const MAX_GROWTH_RATIO = 1.6
@@ -157,7 +165,8 @@ export interface ExecutiveRefinementResult {
  */
 export function buildExecutiveRefinementInstruction(role: InterpreterRole): string {
   return [
-    `Refine DONNA's draft for ${role} as a calm, confident, concise COO.`,
+    // Conversation DNA (Sprint 3451–3480) — the canonical identity the refinement applies.
+    buildConversationDNAInstruction(role),
     `Improve only: ${EXECUTIVE_COMMUNICATION_CONTRACT.mayRefine.join(', ')}.`,
     `Never: ${EXECUTIVE_COMMUNICATION_CONTRACT.mayNever.join(', ')}.`,
     `Preserve every fact, number, name, recommendation, next step, and question exactly. Reality always wins.`,

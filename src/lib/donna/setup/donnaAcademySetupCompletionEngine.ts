@@ -66,7 +66,7 @@ export const SETUP_FIELD_IMPORTANCE: Record<AcademySetupFieldId, SetupFieldImpor
   program_types: {
     displayLabel: 'Program Types',
     why: 'Program types define how groups, sessions, and curriculum levels are organized. DONNA uses this to frame recommendations by program context.',
-    riskIfIgnored: 'DONNA cannot distinguish between development, competition, and adult programs — recommendations will be generic.',
+    riskIfIgnored: 'I cannot distinguish between development, competition, and adult programs — recommendations will be generic.',
     missingRecommendation: 'Define your program types (e.g. Junior Development, Competition, Adult) to give DONNA program-level context.',
   },
   levels: {
@@ -84,7 +84,7 @@ export const SETUP_FIELD_IMPORTANCE: Record<AcademySetupFieldId, SetupFieldImpor
   staff_plan: {
     displayLabel: 'Coaching Staff',
     why: 'Knowing your coaching staff count and roles allows DONNA to track coach wrap-up completion, flag workload imbalances, and surface coach health signals accurately.',
-    riskIfIgnored: 'DONNA cannot detect if a coach is overloaded or missing wrap-ups without knowing how many coaches are active.',
+    riskIfIgnored: 'I cannot detect if a coach is overloaded or missing wrap-ups without knowing how many coaches are active.',
     missingRecommendation: 'Describe your coaching staff (count and roles) so DONNA can track coach engagement and flag issues early.',
   },
   weekly_schedule: {
@@ -101,14 +101,14 @@ export const SETUP_FIELD_IMPORTANCE: Record<AcademySetupFieldId, SetupFieldImpor
   },
   curriculum_starting_point: {
     displayLabel: 'Curriculum Starting Point',
-    why: 'The curriculum framework shapes how skills, drills, and progressions are organized within each level. Without it, DONNA cannot suggest curriculum items that match your existing structure.',
+    why: 'The curriculum framework shapes how skills, drills, and progressions are organized within each level. Without it, I cannot suggest curriculum items that match your existing structure.',
     riskIfIgnored: 'Curriculum builder items and templates will not align with your development philosophy — coaches will need to rework them.',
     missingRecommendation: 'Define your curriculum starting point (e.g. ITF ball colours, custom) so the curriculum builder and DONNA recommendations align with your structure.',
   },
   setup_notes: {
     displayLabel: 'Setup Notes',
     why: 'Setup notes give DONNA critical context about launch timelines, compliance requirements, or specific priorities that shape setup decisions.',
-    riskIfIgnored: 'DONNA will not know about time-sensitive constraints or special requirements — setup guidance will be generic rather than tailored.',
+    riskIfIgnored: 'I will not know about time-sensitive constraints or special requirements — setup guidance will be generic rather than tailored.',
     missingRecommendation: 'Add any important context (launch date, federation requirements, special priorities) so DONNA can prioritize setup steps correctly.',
   },
 }
