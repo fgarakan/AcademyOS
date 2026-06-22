@@ -1,15 +1,15 @@
 # Current Build Target
 
-**Last updated:** 2026-06-21
+**Last updated:** 2026-06-22
 **Current phase:** Director Pilot Readiness — Brian Dabul (Dabul Tennis Academy) Pilot
 
 ---
 
 ## Active target
 
-**Latest completed: Mega Sprint 3361–3390 — ONE DONNA Executive Experience Convergence V1 (2026-06-21, commit `740612f8`)**
+**Latest completed: Mega Sprint 3481–3510 — DONNA COO Presence V1 (2026-06-22, commit `7921906e`)**
 
-Final convergence pass before the Director Pilot. Convergence over creation — no new engine/router/gateway/store/memory, no dashboards, no migration. The DONNA architecture is now unified across every entry point and certified pilot-ready.
+Surfaced DONNA's existing COO intelligence (Opinion · Tradeoff · Memory · Proactive) by default on every director turn, no longer gated behind magic phrases. One convergence layer (`enforceExecutivePresence`) consumes the intelligence already built — no new reasoning engine, no new memory system, no second conversation layer, no OpenAI wiring change, no migration. The DONNA architecture remains unified across every entry point and certified pilot-ready.
 
 ### Recent completed arc
 
@@ -19,14 +19,22 @@ Final convergence pass before the Director Pilot. Convergence over creation — 
 | 3301–3330 | Adaptive COO Operating Day | DONNA operates the day; director reduced to approve / reject / adjust / prioritize / override / ask-why / done |
 | 3331–3360 | Atomic Loop Usability Test Mode | 10 atomic loops made structurally test-ready; Brian pilot test script written |
 | 3361–3390 | ONE DONNA Executive Experience Convergence | Executive Communication refinement layer wired fail-open; 51/51 certified |
+| 3391–3420 | ONE DONNA Guided Completion Convergence | Three completion systems converged behind one contract; "never answer and leave" guaranteed in the director pipeline |
+| 3451–3480 | ONE DONNA Conversation Convergence | One Conversation DNA so every DONNA reply sounds like the same academy COO; 30/30 certified |
+| 3481–3510 | DONNA COO Presence | COO intelligence (Opinion · Tradeoff · Memory · Proactive) surfaced by default on every director turn, no magic phrases; 21/21 certified |
 
 ### Current truth
 
 - **ONE DONNA pipeline is converged** — every entry point (floating widget, expanded `/director/donna`, coach, voice, page panels, both live server actions) runs the same pipeline: one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`).
-- **OpenAI Executive Communication Layer is wired live** — `donnaExecutiveCommunicationLayer.ts` runs as a presentation-only, fact-preserving final step in both director conversation actions. Fail-open: no API key / timeout / error → original grounded answer (worst case = today's experience).
-- **RealitySnapshot remains the source of truth** — refinement is presentation-only and may never alter facts, reality, or recommendations.
+- **OpenAI Executive Communication is live** — `donnaExecutiveCommunicationLayer.ts` runs as a presentation-only, fact-preserving final step in both director conversation actions. Fail-open: no API key / timeout / error → original grounded answer (worst case = today's experience).
+- **Completion Contract is live in the director pipeline** — `enforceCompletionContract` (`src/lib/donna/completion/`) runs between the brain and the Executive layer in both the live and strategic director actions. It converges the three completion systems (Form Guided, Goal Session, Page Execution Guidance) behind one canonical contract. Additive and fail-safe: it only ever fills a missing `nextAction`/`followUpQuestion` when the state is not COMPLETE, never altering response, recommendations, `requiresApproval`, `action`, confidence, navigation, or safety.
+- **Conversation DNA is live** — one canonical voice contract (`donnaConversationDNA.ts`) applied through the Executive Communication Layer, so every DONNA reply sounds like the same experienced academy COO (first-person, 5-beat rhythm Acknowledge→Interpret→Recommend→Explain→Guide). Fact-preserving and fail-open; 30/30 certified.
+- **Executive Presence is live by default** — `enforceExecutivePresence` (`donnaExecutivePresenceContract.ts`) runs between the Completion Contract and the Executive Communication Layer on every director turn. Pipeline: processDonnaMessage → completion → executive presence → executive refinement → director. Additive, relevance-gated, idempotent, fail-safe; never alters facts, recommendations, `action`, `requiresApproval`, navigation, or any structured field. 21/21 certified.
+- **COO intelligence is surfaced without magic phrases** — Opinion · Tradeoff · Memory · Proactive are now presented by default on every relevant turn, no longer gated behind prompts like "what should I do today" / "give me COO insights". The intelligence was already built; this convergence layer just surfaces it.
+- **DONNA should never answer and leave** — Operating Law #1. The completion contract makes "no dangling conversations" a structural guarantee (`resolveCompletionTurn` is total over intent × contract), not a per-prompt hope.
+- **RealitySnapshot remains the source of truth** — refinement, completion, and presence are presentation/guidance-only and may never alter facts, reality, or recommendations.
 - **10 atomic loops are structurally test-ready** — route · primary action · DONNA guidance · completion path · approval guardrails · no fake completion, all certified (60/60).
-- **Next priority is hands-on guided-completion testing, not more architecture** — the spine is converged and certified; the gap now is real-world usability validation, not new engines.
+- **Next priority is real usability testing, not new architecture** — the spine is converged and certified; the gap now is real-world usability validation, not new engines, routers, pathways, or conversation layers.
 
 **Next recommended action:** Run an internal guided-completion test pass across all 10 atomic loops (`docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md`), then run the Brian Dabul pilot (`docs/testing/BRIAN_DABUL_PILOT_TEST_SCRIPT.md`). No migrations pending.
 
