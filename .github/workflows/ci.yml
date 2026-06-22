@@ -1,0 +1,57 @@
+name: CI
+
+# AcademyOS permanent quality gates.
+#
+# Order is fixed and fail-fast — any gate failing fails the whole build:
+#   1. TypeScript
+#   2. Guardians            (AcademyOS Guardian Framework — architectural immune system)
+#   3. Certification Suites
+#   4. Build
+#
+# This workflow is DESIGNED NOT TO CHANGE as the project scales:
+#   • Every guardian participates automatically via src/lib/guardians/framework/registry.ts
+#     — `npm run guard` runs the whole registry. Guardian #2…#N need no workflow edit.
+#   • Every certification suite participates via scripts/certificationSuites.ts
+#     — `npm run certify` runs the whole manifest. New suites need no workflow edit.
+# The registry and the manifest are the only places new gates are registered.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 1. TypeScript — fails the build on any type error.
+      - name: TypeScript
+        run: npm run type-check
+
+      # 2. Guardians — the architectural immune system. Fails the build (exit 1)
+      #    if any guardian regresses (new sidebar workflow ownership, etc.).
+      #    Runs the entire guardian registry; never edited when guardians are added.
+      - name: Guardians
+        run: npm run guard
+
+      # 3. Certification suites — fails the build if any certified suite drops below 100%.
+      #    Runs the entire certification manifest; never edited when suites are added.
+      - name: Certification suites
+        run: npm run certify
+
+      # 4. Build — fails the build on any Next.js build error.
+      - name: Build
+        run: npm run build

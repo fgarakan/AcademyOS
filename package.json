@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "guard": "tsx src/lib/guardians/runGuardians.ts",
+    "certify": "tsx scripts/runCertifications.ts",
+    "ci": "npm run type-check && npm run guard && npm run certify && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
@@ -31,6 +34,7 @@
     "eslint-config-next": "14.2.29",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

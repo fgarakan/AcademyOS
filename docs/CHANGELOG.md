@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-06-22 — AcademyOS Guardian Framework V1 (architectural immune system)
+
+**Mission:** Stand up AcademyOS's permanent architectural immune system. Guardians are read-only — they observe · classify · certify · report · block regressions, and never mutate, repair, or implement. The Constitution defines the laws; the Guardians enforce them. `ExecutiveWorkspaceGuardian` is Guardian #1; the framework is designed so the planned Cognitive Load, DONNA Guidance, Page Ownership, Information Hierarchy, and Design System guardians each plug in as one rule file + one registry line.
+
+**Architecture:** one impure boundary (the `RepoSnapshot` collector) reads files into an immutable, deterministically-ordered snapshot; every guardian is a pure, deterministic function over that snapshot. The generic pipeline (classify → report → certify → ratchet) is implemented once. Pure TypeScript, no new dependencies, no migration, CI-friendly (`npx tsx`, exit 1 on regression).
+
+**Ratchet:** a guardian ships GREEN without faking conformance — existing violations are recorded as an accepted, ratchet-only baseline (may shrink, never grow). A finding outside the baseline is a regression that fails CI. The product becomes progressively harder to accidentally make worse.
+
+**Added:**
+- `src/lib/guardians/framework/{types,snapshot,baseline,runtime,registry}.ts` — the framework: contracts, the single impure collector, baseline loader, the generic scan→classify→report→certify→ratchet pipeline, and the registry plug-in point.
+- `src/lib/guardians/executiveWorkspace/executiveWorkspaceGuardian.ts` — Guardian #1. Pure rules for the §2/§7/§8 sidebar-containment laws: no committing server action, no content editor, no multi-step/progress state, no completion control in the DONNA sidebar render tree (v1 surface heuristic = `.tsx` under `src/components/assistant/**`).
+- `src/lib/guardians/executiveWorkspace/executiveWorkspace.baseline.json` — 38 accepted backlog violations (the existing sidebar ownership documented in `EXECUTIVE_WORKSPACE_STANDARD.md`), ratchet-only.
+- `src/lib/guardians/runGuardians.ts` — CI entrypoint (exit 1 on regression) + operator `--write-baseline`.
+- `src/lib/guardians/{index.ts,README.md}` — public surface + "how to add Guardian N".
+
+**Wired into permanent CI quality gates:**
+- `.github/workflows/ci.yml` — new CI workflow. Fixed, fail-fast order: **(1) TypeScript → (2) Guardians → (3) Certification Suites → (4) Build.** Any gate failing fails the build. Designed never to change as the project scales: guardians participate via the registry (`npm run guard` runs the whole registry) and certification suites via the manifest (`npm run certify` runs the whole manifest) — Guardian #2…#N and new suites need no workflow edit.
+- `package.json` — scripts: `"guard"` (`tsx src/lib/guardians/runGuardians.ts`), `"certify"` (`tsx scripts/runCertifications.ts`), and `"ci"` (type-check → guard → certify → build). Added `tsx` as a devDependency so the bare `tsx` scripts resolve under `npm ci` (dev-only TypeScript runner; the existing certs already ran via `npx tsx`).
+- `scripts/certificationSuites.ts` — the certification manifest: the single place suites are registered for CI (mirrors the guardian registry). Scopes the gate to the 9 green-certified suites rather than blanket-globbing all 40+ `*Certification.ts` (which include the known-red `philosophyCertification`), keeping the gate meaningful.
+- `scripts/runCertifications.ts` — runs every manifested suite, aggregates, exits 1 on any failure.
+
+**Modified:**
+- `docs/EXECUTIVE_WORKSPACE_STANDARD.md` — Implementation Status: roadmap step 1 marked DONE (the certification now exists as the Guardian Framework); maturity table updated.
+
+**Validation:** `npm run type-check` clean. Guardian #1 GREEN on its 38-item ratchet baseline (exit 0); a probe introducing a new sidebar mutation + editor correctly flips to REGRESSED (exit 1), and reverts to GREEN when removed. `npm run certify` → 9/9 suites PASS (exit 0). Local gate chain (type-check → guard → certify) all green; `build` runs in CI. Existing certifications untouched.
+
+---
+
 ## 2026-06-22 — Mega Sprint 3511–3540 — Director Operating Session V1 (Executive Partnership)
 
 **Mission:** Promote the canonical concept to the **Executive Partnership** layer. Every way a director begins a session — the floating widget, the full `/director/donna` page, a typed "good morning", "I'm back" after lunch, "ready", "let's begin", a return tomorrow — converges on ONE composer and resumes the same executive working relationship. The director never starts a chat; they always continue the work. Convergence over creation — no new lifecycle, no duplicated state, no second greeting system, no OpenAI pathway, no migration.
