@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-06-23 — Mega Sprint 3571–3600 — Sidebar Purification V1 (review-queue completion → page handoff)
+
+**Mission:** Begin conforming the product to the Executive Workspace Standard. Subtraction, not construction — remove meaningful work from the DONNA sidebar so it advises and delegates while the owning page completes. No new intelligence, no new Guardian, no new features, no migration. Objective: *Conversation happens in DONNA; work happens in the owning workspace.* Where no owning workspace exists, the migration is deferred — zero capability regression.
+
+**What moved (sprint priorities #1–#3 — highest-risk apply/decision controls):**
+- Relocated three completion controls out of the sidebar render tree (`src/components/assistant/`) into the owning review page (`src/app/director/review/`), via `git mv`:
+  - `DonnaLevelMovementApplyControls.tsx` (`applyApprovedLevelMovementAction`)
+  - `DonnaCurriculumAdjustmentApplyControls.tsx` (`applyApprovedCurriculumAdjustmentAction`)
+  - `DonnaIntelligenceDraftDecisionControls.tsx` (`updateDonnaIntelligenceDraftDecisionAction` — approve / needs-clarification / discard)
+- These were already consumed by the review-page cards; they now live with their page consumers. Zero behavior change — the identical controls run on `/director/review`.
+
+**Modified:**
+- `src/components/assistant/DonnaReviewQueuePanel.tsx` — removed the imports/renders of the three controls and the now-unused `ITEM_TYPE_TO_TARGET_MODULE` / `DonnaReviewItemType`. For `mark_reviewed_proposed_action` items the panel now shows the read-only draft preview (unchanged) + a single **"Review & approve on page →"** handoff `<Link>` to `/director/review`. The sidebar previews and delegates; completion happens on the page.
+- Updated the six consuming review-page cards to import the relocated controls via their new co-located path (`./…` instead of `@/components/assistant/…`): `LevelMovementReviewCard`, `CurriculumAdjustmentReviewCard`, `KnowledgePromotionReviewCard`, `BadgeMissionReviewCard`, `ParentSummaryReviewCard`, `VideoVisibilityReviewCard`.
+- `src/lib/guardians/executiveWorkspace/executiveWorkspace.baseline.json` — Guardian ratchet tightened **38 → 33** (5 fingerprints cleared: 2 apply completions + 3 committing mutations). Written intentionally via `--write-baseline`.
+- `docs/EXECUTIVE_WORKSPACE_STANDARD.md` — Implementation Status: baseline 38 → 33; Known-gap #2 (high-risk apply controls) marked RESOLVED; migration roadmap step 3 marked DONE.
+
+**Intentionally deferred (no page owner yet / regression risk — preserves zero capability loss):**
+- Voice-note routing in `DonnaReviewQueuePanel` (`markVoiceNoteReviewedAction`, `routeVoiceNoteToPlayerAction`, `routeVoiceNoteToSessionAction` + search input) — no page surface exists; migrate after one is built.
+- `TemplateDraftPanel` / `GenericDraftPanel` editors and the attendance-exception save path — deeply wired common paths in the 6,252-line `DonnaAssistantButton`; each warrants its own dedicated sprint.
+- Step-counter status chips — display-only, borderline; low value.
+These remain the accepted, ratchet-only backlog of 33.
+
+**Validation:** `npx tsc --noEmit` clean. `npm run guard` GREEN (backlog 33, new 0, cleared 0). `npm run certify` 9/9 suites PASS. `npm run build` exit 0. No new violations introduced.
+
+---
+
 ## 2026-06-22 — AcademyOS Guardian Framework V1 (architectural immune system)
 
 **Mission:** Stand up AcademyOS's permanent architectural immune system. Guardians are read-only — they observe · classify · certify · report · block regressions, and never mutate, repair, or implement. The Constitution defines the laws; the Guardians enforce them. `ExecutiveWorkspaceGuardian` is Guardian #1; the framework is designed so the planned Cognitive Load, DONNA Guidance, Page Ownership, Information Hierarchy, and Design System guardians each plug in as one rule file + one registry line.

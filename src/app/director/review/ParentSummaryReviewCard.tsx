@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Eye, EyeOff, CheckCircle2, AlertTriangle, ShieldCheck, User, Send } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
-import { DonnaIntelligenceDraftDecisionControls } from '@/components/assistant/DonnaIntelligenceDraftDecisionControls'
+import { DonnaIntelligenceDraftDecisionControls } from './DonnaIntelligenceDraftDecisionControls'
 import { applyParentCommunicationAction } from './applyParentCommunicationAction'
 
 // ── Payload ────────────────────────────────────────────────────────────────────

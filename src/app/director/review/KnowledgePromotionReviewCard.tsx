@@ -10,7 +10,7 @@
 import { useRouter } from 'next/navigation'
 import { BookOpen, Globe, Shield, ShieldCheck, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
-import { DonnaIntelligenceDraftDecisionControls } from '@/components/assistant/DonnaIntelligenceDraftDecisionControls'
+import { DonnaIntelligenceDraftDecisionControls } from './DonnaIntelligenceDraftDecisionControls'
 
 // ── Destination types ─────────────────────────────────────────────────────────
 

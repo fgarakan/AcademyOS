@@ -1,11 +1,9 @@
 {
   "guardianId": "executive-workspace",
   "note": "Accepted backlog — ratchet-only. Guardians never repair; this records existing violations so the gate blocks NEW ones. Shrinks as the owning convergence sprint moves work to the page; never grows.",
-  "count": 38,
+  "count": 33,
   "fingerprints": [
-    "executive-workspace::no-sidebar-completion::src/components/assistant/DonnaCurriculumAdjustmentApplyControls.tsx::apply",
     "executive-workspace::no-sidebar-completion::src/components/assistant/DonnaDeveloperTools.tsx::queue",
-    "executive-workspace::no-sidebar-completion::src/components/assistant/DonnaLevelMovementApplyControls.tsx::apply",
     "executive-workspace::no-sidebar-completion::src/components/assistant/DonnaMessageReviewPanel.tsx::approve",
     "executive-workspace::no-sidebar-completion::src/components/assistant/GenericDraftPanel.tsx::save",
     "executive-workspace::no-sidebar-completion::src/components/assistant/TemplateDraftPanel.tsx::save",
@@ -32,9 +30,6 @@
     "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaAssistantButton.tsx::saveSessionDraftAction",
     "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaAssistantButton.tsx::saveWorkflowStateAction",
     "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaAttendanceExceptionCard.tsx::saveAttendanceExceptionDraftAction",
-    "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaCurriculumAdjustmentApplyControls.tsx::applyApprovedCurriculumAdjustmentAction",
-    "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaIntelligenceDraftDecisionControls.tsx::updateDonnaIntelligenceDraftDecisionAction",
-    "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaLevelMovementApplyControls.tsx::applyApprovedLevelMovementAction",
     "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaReviewQueuePanel.tsx::markVoiceNoteReviewedAction",
     "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaReviewQueuePanel.tsx::routeVoiceNoteToPlayerAction",
     "executive-workspace::no-sidebar-mutations::src/components/assistant/DonnaReviewQueuePanel.tsx::routeVoiceNoteToSessionAction",

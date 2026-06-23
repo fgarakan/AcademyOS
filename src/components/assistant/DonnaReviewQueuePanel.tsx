@@ -12,13 +12,12 @@ import {
   routeVoiceNoteToSessionAction,
 } from '@/app/director/_actions/donnaReviewQueueActions'
 import { explainReviewItem } from './donnaReviewQueueExplainer'
-import { DonnaIntelligenceDraftDecisionControls } from './DonnaIntelligenceDraftDecisionControls'
-import { DonnaLevelMovementApplyControls } from './DonnaLevelMovementApplyControls'
-import { DonnaCurriculumAdjustmentApplyControls } from './DonnaCurriculumAdjustmentApplyControls'
+// Executive Workspace Standard §2/§7: draft completion (approve / apply / reject)
+// happens on the owning page. The decision + apply controls now live with the
+// review-page cards under src/app/director/review/; the sidebar hands off there.
 import type {
   DonnaReviewQueueSummary,
   DonnaReviewItem,
-  DonnaReviewItemType,
   DonnaReviewQueueActionType,
 } from './donnaReviewQueueTypes'
 import type { DonnaTaskId } from './donnaTaskContracts'
@@ -54,14 +53,6 @@ const ACTION_LABELS: Record<DonnaReviewQueueActionType, string> = {
   route_to_session: 'Route to Session',
   start_populate_blocks: 'Populate Blocks',
   mark_reviewed_proposed_action: 'Review Draft',
-}
-
-// Maps DonnaReviewItemType → proposed_actions.target_module string for the decision controls.
-const ITEM_TYPE_TO_TARGET_MODULE: Partial<Record<DonnaReviewItemType, string>> = {
-  parent_update_pending_review: 'parent_communication',
-  level_readiness_pending_review: 'level_review',
-  curriculum_adjustment_pending_review: 'curriculum_adjustment',
-  coach_communication_pending_review: 'coach_communication',
 }
 
 // ---------------------------------------------------------------------------
@@ -515,31 +506,19 @@ export function DonnaReviewQueuePanel({
                             )
                           }
                           if (action === 'mark_reviewed_proposed_action') {
-                            const targetModule = ITEM_TYPE_TO_TARGET_MODULE[item.type]
-                            if (!targetModule) return null
+                            // Completion (approve / apply / reject) is page-owned. The
+                            // sidebar previews the draft (above) and hands off to the
+                            // owning review page where the decision + apply controls live.
                             return (
-                              <div key={action} className="space-y-2">
-                                <DonnaIntelligenceDraftDecisionControls
-                                  proposedActionId={item.sourceId}
-                                  targetModule={targetModule}
-                                  onSuccess={onRefresh}
-                                />
-                                {item.type === 'level_readiness_pending_review' && (
-                                  <DonnaLevelMovementApplyControls
-                                    proposedActionId={item.sourceId}
-                                    playerLabel={item.playerLabel}
-                                    previewText={item.previewText}
-                                    onSuccess={onRefresh}
-                                  />
-                                )}
-                                {item.type === 'curriculum_adjustment_pending_review' && (
-                                  <DonnaCurriculumAdjustmentApplyControls
-                                    proposedActionId={item.sourceId}
-                                    previewText={item.previewText}
-                                    onSuccess={onRefresh}
-                                  />
-                                )}
-                              </div>
+                              <Link
+                                key={action}
+                                href="/director/review"
+                                onClick={onClose}
+                                className="flex items-center gap-1.5 btn-lime text-xs px-2.5 py-1.5"
+                              >
+                                Review &amp; approve on page
+                                <ArrowRight className="w-3 h-3 shrink-0" />
+                              </Link>
                             )
                           }
                           return null

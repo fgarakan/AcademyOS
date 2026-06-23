@@ -9,8 +9,8 @@
 import { useRouter } from 'next/navigation'
 import { ArrowRight, CheckCircle2, XCircle, AlertTriangle, ShieldCheck, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
-import { DonnaIntelligenceDraftDecisionControls } from '@/components/assistant/DonnaIntelligenceDraftDecisionControls'
-import { DonnaLevelMovementApplyControls } from '@/components/assistant/DonnaLevelMovementApplyControls'
+import { DonnaIntelligenceDraftDecisionControls } from './DonnaIntelligenceDraftDecisionControls'
+import { DonnaLevelMovementApplyControls } from './DonnaLevelMovementApplyControls'
 
 // ── Payload shape ──────────────────────────────────────────────────────────────
 
