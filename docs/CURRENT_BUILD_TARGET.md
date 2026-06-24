@@ -1,13 +1,23 @@
 # Current Build Target
 
-**Last updated:** 2026-06-22
+**Last updated:** 2026-06-23
 **Current phase:** Director Pilot Readiness — Brian Dabul (Dabul Tennis Academy) Pilot
 
 ---
 
 ## Active target
 
-**Latest completed: Mega Sprint 3511–3540 — Director Operating Session V1 / Executive Partnership (2026-06-22, uncommitted)**
+**In progress: Mega Sprint 3631–3660 — Templates Workspace V1 (2026-06-23)**
+
+Make the Templates **page** the permanent executive workspace for template creation. The page owns creation, editing, save, and completion; DONNA only prepares drafts; the sidebar only explains, previews, and navigates. Completes the remaining Template workflow migration, preserves all existing functionality, and improves the Guardian baseline if applicable. No new AI, no visual redesign, no new template types — the goal is a premium, low-cognitive-load, Director-first Templates experience.
+
+### Recently completed (2026-06-23)
+
+- **Curriculum Architecture Audit V1** (`6c0c69fa`) — read-only audit of the curriculum system against the target Master Development Spine model. Verdict: directionally correct but incomplete. Surfaced a P0 multi-tenant RLS hole on the global spine (acknowledged; deferred — highest-priority *production security* task, but not the highest-leverage task for the Brian Dabul V1 pilot), an outcome-layer gap (P1), and model duplication (P1). Phase 0 RLS hardening is **deferred** until after Templates Workspace V1; reassess the roadmap then. See `docs/architecture/curriculum/CURRICULUM_ARCHITECTURE_AUDIT_V1.md`.
+- **Sidebar Purification V1** (`9dbc4650`, Mega Sprint 3571–3600) — moved DONNA apply-controls into the review folder and slimmed `DonnaReviewQueuePanel`; the sidebar explains/previews/navigates rather than executing. Updated `EXECUTIVE_WORKSPACE_STANDARD.md` and the executiveWorkspace Guardian baseline.
+- **Guardian Framework V1** (`e90dce79`) — CI quality gates + `ExecutiveWorkspaceGuardian` and `executiveWorkspace.baseline.json` to enforce the executive-workspace standard (page owns work; sidebar explains/previews/navigates).
+
+**Previous: Mega Sprint 3511–3540 — Director Operating Session V1 / Executive Partnership (2026-06-22)**
 
 Promoted the canonical concept to the **Executive Partnership** layer. Every way a director begins a session — floating widget, full `/director/donna` page, a typed "good morning", "I'm back" after lunch, "ready", "let's begin", a return tomorrow — converges on ONE composer (`resumeExecutivePartnership`) and resumes the same executive working relationship: situation awareness → recommended first action → guide-to-completion. The Operating Session is simply the mechanism by which the partnership resumes. Convergence over creation — no new lifecycle, no duplicated state, no second greeting system, no OpenAI pathway, no migration. Reuses the three existing lifecycle stores (`donnaDailyGreeting`, `donnaLastSessionStore`, `donnaChatSessionMemory`), RealitySnapshot, the Completion Contract, Executive Presence, and Conversation DNA.
 
@@ -41,7 +51,7 @@ Promoted the canonical concept to the **Executive Partnership** layer. Every way
 - **10 atomic loops are structurally test-ready** — route · primary action · DONNA guidance · completion path · approval guardrails · no fake completion, all certified (60/60).
 - **Next priority is real usability testing, not new architecture** — the spine is converged and certified; the gap now is real-world usability validation, not new engines, routers, pathways, or conversation layers.
 
-**Next recommended action:** Run an internal guided-completion test pass across all 10 atomic loops (`docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md`), then run the Brian Dabul pilot (`docs/testing/BRIAN_DABUL_PILOT_TEST_SCRIPT.md`). No migrations pending.
+**Next recommended action:** Complete **Mega Sprint 3631–3660 — Templates Workspace V1** (see Active target above). After it ships, reassess the roadmap before beginning Phase 0 RLS hardening, then resume pilot usability testing (`docs/testing/ATOMIC_LOOP_USABILITY_TEST_PLAN.md`, `docs/testing/BRIAN_DABUL_PILOT_TEST_SCRIPT.md`). No migrations pending.
 
 > Note: the historical sections below (Mega Sprint 554–603 and earlier) are retained for reference. They predate the 3000-series convergence work and do not describe the current target. Trust this header and `docs/CHANGELOG.md`.
 
