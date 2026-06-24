@@ -13,6 +13,7 @@
 // contributes reasoning, continuity, and the response wording.
 
 import type { DonnaMessageInput, DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
+import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import { runExecutiveOperatingTurn, type ExecutiveTurnResult } from './executiveOperatingLayer'
 import { buildResolverStateFromLive, type LiveAcademyContext } from './liveResolverAdapter'
 import {
@@ -98,10 +99,12 @@ export async function runExecutiveLive(
   academy: LiveAcademyContext,
   legacy: DonnaMessageResult,
   mode: ExecutiveMode,
+  // Mega Sprint 3841–3870 — already-loaded live academy context (optional, fail-safe).
+  directorCtx?: DirectorDonnaContext | null,
 ): Promise<ExecutiveLiveResult> {
   let turn: ExecutiveTurnResult | null = null
   try {
-    const state = buildResolverStateFromLive(input, role, academy, legacy)
+    const state = buildResolverStateFromLive(input, role, academy, legacy, directorCtx)
     turn = await runExecutiveOperatingTurn(state)
   } catch (err) {
     // Fail-open — executive crashed; legacy will be returned.

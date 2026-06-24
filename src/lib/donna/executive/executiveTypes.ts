@@ -62,6 +62,13 @@ export interface AcademyContext {
   name: string
   /** Non-sensitive identity label, e.g. development model name. */
   modelLabel?: string | null
+  /**
+   * Compact one-line live operating snapshot (counts only — players, coaches,
+   * pending reviews, onboarding readiness, etc.). Wired from the already-loaded
+   * DirectorDonnaContext (Mega Sprint 3841–3870). Only ever set when context is
+   * live; never demo/fabricated. No PII.
+   */
+  operatingSummary?: string | null
 }
 
 export interface CurriculumContext {

@@ -162,6 +162,9 @@ export async function donnaLiveConversationAction(
         { academyId, name: (academy?.name as string) ?? null, modelLabel: dnaModelId },
         legacyResult,
         execMode,
+        // Mega Sprint 3841–3870 — feed the already-loaded live academy truth into
+        // the Executive Context Packet (real signals, not role+permissions alone).
+        directorCtx,
       )
       return live.result
     } catch (bridgeErr) {

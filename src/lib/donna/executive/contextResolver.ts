@@ -84,7 +84,14 @@ const PROVIDERS: Record<ContextSourceId, Provider> = {
     id: 'academy',
     relevance: () => true,
     assemble: (s) => s.academy
-      ? { ok: true, content: `${s.academy.name}${s.academy.modelLabel ? ` (${s.academy.modelLabel})` : ''}`, confidence: 0.9 }
+      ? {
+          ok: true,
+          // Identity + (when live) a one-line operating snapshot, so the academy
+          // source — required by every goal — always carries real headline facts.
+          content: `${s.academy.name}${s.academy.modelLabel ? ` (${s.academy.modelLabel})` : ''}` +
+            (s.academy.operatingSummary ? ` — ${s.academy.operatingSummary}` : ''),
+          confidence: 0.9,
+        }
       : UNAVAILABLE('no academy context'),
   },
   academy_defaults: {

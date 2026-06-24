@@ -2,6 +2,61 @@
 
 ---
 
+## 2026-06-24 — Mega Sprint 3841–3870 — DONNA Executive Intelligence V1
+
+**Mission:** Executive DONNA is proven live; the bottleneck is now intelligence quality.
+She reached OpenAI but answered generically because the Executive Context Packet carried
+role+permissions+academy-name only — no real academy operating truth. Wire the
+already-loaded `DirectorDonnaContext` into the packet. No new architecture, no new OpenAI
+path, no new tables/migrations, no memory/COO work.
+
+**Root cause:** `outstanding_decisions` is *required* context for analyze/recommend/diagnose,
+but `buildResolverStateFromLive` left it empty → resolved UNAVAILABLE → OpenAI saw no signals.
+
+**Files changed (5):**
+- `executiveTypes.ts` — `AcademyContext.operatingSummary?` (one-line live counts; no PII).
+- `contextResolver.ts` — academy source appends `operatingSummary` (reaches every goal).
+- `liveResolverAdapter.ts` — derive `outstandingDecisions` (from `academyRisks` + named
+  `attentionItems`, urgency-ranked), `academy.operatingSummary` (player/coach/review/session
+  counts, onboarding readiness), and `curriculum` (structural gaps + bottleneck + stalls) —
+  all from `DirectorDonnaContext`, **gated on `isLive`** (never demo data as real).
+- `executiveLiveBridge.ts` — thread `directorCtx` into `buildResolverStateFromLive`.
+- `donnaLiveConversationAction.ts` — pass the already-loaded `directorCtx` to `runExecutiveLive`.
+
+**Live result (restarted server, real director auth, flag=primary, 6 prompts):** every turn
+`openaiRealCall=true, executivePathUsed=true, fallbackUsed=NO`; contextSources 4→5, packet
+~80→~110 tok. Responses went from generic ("review academy metrics / approve reviews") to
+academy-specific: every answer cited **54 active players**, the **Orange 1 — Foundation
+bottleneck (10 stalled)**, and **onboarding partial**.
+
+**Remaining gaps:** the pilot academy currently has 0 pending reviews/risks, so
+`outstanding_decisions` stays honestly empty (the ranking logic is wired, nothing to rank);
+`serializePacket` emits a duplicate `AVAILABLE_ACTIONS` line (pre-existing, minor);
+`curriculum.levels` left `[]` (summary only); strategic action path does not run the
+executive layer (separate path, out of scope). Throwaway live-trace/audit scripts are not
+retained. Report: `docs/donna/DONNA_EXECUTIVE_INTELLIGENCE_V1_REPORT.md`.
+
+---
+
+## 2026-06-24 — Mega Sprint 3811–3840 — DONNA Live Executive Activation Certification V1
+
+**Mission:** Prove a real Director message reaches the Executive Operating Layer end-to-end
+(Router → Brain → Executive → Context Packet → OpenAI → Validator → UI) and that the
+Executive Layer — not a legacy engine — owns the answer. Certification only; no architecture.
+
+- Verified via a throwaway **live-action** trace runner invoking the exact `runExecutiveLive()`
+  the sidebar action calls (`donnaLiveConversationAction.ts:159`) with
+  `DONNA_EXECUTIVE_REASONING=primary` and **real OpenAI calls** (gpt-4o-mini). Later superseded
+  by a full real-server-action HTTP trace; throwaway scripts not retained.
+- **Proven on 7 real Director messages:** executive invoked, context packet built (4 sources,
+  ~85–97 tok), **real OpenAI call** (`source=openai`, 344–361 resp tok, 1.2–3.9s), validator
+  accepted, executive path used, **0/7 legacy phrase leaks**. Verdict **PASS (engine)**.
+- **Gap found:** `.env.local` has **no `DONNA_EXECUTIVE_REASONING`** → the committed runtime
+  resolves to `off`, so the live app currently serves the Director via legacy engines. Engine
+  is built, wired, and certified but **dormant** until the flag is set.
+- Report: `docs/donna/DONNA_LIVE_EXECUTIVE_ACTIVATION_CERTIFICATION_V1.md`. Scores —
+  Executive readiness 98, Live DONNA (as-deployed) 40, God Mode 88.
+
 ## 2026-06-24 — Mega Sprint 3781–3810 — DONNA Executive Flag Reconciliation V1
 
 **Mission:** Make `DONNA_EXECUTIVE_REASONING` mean the same thing across the router, the brain, and the action layer. Reconciliation only — no new architecture, no second OpenAI pathway, no migration, OpenAI gateway untouched.
