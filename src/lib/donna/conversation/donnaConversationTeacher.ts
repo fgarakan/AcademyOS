@@ -42,6 +42,11 @@ export interface ConversationTeacherInput {
   currentConfidence?: number
   academyContext?: string    // brief non-sensitive academy context (name, DNA model label)
   maxWords?: number          // target response length
+  /** Opt-in override for the userText volume cap (chars). Used only by the
+   *  Executive Operating Layer, which sends a redacted, budget-bounded context
+   *  packet (see contextResolver). Legacy callers omit it and keep the 500-char
+   *  cap. The sensitive-PII pattern checks below always apply regardless. */
+  contextLengthLimit?: number
 }
 
 export interface ConversationTeacherOutput {
@@ -220,7 +225,13 @@ function privacyGuard(input: ConversationTeacherInput): string | null {
   // 3451–3480): executive_refinement receives DONNA's OWN already-grounded,
   // already-safe answer (not raw user input), so longer structured answers may be
   // humanized; the sensitive-pattern checks above still apply unchanged.
-  const lengthLimit = input.mode === 'executive_refinement' ? 1600 : 500
+  // Volume cap. The Executive Operating Layer opts into a higher cap via
+  // contextLengthLimit because it sends a redacted, budget-bounded context packet
+  // (not raw user input). The sensitive-PII pattern checks above are unconditional
+  // and unaffected by this — only the volume threshold changes.
+  const lengthLimit =
+    input.contextLengthLimit ??
+    (input.mode === 'executive_refinement' ? 1600 : 500)
   if (input.userText.length > lengthLimit) {
     return `Privacy guard blocked: text exceeds ${lengthLimit} character safety limit for teacher calls`
   }

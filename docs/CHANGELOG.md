@@ -2,6 +2,120 @@
 
 ---
 
+## 2026-06-24 — Mega Sprint 3781–3810 — DONNA Executive Flag Reconciliation V1
+
+**Mission:** Make `DONNA_EXECUTIVE_REASONING` mean the same thing across the router, the brain, and the action layer. Reconciliation only — no new architecture, no second OpenAI pathway, no migration, OpenAI gateway untouched.
+
+**Problem (flagged at the end of 3751–3780):** executive-first routing was gated by the binary `isExecutiveReasoningEnabled()` (matched only `'1'`/`'true'`), while the live action layer read the tri-state `resolveExecutiveMode()` (`off`/`shadow`/`primary`). Setting `DONNA_EXECUTIVE_REASONING=primary` therefore enabled the action bridge but **not** executive-first routing — one env value, two meanings.
+
+**Fix (single source of truth):**
+- `src/lib/donna/executive/executiveOperatingLayer.ts` — `isExecutiveReasoningEnabled()` now returns `resolveExecutiveMode() === 'primary'`. The tri-state resolver is the only flag parser; routing and the action layer can no longer disagree. One env value now drives the whole path:
+  - `off` (default/unset) → dormant; legacy path only.
+  - `shadow` → routing stays legacy (user always sees the legacy answer); the executive layer runs in parallel inside the action layer for diagnostics only — routing is **not** executive-first.
+  - `primary` → executive-first routing (router Step 1.6 + brain Step 2.5 → `live_ai_assist`) **and** executive response when it validates.
+  - `1` / `true` → backward-compatible aliases for `primary` (already mapped by `resolveExecutiveMode`).
+
+**Certification:**
+- `executiveLiveWiringCertification.ts` (block A) — adds `isExecutiveReasoningEnabled()` agreement checks: `primary`/`1`/`true` → routing enabled; `shadow`/`off` → routing disabled. **35/35** offline (was 29/29).
+- `executiveExperienceConvergenceCertification.ts` (blocks B + C) — replaced the single-token `'1'` assertion (and its now-stale comment) with a full mode→routing matrix: `primary`+`1`+`true` defer to `executive_reasoning` / force `live_ai_assist`; `shadow`+`off` do neither (baseline preserved). **75/75** offline (was 41/41). LIVE OpenAI proof still honestly **SKIPPED — NOT RUN** with no key.
+
+**Validation:** `npx tsc --noEmit` clean · `npm run guard` GREEN (backlog 33 unchanged) · `npm run certify` **12/12 suites**. Migration 083 untouched.
+
+---
+
+## 2026-06-24 — Mega Sprint 3751–3780 — DONNA Executive Experience Convergence V1
+
+**Mission:** Converge the live Director conversation on the Executive Operating Layer. When `DONNA_EXECUTIVE_REASONING` is on, a conversational/strategic director turn ("What should I do next?", "Help me complete this.", "Why are you recommending that?") routes through Executive Reasoning → Context Assembly → OpenAI → Validation instead of being preempted by a deterministic answer engine or a goal-confirmation menu. Convergence over creation — no new reasoning engine, no second OpenAI pathway, no migration. Flag-off is a strict no-op: every prior certification holds unchanged.
+
+**Routing wiring (flag-gated, additive):**
+- `src/lib/donna/brain/donnaCanonicalRouter.ts` — new `executive_reasoning` router stage (Step 1.6). When `isExecutiveReasoningEnabled()` and `classifyExecutiveConversation(text).match`, the router defers (`matched:false`, `needsOpenAI:true`) so the brain hands the turn to the Executive Operating Layer. Safety blocks + operating-session resume above always win first; flag-off skips the step entirely.
+- `src/lib/donna/brain/processDonnaMessage.ts` — Step 2.5 routes a matched executive turn to `live_ai_assist` (→ `donnaLiveConversationAction` → executive pipeline). Placed after active guided-workflow and COO-control early-returns, so it never hijacks an in-progress form or control turn. Flag-off → skipped.
+- `src/lib/donna/executive/executiveConversationClassifier.ts` — classifies the executive conversational class (advance/complete/explain/attention/status/prioritize); declines direct mutations, narrow lookups, and greetings so they keep their deterministic paths.
+- `src/lib/donna/executive/executiveUsageMetrics.ts` — summarizes/formats instrumented executive invocations for developer-visible proof.
+- `src/lib/donna/executive/responseValidator.ts` — quality gate strips Workflow-DONNA menu/generic output ("describe what you need in your own words", numbered option menus, "I think you're trying to…") when grounded context exists; grounded executive answers pass through accepted.
+
+**Certification:**
+- `src/lib/donna/certification/executiveExperienceConvergenceCertification.ts` — **41/41 offline checks**: classifier class boundaries, flag-gated router defer (on → `executive_reasoning`; off → baseline engine), flag-gated brain routing (on → `live_ai_assist`; off → baseline), the validator menu/generic gate, and the executive pipeline producing no workflow-menu output for the 8 sprint prompts. Includes a **real-key gated** LIVE OpenAI proof; with no key it honestly reports **SKIPPED — NOT RUN**, never faked. Registered in `scripts/certificationSuites.ts`.
+
+**Validation:** `npx tsc --noEmit` clean · `npm run guard` GREEN (backlog 33 unchanged — library/routing, not a sidebar surface) · `npm run certify` **12/12 suites**.
+
+**Note (not fixed — out of scope):** routing is gated by the binary `isExecutiveReasoningEnabled()` (`'1'`/`'true'`), while the live-wiring action layer reads the tri-state `resolveExecutiveMode()` (`off`/`shadow`/`primary`). A deployment that sets the flag to `primary` alone enables the action layer but not executive-first routing. Flagged for a follow-up reconciliation; no production change made this sprint.
+
+---
+
+## 2026-06-24 — Mega Sprint 3721–3750 — DONNA Live OpenAI Proof V1
+
+**Mission:** Prove that real director conversations reach OpenAI through the Executive Operating Layer with a real `OPENAI_API_KEY`. No new architecture, deep context, memory, or COO intelligence — proof only.
+
+**Result: PROVEN ✓ (YES).** With `DONNA_EXECUTIVE_REASONING=primary` and a real key, all 5 canonical turns hit OpenAI for real (`source=openai`, `disposition=accepted`, real latency 2.4–6.3s), executive path used, **legacy fallback NOT used** on any turn. Continuity held across the template chain (turn 3 "make it more competitive" + turn 4 "actually focus more on transition" → goal `revise`; turn 5 → `summarize`). `LIVE OPENAI PROOF: PROVEN ✓`, 31/31.
+
+**Proof blocker found + minimal fix (the only code change):**
+- **Breakpoint:** `src/lib/donna/conversation/donnaConversationTeacher.ts` `privacyGuard` capped `userText` at **500 chars** for all modes except `executive_refinement`. The executive gateway sends a serialized context packet via mode `strategic_reasoning`; once conversation history accumulated (turn 3+), the packet exceeded 500 chars and was rejected **before any network call** (observed as `realOpenAI=NO` at `0ms`). Turns 1–2 (small packet) already proved real OpenAI.
+- **Fix (minimal, isolated):** added an opt-in `contextLengthLimit?: number` to `ConversationTeacherInput`; the privacy guard honors it when present, else keeps the 500/1600 defaults. `executiveReasoningGateway.ts` sets it to `packet.budget.limitTokens * 5 + 2000` (≈9000 chars). **Legacy callers are unaffected** (the other `strategic_reasoning` caller, `donnaLiveAIConversationBrain`, omits the field and keeps the 500 cap). The **sensitive-PII pattern checks are unconditional and unchanged** — this raises the volume allowance only, for an already redacted + budget-bounded packet. Single OpenAI gateway preserved; no new pathway.
+
+**Per-turn proof (primary, real key):** all `gpt-4o-mini`, `source=openai`, `accepted`; context grew with history (ctxTokens 85 → 318 → 445 → 452 across the chain — exactly the growth that tripped the old cap).
+
+**Shadow mode (real key):** user received the legacy response while the executive path ran in parallel and reached real OpenAI; differences recorded; no user-facing regression.
+
+**Validation:** `tsc` clean · `npm run guard` GREEN (backlog 33) · `npm run certify` **11/11** (no regression in teacher-exercising suites). Without a key the live block self-reports `NOT RUN` and the suite still passes (CI-safe).
+
+---
+
+## 2026-06-24 — Mega Sprint 3691–3720 — DONNA Executive Reasoning Live Wiring V1
+
+**Mission:** Activate the Executive Operating Layer (shipped in 3661–3690) as a live path in `donnaLiveConversationAction`, behind the existing `DONNA_EXECUTIVE_REASONING` flag. Live execution, not architecture — no redesign, no new AI, no parallel reasoning system, single OpenAI gateway preserved. Fail-open: the legacy result is always computed first and returned on any executive failure (no user-facing regression).
+
+**Modes (resolved from the one existing flag):**
+- `off` (default) — legacy path only; zero behavior change.
+- `shadow` — legacy returned to the user; executive run in parallel and compared; developer-visible only.
+- `primary` — executive response returned when it validates; legacy is the certified fail-open fallback.
+
+**New modules — `src/lib/donna/executive/` (additive, pure, no supabase):**
+- `executiveShadowMode.ts` — mode resolver, `ExecutiveLiveDiagnostics` (openaiInvoked · realCall · model · goal · packet tokens · sources · latency · confidence target · disposition · fallbackUsed · executivePathUsed), `ShadowComparison`, in-memory recorder (`recordShadow`/`getShadowRecords`) + structured console proof line.
+- `liveResolverAdapter.ts` — maps `DonnaMessageInput` + the legacy brain result → `ResolverState` (reuses the legacy turn's resolved entity for "it"/"that" coreference; loads only what's cheaply available, leaves the rest honestly `unavailable`).
+- `executiveLiveBridge.ts` — `runExecutiveLive()`: runs the executive turn, builds diagnostics + comparison, and maps the result back to `DonnaMessageResult`. Structural safety inherited from legacy — permissions/approval/navigation/workflow only ever STRENGTHENED (approval can be added, never removed). Fail-open: executive crash or validator rejection → legacy returned.
+
+**Wiring points:**
+- `src/app/director/_actions/donnaLiveConversationAction.ts` — after the legacy result is computed (completion contract → executive presence → executive refinement), the action routes through `resolveExecutiveMode()` → `runExecutiveLive(...)` with the legacy result as fallback. Wrapped in try/catch returning legacy. No other call site changed.
+- `src/lib/donna/brain/processDonnaMessage.ts` — `DonnaMessageResult` gains one **optional** `executiveDiagnostics` field (additive; absent on the legacy path; never user-facing).
+
+**Certification:**
+- `src/lib/donna/certification/executiveLiveWiringCertification.ts` — **29/29 offline checks**: mode resolution, shadow safety (user always sees legacy), primary path (executive shown when valid), permission/approval preservation, fail-open on executive crash, and developer-diagnostics completeness. Includes a **real-key gated** 5-turn live proof that asserts `source=openai` + no fallback when `OPENAI_API_KEY` is set.
+- **Honest status:** this environment has no `OPENAI_API_KEY`, so the LIVE OpenAI proof reports **NOT RUN (no key)** rather than a faked pass. Offline wiring is fully certified; set the key and re-run block G to prove the live call end-to-end.
+- Registered in `scripts/certificationSuites.ts`.
+
+**Validation:** `npx tsc --noEmit` clean · `npm run guard` GREEN (backlog 33 unchanged) · `npm run certify` **11/11 suites**.
+
+---
+
+## 2026-06-24 — Mega Sprint 3661–3690 — DONNA Executive Conversational Readiness V1 (Executive Operating Layer)
+
+**Mission:** Make DONNA reason with *complete context* instead of isolated prompts — an Executive Operating Partner, not a workflow bot. DONNA must never send OpenAI a naked prompt; she sends an **Executive Context Packet**. Additive, flag-gated, fail-open — the live director pipeline is untouched until `DONNA_EXECUTIVE_REASONING` is set; worst case at every stage is today's grounded answer. No new dependencies, no migration, no UI/Templates work, reuses the single canonical OpenAI gateway (no second pathway).
+
+**New layer — `src/lib/donna/executive/` (additive, library-only):**
+- `contextSources.ts` — catalog of 19 context sources with cost weight, redaction class (open/sensitive/tenant), freshness.
+- `reasoningGoals.ts` — the 15 reasoning goals (analyze · decide · recommend · create · revise · explain · compare · summarize · teach · navigate · approve · delegate · coach · diagnose · plan); each carries a confidence target + required/conditional/excluded context profile. **Reasoning determines context; context never determines reasoning.**
+- `executiveTypes.ts` — `ResolverState` input bag + slice/record types (decoupled from the 6k-line brain input so the layer is independently testable).
+- `conversationContinuity.ts` — binds "it"/"that"/follow-ups ("make it more competitive", "actually focus more on transition") to the active draft or last entity; rewrites the turn self-contained.
+- `executiveReasoningLayer.ts` — `deriveReasoningGoal()`: classifies the turn into one reasoning goal and its context contract (runs *before* assembly).
+- `executiveContextPacket.ts` — the formal packet: reasoning goal, confidence target, assembled / **omitted** / **unavailable** context, active workflow, active draft, outstanding decisions, available actions, completion contract, provenance, budget. `serializePacket()` (compact, to OpenAI) + `inspectPacket()` (human audit).
+- `contextResolver.ts` — assembles the **minimum complete** packet: relevance-gates conditionals, redacts by role/permission/tenant, budgets optional sources by cost (required never dropped, excluded never sent).
+- `openaiInstrumentation.ts` — records every invocation (model · latency · context tokens · response tokens · reasoning goal · confidence target · source · disposition); `proveOpenAIWasCalled()` / `gatewayWasInvoked()`.
+- `executiveReasoningGateway.ts` — packet → multi-turn reasoning call via the existing `callDonnaOpenAIGateway` (gpt-4o-mini); fail-open to a packet-grounded deterministic fallback; always instrumented.
+- `responseValidator.ts` — only validated responses reach the UI: tone, execution-claim/permission, hallucination (stray figures), workflow consistency, completion contract.
+- `actionPlanner.ts` — separates reasoning from execution: reasoning → an inspectable plan (navigate / update_draft / start_workflow / request_approval / respond); never executes or mutates.
+- `executiveOperatingLayer.ts` — composition root `runExecutiveOperatingTurn()`: continuity → reasoning goal → resolver → packet → instrumented gateway → validator → planner → completion. Gated by `isExecutiveReasoningEnabled()`.
+
+**Certification:**
+- `src/lib/donna/certification/executiveConversationalReadinessCertification.ts` — drives the canonical 7-turn director conversation end-to-end. **31/31 checks, 10.0/10** (structural; runs offline via fail-open gateway — with a key the same path returns source `openai`). Registered in `scripts/certificationSuites.ts`.
+- All 7 mandated tests pass: "Good morning" resumes context · "Create an Orange 2 class template" prepares draft with curriculum+defaults · "Make it more competitive" binds "it" to the draft · "Actually focus more on transition" continues the same intent · "What were we working on yesterday?" resumes prior work · "Why did you recommend this?" assembles assumptions+history · "How confident are you?" carries an explicit confidence signal.
+
+**Validation:** `npx tsc --noEmit` clean (full repo) · `npm run guard` GREEN (no new violations; backlog 33 unchanged — library layer, not a sidebar surface) · `npm run certify` **10/10 suites** (was 9).
+
+**Status:** Architecture shipped and certified; live wiring deferred behind the flag (Phase 2) — see Remaining gaps in the sprint return.
+
+---
+
 ## 2026-06-23 — Mega Sprint 3571–3600 — Sidebar Purification V1 (review-queue completion → page handoff)
 
 **Mission:** Begin conforming the product to the Executive Workspace Standard. Subtraction, not construction — remove meaningful work from the DONNA sidebar so it advises and delegates while the owning page completes. No new intelligence, no new Guardian, no new features, no migration. Objective: *Conversation happens in DONNA; work happens in the owning workspace.* Where no owning workspace exists, the migration is deferred — zero capability regression.

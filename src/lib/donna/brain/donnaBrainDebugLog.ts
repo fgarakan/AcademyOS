@@ -13,6 +13,7 @@ export type BrainRoutingStep =
   | 'check_setup_routing'
   | 'check_guided_workflow'
   | 'check_coo_control'
+  | 'check_executive_first'
   | 'check_continuity'
   | 'check_today_guidance'
   | 'check_daily_brief'

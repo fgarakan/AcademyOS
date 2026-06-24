@@ -17,6 +17,9 @@ export const CERTIFICATION_SUITES: readonly string[] = [
   'src/lib/donna/certification/donnaAdaptiveCOOOperatingDayCertification.ts',
   'src/lib/donna/certification/donnaCOOPresenceCertification.ts',
   'src/lib/donna/certification/atomicLoopUsabilityCertification.ts',
+  'src/lib/donna/certification/executiveConversationalReadinessCertification.ts',
+  'src/lib/donna/certification/executiveLiveWiringCertification.ts',
+  'src/lib/donna/certification/executiveExperienceConvergenceCertification.ts',
   'src/lib/donna/certification/pilotModeExecutiveRefinementCertification.ts',
   'src/lib/donna/experience/donnaExecutiveExperienceCertification.ts',
 ]

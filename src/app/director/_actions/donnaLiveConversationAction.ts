@@ -22,6 +22,9 @@ import { applyExecutiveRefinement } from '@/lib/donna/brain/donnaExecutiveCommun
 import { enforceCompletionContract } from '@/lib/donna/completion/donnaCompletionConvergence'
 import { enforceExecutivePresence } from '@/lib/donna/conversation/donnaExecutivePresenceContract'
 import { loadDirectorDonnaContext, type DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+// Mega Sprint 3691–3720 — Executive Operating Layer live wiring (flag-gated, fail-open)
+import { resolveExecutiveMode } from '@/lib/donna/executive/executiveShadowMode'
+import { runExecutiveLive } from '@/lib/donna/executive/executiveLiveBridge'
 
 const ALLOWED_ROLES = ['academy_director', 'head_coach'] as const
 type AllowedRole = typeof ALLOWED_ROLES[number]
@@ -138,7 +141,34 @@ export async function donnaLiveConversationAction(
     // Fail-open: returns the result unchanged if refinement is unavailable.
     // Never alters facts, recommendations, or permissions.
     const role = membership.role === 'head_coach' ? 'coach' : 'director'
-    return await applyExecutiveRefinement(present, role)
+    const legacyResult = await applyExecutiveRefinement(present, role)
+
+    // ── Executive Operating Layer wiring (Mega Sprint 3691–3720) ──────────────
+    // Flag-gated via the existing DONNA_EXECUTIVE_REASONING flag. The legacy
+    // result above is always computed first, so it is available as the certified
+    // fail-open fallback. Modes:
+    //   off     → legacy only (production default; zero behavior change)
+    //   shadow  → run executive in parallel, record diagnostics, return legacy
+    //   primary → return executive when it validates, else legacy
+    // Never throws to the user: any failure inside the bridge returns legacy.
+    const execMode = resolveExecutiveMode()
+    if (execMode === 'off') {
+      return legacyResult
+    }
+    try {
+      const live = await runExecutiveLive(
+        { ...input, userMessage: msg },
+        membership.role,
+        { academyId, name: (academy?.name as string) ?? null, modelLabel: dnaModelId },
+        legacyResult,
+        execMode,
+      )
+      return live.result
+    } catch (bridgeErr) {
+      console.error('[donnaLiveConversationAction] executive bridge error (returning legacy):',
+        bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr))
+      return legacyResult
+    }
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

@@ -37,6 +37,11 @@ import {
   resumeExecutivePartnership,
 } from '@/lib/donna/conversation/donnaExecutivePartnership'
 import { detectGuidedCompletionIntent } from '@/lib/donna/guidedCompletion/guidedCompletionRegistry'
+// Mega Sprint 3751–3780 — Executive Experience Convergence. When the executive
+// flag is on, conversational/strategic requests defer to the executive layer
+// instead of being preempted by a deterministic answer engine. Flag-off = no-op.
+import { isExecutiveReasoningEnabled } from '@/lib/donna/executive/executiveOperatingLayer'
+import { classifyExecutiveConversation } from '@/lib/donna/executive/executiveConversationClassifier'
 import {
   detectDailyBriefIntent,
   buildDailyOperatingBrief,
@@ -59,6 +64,7 @@ export type DonnaRouterStage =
   | 'proactive'           // "what's blocking / what are you noticing"
   | 'assumption'          // vague-but-safe → executive COO assumption
   | 'guided_completion'   // "take me to completion / walk me through" → brain runs the loop
+  | 'executive_reasoning' // executive-flag on + strategic request → brain → Executive Operating Layer
   | 'clarify'             // one focused clarifying question (only when required)
   | 'defer_to_brain'      // nothing matched → existing brain (may use OpenAI gateway)
 
@@ -176,6 +182,25 @@ export function routeDonnaConversation(params: {
       needsOpenAI: false,
       requiresApproval: false,
       realityGrounded: groundedFrom(answer, ctx),
+    }
+  }
+
+  // ── Step 1.6 — Executive-first routing (Mega Sprint 3751–3780) ─────────────────
+  // When the Executive Operating Layer is live (DONNA_EXECUTIVE_REASONING on), a
+  // conversational/strategic director request must reach Executive Reasoning →
+  // Context Assembly → OpenAI → Validation, NOT a deterministic answer engine or a
+  // goal-confirmation menu. Safety blocks + operating-session resume above always
+  // win first; this only intercepts genuine executive questions. When the flag is
+  // off this is a no-op and the deterministic engines below are unchanged.
+  if (isExecutiveReasoningEnabled() && classifyExecutiveConversation(text).match) {
+    return {
+      matched: false,            // defer: the brain routes this to live_ai_assist → executive layer
+      stage: 'executive_reasoning',
+      engineId: 'executiveOperatingLayer(brain)',
+      answer: null,
+      needsOpenAI: true,
+      requiresApproval: false,
+      realityGrounded: false,
     }
   }
 

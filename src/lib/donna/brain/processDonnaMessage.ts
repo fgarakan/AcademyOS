@@ -155,6 +155,13 @@ import { detectOperatingIntent, getOperatingIntentPrompt } from '@/lib/donna/ope
 // Mega Sprint 3151–3180 — Reality Synchronization Engine V1
 import type { RealitySnapshot } from '@/lib/donna/reality/realitySnapshot'
 import { livePageStateToSnapshot, projectSnapshotToLiveState } from '@/lib/donna/reality/realityAdapter'
+// Mega Sprint 3691–3720 — Executive Operating Layer live diagnostics (type-only)
+import type { ExecutiveLiveDiagnostics } from '@/lib/donna/executive/executiveShadowMode'
+// Mega Sprint 3751–3780 — Executive Experience Convergence. Flag-gated executive-first
+// routing: strategic/conversational requests go to the Executive Operating Layer
+// (via live_ai_assist → donnaLiveConversationAction) instead of a workflow menu.
+import { isExecutiveReasoningEnabled } from '@/lib/donna/executive/executiveOperatingLayer'
+import { classifyExecutiveConversation } from '@/lib/donna/executive/executiveConversationClassifier'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -273,6 +280,11 @@ export interface DonnaMessageResult {
    *  Non-null when livePageState or realitySnapshot was present in the input.
    *  Available to downstream AI pipelines for freshness-aware context building. */
   realitySnapshot: RealitySnapshot | null
+  /** Mega Sprint 3691–3720 — developer-visible Executive Operating Layer diagnostics
+   *  for this turn (proves OpenAI invocation, packet assembly, fallback usage).
+   *  Optional + additive: populated only when the executive layer ran (shadow or
+   *  primary mode); absent on the legacy-only path. Never user-facing. */
+  executiveDiagnostics?: ExecutiveLiveDiagnostics | null
 }
 
 // ── Phrase detectors (inlined to avoid React component dependency) ─────────────
@@ -713,6 +725,26 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
       finalizeLog(debugLog, 'check_coo_control', 'route_coo_control')
       emitDebugLog(debugLog)
       return makeResult('route_coo_control', { cooControl: control, confidence: 0.95 }, debugLog)
+    }
+  }
+
+  // ── Step 2.5: Executive-first routing (Mega Sprint 3751–3780) ─────────────────
+  // When the Executive Operating Layer is live, a conversational/strategic director
+  // request is routed to live_ai_assist so it reaches the executive pipeline
+  // (donnaLiveConversationAction → Executive Reasoning → Context Packet → OpenAI →
+  // Validation) instead of being answered by a deterministic engine or a goal-
+  // confirmation menu. Placed AFTER active guided-workflow (Step 1) and COO control
+  // (Step 2) early-returns, so it never hijacks an in-progress form or control turn.
+  // Flag-off → skipped entirely (zero behavior change; prior certifications hold).
+  logStep(debugLog, 'check_executive_first')
+  if (isExecutiveReasoningEnabled()) {
+    const execClass = classifyExecutiveConversation(userMessage)
+    if (execClass.match) {
+      finalizeLog(debugLog, 'check_executive_first', 'live_ai_assist')
+      emitDebugLog(debugLog)
+      return makeResult('live_ai_assist', {
+        confidence: 0.20, // intentionally low: hand reasoning to the executive layer
+      }, debugLog)
     }
   }
 
