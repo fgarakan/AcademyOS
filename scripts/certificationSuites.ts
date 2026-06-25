@@ -33,4 +33,5 @@ export const CERTIFICATION_SUITES: readonly string[] = [
   'src/lib/donna/certification/donnaExecutiveExperienceRefinementCertification.ts',
   'src/lib/donna/certification/donnaExecutiveLearningCertification.ts',
   'src/lib/donna/certification/donnaExecutiveLearningWiringCertification.ts',
+  'src/lib/donna/certification/donnaExecutiveIntelligenceEngineCertification.ts',
 ]

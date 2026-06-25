@@ -2,6 +2,56 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4261–4290 — DONNA Executive Intelligence Engine V1
+
+**Mission:** Make DONNA a proactive academy COO — review state, detect risks +
+opportunities (with evidence), prioritize, and recommend the next action before the
+Director asks. Pure + deterministic over **already-computed** signals
+(`DonnaAcademySignals` / `LivePageState`) + Durable Learning. No invented data
+(null = unknown → ignored), no new OpenAI/memory, no duplicate intelligence engine.
+
+**Signal map (Obj 1).** `buildSignalMap` normalizes 13 real signals across onboarding ·
+players · curriculum · coaches · sessions · approvals · assessments · parent/player risk ·
+durable learning. Unknown signals are dropped, never fabricated.
+
+**Risks + opportunities (Obj 2–3).** `detectRisks` (incomplete onboarding, pending
+approvals, curriculum gaps, player stagnation, missed assessments, workflow blockers) and
+`detectOpportunities` (promotion candidates, enrollment/placement, coach assignment,
+parent-communication, curriculum improvement from durable learning) — **every finding
+carries non-empty evidence**; a finding without evidence is never emitted.
+
+**Prioritization (Obj 4).** `priorityScore` blends urgency · impact · confidence ·
+(1−effort) · (1−dependency) · director relevance (risk bump); `prioritize` returns the
+**top 3–5** only — no noisy dashboard.
+
+**Recommendation (Obj 5).** Each priority → situation · evidence · confidence · impact ·
+recommended action · why now · next step (calm, direct, executive). `buildExecutiveBriefing`
++ `formatBriefingSpoken` produce the COO briefing.
+
+**Integration (Obj 6).** `isProactiveExecutiveQuestion` catches "good morning / what should
+I do today / how is the academy / what needs attention / what am I missing / highest
+priority"; `donnaLiveConversationAction` builds the briefing from live signals + learning
+and injects the top priorities into the packet's existing `outstandingDecisions` slot —
+the live executive answer is grounded in real priorities. Real-OpenAI proof: "What should I
+do today?" → led with "Clear the review queue first … two parent-facing reviews … Next step…".
+
+**Diagnostics (Obj 7).** `[donna.intelligence] inspected/known/risks/opps/topScore/evidence/
+confidence/source/learningUsed`.
+
+**Files — new (3) + modified (3):**
+- `executive/donnaExecutiveIntelligence.ts` (new), `certification/donnaExecutiveIntelligenceEngineCertification.ts` (new, **40/40**),
+  `docs/donna/DONNA_EXECUTIVE_INTELLIGENCE_ENGINE_V1.md` (new).
+- `executive/liveResolverAdapter.ts`, `executive/executiveLiveBridge.ts`,
+  `director/_actions/donnaLiveConversationAction.ts` (+ `scripts/certificationSuites.ts`).
+
+**Certification:** full gate **24/24 suites passed**; `tsc --noEmit` clean. Remaining gaps:
+attendance/coach-follow-up signals not yet sourced (not invented); findings are point-in-time
+(no trend history).
+
+**God Mode score: 9 / 10.**
+
+---
+
 ## 2026-06-25 — Mega Sprint 4231–4260 — Executive Learning Context Wiring V1
 
 **Mission:** Complete the loop — every OpenAI reasoning request automatically benefits

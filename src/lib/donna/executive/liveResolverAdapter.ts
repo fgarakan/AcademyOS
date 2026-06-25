@@ -132,6 +132,9 @@ export function buildResolverStateFromLive(
   // Mega Sprint 4231–4260 — durable learning already retrieved for this turn (relevant,
   // compressed) so the packet reuses it instead of re-sending context. Empty when none.
   durableMemories?: MemoryRecord[],
+  // Mega Sprint 4261–4290 — Executive Intelligence priorities to lead the decisions
+  // (proactive grounding). Empty/absent on a non-proactive turn.
+  extraDecisions?: DecisionRef[],
 ): ResolverState {
   const execRole = mapRole(role)
 
@@ -152,6 +155,11 @@ export function buildResolverStateFromLive(
   }
   if (!outstandingDecisions.length && legacy?.requiresApproval && legacy.nextAction?.label) {
     outstandingDecisions = [{ id: 'legacy_next', summary: legacy.nextAction.label, urgency: 'medium' }]
+  }
+  // Mega Sprint 4261–4290 — Executive Intelligence priorities lead the decisions so a
+  // proactive turn ("what should I do today?") is grounded in real ranked priorities.
+  if (extraDecisions?.length) {
+    outstandingDecisions = [...extraDecisions, ...outstandingDecisions]
   }
 
   const operatingSummary = live ? operatingSummaryFromDirectorCtx(live) : null

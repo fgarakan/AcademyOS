@@ -32,6 +32,13 @@ import {
   learningToMemoryRecords,
   learnFromOperatingSession,
 } from '@/lib/donna/executive/donnaExecutiveLearning'
+// Mega Sprint 4261–4290 — proactive Executive Intelligence (answers "what should I do?").
+import {
+  buildExecutiveBriefing,
+  isProactiveExecutiveQuestion,
+  recommendationsToDecisions,
+  formatExecutiveIntelligenceDiagnostics,
+} from '@/lib/donna/executive/donnaExecutiveIntelligence'
 // Mega Sprint 3901–3930 — DONNA Reasoning Constitution: classify + developer logging.
 import { classifyRequest } from '@/lib/donna/constitution/donnaRoutingConstitution'
 import { logReasoningTrace } from '@/lib/donna/constitution/donnaRoutingLog'
@@ -201,6 +208,21 @@ export async function donnaLiveConversationAction(
       ? { ...input, userMessage: msg, conversationHistory: (input.conversationHistory ?? []).slice(-3) }
       : { ...input, userMessage: msg }
 
+    // ── Proactive Executive Intelligence (Mega Sprint 4261–4290) ───────────────
+    // When the Director asks a "what matters?" question, review the academy's real
+    // signals + durable learning, rank the top priorities, and ground the executive
+    // turn in them (via the packet's existing outstandingDecisions slot) so DONNA
+    // answers from intelligence, not generic chat. Pure + fail-open (no signals → none).
+    let extraDecisions: ReturnType<typeof recommendationsToDecisions> = []
+    if (isProactiveExecutiveQuestion(msg)) {
+      const briefing = buildExecutiveBriefing(input.livePageState ?? {}, durableLearning)
+      if (briefing.hasState) {
+        extraDecisions = recommendationsToDecisions(briefing.recommendations)
+        // eslint-disable-next-line no-console
+        console.info(formatExecutiveIntelligenceDiagnostics(briefing.diagnostics))
+      }
+    }
+
     try {
       const live = await runExecutiveLive(
         execInput,
@@ -213,6 +235,8 @@ export async function donnaLiveConversationAction(
         directorCtx,
         // Mega Sprint 4231–4260 — relevant durable learning folded into relevant_memory.
         durableMemories,
+        // Mega Sprint 4261–4290 — proactive priorities grounding the turn.
+        extraDecisions,
       )
 
       // Capture durable learning from this turn's operating session and persist it

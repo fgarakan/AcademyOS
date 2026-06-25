@@ -17,7 +17,7 @@ import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import { runExecutiveOperatingTurn, type ExecutiveTurnResult } from './executiveOperatingLayer'
 import { buildResolverStateFromLive, type LiveAcademyContext } from './liveResolverAdapter'
 import { applyExecutiveVoice } from '@/lib/donna/conversation/donnaConversationDNA'
-import type { MemoryRecord } from './executiveTypes'
+import type { MemoryRecord, DecisionRef } from './executiveTypes'
 import {
   recordShadow,
   type ExecutiveMode,
@@ -126,10 +126,12 @@ export async function runExecutiveLive(
   // Mega Sprint 4231–4260 — durable learning (relevant + compressed) retrieved before
   // this turn, folded into the packet's relevant_memory slot. Empty when none.
   durableMemories?: MemoryRecord[],
+  // Mega Sprint 4261–4290 — Executive Intelligence priorities (proactive grounding).
+  extraDecisions?: DecisionRef[],
 ): Promise<ExecutiveLiveResult> {
   let turn: ExecutiveTurnResult | null = null
   try {
-    const state = buildResolverStateFromLive(input, role, academy, legacy, directorCtx, durableMemories)
+    const state = buildResolverStateFromLive(input, role, academy, legacy, directorCtx, durableMemories, extraDecisions)
     turn = await runExecutiveOperatingTurn(state)
   } catch (err) {
     // Fail-open — executive crashed; legacy will be returned.
