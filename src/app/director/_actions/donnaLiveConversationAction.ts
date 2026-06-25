@@ -174,6 +174,7 @@ export async function donnaLiveConversationAction(
         validatorDisposition: 'n/a',
         executionMode: classification.class,
         finalResponseSource: 'legacy',
+        executiveAttempted: false,
         fallbackReason: 'DONNA_EXECUTIVE_REASONING=off',
         pageDetected: pageTrace.pageDetected,
         uiContextCollected: pageTrace.uiContextCollected,
@@ -200,9 +201,14 @@ export async function donnaLiveConversationAction(
         validatorDisposition: live.diagnostics.responseDisposition,
         executionMode: classification.class,
         finalResponseSource: live.diagnostics.executivePathUsed ? 'executive' : 'legacy',
-        fallbackReason: live.diagnostics.fallbackUsed
-          ? `validator=${live.diagnostics.responseDisposition}`
-          : null,
+        executiveAttempted: live.diagnostics.executiveAttempted,
+        // No silent fallback (Mega Sprint 4141–4170) — when legacy answers, the
+        // reason is always stated; the full executive-chain state stays visible.
+        fallbackReason: live.diagnostics.fallbackReason,
+        dialogueStage: live.diagnostics.dialogueStage ?? null,
+        sessionActiveObjective: live.diagnostics.sessionActiveObjective ?? null,
+        workflowStep: live.diagnostics.workflowStep ?? null,
+        workflowBlocker: live.diagnostics.workflowBlocker ?? null,
         pageDetected: pageTrace.pageDetected,
         uiContextCollected: pageTrace.uiContextCollected,
         contextSourcesSkipped: live.diagnostics.contextSourcesSkipped,
@@ -222,6 +228,7 @@ export async function donnaLiveConversationAction(
         validatorDisposition: 'crashed',
         executionMode: classification.class,
         finalResponseSource: 'legacy',
+        executiveAttempted: true,
         fallbackReason: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
         pageDetected: pageTrace.pageDetected,
         uiContextCollected: pageTrace.uiContextCollected,

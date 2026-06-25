@@ -15,9 +15,22 @@
 
 export type ExecutiveMode = 'off' | 'shadow' | 'primary'
 
-/** Resolve the live mode from the single existing flag. */
+/**
+ * Resolve the live mode from the single existing flag.
+ *
+ * Live Executive Activation (Mega Sprint 4141–4170): the brain router
+ * (processDonnaMessage / donnaCanonicalRouter) decides executive-first routing
+ * CLIENT-SIDE. A non-`NEXT_PUBLIC_` env var is inlined as `undefined` in the
+ * browser bundle, so the server-only `DONNA_EXECUTIVE_REASONING` was invisible to
+ * client routing — the executive path stayed dormant in the live UI even when the
+ * server action honored `primary`. We read the public mirror as a fallback so the
+ * SAME logical flag activates both sides. The server still prefers the server-only
+ * value (never weaker); the public mirror only fills the client gap. No new flag —
+ * one value, set in both forms in `.env.local`.
+ */
 export function resolveExecutiveMode(): ExecutiveMode {
-  const v = (process.env.DONNA_EXECUTIVE_REASONING ?? '').toLowerCase().trim()
+  const raw = process.env.DONNA_EXECUTIVE_REASONING ?? process.env.NEXT_PUBLIC_DONNA_EXECUTIVE_REASONING ?? ''
+  const v = raw.toLowerCase().trim()
   if (v === 'shadow') return 'shadow'
   if (v === '1' || v === 'true' || v === 'primary') return 'primary'
   return 'off'
@@ -44,6 +57,27 @@ export interface ExecutiveLiveDiagnostics {
   fallbackUsed: boolean
   /** The executive response was returned to the user. */
   executivePathUsed: boolean
+  // ── Mega Sprint 4141–4170 — Live Executive Activation: no silent fallback ──────
+  /** The executive layer was attempted on this turn (mode ≠ off). */
+  executiveAttempted: boolean
+  /** Why legacy answered instead of the executive path (null when executive won). */
+  fallbackReason: string | null
+  /** Dialogue Engine — furthest progressive-planning stage reached this turn. */
+  dialogueStage?: string
+  /** Dialogue Engine — the objective the discussion is working toward. */
+  dialogueObjective?: string | null
+  /** Operating Session — the currently active objective for the workday. */
+  sessionActiveObjective?: string | null
+  /** Operating Session — count of still-open (active + paused) objectives. */
+  sessionUnfinished?: number
+  /** Action Loop — workflow reduced from live UI events (null when no events). */
+  workflowName?: string | null
+  /** Action Loop — current step label. */
+  workflowStep?: string | null
+  /** Action Loop — current blocker (failed validation), if any. */
+  workflowBlocker?: string | null
+  /** Action Loop — the next action derived from live execution state. */
+  workflowNextAction?: string | null
   // ── Mega Sprint 3991–4020 — Unified Executive Context Engine developer trace ───
   /** Context sources skipped (excluded / not relevant / budget / redacted). */
   contextSourcesSkipped?: number
@@ -63,7 +97,12 @@ export function formatDiagnostics(d: ExecutiveLiveDiagnostics): string {
     `goal=${d.reasoningGoal} packetTokens=${d.contextPacketTokens} ` +
     `sources=${d.contextSources} latencyMs=${d.latencyMs} ` +
     `confTarget=${d.confidenceTarget} disposition=${d.responseDisposition} ` +
-    `fallbackUsed=${d.fallbackUsed ? 'YES' : 'NO'} executivePathUsed=${d.executivePathUsed ? 'YES' : 'NO'}`
+    `attempted=${d.executiveAttempted ? 'YES' : 'NO'} ` +
+    `fallbackUsed=${d.fallbackUsed ? 'YES' : 'NO'} executivePathUsed=${d.executivePathUsed ? 'YES' : 'NO'}` +
+    (d.fallbackReason ? ` fallbackReason="${d.fallbackReason}"` : '') +
+    (d.dialogueStage ? ` dialogue=${d.dialogueStage}` : '') +
+    (d.sessionActiveObjective ? ` session="${d.sessionActiveObjective}"` : '') +
+    (d.workflowName ? ` workflow=${d.workflowName}/${d.workflowStep ?? 'n/a'}${d.workflowBlocker ? `(blocked:${d.workflowBlocker})` : ''}` : '')
   )
 }
 

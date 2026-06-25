@@ -118,6 +118,19 @@ export async function runExecutiveLive(
   const usesExecutive = mode === 'primary' && validated
   const fallbackUsed = !usesExecutive
 
+  // Mega Sprint 4141–4170 — no silent fallback: always state WHY legacy answered.
+  const fallbackReason: string | null = !fallbackUsed
+    ? null
+    : !turn
+      ? 'executive turn crashed'
+      : turn.validation.disposition === 'rejected'
+        ? `validator rejected (${turn.validation.disposition})`
+        : mode === 'shadow'
+          ? 'shadow mode — legacy shown, executive observed only'
+          : mode === 'off'
+            ? 'executive dormant (mode=off)'
+            : 'legacy preferred'
+
   const diagnostics: ExecutiveLiveDiagnostics = {
     mode,
     openaiInvoked: !!turn && turn.reasoning.source !== 'not_called',
@@ -131,6 +144,19 @@ export async function runExecutiveLive(
     responseDisposition: turn?.validation.disposition ?? 'crashed',
     fallbackUsed,
     executivePathUsed: usesExecutive,
+    // Live Executive Activation (Mega Sprint 4141–4170) — attempt + reason + the
+    // full executive-chain state, so the trace proves Dialogue → Session → Action
+    // Loop ran (never a silent fallback).
+    executiveAttempted: mode !== 'off',
+    fallbackReason,
+    dialogueStage: turn?.dialogueState.stage,
+    dialogueObjective: turn?.dialogueState.activeObjective ?? null,
+    sessionActiveObjective: turn?.session.activeObjective?.label ?? null,
+    sessionUnfinished: turn?.session.unfinishedObjectives.length ?? 0,
+    workflowName: turn?.workflowState?.workflow ?? null,
+    workflowStep: turn?.workflowState?.currentStep?.label ?? null,
+    workflowBlocker: turn?.workflowState?.blocker ?? null,
+    workflowNextAction: turn?.workflowState?.nextAction ?? null,
     // Unified Executive Context Engine developer trace (Mega Sprint 3991–4020).
     contextSourcesSkipped: turn?.contextTrace.sourcesSkipped.length ?? 0,
     packetSizeChars: turn?.contextTrace.packetSizeChars ?? 0,

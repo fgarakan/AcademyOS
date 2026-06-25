@@ -81,6 +81,17 @@ export interface ReasoningTrace {
   packetSizeChars?: number
   /** OpenAI request latency (ms). */
   latencyMs?: number
+  // ── Mega Sprint 4141–4170 — Live Executive Activation: full-chain visibility ───
+  /** The executive layer was attempted on this turn (mode ≠ off). */
+  executiveAttempted?: boolean
+  /** Dialogue Engine — furthest planning stage reached this turn. */
+  dialogueStage?: string | null
+  /** Operating Session — currently active workday objective. */
+  sessionActiveObjective?: string | null
+  /** Action Loop — current workflow step reduced from live UI events. */
+  workflowStep?: string | null
+  /** Action Loop — current blocker, if any. */
+  workflowBlocker?: string | null
 }
 
 /** Emit the full reasoning-pipeline trace for one turn (developer-only). */
@@ -90,10 +101,15 @@ export function logReasoningTrace(t: ReasoningTrace): void {
   // eslint-disable-next-line no-console
   console.debug(
     `${PREFIX} TRACE entry=${t.entryPoint} class=${c.class} goal=${c.executiveGoal ?? 'n/a'} ` +
-      `decision=${t.routingDecision} contextBuilt=${t.contextSources > 0 ? `YES(${t.contextSources})` : 'NO'} ` +
+      `decision=${t.routingDecision} ` +
+      (t.executiveAttempted !== undefined ? `execAttempted=${t.executiveAttempted ? 'YES' : 'NO'} ` : '') +
+      `contextBuilt=${t.contextSources > 0 ? `YES(${t.contextSources})` : 'NO'} ` +
       (t.contextSourcesSkipped !== undefined ? `skipped=${t.contextSourcesSkipped} ` : '') +
       (t.pageDetected ? `page="${t.pageDetected}" ui=${t.uiContextCollected ?? 0} ` : '') +
       (t.packetSizeChars !== undefined ? `packet=${t.packetSizeChars}c ` : '') +
+      (t.dialogueStage ? `dialogue=${t.dialogueStage} ` : '') +
+      (t.sessionActiveObjective ? `session="${t.sessionActiveObjective}" ` : '') +
+      (t.workflowStep ? `workflowStep="${t.workflowStep}"${t.workflowBlocker ? `(blocked:${t.workflowBlocker})` : ''} ` : '') +
       `openai=${t.openaiInvoked ? 'YES' : 'NO'} validator=${t.validatorDisposition} ` +
       (t.latencyMs !== undefined ? `latencyMs=${t.latencyMs} ` : '') +
       `mode=${t.executionMode} finalSource=${t.finalResponseSource}` +

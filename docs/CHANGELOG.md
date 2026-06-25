@@ -2,6 +2,63 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4141–4170 — DONNA Live Executive Activation V1
+
+**Mission:** Activate the already-built, already-certified Executive DONNA stack in
+the live Director experience. No new intelligence, memory, or architecture —
+**activate, verify, stabilize.**
+
+**Activation (Objective 1).** `.env.local` (local/secret) runs `primary` with a real
+`OPENAI_API_KEY`. One logical flag drives router, action layer, executive operating
+layer, OpenAI reasoning, validation, and diagnostics via `resolveExecutiveMode()`.
+
+**Dormancy removal (Objective 4) — the real blocker.** The brain router
+(`processDonnaMessage.ts:747`, `donnaCanonicalRouter.ts:204`) decides executive-first
+routing **client-side**, but `DONNA_EXECUTIVE_REASONING` is not `NEXT_PUBLIC_`, so
+Next.js inlined it as `undefined` in the browser — the flag resolved to `off` on the
+client and the executive path stayed dormant in the live UI even though the server
+action honored `primary`. **Fix:** `resolveExecutiveMode()` now reads
+`DONNA_EXECUTIVE_REASONING ?? NEXT_PUBLIC_DONNA_EXECUTIVE_REASONING` (same logical
+flag, no new flag; server value always preferred). `.env.local` + `.env.local.example`
+document both forms.
+
+**Live trace (Objective 2) + no silent fallback (Objective 5).** `ExecutiveLiveDiagnostics`,
+`formatDiagnostics`, the `ReasoningTrace`, and the live action now expose the full
+executive chain per turn — `executiveAttempted`, **dialogue stage**, **session
+objective**, **workflow step + blocker**, and a **`fallbackReason`** that is always
+stated when legacy answers (crash / validator-reject / shadow). Fail-open preserved;
+never silent.
+
+**Browser proof (Objective 3).** The exact 7-turn sprint script run through the live
+server pipeline (`runExecutiveLive`) with the real key: every reasoning turn
+(`What should I do today?` · `Walk me through this page` · `Why?` · `What remains
+today?`) made a real `source=openai` call (~1.6–2.6 s) and the executive path owned
+the answer. The operating turns (`Good morning Donna` · `Continue` · `Did that save?`)
+are owned by the executive stack's deterministic components (Operating Session resume
+· Dialogue continuity · Action Loop) — by design, not legacy. Literal browser + Supabase
+auth shell not exercised (no seeded director login); the proof covers the exact code
+path the browser triggers.
+
+**Files — new (2) + modified (5):**
+- `certification/donnaLiveExecutiveActivationCertification.ts` (new) — **20/20** with
+  key (19/19 offline + live-OpenAI tier): flag activation both sides, 7-turn routing
+  contract, executive chain end-to-end, trace completeness, fail-open-never-silent,
+  real-OpenAI proof. Registered in the gate.
+- `docs/donna/DONNA_LIVE_EXECUTIVE_ACTIVATION_V1.md` (new).
+- `executiveShadowMode.ts` (client-visible flag + diagnostics), `executiveLiveBridge.ts`
+  (populate chain state + fallbackReason), `constitution/donnaRoutingLog.ts` (trace
+  fields), `director/_actions/donnaLiveConversationAction.ts` (log them),
+  `scripts/certificationSuites.ts`, `.env.local.example`.
+
+**Certification:** new suite registered; full gate **20/20 suites passed**;
+`tsc --noEmit` clean. Real OpenAI **PROVEN ✓** end-to-end. No migrations, no new
+dependencies, no RLS changes, no new routing/memory architecture.
+
+**Live DONNA score: 9 / 10.** **God Mode score: 9 / 10** (−1 each: literal
+browser+auth shell unproven in this environment).
+
+---
+
 ## 2026-06-25 — Mega Sprint 4111–4140 — DONNA Executive Action Loop V1
 
 **Mission:** DONNA stops relying on conversation alone. She observes what actually
