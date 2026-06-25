@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4291–4320 — Demo Academy God Mode Test Harness V1
+
+**Mission:** Prove DONNA's God Mode on a realistic, fully-deletable demo academy. No new
+DONNA architecture/intelligence/memory — just real DATA for the existing engines to operate
+on, plus safe seed/reset commands and a Director test script.
+
+**Architecture decision — academy-scoped isolation (not 80-table tagging).** `is_demo_data`
+/ `seed_batch_id` don't exist in the schema. Rather than add them to every table, only the
+`academies` row is tagged (migration 085); every child cascades via `academy_id ON DELETE
+CASCADE`, so deleting the one demo academy removes the whole dataset and can never touch a
+real academy. `isDemoResettable` gates reset on both columns.
+
+**Seed pack (Obj 1–3).** `scripts/demo/demoAcademyGodModeV1.ts` — ONE typed dataset: 1
+academy, 1 director, 3 coaches, 10 players (each a distinct archetype — ready-to-promote,
+almost-ready, stagnating, missing-assessment, declining-attendance, parent-concern,
+strong-progress, no-level, overdue-coach-note, new-onboarding), 10 parents, approvals,
+sessions, an incomplete onboarding step. Curriculum reuses the **global** `curriculum_levels`
+spine (Red→HP, already seeded) — no duplicate curriculum.
+
+**Real signals, no fakes (Obj 4).** `deriveDemoSignals` computes the signal snapshot with
+the SAME rules as `getDonnaAcademySignalsAction`; the certification feeds it to the live
+Executive Intelligence engine, which detects 5 risks (pending approvals, curriculum gap,
+player stagnation, missed assessments, incomplete onboarding) + opportunities (promotion,
+placement) and briefs the top 3–5 — "I reviewed the academy. Five things need attention today."
+
+**Reset safety (Obj 5).** `npm run demo:seed` / `npm run demo:reset` (dry-run by default,
+`--confirm` to write). Reset refuses any academy not tagged `is_demo_data=true` +
+`seed_batch_id=demo_academy_godmode_v1`, deletes by cascade, and cleans up demo auth users.
+
+**Test script (Obj 6).** `docs/donna/DONNA_GOD_MODE_TEST_SCRIPT_V1.md` — 10 Director turns
+(Good morning · What should I do today? · Who needs attention? · …) with expected DONNA
+behavior mapped to the seeded reality.
+
+**Operating-academy enrichment.** Turned the demo from records into a living academy:
+coach personalities + load (Diego overloaded 9/8, Sara underused, Tom scarce HP), player
+journeys (Maya 62→81 improving, Sofia flat, Ava 64→52 declining), parent situations
+(pushing-for-promotion, considering-leaving, concern-raised), a curriculum bottleneck
+(Orange 2→3 jamming Leo + Sofia with missing content), scheduling conflicts (overload,
+overdue wrap-up), and **six interconnected operating scenarios** with competing priorities
++ explicit tradeoffs + next steps — every entity threads through a real executive decision.
+New `donnaDemoAcademyOperatingCertification.ts` (**31/31**) proves interconnection,
+competing priorities, journeys, coach load, the retention storyline, the bottleneck, and
+that Executive Intelligence surfaces a genuinely competing risk+opportunity load. Live
+real-OpenAI multi-step proof: DONNA sequenced "clear the queue before promoting Maya" with
+the tradeoff stated, citing the real signals.
+
+**Files — new (8) + modified (2):**
+- `scripts/demo/demoAcademyGodModeV1.ts`, `deriveDemoSignals.ts`, `demoClient.ts`, `seed.ts`,
+  `reset.ts` (new); `supabase/migrations/085_academy_demo_tagging.sql` (new);
+  `certification/donnaDemoAcademyGodModeCertification.ts` (new, **41/41**) +
+  `certification/donnaDemoAcademyOperatingCertification.ts` (new, **31/31**);
+  `docs/donna/DONNA_GOD_MODE_TEST_SCRIPT_V1.md` (new). `package.json`, `scripts/certificationSuites.ts`.
+
+**Certification:** full gate **26/26 suites passed**; `tsc --noEmit` clean. Live seed/reset
+require DB access + migrations 084/085 applied (gated, same as 084); the God-Mode proof
+itself runs offline against the dataset.
+
+**God Mode score: 9 / 10.**
+
+---
+
 ## 2026-06-25 — Mega Sprint 4261–4290 — DONNA Executive Intelligence Engine V1
 
 **Mission:** Make DONNA a proactive academy COO — review state, detect risks +
