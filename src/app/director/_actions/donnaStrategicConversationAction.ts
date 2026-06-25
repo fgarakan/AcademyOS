@@ -23,6 +23,16 @@ import { applyExecutiveRefinement } from '@/lib/donna/brain/donnaExecutiveCommun
 import { enforceCompletionContract } from '@/lib/donna/completion/donnaCompletionConvergence'
 import { enforceExecutivePresence } from '@/lib/donna/conversation/donnaExecutivePresenceContract'
 import { loadDirectorDonnaContext, type DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+// Mega Sprint 3931–3960 — DONNA Unified Reasoning Engine. Strategic reasoning is a
+// CLIENT of the one Executive Operating Layer, not a second reasoning pipeline. The
+// strategic brain above runs as the certified fail-open fallback; in primary mode the
+// executive layer owns the reasoned answer (same proven wiring as the live action).
+import { resolveExecutiveMode } from '@/lib/donna/executive/executiveShadowMode'
+import { runExecutiveLive } from '@/lib/donna/executive/executiveLiveBridge'
+import { classifyRequest } from '@/lib/donna/constitution/donnaRoutingConstitution'
+import { logReasoningTrace } from '@/lib/donna/constitution/donnaRoutingLog'
+// Mega Sprint 3991–4020 — Unified Executive Context Engine developer trace.
+import { buildPageContextDevTrace } from '@/lib/donna/executive/pageContextPacketSource'
 
 const ALLOWED_ROLES = ['academy_director', 'head_coach'] as const
 type AllowedRole = typeof ALLOWED_ROLES[number]
@@ -139,7 +149,77 @@ export async function donnaStrategicConversationAction(
     // Fail-open: returns the result unchanged if refinement is unavailable.
     // Never alters facts, recommendations, or permissions.
     const role = membership.role === 'head_coach' ? 'coach' : 'director'
-    return await applyExecutiveRefinement(present, role)
+    const legacyResult = await applyExecutiveRefinement(present, role)
+
+    // ── Unified reasoning: converge onto the ONE Executive Operating Layer ──────
+    // (Mega Sprint 3931–3960). Strategic reasoning no longer terminates in its own
+    // pipeline — it routes through the same runExecutiveLive() the live action uses,
+    // so reasoning, context assembly, the OpenAI gateway, and validation are shared.
+    // The strategic brain result above is the certified fail-open fallback. Modes:
+    //   off → strategic legacy only; primary → executive owns the reasoned answer.
+    const execMode = resolveExecutiveMode()
+    const classification = classifyRequest(msg)
+    const pageTrace = buildPageContextDevTrace(input.route, input.livePageState ?? null)
+    if (execMode === 'off') {
+      logReasoningTrace({
+        entryPoint: 'strategic_action',
+        classification,
+        routingDecision: 'strategic_legacy (executive dormant)',
+        contextSources: 0,
+        openaiInvoked: false,
+        validatorDisposition: 'n/a',
+        executionMode: classification.class,
+        finalResponseSource: 'legacy',
+        fallbackReason: 'DONNA_EXECUTIVE_REASONING=off',
+        pageDetected: pageTrace.pageDetected,
+        uiContextCollected: pageTrace.uiContextCollected,
+      })
+      return legacyResult
+    }
+    try {
+      const live = await runExecutiveLive(
+        { ...input, userMessage: msg },
+        membership.role,
+        { academyId, name: (academy?.name as string) ?? null, modelLabel: dnaModelId },
+        legacyResult,
+        execMode,
+        directorCtx,
+      )
+      logReasoningTrace({
+        entryPoint: 'strategic_action',
+        classification,
+        routingDecision: live.diagnostics.executivePathUsed ? 'executive_layer' : 'legacy_fallback',
+        contextSources: live.diagnostics.contextSources,
+        openaiInvoked: live.diagnostics.openaiRealCall,
+        validatorDisposition: live.diagnostics.responseDisposition,
+        executionMode: classification.class,
+        finalResponseSource: live.diagnostics.executivePathUsed ? 'executive' : 'legacy',
+        fallbackReason: live.diagnostics.fallbackUsed ? `validator=${live.diagnostics.responseDisposition}` : null,
+        pageDetected: pageTrace.pageDetected,
+        uiContextCollected: pageTrace.uiContextCollected,
+        contextSourcesSkipped: live.diagnostics.contextSourcesSkipped,
+        packetSizeChars: live.diagnostics.packetSizeChars,
+        latencyMs: live.diagnostics.latencyMs,
+      })
+      return live.result
+    } catch (bridgeErr) {
+      console.error('[donnaStrategicConversationAction] executive bridge error (returning legacy):',
+        bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr))
+      logReasoningTrace({
+        entryPoint: 'strategic_action',
+        classification,
+        routingDecision: 'legacy_fallback (bridge error)',
+        contextSources: 0,
+        openaiInvoked: false,
+        validatorDisposition: 'crashed',
+        executionMode: classification.class,
+        finalResponseSource: 'legacy',
+        fallbackReason: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+        pageDetected: pageTrace.pageDetected,
+        uiContextCollected: pageTrace.uiContextCollected,
+      })
+      return legacyResult
+    }
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

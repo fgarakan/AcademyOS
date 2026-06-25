@@ -12,6 +12,14 @@
 // Principle: reasoning determines context. The goal is chosen first (by the
 // Executive Reasoning Layer), and the goal's profile dictates what the Context
 // Resolver may and must assemble — never the reverse.
+//
+// Mega Sprint 3961–3990 — Live Page Intelligence: `current_page` is a universal
+// conditional source. The Director's current screen is relevant to every reasoning
+// goal ("what should I do here?", "which should I choose?", "why?"), it is always
+// relevant (its relevance gate is always-true) and cost-weight 1, so it is admitted
+// cheaply on every turn. It stays REQUIRED for analyze/diagnose (page state is
+// load-bearing there) and CONDITIONAL everywhere else — so DONNA never asks the
+// Director to explain a page that is already on screen.
 
 import type { ContextSourceId } from './contextSources'
 
@@ -62,7 +70,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Examine current state and surface what it means.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'outstanding_decisions', 'current_page'],
-    conditionalContext: ['curriculum', 'development_spine', 'relevant_memory', 'player_context'],
+    conditionalContext: ['conversation_history', 'curriculum', 'development_spine', 'relevant_memory', 'player_context'],
     excludedContext: ['navigation_target'],
     maxTokens: 320,
   },
@@ -71,7 +79,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Choose between options and commit to a course of action.',
     confidenceTarget: 0.85,
     requiredContext: [...BASE, 'outstanding_decisions', 'available_actions'],
-    conditionalContext: ['active_draft', 'active_workflow', 'curriculum', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'active_draft', 'active_workflow', 'curriculum', 'relevant_memory'],
     excludedContext: [],
     maxTokens: 300,
   },
@@ -80,7 +88,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Propose the next best action with rationale.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'outstanding_decisions', 'available_actions'],
-    conditionalContext: ['curriculum', 'development_spine', 'relevant_memory', 'active_draft'],
+    conditionalContext: ['current_page', 'conversation_history', 'curriculum', 'development_spine', 'relevant_memory', 'active_draft'],
     excludedContext: [],
     maxTokens: 320,
   },
@@ -89,7 +97,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Produce a new draft object (template, plan, note) for review.',
     confidenceTarget: 0.75,
     requiredContext: [...BASE, 'academy_defaults', 'curriculum'],
-    conditionalContext: ['development_spine', 'active_workflow', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'development_spine', 'active_workflow', 'relevant_memory'],
     excludedContext: ['parent_context'],
     maxTokens: 380,
   },
@@ -98,7 +106,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Modify the active draft per a follow-up instruction.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'active_draft', 'conversation_history'],
-    conditionalContext: ['curriculum', 'donna_assumptions', 'active_workflow'],
+    conditionalContext: ['current_page', 'curriculum', 'donna_assumptions', 'active_workflow'],
     excludedContext: ['parent_context'],
     maxTokens: 320,
   },
@@ -107,7 +115,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Explain a prior recommendation, decision, or concept.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'conversation_history', 'donna_assumptions'],
-    conditionalContext: ['outstanding_decisions', 'curriculum', 'relevant_memory'],
+    conditionalContext: ['current_page', 'outstanding_decisions', 'curriculum', 'relevant_memory'],
     excludedContext: ['navigation_target'],
     maxTokens: 340,
   },
@@ -116,7 +124,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Weigh two or more options against each other.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'curriculum'],
-    conditionalContext: ['development_spine', 'active_draft', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'development_spine', 'active_draft', 'relevant_memory'],
     excludedContext: ['navigation_target'],
     maxTokens: 360,
   },
@@ -125,7 +133,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Condense state, history, or a document into a brief.',
     confidenceTarget: 0.75,
     requiredContext: [...BASE, 'conversation_history'],
-    conditionalContext: ['outstanding_decisions', 'relevant_memory', 'active_draft'],
+    conditionalContext: ['current_page', 'outstanding_decisions', 'relevant_memory', 'active_draft'],
     excludedContext: ['available_actions', 'navigation_target'],
     maxTokens: 320,
   },
@@ -134,7 +142,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Explain how the academy or AcademyOS works.',
     confidenceTarget: 0.75,
     requiredContext: [...BASE, 'curriculum'],
-    conditionalContext: ['development_spine', 'current_page', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'development_spine', 'relevant_memory'],
     excludedContext: ['outstanding_decisions', 'player_context', 'parent_context'],
     maxTokens: 360,
   },
@@ -143,7 +151,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Take the director to the right place to act.',
     confidenceTarget: 0.7,
     requiredContext: [...BASE, 'current_route', 'navigation_target'],
-    conditionalContext: ['available_actions', 'active_workflow'],
+    conditionalContext: ['current_page', 'conversation_history', 'available_actions', 'active_workflow'],
     excludedContext: ['curriculum', 'development_spine', 'player_context'],
     maxTokens: 180,
   },
@@ -152,7 +160,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Guide an approval-gated decision in the review queue.',
     confidenceTarget: 0.85,
     requiredContext: [...BASE, 'outstanding_decisions', 'available_actions'],
-    conditionalContext: ['active_draft', 'curriculum'],
+    conditionalContext: ['current_page', 'conversation_history', 'active_draft', 'curriculum'],
     excludedContext: ['navigation_target'],
     maxTokens: 280,
   },
@@ -161,7 +169,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Assign or route work to a coach.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'available_actions'],
-    conditionalContext: ['coach_context', 'outstanding_decisions', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'coach_context', 'outstanding_decisions', 'relevant_memory'],
     excludedContext: ['parent_context'],
     maxTokens: 280,
   },
@@ -170,7 +178,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Advise on a player or coaching situation.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'curriculum'],
-    conditionalContext: ['player_context', 'coach_context', 'development_spine', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'player_context', 'coach_context', 'development_spine', 'relevant_memory'],
     excludedContext: ['navigation_target'],
     maxTokens: 360,
   },
@@ -179,7 +187,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Find the root cause of a signal or problem.',
     confidenceTarget: 0.82,
     requiredContext: [...BASE, 'outstanding_decisions', 'current_page'],
-    conditionalContext: ['curriculum', 'development_spine', 'player_context', 'relevant_memory'],
+    conditionalContext: ['conversation_history', 'curriculum', 'development_spine', 'player_context', 'relevant_memory'],
     excludedContext: ['navigation_target'],
     maxTokens: 360,
   },
@@ -188,7 +196,7 @@ export const REASONING_GOALS: Record<ReasoningGoal, ReasoningGoalContract> = {
     description: 'Lay out a multi-step plan toward a goal.',
     confidenceTarget: 0.8,
     requiredContext: [...BASE, 'outstanding_decisions', 'available_actions'],
-    conditionalContext: ['curriculum', 'development_spine', 'active_workflow', 'relevant_memory'],
+    conditionalContext: ['current_page', 'conversation_history', 'curriculum', 'development_spine', 'active_workflow', 'relevant_memory'],
     excludedContext: [],
     maxTokens: 400,
   },

@@ -44,6 +44,15 @@ export interface ExecutiveLiveDiagnostics {
   fallbackUsed: boolean
   /** The executive response was returned to the user. */
   executivePathUsed: boolean
+  // ── Mega Sprint 3991–4020 — Unified Executive Context Engine developer trace ───
+  /** Context sources skipped (excluded / not relevant / budget / redacted). */
+  contextSourcesSkipped?: number
+  /** Character size of the serialized packet sent toward OpenAI. */
+  packetSizeChars?: number
+  /** Current page was grounded into the packet (page awareness). */
+  pageGrounded?: boolean
+  /** Prior conversation was grounded into the packet (continuity). */
+  conversationGrounded?: boolean
 }
 
 /** Human-readable one-liner proving what happened on a turn. */

@@ -76,7 +76,16 @@ export async function runExecutiveReasoning(
   role: ExecutiveRole,
 ): Promise<ExecutiveReasoningResult> {
   const serialized = serializePacket(packet)
-  const userText = `${serialized}\n\nDIRECTOR MESSAGE: ${packet.effectiveMessage}`
+  // Mega Sprint 4021–4050 — executive voice directive. The packet already grounds the
+  // screen, conversation, and academy, so DONNA answers first and never asks what the
+  // Director is looking at. Presentation guidance only — facts come from the packet.
+  const EXECUTIVE_VOICE_DIRECTIVE =
+    'ANSWER AS AN EXPERIENCED COO SITTING BESIDE THE DIRECTOR. You already have the ' +
+    'current page, conversation, and academy in the context above — answer directly; ' +
+    'do not ask which page they are on, say "I think you\'re asking", or defer back. ' +
+    'Recommend decisively, then give: why, the tradeoff, the expected outcome, and the ' +
+    'exact next step. Be concise and conversational — short spoken sentences, no lists.'
+  const userText = `${serialized}\n\n${EXECUTIVE_VOICE_DIRECTIVE}\n\nDIRECTOR MESSAGE: ${packet.effectiveMessage}`
   const contextTokens = estimateTokens(userText)
   const started = Date.now()
 

@@ -14,13 +14,15 @@
 // every stage — worst case is a deterministic grounded answer (today's
 // experience), never a thrown turn or a hallucination.
 
-import { resolveContinuity } from './conversationContinuity'
-import { deriveReasoningGoal, type ReasoningPlan } from './executiveReasoningLayer'
-import { resolveExecutiveContext } from './contextResolver'
+import { type ReasoningPlan } from './executiveReasoningLayer'
 import {
   type ExecutiveContextPacket,
   inspectPacket,
 } from './executiveContextPacket'
+import {
+  assembleExecutiveContext,
+  type ContextEngineTrace,
+} from './executiveContextEngine'
 import { runExecutiveReasoning, type ExecutiveReasoningResult } from './executiveReasoningGateway'
 import { validateExecutiveResponse, type ValidationResult } from './responseValidator'
 import { planActions, type ExecutiveActionPlan } from './actionPlanner'
@@ -38,6 +40,8 @@ export interface ExecutiveTurnResult {
   nextAction: string
   /** Human-readable packet audit. */
   packetInspection: string
+  /** Developer-only context-engine trace (sources, tokens, packet size, grounding). */
+  contextTrace: ContextEngineTrace
 }
 
 export interface RunOptions {
@@ -83,17 +87,15 @@ export async function runExecutiveOperatingTurn(
   state: ResolverState,
   opts: RunOptions = {},
 ): Promise<ExecutiveTurnResult> {
-  // 1. Continuity — bind "it"/"that"/follow-ups to the active draft or last entity.
-  const continuity = resolveContinuity(state)
-
-  // 2. Executive reasoning — choose the goal (reasoning determines context).
-  const plan = deriveReasoningGoal(state, continuity)
-
-  // 3 + 4. Context Resolver → Executive Context Packet (minimum complete).
-  let packet = resolveExecutiveContext(plan, state, {
+  // 1–4. Unified Executive Context Engine — continuity, reasoning goal, and the
+  // minimum-complete Executive Context Packet are assembled in ONE central place.
+  // No context is requested manually here.
+  const assembled = assembleExecutiveContext(state, {
     budgetTokens: opts.budgetTokens,
     completionContract: opts.completionContract ?? null,
   })
+  const plan = assembled.plan
+  let packet = assembled.packet
 
   // Completion state is derived once the packet exists, then folded back in.
   const completion = deriveCompletion(packet, opts.completionContract)
@@ -122,5 +124,6 @@ export async function runExecutiveOperatingTurn(
     finalResponse,
     nextAction: completion.nextAction ?? 'Tell me what you’d like to tackle next.',
     packetInspection: inspectPacket(packet),
+    contextTrace: assembled.trace,
   }
 }

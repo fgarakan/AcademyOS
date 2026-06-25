@@ -41,7 +41,9 @@ import { detectGuidedCompletionIntent } from '@/lib/donna/guidedCompletion/guide
 // flag is on, conversational/strategic requests defer to the executive layer
 // instead of being preempted by a deterministic answer engine. Flag-off = no-op.
 import { isExecutiveReasoningEnabled } from '@/lib/donna/executive/executiveOperatingLayer'
-import { classifyExecutiveConversation } from '@/lib/donna/executive/executiveConversationClassifier'
+// Mega Sprint 3901–3930 — DONNA Reasoning Constitution. The single classifier that
+// decides "reasoning vs execution vs hybrid" for every request, BEFORE routing.
+import { classifyRequest } from '@/lib/donna/constitution/donnaRoutingConstitution'
 import {
   detectDailyBriefIntent,
   buildDailyOperatingBrief,
@@ -122,6 +124,13 @@ export function routeDonnaConversation(params: {
   const t = text.toLowerCase().trim()
   const ctx = params.directorCtx
 
+  // ── Constitution — classify BEFORE routing (Mega Sprint 3901–3930) ────────────
+  // Every request is first classified deterministic | executive | hybrid. Safety
+  // (approval-gated mutations) is intercepted below regardless; this drives the
+  // executive-vs-deterministic decision so no feature decides routing on its own.
+  const classification = classifyRequest(text)
+  const wantsExecutive = classification.class === 'executive' || classification.class === 'hybrid'
+
   const defer = (needsOpenAI: boolean, stage: DonnaRouterStage = 'defer_to_brain'): DonnaRouterResult => ({
     matched: false,
     stage,
@@ -192,7 +201,7 @@ export function routeDonnaConversation(params: {
   // goal-confirmation menu. Safety blocks + operating-session resume above always
   // win first; this only intercepts genuine executive questions. When the flag is
   // off this is a no-op and the deterministic engines below are unchanged.
-  if (isExecutiveReasoningEnabled() && classifyExecutiveConversation(text).match) {
+  if (isExecutiveReasoningEnabled() && wantsExecutive) {
     return {
       matched: false,            // defer: the brain routes this to live_ai_assist → executive layer
       stage: 'executive_reasoning',

@@ -25,6 +25,11 @@ import { loadDirectorDonnaContext, type DirectorDonnaContext } from '@/lib/donna
 // Mega Sprint 3691–3720 — Executive Operating Layer live wiring (flag-gated, fail-open)
 import { resolveExecutiveMode } from '@/lib/donna/executive/executiveShadowMode'
 import { runExecutiveLive } from '@/lib/donna/executive/executiveLiveBridge'
+// Mega Sprint 3901–3930 — DONNA Reasoning Constitution: classify + developer logging.
+import { classifyRequest } from '@/lib/donna/constitution/donnaRoutingConstitution'
+import { logReasoningTrace } from '@/lib/donna/constitution/donnaRoutingLog'
+// Mega Sprint 3991–4020 — Unified Executive Context Engine developer trace.
+import { buildPageContextDevTrace } from '@/lib/donna/executive/pageContextPacketSource'
 
 const ALLOWED_ROLES = ['academy_director', 'head_coach'] as const
 type AllowedRole = typeof ALLOWED_ROLES[number]
@@ -152,7 +157,27 @@ export async function donnaLiveConversationAction(
     //   primary → return executive when it validates, else legacy
     // Never throws to the user: any failure inside the bridge returns legacy.
     const execMode = resolveExecutiveMode()
+    // Constitution (Mega Sprint 3901–3930) — classify the request so the routing
+    // decision is developer-visible (Objective 6). Classification only; does not
+    // change the proven execMode routing below.
+    const classification = classifyRequest(msg)
+    // Unified Executive Context Engine (Mega Sprint 3991–4020) — page-awareness trace.
+    // Developer-only: proves which screen DONNA grounded the turn in.
+    const pageTrace = buildPageContextDevTrace(input.route, input.livePageState ?? null)
     if (execMode === 'off') {
+      logReasoningTrace({
+        entryPoint: 'live_action',
+        classification,
+        routingDecision: 'legacy_engines (executive dormant)',
+        contextSources: 0,
+        openaiInvoked: false,
+        validatorDisposition: 'n/a',
+        executionMode: classification.class,
+        finalResponseSource: 'legacy',
+        fallbackReason: 'DONNA_EXECUTIVE_REASONING=off',
+        pageDetected: pageTrace.pageDetected,
+        uiContextCollected: pageTrace.uiContextCollected,
+      })
       return legacyResult
     }
     try {
@@ -166,10 +191,41 @@ export async function donnaLiveConversationAction(
         // the Executive Context Packet (real signals, not role+permissions alone).
         directorCtx,
       )
+      logReasoningTrace({
+        entryPoint: 'live_action',
+        classification,
+        routingDecision: live.diagnostics.executivePathUsed ? 'executive_layer' : 'legacy_fallback',
+        contextSources: live.diagnostics.contextSources,
+        openaiInvoked: live.diagnostics.openaiRealCall,
+        validatorDisposition: live.diagnostics.responseDisposition,
+        executionMode: classification.class,
+        finalResponseSource: live.diagnostics.executivePathUsed ? 'executive' : 'legacy',
+        fallbackReason: live.diagnostics.fallbackUsed
+          ? `validator=${live.diagnostics.responseDisposition}`
+          : null,
+        pageDetected: pageTrace.pageDetected,
+        uiContextCollected: pageTrace.uiContextCollected,
+        contextSourcesSkipped: live.diagnostics.contextSourcesSkipped,
+        packetSizeChars: live.diagnostics.packetSizeChars,
+        latencyMs: live.diagnostics.latencyMs,
+      })
       return live.result
     } catch (bridgeErr) {
       console.error('[donnaLiveConversationAction] executive bridge error (returning legacy):',
         bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr))
+      logReasoningTrace({
+        entryPoint: 'live_action',
+        classification,
+        routingDecision: 'legacy_fallback (bridge error)',
+        contextSources: 0,
+        openaiInvoked: false,
+        validatorDisposition: 'crashed',
+        executionMode: classification.class,
+        finalResponseSource: 'legacy',
+        fallbackReason: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+        pageDetected: pageTrace.pageDetected,
+        uiContextCollected: pageTrace.uiContextCollected,
+      })
       return legacyResult
     }
 

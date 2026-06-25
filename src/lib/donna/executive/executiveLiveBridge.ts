@@ -131,6 +131,11 @@ export async function runExecutiveLive(
     responseDisposition: turn?.validation.disposition ?? 'crashed',
     fallbackUsed,
     executivePathUsed: usesExecutive,
+    // Unified Executive Context Engine developer trace (Mega Sprint 3991–4020).
+    contextSourcesSkipped: turn?.contextTrace.sourcesSkipped.length ?? 0,
+    packetSizeChars: turn?.contextTrace.packetSizeChars ?? 0,
+    pageGrounded: turn?.contextTrace.pageGrounded ?? false,
+    conversationGrounded: turn?.contextTrace.conversationGrounded ?? false,
   }
 
   const comparison = buildComparison(legacy, turn)

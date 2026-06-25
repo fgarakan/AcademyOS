@@ -16,6 +16,10 @@ import type {
   DecisionRef,
   CurriculumContext,
 } from './executiveTypes'
+// Mega Sprint 3961–3990 / 3991–4020 — Live Page Intelligence → Unified Context Engine.
+// The Director's current screen is assembled centrally and injected into the single
+// `current_page` source so every OpenAI request is grounded in what is on screen.
+import { buildPageContextForResolver } from './pageContextPacketSource'
 
 export interface LiveAcademyContext {
   academyId: string
@@ -149,8 +153,14 @@ export function buildResolverStateFromLive(
   const operatingSummary = live ? operatingSummaryFromDirectorCtx(live) : null
   const curriculum = live ? curriculumFromDirectorCtx(live, academy.academyId) : null
 
-  const pageLabel =
-    (legacy?.pageIntelligence as { label?: string } | null)?.label ??
+  // Current page: the rich, structured page-context block (purpose, current step,
+  // visible UI, selected values, completion status, recommended next action) built
+  // from page intelligence + live page state. Falls back to the raw route only for
+  // completely unknown routes, then to legacy page intelligence, then null —
+  // so DONNA never has to ask the Director which screen they are on.
+  const pageContextBlock =
+    buildPageContextForResolver(input.route, input.livePageState ?? null) ??
+    (legacy?.pageIntelligence as { pageName?: string } | null)?.pageName ??
     input.route ??
     null
 
@@ -158,7 +168,7 @@ export function buildResolverStateFromLive(
     role: execRole,
     message: input.userMessage,
     route: input.route ?? null,
-    page: pageLabel,
+    page: pageContextBlock,
     conversationHistory: input.conversationHistory ?? [],
     activeWorkflowId: input.activeGuidedWorkflowId ?? null,
     activeDraft: null, // V1 live carries no structured draft; continuity uses lastEntityLabel

@@ -161,7 +161,9 @@ import type { ExecutiveLiveDiagnostics } from '@/lib/donna/executive/executiveSh
 // routing: strategic/conversational requests go to the Executive Operating Layer
 // (via live_ai_assist → donnaLiveConversationAction) instead of a workflow menu.
 import { isExecutiveReasoningEnabled } from '@/lib/donna/executive/executiveOperatingLayer'
-import { classifyExecutiveConversation } from '@/lib/donna/executive/executiveConversationClassifier'
+// Mega Sprint 3901–3930 — DONNA Reasoning Constitution: the single classifier that
+// decides reasoning vs execution vs hybrid for executive-first routing.
+import { classifyRequest } from '@/lib/donna/constitution/donnaRoutingConstitution'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -738,8 +740,11 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
   // Flag-off → skipped entirely (zero behavior change; prior certifications hold).
   logStep(debugLog, 'check_executive_first')
   if (isExecutiveReasoningEnabled()) {
-    const execClass = classifyExecutiveConversation(userMessage)
-    if (execClass.match) {
+    // Constitution (Mega Sprint 3901–3930): reasoning + hybrid requests are owned by
+    // the Executive Operating Layer. Pure execution/CRUD (deterministic) is not — it
+    // stays on the deterministic engines / approval pipeline below.
+    const cls = classifyRequest(userMessage)
+    if (cls.class === 'executive' || cls.class === 'hybrid') {
       finalizeLog(debugLog, 'check_executive_first', 'live_ai_assist')
       emitDebugLog(debugLog)
       return makeResult('live_ai_assist', {

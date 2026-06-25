@@ -31,7 +31,10 @@ import {
 } from '@/lib/donna/brain/donnaOpenAIGateway'
 import type { InterpreterRole } from '@/lib/donna/conversation/donnaIntentInterpreter'
 import type { DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
-import { buildConversationDNAInstruction } from '@/lib/donna/conversation/donnaConversationDNA'
+import {
+  buildConversationDNAInstruction,
+  applyExecutiveVoice,
+} from '@/lib/donna/conversation/donnaConversationDNA'
 
 // ── Contract (Part 3) ────────────────────────────────────────────────────────────
 
@@ -343,11 +346,21 @@ export async function applyExecutiveRefinement(
   const refine = opts?.refine ?? refineExecutiveResponse
   try {
     const refinement = await refine({ draft: result.response, role })
-    if (!refinement.refined) return result
+    // Base text: OpenAI's refined wording when it improved, else the grounded draft.
+    const base = refinement.refined ? refinement.text : result.response
+
+    // Mega Sprint 4021–4050 — deterministic executive-voice polish. Runs LIVE even
+    // when OpenAI is unavailable, so the no-key path still sheds chatbot hedging.
+    // Fact-preserving (numbers/names unchanged) and fail-safe: if the rewrite would
+    // alter a fact, keep `base`.
+    const voiced = applyExecutiveVoice(base)
+    const finalText = (voiced !== base && isRefinementFactPreserving(base, voiced)) ? voiced : base
+
+    if (finalText === result.response) return result
     return {
       ...result,
-      response: refinement.text,
-      spokenResponse: toSpoken(refinement.text),
+      response: finalText,
+      spokenResponse: toSpoken(finalText),
     }
   } catch {
     return result

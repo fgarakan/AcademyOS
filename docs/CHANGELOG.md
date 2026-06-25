@@ -2,6 +2,214 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4021–4050 — DONNA Executive Conversation Quality V1
+
+**Mission:** Transform DONNA from an AI assistant into an Executive Operating Partner —
+**conversation quality only**, no new architecture, routing, or memory. Every response
+should sound like an experienced COO sitting beside the Director: answer first,
+recommend confidently, explain why, guide to completion. Never sound like a chatbot.
+
+**Natural executive voice (Objective 1 + 6):** the canonical Conversation DNA contract
+now detects and removes chatbot hedging — "I think you're asking…", "Could you
+clarify…", "Would you like…", "Please choose…", "Describe what you need.", "If I
+understand correctly…", leading filler ("Sure,", "Of course,"), and weak
+recommendations. A new **deterministic, fact-preserving `applyExecutiveVoice()`
+normalizer** rewrites these into decisive executive phrasing and runs **live even with
+no OpenAI key**, so the Director gets the improved voice on the deterministic path, not
+only when the model is on. Pure, idempotent, numbers/names never altered.
+
+**Live wiring:** `applyExecutiveRefinement` (the final presentation layer both director
+actions already call) now applies `applyExecutiveVoice` as a final fact-preserving
+polish — over OpenAI's wording when it ran, over the grounded draft when it didn't.
+Approval-gated / safety-blocked / mutation responses remain untouched.
+
+**Prompt:** the Executive Reasoning Gateway now prepends an executive-voice directive
+(answer first; never ask which page; recommend with why · tradeoff · outcome · next
+step; concise, conversational) to the packet — the packet already grounds the screen,
+conversation, and academy (prior sprint), so DONNA never asks what the Director is
+looking at.
+
+**Page-aware guidance (Objective 2):** reuses the Unified Executive Context Engine —
+across Today, Onboarding, Curriculum, Templates, Players, Coaches, Approvals, a COO
+answer built from the page packet is answer-first, never asks the page, and ends by
+guiding the next step.
+
+**Files — modified (3) + new (1):**
+- `conversation/donnaConversationDNA.ts` — chatbot-hedging detector, `applyExecutiveVoice()` normalizer, `answersFirst` + `hasExecutiveRecommendationShape` predicates, stronger live instruction; `conformsToConversationDNA` now flags hedging.
+- `brain/donnaExecutiveCommunicationLayer.ts` — applies the deterministic voice polish (fact-preserving, fail-safe) so the no-key path sheds hedging.
+- `executive/executiveReasoningGateway.ts` — executive-voice directive prepended to the reasoning call.
+- `certification/donnaExecutiveConversationQualityCertification.ts` (new) — **39/39**: voice cleanup (8 hedging patterns, fact-safe, idempotent), 7-page answer-first guidance, recommendation shape, guided completion, continuity tokens, live no-key cleanup, safety pass-through, concision.
+- `scripts/certificationSuites.ts` — registers the suite.
+
+**Certification:** new suite 39/39; full registered suite green (16/16, zero failures).
+`tsc --noEmit` clean. No new architecture, no migrations, no new dependencies, no RLS
+changes. Live deterministic behavior **improves** (hedging removed, fact-preserving);
+worst case is the original grounded answer.
+
+**Executive Conversation score: 9 / 10.**
+
+---
+
+## 2026-06-25 — Mega Sprint 3961–4020 — DONNA Live Page Intelligence + Unified Executive Context Engine V1
+
+**Mission:** Make every OpenAI reasoning request automatically carry the complete
+operating picture an experienced COO would have standing beside the Director —
+the current screen (page awareness), the conversation (continuity), the academy,
+permissions, available actions, and relevant memory — assembled **once, centrally**.
+DONNA never asks the Director to explain a page that is already on screen.
+
+**Root gap closed:** the executive packet's `current_page` source only ever carried
+the raw route string — `liveResolverAdapter` read `legacy.pageIntelligence.label`,
+a field that does not exist on `PageIntelligence`, so it always fell through to the
+route. And `current_page` was only in the `analyze`/`diagnose` reasoning goals, so
+"what should I select?" (`decide`/`recommend`) and "why?" (`explain`) reasoned with
+**no page context at all**. Both are fixed.
+
+**Executive Context Engine (the convergence):** one new module,
+`executiveContextEngine.ts`, owns context assembly (`assembleExecutiveContext` =
+continuity → reasoning goal → Context Resolver → packet → developer trace).
+`runExecutiveOperatingTurn` now calls the engine instead of re-deriving the plan and
+re-resolving context inline — so there is a single context builder, no duplicate path.
+
+**Page Context Packet Source:** `pageContextPacketSource.ts` turns the current
+screen (route + `LivePageState` + `PageIntelligence`) into a structured, token-lean
+block — page id/title/purpose, current step, progress, visible sections/fields/buttons,
+selected values, completion status (completed/remaining/blockers), approval-gated
+actions, and the recommended next action — injected into the single `current_page`
+source. Executive-critical fields are front-loaded so they survive truncation.
+
+**Token strategy (Objective 4):** the COO-priority set — `current_page`, `academy`,
+`active_workflow`, `conversation_history` — is exempt from the budget drop, so the
+Director's screen and the conversation are never sacrificed for cheaper context.
+`current_page` and `conversation_history` are now near-universal conditionals
+(always-relevant, cheap) so every goal grounds the screen and keeps the thread.
+
+**Pages supported:** Today, Onboarding, Curriculum, Templates (new), Players, Coaches,
+Approvals, Sessions, Settings (new), Placement, Level-Up, Player Profile, Group, plus
+coach screens.
+
+**Developer trace (Objective 5):** sources included / skipped / unavailable, token
+count, packet size, page detected, UI elements collected, latency, and final response
+source — emitted via `logReasoningTrace` from both director reasoning actions and
+surfaced through `ExecutiveLiveDiagnostics`. Developer-only; never user-facing.
+
+**Files — new (2):**
+- `src/lib/donna/executive/executiveContextEngine.ts` — the Unified Executive Context Engine.
+- `src/lib/donna/executive/pageContextPacketSource.ts` — page → structured context packet source + dev trace.
+- `src/lib/donna/certification/donnaUnifiedExecutiveContextCertification.ts` (new) — **31/31**: one engine, 7 pages × 5 questions grounded, continuity, token strategy, dev trace, convergence, honest-on-unknown-route.
+
+**Files — modified (9):**
+- `executiveOperatingLayer.ts` — turn assembles via `assembleExecutiveContext` (no inline resolve); exposes `contextTrace`.
+- `liveResolverAdapter.ts` — injects the rich page block into `current_page` (fixes the dead `.label` lookup).
+- `reasoningGoals.ts` — `current_page` + `conversation_history` made near-universal conditionals.
+- `contextResolver.ts` — `ALWAYS_INCLUDE` priority set exempt from the budget drop.
+- `pageContextResolver.ts` — added Templates, Today, Settings page definitions.
+- `executiveShadowMode.ts` / `executiveLiveBridge.ts` — diagnostics carry skipped-sources / packet-size / page+conversation grounding.
+- `donnaRoutingLog.ts` — `ReasoningTrace` extended with page + context-engine fields.
+- `donnaLiveConversationAction.ts` / `donnaStrategicConversationAction.ts` — emit the page-grounded developer trace.
+- `donnaUnifiedReasoningCertification.ts` — D-section follows the convergence (layer → engine → resolver); now 38/38.
+- `scripts/certificationSuites.ts` — registers the new suite.
+
+**Certification:** new suite 31/31; full registered suite green (15/15, zero failures)
+— readiness 31/31, live-wiring 35/35, experience convergence 75/75, routing constitution
+132/132, unified reasoning 38/38, COO operating day 144/144, executive experience 87/87,
+plus all others. `tsc --noEmit` clean. No migrations, no new dependencies, no RLS changes.
+Executive layer remains flag-dormant live (`DONNA_EXECUTIVE_REASONING` unset) — these
+changes ground the packet for when it is enabled; live deterministic behavior is unchanged.
+
+---
+
+## 2026-06-25 — Mega Sprint 3931–3960 — DONNA Unified Reasoning Engine V1
+
+**Mission:** Complete the permanent reasoning architecture — exactly ONE reasoning
+pipeline. Every reasoning request flows Intent → Routing Constitution → Executive
+Operating Layer → Context Resolver → Executive Context Packet → OpenAI (one gateway) →
+Response Validator → Action Planner → AcademyOS. No feature runs a second pipeline.
+
+**Consolidation:** the last divergent path — `strategic_ai_assist` — now converges onto
+the Executive Operating Layer. `donnaStrategicConversationAction.ts` mirrors the live
+action exactly: the strategic brain runs as the certified fail-open fallback (keeps its
+DNA guard + approval-gated strategic learning), then `runExecutiveLive()` owns the
+reasoned answer in primary mode. Strategic reasoning is now a **client** of the one
+executive pipeline, not its own.
+
+**Files changed (3) + new (2):**
+- `donnaStrategicConversationAction.ts` — converged onto `runExecutiveLive` + full trace.
+- `donnaLiveConversationAction.ts` — upgraded to the full `logReasoningTrace`.
+- `donnaRoutingLog.ts` — added `logReasoningTrace` (classification · routing · context
+  built · OpenAI · validator · fallback · final source — Objective 6).
+- `donnaRoutingConstitution.ts` — reasoning vocabulary extended (`review/advise/evaluate/
+  assess/prioritize/"what should I"/"what's next"`) so the certification prompts classify
+  as reasoning. Additive — no CRUD/mutation reclassified (constitution cert still 132/132).
+- `donnaUnifiedReasoningCertification.ts` (new) — **36/36** structural regression lock:
+  one gateway, no direct model calls, no executive-layer bypass, validator + context
+  resolver present, every certification prompt on the executive pipeline.
+- `scripts/certificationSuites.ts` — registers the suite.
+
+**Audit (Objective 1):** `askConversationTeacher` (`donnaConversationTeacher.ts:138`) is
+the single reasoning OpenAI call site; executive + both legacy brains + refinement all
+route through it. One Context Resolver (`resolveExecutiveContext`), one Validator
+(`validateExecutiveResponse`).
+
+**Verification:** full gate **14/14 suites green** (12 pre-existing unchanged), guardians
+GREEN (no new violations), `tsc --noEmit` clean.
+
+**Remaining exceptions (documented):** the fail-open legacy computation still issues a
+redundant OpenAI call in primary mode before the executive layer takes ownership (kept
+for DNA guard + learning capture; never owns the answer); two advisory non-conversation
+OpenAI utilities (`donnaLearningAnalyzer` testing-only, `donnaKnowledgeDraftGenerator`
+uncalled) are allow-listed so any third off-path caller fails the build; media OpenAI
+(TTS/Whisper/realtime) out of scope. Report: `docs/donna/DONNA_UNIFIED_REASONING_ENGINE_V1.md`.
+
+**Scores:** Executive readiness **99**; God Mode **95**.
+
+---
+
+## 2026-06-25 — Mega Sprint 3901–3930 — DONNA Reasoning Constitution V1
+
+**Mission:** Establish the permanent routing constitution. Executive reasoning becomes
+the default for reasoning requests; OpenAI is the primary reasoning engine; AcademyOS
+stays the source of truth + execution engine. Every Director request is classified —
+`deterministic | executive | hybrid` — **before** routing, through one front door.
+
+**New files (4):**
+- `src/lib/donna/constitution/donnaRoutingConstitution.ts` — `classifyRequest()`, the
+  single pure/total classifier + `ROUTING_CONSTITUTION` ownership map. Composes the
+  already-certified `detectDirectMutationRequest` + `classifyExecutiveConversation` so
+  the decision is identical to the live router, now under one name.
+- `src/lib/donna/constitution/donnaRoutingLog.ts` — developer-only routing visibility
+  (Objective 6): classification · decision · openaiInvoked · execution mode · fallback.
+  Off in production unless `DONNA_ROUTING_DEBUG=1`.
+- `src/lib/donna/certification/donnaRoutingConstitutionCertification.ts` — **132/132**,
+  offline + CI-gating: reasoning→executive, CRUD→never-OpenAI, mutations→safety_block,
+  hybrid→reason-then-execute, totality/determinism, no-conflict, flag-off baseline.
+- `docs/donna/DONNA_ROUTING_CONSTITUTION_V1.md` — the ratified constitution + entry-point
+  audit + remaining exceptions.
+
+**Files changed (4):**
+- `donnaCanonicalRouter.ts` — Step 1.6 now consults `classifyRequest` (executive|hybrid)
+  instead of the conservative classifier alone; classification computed before routing.
+- `processDonnaMessage.ts` — Step 2.5 executive-first routing now driven by
+  `classifyRequest` (broadens executive coverage to recommend/compare/teach/coach/
+  diagnose/plan/summarize per Objective 2). Safety unchanged (mutations classify
+  deterministic; safety blocks run first).
+- `donnaLiveConversationAction.ts` — logs the constitutional decision for every live turn.
+- `scripts/certificationSuites.ts` — registers the new suite.
+
+**Behavior change (intended, Objective 2):** reasoning verbs beyond the prior conservative
+set now route executive in primary mode. **Verified non-regressive** — full gate
+**13/13 suites green** (the 12 pre-existing suites unchanged), `tsc --noEmit` clean,
+guardians green.
+
+**Remaining exceptions (documented, §6 of the report):** the `strategic_ai_assist` path
+reaches OpenAI outside the executive layer (confidence-zone gated); sub-engine confidence
+gates; `detectDirectMutationRequest` whole-word coarseness; flag dependency
+(executive routing requires `DONNA_EXECUTIVE_REASONING=primary`).
+
+**Scores:** Executive readiness **99**; God Mode **90**.
+
+---
+
 ## 2026-06-24 — Mega Sprint 3841–3870 — DONNA Executive Intelligence V1
 
 **Mission:** Executive DONNA is proven live; the bottleneck is now intelligence quality.

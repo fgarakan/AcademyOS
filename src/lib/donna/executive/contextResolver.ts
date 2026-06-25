@@ -30,6 +30,20 @@ import {
 
 const DEFAULT_BUDGET_TOKENS = 1400
 
+// Mega Sprint 3991–4020 — Unified Executive Context Engine. The COO-priority set:
+// the context an executive standing beside the Director always has — the current
+// screen, the academy, the active workflow, and the conversation. When these are
+// relevant they are admitted even under a tight token budget (never dropped to make
+// room for cheaper-but-less-important context). academy is already a required BASE
+// source for every goal; the other three are conditionals that this exemption keeps.
+export const ALWAYS_INCLUDE: ContextSourceId[] = [
+  'current_page',
+  'academy',
+  'active_workflow',
+  'conversation_history',
+]
+const ALWAYS_INCLUDE_SET = new Set<ContextSourceId>(ALWAYS_INCLUDE)
+
 type AssembleResult =
   | { ok: true; content: string; confidence: number }
   | { ok: false; reason: string }
@@ -280,8 +294,10 @@ export function resolveExecutiveContext(
     const meta = sourceMeta(id)
     const tokensEst = estimateTokens(res.content)
 
-    // Budget: required slices are always admitted; conditionals only if they fit.
-    if (!required.has(id) && used + tokensEst > budget) {
+    // Budget: required slices and the always-include COO-priority set are always
+    // admitted; other conditionals only if they fit. This guarantees the Director's
+    // current screen and the conversation are never dropped to fit cheaper context.
+    if (!required.has(id) && !ALWAYS_INCLUDE_SET.has(id) && used + tokensEst > budget) {
       omitted.push({ id, reason: 'budget' })
       continue
     }

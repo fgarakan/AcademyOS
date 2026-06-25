@@ -190,6 +190,40 @@ const COMPLETION_INTELLIGENCE: Record<string, CompletionIntelligence> = {
     ],
   },
 
+  // ── Templates workspace, Today, Settings (Mega Sprint 3961–3990) ────────────
+
+  '/director/templates': {
+    completionGoals: [
+      'Each curriculum level has at least one class template',
+      'Templates have activities and coaching cues in every block',
+      'Templates published and available for sessions',
+    ],
+    recommendedNextAction: 'Open or create the template for the level you are delivering next — fill every block with an activity and a coaching cue before publishing.',
+    warnings: [
+      'Sessions cannot align to a level without a published template for that level',
+    ],
+  },
+
+  '/director/today': {
+    completionGoals: [
+      'Review queue cleared or triaged',
+      'Attention signals reviewed and actioned',
+      'Daily brief acknowledged',
+    ],
+    recommendedNextAction: 'Start with what needs your decision today — open the review queue, then act on flagged players.',
+    warnings: [],
+  },
+
+  '/director/settings': {
+    completionGoals: [
+      'Academy identity and branding confirmed',
+      'Academy DNA model selected',
+      'Operating preferences reviewed',
+    ],
+    recommendedNextAction: 'Confirm your Academy DNA model and identity — these drive how DONNA reasons about your academy everywhere else.',
+    warnings: [],
+  },
+
   // ── Coaches management page (Mega Sprint 3181–3210) ─────────────────────────
 
   '/director/coaches': {
@@ -801,6 +835,86 @@ const STATIC_PAGE_DEFAULTS: Record<string, StaticPageDefault> = {
       'All setup changes are director decisions — nothing is automatic',
     ],
     missingData: 'Setup progress may not be loaded yet. I can explain what each step does while it loads.',
+  },
+
+  // Mega Sprint 3961–3990 — Templates workspace, Today, Settings
+  '/director/templates': {
+    pageName: 'Templates',
+    pagePurpose: 'Templates workspace. Create, edit, and publish the class and fitness templates that structure every session. A level without a published template cannot have aligned sessions.',
+    visibleData: [
+      'Class templates by curriculum level',
+      'Fitness templates and load profiles',
+      'Block structure (warm-up, main, cool-down) per template',
+      'Publish status per template',
+      'Coverage gaps — levels with no template',
+    ],
+    keyMetrics: [
+      { id: 'published_templates', label: 'Published Templates', description: 'Templates available for sessions to align to.' },
+      { id: 'levels_covered', label: 'Levels Covered', description: 'Curriculum levels that have at least one published template.' },
+      { id: 'empty_blocks', label: 'Empty Blocks', description: 'Template blocks with no activity or coaching cue assigned — these block publishing.' },
+    ],
+    availableActions: [
+      'Create a class or fitness template',
+      'Fill blocks with activities and coaching cues',
+      'Assign a curriculum level to a template',
+      'Preview the session flow',
+      'Publish a template',
+    ],
+    approvalActions: [
+      'Publishing a template makes it available to coaches for live sessions',
+    ],
+    missingData: 'Template data may not be loaded yet. I can explain what each template section does while it loads.',
+  },
+
+  '/director/today': {
+    pageName: 'Today',
+    pagePurpose: "The Director command center for today. Shows what needs your decision now — the review queue, attention signals, today's sessions, and the daily brief.",
+    visibleData: [
+      'Daily brief',
+      'Review queue depth',
+      'Players needing attention',
+      "Today's sessions",
+      'Academy vital signs',
+    ],
+    keyMetrics: [
+      { id: 'pending_reviews', label: 'Pending Reviews', description: 'Items waiting for your approval.' },
+      { id: 'attention_signals', label: 'Attention Signals', description: 'Players flagged for follow-up today.' },
+      { id: 'sessions_today', label: 'Sessions Today', description: 'Sessions scheduled for today.' },
+    ],
+    availableActions: [
+      'Open the review queue',
+      'Act on attention signals',
+      'Review today’s sessions',
+      'Acknowledge the daily brief',
+    ],
+    approvalActions: [
+      'Review queue items require explicit director approval before they take effect',
+    ],
+    missingData: 'Today’s data may not be loaded yet. I can explain each section while it loads.',
+  },
+
+  '/director/settings': {
+    pageName: 'Academy Settings',
+    pagePurpose: 'Academy configuration. Set identity, branding, the Academy DNA model, and operating preferences. The DNA model drives how DONNA reasons about your academy everywhere else.',
+    visibleData: [
+      'Academy name and branding',
+      'Academy DNA model selection',
+      'Operating preferences and terminology',
+      'Role and membership configuration',
+    ],
+    keyMetrics: [
+      { id: 'dna_selected', label: 'DNA Model', description: 'The development model that grounds DONNA’s academy-specific reasoning.' },
+      { id: 'identity_complete', label: 'Identity', description: 'Whether academy name and branding are set.' },
+    ],
+    availableActions: [
+      'Confirm academy identity and branding',
+      'Select or change the Academy DNA model',
+      'Review operating preferences',
+    ],
+    approvalActions: [
+      'Settings changes are director decisions — nothing is automatic',
+    ],
+    missingData: 'Settings may not be loaded yet. I can explain what each option controls while it loads.',
   },
 
   // Mega Sprint 3181–3210

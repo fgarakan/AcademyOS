@@ -49,7 +49,7 @@ export const DONNA_CONVERSATION_DNA = {
     { beat: 5, name: 'Guide', guidance: 'Offer the next step or ask the one question that moves it forward.' },
   ] as const,
 
-  /** Phrasings DONNA must never use (robotic / system / third-person). */
+  /** Phrasings DONNA must never use (robotic / system / third-person / chatbot). */
   forbiddenPhrasings: [
     'arc closed',
     'learning captured',
@@ -61,6 +61,14 @@ export const DONNA_CONVERSATION_DNA = {
     'donna does not',
     'you may wish to consider',
     'you may want to consider',
+    // Mega Sprint 4021–4050 — chatbot hedging. When sufficient context already
+    // exists DONNA answers; she does not interpret-aloud, hedge, or defer back.
+    "i think you're asking",
+    'could you clarify',
+    'would you like me to',
+    'please choose',
+    'describe what you need',
+    'if i understand correctly',
   ] as readonly string[],
 
   /** Reality and safety always win — identity never overrides them. */
@@ -90,7 +98,10 @@ export function buildConversationDNAInstruction(role: InterpreterRole): string {
     `You are ONE DONNA — the same experienced academy COO everywhere. Speak to ${role} in this voice: ${tone}`,
     'Speak in the first person ("I"); never refer to yourself as "DONNA" in the third person.',
     'Sound calm, confident, warm, and concise — like an executive talking, never a chatbot and never a dashboard.',
-    'Acknowledge naturally and specifically, then say what matters, recommend decisively ("I\'d recommend…"), explain briefly, and end by guiding the next step.',
+    // Mega Sprint 4021–4050 — answer-first executive voice.
+    'Answer first. When you already have the context (the current page, the conversation, the academy), respond directly — never open with "I think you\'re asking…", "Could you clarify…", "Would you like…", "Please choose…", or "Describe what you need.". Only ask a question when an answer is genuinely impossible without it.',
+    'Acknowledge briefly and specifically, then say what matters, recommend decisively ("I\'d recommend…"), explain why in one line, and end by guiding the exact next step.',
+    'When you recommend, make it complete: the action, why it\'s right, the tradeoff, the expected outcome, and the next click — in plain spoken sentences.',
     'Speak, do not print: no numbered lists, bullet points, or bold field labels — use short spoken sentences.',
     'Drop robotic or internal wording (e.g. "arc closed", "learning captured", status narration) and do not mention approval rules unless this specific answer involves an action that needs approval.',
   ].join(' ')
@@ -153,6 +164,114 @@ export function isFirstPersonVoice(text: string): boolean {
   return !hasThirdPersonSelfReference(text)
 }
 
+// ── Chatbot hedging (Mega Sprint 4021–4050) ─────────────────────────────────────
+// The phrasings that make DONNA sound like an AI assistant instead of a COO who
+// already has the context: interpret-aloud openers, servile clarifiers, and
+// defer-back questions. These are wrong only when context already exists — which,
+// in the ONE pipeline, the Executive Context Engine guarantees.
+
+const CHATBOT_HEDGING =
+  /\b(i think you'?re asking|i believe you'?re asking|it sounds like you'?re asking|if i understand correctly|i'?m not sure i understand|could you (please )?clarify|can you (please )?clarify|please clarify|would you like me to|would you like to|please choose|please select|describe what you need|i'?d be happy to|i assume you (mean|want)|you (may|might) (wish|want) to consider|perhaps consider)\b|(^|[.!?]\s+)(sure|of course|certainly|absolutely|got it|no problem)\s*[,!]/i
+
+/** True when text uses chatbot hedging (interpret-aloud / clarifier / defer-back). */
+export function hasChatbotHedging(text: string): boolean {
+  return CHATBOT_HEDGING.test(text)
+}
+
+/** True when the answer leads with substance, not a hedge or a clarifying question. */
+export function answersFirst(text: string): boolean {
+  const t = text.trim()
+  if (!t) return false
+  // First sentence must not be a hedge and must not be a pure clarifying question.
+  const firstSentence = t.split(/(?<=[.!?])\s+/)[0] ?? t
+  if (CHATBOT_HEDGING.test(firstSentence)) return false
+  if (firstSentence.endsWith('?') && /^(what|which|who|where|when|how|could|can|would|do|are|is)\b/i.test(firstSentence)) {
+    return false
+  }
+  return true
+}
+
+/**
+ * The five-part executive recommendation: action · why · tradeoff · outcome · next.
+ * Heuristic presence check used by the certification and template self-checks.
+ */
+export function hasExecutiveRecommendationShape(text: string): {
+  complete: boolean
+  present: { action: boolean; why: boolean; tradeoff: boolean; outcome: boolean; next: boolean }
+} {
+  const t = text.toLowerCase()
+  const present = {
+    action: /\b(i'?d recommend|i recommend|start (with|by|here)|the move is|i'?d|let'?s|open the|review|assign|publish|finalize|approve)\b/.test(t),
+    why: /\b(because|since|that way|the reason|so that|this matters|why)\b/.test(t),
+    tradeoff: /\b(tradeoff|trade-off|downside|risk|cost|the catch|otherwise|if you don'?t|the alternative|versus|instead of)\b/.test(t),
+    outcome: /\b(you'?ll|this (gets|gives|lets|keeps|unlocks|means)|the result|outcome|so you can|then you'?ll|expect)\b/.test(t),
+    next: endsWithGuidance(text),
+  }
+  return { complete: present.action && present.why && present.next, present }
+}
+
+// ── Deterministic executive-voice normalizer (Objective 1 + 6) ──────────────────
+// A pure, fact-preserving polish that runs LIVE even with no OpenAI key. It rewrites
+// known chatbot openers/clarifiers into decisive executive phrasing. It NEVER touches
+// numbers, names, recommendations, or meaning — only the servile/hedged scaffolding.
+// Ordered, idempotent substitutions (each eliminates its own pattern, so a second
+// pass is a no-op).
+
+const VOICE_REWRITES: Array<[RegExp, string]> = [
+  // Interpret-aloud openers → drop the hedge, keep the substance.
+  [/\bi think you'?re asking (about |for |to )?/gi, ''],
+  [/\bi believe you'?re asking (about |for |to )?/gi, ''],
+  [/\bit sounds like you'?re asking (about |for |to )?/gi, ''],
+  [/\bif i understand correctly,?\s*/gi, ''],
+  [/\bi'?m not sure i understand[.,]?\s*/gi, ''],
+  [/\bi assume you (mean|want) (to )?/gi, ''],
+  // Leading filler.
+  [/^(sure|of course|certainly|absolutely|got it|no problem)[,!.]?\s+/i, ''],
+  // Servile clarifiers → direct ask.
+  [/\bcould you (please )?clarify\b/gi, 'tell me'],
+  [/\bcan you (please )?clarify\b/gi, 'tell me'],
+  [/\bplease clarify\b/gi, 'tell me'],
+  [/\bdescribe what you need\b/gi, 'tell me what you need'],
+  // Defer-back → decisive guiding question (still a question, not servile).
+  [/\bwould you like me to\b/gi, 'want me to'],
+  [/\bwould you like to\b/gi, 'want to'],
+  [/\bplease choose\b/gi, 'choose'],
+  [/\bplease select\b/gi, 'select'],
+  [/\bi'?d be happy to\b/gi, "I'll"],
+  // Weak recommendations → decisive.
+  [/\byou (may|might) (wish|want) to consider\b/gi, "I'd recommend"],
+  [/\bperhaps consider\b/gi, "I'd recommend"],
+  [/\byou may wish to\b/gi, "I'd recommend you"],
+]
+
+/** Restore sentence-leading capitalization after a hedge clause was removed. */
+function recapitalize(text: string): string {
+  return text.replace(/(^|[.!?]\s+)([a-z])/g, (_m, lead: string, ch: string) => lead + ch.toUpperCase())
+}
+
+/**
+ * Deterministically rewrite chatbot scaffolding into executive voice. Pure and
+ * fact-preserving: numbers and names are never altered. Idempotent.
+ */
+export function applyExecutiveVoice(text: string): string {
+  if (!text || !text.trim()) return text
+  let out = text
+  for (const [re, rep] of VOICE_REWRITES) out = out.replace(re, rep)
+  // Tidy whitespace + stray punctuation left by removed clauses.
+  out = out
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/([,;:])\s*([.!?])/g, '$2')
+    .replace(/^\s*[,.;:]\s*/g, '')
+    .trim()
+  return recapitalize(out)
+}
+
+/** True when applying the voice normalizer would change nothing (already executive). */
+export function isExecutiveVoiceClean(text: string): boolean {
+  return applyExecutiveVoice(text) === text.trim()
+}
+
 /**
  * Aggregate DNA conformance check for a single spoken answer. Used by the
  * certification and available to any template that wants to self-verify.
@@ -167,5 +286,6 @@ export function conformsToConversationDNA(text: string): {
   if (hasRoboticSafetyBoilerplate(text)) violations.push('robotic_safety_boilerplate')
   if (hasDashboardSpeech(text)) violations.push('dashboard_speech')
   if (!isDecisiveRecommendation(text)) violations.push('weak_recommendation')
+  if (hasChatbotHedging(text)) violations.push('chatbot_hedging')
   return { conforms: violations.length === 0, violations }
 }
