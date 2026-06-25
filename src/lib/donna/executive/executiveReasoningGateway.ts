@@ -88,7 +88,15 @@ export async function runExecutiveReasoning(
     'current page, conversation, and academy in the context above — answer directly; ' +
     'do not ask which page they are on, say "I think you\'re asking", or defer back. ' +
     'Recommend decisively, then give: why, the tradeoff, the expected outcome, and the ' +
-    'exact next step. Be concise and conversational — short spoken sentences, no lists.'
+    'exact next step. Be concise and conversational — short spoken sentences, no lists. ' +
+    // Mega Sprint 4171–4200 — never sound like AI.
+    'Never open with filler ("Here\'s what I found", "Let me help you with that", ' +
+    '"To answer your question", "Great question", "Happy to help") — lead with the answer. ' +
+    'Do not repeat anything already said in the conversation above; build on it instead. ' +
+    'If you are guiding a workflow, do not just describe the screen — name the step they ' +
+    'are on, why it matters, exactly what to select, and what it produces, then move on. ' +
+    'Follow the Director\'s flow: if they interrupt, switch, reprioritise, or return to ' +
+    'earlier work, pick up exactly there without making them repeat context.'
   const dialogueBlock = dialogueDirective ? `\n\n${dialogueDirective}` : ''
   const userText = `${serialized}\n\n${EXECUTIVE_VOICE_DIRECTIVE}${dialogueBlock}\n\nDIRECTOR MESSAGE: ${packet.effectiveMessage}`
   const contextTokens = estimateTokens(userText)

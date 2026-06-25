@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4171–4200 — DONNA Executive Experience Refinement V1
+
+**Mission:** Make DONNA feel like an experienced COO, never "that sounded like AI."
+Presentation only — **no new architecture, routing, context engine, memory, or OpenAI
+pathway.** Every change rides existing, already-wired layers.
+
+**Natural conversation (Obj 1).** The deterministic executive-voice normalizer
+(`applyExecutiveVoice`, already live in `applyExecutiveRefinement`) now also strips
+generic intros ("Here's what I found", "Let me help you with that"), stock
+acknowledgements ("Great question", "Happy to help", "Thanks for asking"), and
+self-repetition lead-ins ("As I mentioned earlier", "Just to reiterate"), and flattens
+glyph bullet lists into spoken sentences. Digit-safe (numbered counts untouched),
+fact-preserving, idempotent.
+
+**No repeated explanations (Obj 1·4·6).** `stripRepeatedExplanation` drops any sentence
+the prior DONNA turn already said. **Recommendation shape (Obj 3)** and **workflow
+guidance (Obj 5, `isWorkflowGuidanceComplete`: step · why · select · outcome)** and
+**flow shifts (Obj 4, `detectFlowShift`: interrupt / resume / reprioritize / continue)**
+are certified.
+
+**Reaches the LIVE primary path.** The executive reasoning system prompt
+(`executiveReasoningGateway.ts`) gained the same directives, and the executive
+`finalResponse` is now fact-safely voice-polished in `executiveLiveBridge.ts` — verified
+with real OpenAI on `/director/curriculum` (`genericIntro=false`, `hedging=false`, facts
+intact, answer-first).
+
+**Files — new (2) + modified (4):**
+- `certification/donnaExecutiveExperienceRefinementCertification.ts` (new) — **30/30**
+  across the 8 Director scenarios. `docs/donna/DONNA_EXECUTIVE_EXPERIENCE_REFINEMENT_V1.md` (new).
+- `conversation/donnaConversationDNA.ts` (strips + predicates + directive),
+  `executive/executiveReasoningGateway.ts` (live directive),
+  `executive/executiveLiveBridge.ts` (fact-safe voice polish),
+  `scripts/certificationSuites.ts`.
+
+**Certification:** full gate **21/21 suites passed**; `tsc --noEmit` clean; existing
+conversation-quality suites unregressed.
+
+**DONNA Executive Experience score: 9 / 10.** **God Mode score: 9 / 10.**
+
+---
+
 ## 2026-06-25 — Mega Sprint 4141–4170 — DONNA Live Executive Activation V1
 
 **Mission:** Activate the already-built, already-certified Executive DONNA stack in

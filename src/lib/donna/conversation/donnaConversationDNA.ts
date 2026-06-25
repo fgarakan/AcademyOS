@@ -69,6 +69,15 @@ export const DONNA_CONVERSATION_DNA = {
     'please choose',
     'describe what you need',
     'if i understand correctly',
+    // Mega Sprint 4171–4200 — generic intros, stock acknowledgements, self-repetition.
+    "here's what i found",
+    'let me help you with that',
+    'to answer your question',
+    'happy to help',
+    'great question',
+    'thanks for asking',
+    'as i mentioned',
+    'just to reiterate',
   ] as readonly string[],
 
   /** Reality and safety always win — identity never overrides them. */
@@ -108,6 +117,11 @@ export function buildConversationDNAInstruction(role: InterpreterRole): string {
     'Challenge weak ideas respectfully and always explain why ("I wouldn\'t recommend that — …", "There\'s a simpler approach — …", "I think we\'re solving the wrong problem — …"); never argue, never attack.',
     'Speak, do not print: no numbered lists, bullet points, or bold field labels — use short spoken sentences.',
     'Drop robotic or internal wording (e.g. "arc closed", "learning captured", status narration) and do not mention approval rules unless this specific answer involves an action that needs approval.',
+    // Mega Sprint 4171–4200 — natural executive voice + flow + workflow guidance.
+    'Never open with filler. No "Here\'s what I found", "Let me help you with that", "To answer your question", "Great question", "Happy to help", or "Thanks for asking" — lead with the answer itself.',
+    'Do not repeat yourself. If you already said something this conversation, build on it in a few words; never restate it with "as I mentioned" or "just to reiterate".',
+    'When guiding a workflow, never just describe the screen. Name the step the Director is on, why it matters, exactly what to select, and what it will produce — then move them to the next step, and stay with it until it is done.',
+    'Follow the Director\'s flow. If they interrupt, switch topics, change priorities, or return to earlier work, pick up exactly there without making them re-establish context.',
   ].join(' ')
 }
 
@@ -182,6 +196,28 @@ export function hasChatbotHedging(text: string): boolean {
   return CHATBOT_HEDGING.test(text)
 }
 
+// ── Generic intros, acknowledgements & self-repetition (Mega Sprint 4171–4200) ──
+// The filler that makes DONNA sound like an assistant announcing itself instead of
+// a COO who just answers: stock intros ("Here's what I found"), thank-you/great-
+// question acknowledgements, and re-statement lead-ins ("As I mentioned earlier").
+// Anchored to a sentence boundary so they only match as openers, never mid-thought.
+
+const GENERIC_INTRO =
+  /(^|[.!?]\s+)(here'?s (what i (found|have|see)|a (quick )?(breakdown|rundown|summary|overview|look))|let me (help you( with that)?|explain|walk you through( this)?|break (this|it) down)|to answer your question|(i'?m )?(happy|glad) to help|(that'?s a |what a )?great question|good question|thanks for asking|as an ai|as your (ai )?assistant)\b/i
+
+const SELF_REPETITION =
+  /(^|[.!?]\s+)(as i (mentioned|said|noted|explained)( before| earlier| above| already)?|just to reiterate|to reiterate|to recap|as we (discussed|covered|said)|like i said|again,)\b/i
+
+/** True when text opens with a generic intro or stock acknowledgement (not executive). */
+export function hasGenericIntro(text: string): boolean {
+  return GENERIC_INTRO.test(text)
+}
+
+/** True when text re-announces something with a restatement lead-in. */
+export function hasSelfRepetitionLeadIn(text: string): boolean {
+  return SELF_REPETITION.test(text)
+}
+
 /** True when the answer leads with substance, not a hedge or a clarifying question. */
 export function answersFirst(text: string): boolean {
   const t = text.trim()
@@ -246,6 +282,16 @@ const VOICE_REWRITES: Array<[RegExp, string]> = [
   [/\byou (may|might) (wish|want) to consider\b/gi, "I'd recommend"],
   [/\bperhaps consider\b/gi, "I'd recommend"],
   [/\byou may wish to\b/gi, "I'd recommend you"],
+  // Mega Sprint 4171–4200 — generic intros & stock acknowledgements → drop the
+  // filler, keep the sentence boundary so the real answer leads. ($1 preserves the
+  // preceding ". " when the intro was mid-text; recapitalize fixes the new opener.)
+  [/(^|[.!?]\s+)here'?s (what i (found|have|see)|a (quick )?(breakdown|rundown|summary|overview|look))[:,]?\s*/gi, '$1'],
+  [/(^|[.!?]\s+)let me (help you( with that)?|explain|walk you through( this)?|break (this|it) down)[:,.]?\s*/gi, '$1'],
+  [/(^|[.!?]\s+)to answer your question[:,]?\s*/gi, '$1'],
+  [/(^|[.!?]\s+)(i'?m )?(happy|glad) to help[.,!]?\s*/gi, '$1'],
+  [/(^|[.!?]\s+)((that'?s a |what a )?great question|good question|thanks for asking)[.,!]?\s*/gi, '$1'],
+  // Self-repetition lead-ins → drop; the point that follows still stands.
+  [/(^|[.!?]\s+)(as i (mentioned|said|noted|explained)( before| earlier| above| already)?|just to reiterate|to reiterate|to recap|as we (discussed|covered|said)|like i said|again),?\s*/gi, '$1'],
 ]
 
 /** Restore sentence-leading capitalization after a hedge clause was removed. */
@@ -254,12 +300,29 @@ function recapitalize(text: string): string {
 }
 
 /**
+ * Flatten glyph bullet lists into spoken sentences. DONNA talks; she does not print
+ * a list. Digit-safe by construction: only leading bullet GLYPHS (•, -, *, –) and
+ * line breaks are removed — never numbers — so the fact-preservation guard holds and
+ * numbered lists (which carry real counts) are left untouched. Idempotent.
+ */
+function flattenBulletsToSpeech(text: string): string {
+  if (!/(^|\n)[ \t]*[•\-*–]\s+\S/.test(text)) return text
+  const parts = text
+    .split(/\n+/)
+    .map((l) => l.replace(/^[ \t]*[•\-*–]\s+/, '').trim())
+    .filter(Boolean)
+  if (parts.length === 0) return text
+  return parts.map((l) => (/[.!?:]$/.test(l) ? l : l + '.')).join(' ')
+}
+
+/**
  * Deterministically rewrite chatbot scaffolding into executive voice. Pure and
  * fact-preserving: numbers and names are never altered. Idempotent.
  */
 export function applyExecutiveVoice(text: string): string {
   if (!text || !text.trim()) return text
-  let out = text
+  // Talk, don't print: collapse glyph bullet lists into spoken sentences first.
+  let out = flattenBulletsToSpeech(text)
   for (const [re, rep] of VOICE_REWRITES) out = out.replace(re, rep)
   // Tidy whitespace + stray punctuation left by removed clauses.
   out = out
@@ -274,6 +337,67 @@ export function applyExecutiveVoice(text: string): string {
 /** True when applying the voice normalizer would change nothing (already executive). */
 export function isExecutiveVoiceClean(text: string): boolean {
   return applyExecutiveVoice(text) === text.trim()
+}
+
+// ── No repeated explanations across turns (Mega Sprint 4171–4200, Obj 1 + 4 + 6) ─
+// A COO does not re-explain what she just told you. Given the previous DONNA turn,
+// drop any sentence in the current draft that essentially restates one already said,
+// so a longer conversation builds forward instead of looping. Pure and never returns
+// empty (if everything would be dropped, the original draft is kept).
+
+function normalizeSentence(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/** Remove sentences in `current` that were already said (verbatim) in `prior`. */
+export function stripRepeatedExplanation(current: string, prior: string | null | undefined): string {
+  if (!current?.trim() || !prior?.trim()) return current
+  const said = new Set(
+    prior.split(/(?<=[.!?])\s+/).map(normalizeSentence).filter(Boolean),
+  )
+  const kept = current
+    .split(/(?<=[.!?])\s+/)
+    .filter((s) => {
+      const n = normalizeSentence(s)
+      return n.length === 0 || !said.has(n)
+    })
+  const out = kept.join(' ').replace(/\s{2,}/g, ' ').trim()
+  return out.length > 0 ? out : current
+}
+
+// ── Executive workflow guidance shape (Mega Sprint 4171–4200, Obj 5) ─────────────
+// Guiding a workflow is never "here is the page". It is: the step you are on, why it
+// matters, exactly what to select, and what it produces — then onward.
+
+/** Heuristic presence of the four workflow-guidance beats: step · why · select · outcome. */
+export function isWorkflowGuidanceComplete(text: string): {
+  complete: boolean
+  present: { step: boolean; why: boolean; select: boolean; outcome: boolean }
+} {
+  const t = text.toLowerCase()
+  const present = {
+    step: /\b(this step|right now|the (current |next )?step|you'?re (on|at|here)|start (by|with|here)|first,?|currently)\b/.test(t),
+    why: /\b(because|so that|this matters|the reason|matters because|that way|so you|why it)\b/.test(t),
+    select: /\b(select|choose|pick|enter|set|assign|add|name|fill in|tap|click|toggle|publish|finalize)\b/.test(t),
+    outcome: /\b(you'?ll|this (gets|gives|lets|unlocks|means|creates|saves|builds)|once (you|this|that)|then you|the result|expect|after (that|this))\b/.test(t),
+  }
+  return { complete: present.step && present.why && present.select && present.outcome, present }
+}
+
+// ── Conversation flow shifts (Mega Sprint 4171–4200, Obj 4) ──────────────────────
+// A continuous conversation lets the Director interrupt, resume earlier work,
+// reprioritise, or continue — without re-establishing context.
+
+export type FlowShift = 'interrupt' | 'resume' | 'reprioritize' | 'continue' | 'none'
+
+/** Classify how this turn moves the conversation, so DONNA can follow the Director's flow. */
+export function detectFlowShift(text: string): FlowShift {
+  const t = text.toLowerCase().trim()
+  if (/\b(hold on|hang on|one sec|wait|actually,? (let'?s|can we|i)|never ?mind|forget (that|it)|scratch that|stop)\b/.test(t)) return 'interrupt'
+  if (/\b(back to|let'?s return to|returning to|where were we|resume|pick up where|continue with the|the .* we were (on|doing|discussing))\b/.test(t)) return 'resume'
+  if (/\b(more important|higher priority|prioriti[sz]e|first deal with|instead (let'?s|focus|do)|switch to|change of plan|before that)\b/.test(t)) return 'reprioritize'
+  if (/^(continue|carry on|go on|keep going|next|proceed)\b/.test(t)) return 'continue'
+  return 'none'
 }
 
 /**
@@ -291,5 +415,8 @@ export function conformsToConversationDNA(text: string): {
   if (hasDashboardSpeech(text)) violations.push('dashboard_speech')
   if (!isDecisiveRecommendation(text)) violations.push('weak_recommendation')
   if (hasChatbotHedging(text)) violations.push('chatbot_hedging')
+  // Mega Sprint 4171–4200 — robotic openers & self-repetition.
+  if (hasGenericIntro(text)) violations.push('generic_intro')
+  if (hasSelfRepetitionLeadIn(text)) violations.push('self_repetition')
   return { conforms: violations.length === 0, violations }
 }

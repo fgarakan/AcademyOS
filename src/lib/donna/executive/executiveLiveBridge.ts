@@ -16,6 +16,7 @@ import type { DonnaMessageInput, DonnaMessageResult } from '@/lib/donna/brain/pr
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import { runExecutiveOperatingTurn, type ExecutiveTurnResult } from './executiveOperatingLayer'
 import { buildResolverStateFromLive, type LiveAcademyContext } from './liveResolverAdapter'
+import { applyExecutiveVoice } from '@/lib/donna/conversation/donnaConversationDNA'
 import {
   recordShadow,
   type ExecutiveMode,
@@ -36,6 +37,24 @@ export interface ExecutiveLiveResult {
 
 function stripMarkdown(text: string): string {
   return text.replace(/[#*_`>]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+/** Numbers are facts — the polish must carry exactly the same multiset. */
+function sameNumbers(a: string, b: string): boolean {
+  const na = (a.match(/\d+(?:\.\d+)?/g) ?? []).slice().sort()
+  const nb = (b.match(/\d+(?:\.\d+)?/g) ?? []).slice().sort()
+  return na.length === nb.length && na.every((n, i) => n === nb[i])
+}
+
+/**
+ * Deterministic executive-voice polish on the executive final response (Mega Sprint
+ * 4171–4200). Idempotent + fact-safe: applied only when it preserves every number,
+ * so even if OpenAI emits a stray "Here's what I found" or a stock acknowledgement,
+ * the live primary path still reads like a COO. Mirrors the legacy refinement path.
+ */
+function voicePolish(text: string): string {
+  const voiced = applyExecutiveVoice(text)
+  return voiced !== text && sameNumbers(text, voiced) ? voiced : text
 }
 
 function buildComparison(
@@ -81,11 +100,13 @@ function buildComparison(
 function mapTurnToResult(turn: ExecutiveTurnResult, legacy: DonnaMessageResult): DonnaMessageResult {
   const navAction = turn.actionPlan.actions.find(a => a.kind === 'navigate')
   const execAddsApproval = turn.actionPlan.actions.some(a => a.kind === 'request_approval')
+  // Fact-safe executive-voice polish so the live primary path never reads like AI.
+  const finalText = voicePolish(turn.finalResponse)
   return {
     ...legacy,
     // Executive layer owns the reasoning + wording + forward step.
-    response: turn.finalResponse,
-    spokenResponse: stripMarkdown(turn.finalResponse).slice(0, 400),
+    response: finalText,
+    spokenResponse: stripMarkdown(finalText).slice(0, 400),
     nextAction: { label: turn.nextAction, route: navAction?.target ?? legacy.nextAction?.route },
     // Structural safety inherited from legacy; navigation/approval only strengthened.
     navigateTo: navAction?.target ?? legacy.navigateTo,
