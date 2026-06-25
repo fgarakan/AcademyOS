@@ -2,6 +2,154 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4111–4140 — DONNA Executive Action Loop V1
+
+**Mission:** DONNA stops relying on conversation alone. She observes what actually
+HAPPENED in AcademyOS — page changes, clicks, form submits, saves, approvals, workflow
+completions, validation errors, cancels — and verifies whether her recommendations were
+completed, without asking the Director to confirm. **No new routing, OpenAI integration,
+or memory architecture.**
+
+**Derived, not stored.** UI events are passed in (the client emits them) and reduced —
+no new route, no new model call, no new store. The new `executive/donnaExecutiveActionLoop.ts`:
+- a **UI event model** (Objective 1) — 9 event kinds with a canonical target,
+- **action verification** (Objective 2) — `verifyRecommendation` returns completed /
+  partial / failed / cancelled / pending from events alone (a retry after a failure
+  resolves to completed; a validation error carries its reason),
+- **live workflow awareness** (Objective 5) — `reduceWorkflowState` reduces current /
+  completed / remaining steps, the blocker, and the next action for all 7 workflows
+  (Academy Setup · Curriculum · Templates · Players · Coaches · Sessions · Approvals)
+  directly from events,
+- the **closed action loop** (Objectives 3 + 4 + 6) — `closeActionLoop` verifies →
+  updates the workflow → phrases the executive update ("I see you completed Academy
+  Setup", "The coach assignment failed because a level wasn't selected") → produces the
+  next recommendation; recommendations adapt immediately,
+- **de-duplicated guidance** — `emitExecutionGuidance` narrates only NEW significant
+  events (never clicks/page-changes, never the same event twice, no confirmation asked),
+- **developer diagnostics** (Objective 7) — events, workflow state, verification status,
+  completed / failed / pending action, execution confidence.
+
+**Wiring (minimal, additive):** `uiEvents?` added to `DonnaMessageInput` and
+`ResolverState` (optional, absent when the client emits none); the live adapter passes
+them through; `executiveOperatingLayer.ts` reduces the live `workflowState` from them,
+exposes it on the turn result, and folds a compact EXECUTION directive ("confirm from
+events, never ask") into the existing reasoning call. No new gateway, route, or store.
+
+**Files — new (2) + modified (4):**
+- `executive/donnaExecutiveActionLoop.ts` (new) — the UI-event execution engine.
+- `certification/donnaExecutiveActionLoopCertification.ts` (new) — **31/31**: four
+  verification verdicts + retry, 7-workflow reduction, blocker detection, closed loop +
+  executive wording, de-duplicated guidance, diagnostics, and live integration.
+- `executiveOperatingLayer.ts`, `liveResolverAdapter.ts`, `executiveTypes.ts`, `brain/processDonnaMessage.ts` (additive `uiEvents`), `scripts/certificationSuites.ts`.
+
+**Certification:** new suite 31/31; full registered suite green (19/19, zero failures).
+`tsc --noEmit` clean. No new routing/OpenAI/memory architecture; no migrations, no new
+dependencies, no RLS changes. Executive layer remains flag-dormant live — the execution
+directive applies when enabled; the reduction is pure and certified now.
+
+**Executive Action Loop score: 9 / 10.**
+
+---
+
+## 2026-06-25 — Mega Sprint 4081–4110 — DONNA Executive Operating Session V1
+
+**Mission:** DONNA stops thinking one conversation at a time and starts thinking one
+WORKDAY at a time. She owns the Director's operating session — what's active, paused,
+or done — so the Director never has to remember where they left off. **No new routing,
+OpenAI integration, or memory architecture.**
+
+**Derived, not stored.** The session is REDUCED, per turn, from the conversation history
+already in the Executive Context Packet — no new store, no new route, no new model call.
+The new `executive/donnaExecutiveSession.ts` reduces the turn stream into a live
+`ExecutiveSession`:
+- **objectives** mapped to work areas (onboarding · curriculum · templates · players ·
+  coaches · sessions · approvals · today · placement · level-up), each active / paused /
+  completed with its decisions and last progress (Objective 1),
+- **intelligent interruption** (Objective 4) — a topic/area switch pauses the active
+  objective (storing progress + decisions) and activates/resumes another; returning
+  resumes exactly where work stopped,
+- the **operating agenda** — current priority · task · decision · blocker · next action ·
+  future queue (Objective 3),
+- the **session timeline** — started · decision · completed · deferred · resumed · state
+  (Objective 7),
+- **work continuity** (Objective 2) — "continue / next / where were we / what remains /
+  what should I do now" answered straight from the session, never re-asking,
+- **proactive guidance** (Objective 6) — `surfaceProactive` ranks unfinished onboarding,
+  pending approvals, academy risks, curriculum gaps, staffing, and the top opportunity,
+  but only when appropriate (no active objective, or the Director asked),
+- **developer diagnostics** (Objective 8) — session state, active/paused/completed,
+  agenda, timeline, next recommendation, confidence.
+
+**Wiring (minimal):** `executiveOperatingLayer.ts` reduces the session each turn,
+exposes it on the turn result, and folds a compact OPERATING SESSION directive
+(active · done · paused · priority · queue · next · "resume, never re-ask") into the
+existing reasoning call alongside the dialogue directive. No new gateway, route, or store.
+
+**Files — new (2) + modified (2):**
+- `executive/donnaExecutiveSession.ts` (new) — the derived operating-session reducer.
+- `certification/donnaExecutiveSessionCertification.ts` (new) — **38/38**: the canonical
+  7-step workday (onboarding → curriculum → templates → onboarding → resume → complete →
+  "what remains today?"), work-area detection ×8, interruption/pause, resume-with-progress,
+  completion + remaining report, agenda, timeline, proactive guidance, diagnostics, and
+  live operating-turn integration.
+- `executiveOperatingLayer.ts`, `scripts/certificationSuites.ts`.
+
+**Certification:** new suite 38/38; full registered suite green (18/18, zero failures).
+`tsc --noEmit` clean. No new routing/OpenAI/memory architecture; no migrations, no new
+dependencies, no RLS changes. Executive layer remains flag-dormant live — the session
+directive applies when enabled; the reduction is pure and certified now.
+
+**Executive Session score: 9 / 10.**
+
+---
+
+## 2026-06-25 — Mega Sprint 4051–4080 — DONNA Executive Dialogue Engine V1
+
+**Mission:** Make DONNA think WITH the Director across a long strategic conversation —
+an Executive Operating Partner capable of sustained dialogue, not an answer-per-message
+responder. **Dialogue quality only** — no new routing, context, or memory architecture.
+
+**Derived, not stored.** Dialogue state is computed per turn from the conversation
+history that already flows through the Executive Context Packet — nothing is persisted,
+nothing new is routed. The new `executive/donnaExecutiveDialogue.ts` derives:
+- the **active objective** + strategic topic (build academy · curriculum · retention ·
+  revenue · onboarding · staffing · scheduling · player development),
+- **decisions made** (a DONNA recommendation the Director then accepted), **open
+  decisions**, **assumptions**, **risks**, **tradeoffs** (Objective 5),
+- the **progressive-planning stage** — objective → constraints → options →
+  recommendation → execution → review (Objective 4),
+- a respectful **executive challenge** for weak ideas (overcomplex / brute-force /
+  wrong-problem / scope-creep / premature), always with the why (Objective 3),
+- **anti-repetition** (Jaccard overlap vs prior DONNA turns) (Objective 6).
+
+**Wiring (minimal, no new architecture):**
+- `executiveOperatingLayer.ts` — derives the dialogue state from the ResolverState
+  history each turn and passes a compact dialogue directive to the reasoning gateway;
+  exposes `dialogueState` on the turn result.
+- `executiveReasoningGateway.ts` — accepts an optional dialogue directive and folds the
+  DIALOGUE STATE block (objective · stage · decided · open · risks · tradeoffs) plus a
+  "continue the same reasoning, build progressively, challenge respectfully, don't
+  repeat" instruction into the OpenAI call.
+- `conversation/donnaConversationDNA.ts` — voice contract extended with think-with /
+  progressive-build / respectful-challenge lines.
+
+**Files — new (2) + modified (4):**
+- `executive/donnaExecutiveDialogue.ts` (new) — the derived dialogue engine.
+- `certification/donnaExecutiveDialogueCertification.ts` (new) — **28/28**: a 16-turn
+  "build an academy" dialogue (state tracked, stages advance monotonically), 8 strategic
+  domains, respectful challenge, adaptation, anti-repetition, directive content, and live
+  operating-turn integration.
+- `executiveOperatingLayer.ts`, `executiveReasoningGateway.ts`, `donnaConversationDNA.ts`, `scripts/certificationSuites.ts`.
+
+**Certification:** new suite 28/28; full registered suite green (17/17, zero failures).
+`tsc --noEmit` clean. No new routing, context, or memory architecture; no migrations, no
+new dependencies, no RLS changes. Executive layer remains flag-dormant live — the dialogue
+directive applies when enabled; the derivation is pure and certified now.
+
+**Executive Dialogue score: 9 / 10.**
+
+---
+
 ## 2026-06-25 — Mega Sprint 4021–4050 — DONNA Executive Conversation Quality V1
 
 **Mission:** Transform DONNA from an AI assistant into an Executive Operating Partner —

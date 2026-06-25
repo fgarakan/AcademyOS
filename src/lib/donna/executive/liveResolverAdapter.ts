@@ -185,5 +185,7 @@ export function buildResolverStateFromLive(
     navigationTarget: legacy?.navigateTo ?? null,
     memories: [],
     lastEntityLabel,
+    // Mega Sprint 4111–4140 — pass through UI execution events the client observed.
+    uiEvents: input.uiEvents ?? null,
   }
 }

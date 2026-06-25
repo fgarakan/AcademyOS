@@ -112,4 +112,8 @@ export interface ResolverState {
   playerContext?: { label: string; fields: Record<string, string> } | null
   coachContext?: { label: string; fields: Record<string, string> } | null
   parentContext?: { label: string; fields: Record<string, string> } | null
+  // Mega Sprint 4111–4140 — Executive Action Loop. UI execution events the client
+  // observed since the last turn (page changes, clicks, saves, approvals, errors).
+  // Optional + additive — absent when the client emits no events.
+  uiEvents?: import('./donnaExecutiveActionLoop').UIEvent[] | null
 }

@@ -198,6 +198,11 @@ export interface DonnaMessageInput {
   /** Pre-built reality snapshot — when provided, takes precedence over livePageState.
    *  When absent and livePageState is present, the brain builds one automatically. */
   realitySnapshot?: RealitySnapshot | null
+  /** Mega Sprint 4111–4140 — UI execution events the client observed since the last
+   *  turn (page changes, clicks, saves, approvals, validation errors, cancels). Lets
+   *  DONNA verify whether a recommendation was completed from activity, not just words.
+   *  Optional + additive — absent when the client emits no events. */
+  uiEvents?: import('@/lib/donna/executive/donnaExecutiveActionLoop').UIEvent[] | null
 }
 
 // ── Action contract ───────────────────────────────────────────────────────────

@@ -74,6 +74,10 @@ function buildFallback(packet: ExecutiveContextPacket): string {
 export async function runExecutiveReasoning(
   packet: ExecutiveContextPacket,
   role: ExecutiveRole,
+  // Mega Sprint 4051–4080 — optional dialogue directive (derived per-turn from the
+  // conversation in the operating layer). Threads sustained-dialogue awareness into
+  // the reasoning call; absent on a first turn or non-dialogue request.
+  dialogueDirective?: string,
 ): Promise<ExecutiveReasoningResult> {
   const serialized = serializePacket(packet)
   // Mega Sprint 4021–4050 — executive voice directive. The packet already grounds the
@@ -85,7 +89,8 @@ export async function runExecutiveReasoning(
     'do not ask which page they are on, say "I think you\'re asking", or defer back. ' +
     'Recommend decisively, then give: why, the tradeoff, the expected outcome, and the ' +
     'exact next step. Be concise and conversational — short spoken sentences, no lists.'
-  const userText = `${serialized}\n\n${EXECUTIVE_VOICE_DIRECTIVE}\n\nDIRECTOR MESSAGE: ${packet.effectiveMessage}`
+  const dialogueBlock = dialogueDirective ? `\n\n${dialogueDirective}` : ''
+  const userText = `${serialized}\n\n${EXECUTIVE_VOICE_DIRECTIVE}${dialogueBlock}\n\nDIRECTOR MESSAGE: ${packet.effectiveMessage}`
   const contextTokens = estimateTokens(userText)
   const started = Date.now()
 

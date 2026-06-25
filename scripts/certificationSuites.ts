@@ -26,4 +26,7 @@ export const CERTIFICATION_SUITES: readonly string[] = [
   'src/lib/donna/certification/donnaUnifiedReasoningCertification.ts',
   'src/lib/donna/certification/donnaUnifiedExecutiveContextCertification.ts',
   'src/lib/donna/certification/donnaExecutiveConversationQualityCertification.ts',
+  'src/lib/donna/certification/donnaExecutiveDialogueCertification.ts',
+  'src/lib/donna/certification/donnaExecutiveSessionCertification.ts',
+  'src/lib/donna/certification/donnaExecutiveActionLoopCertification.ts',
 ]

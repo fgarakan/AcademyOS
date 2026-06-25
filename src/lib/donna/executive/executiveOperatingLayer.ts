@@ -27,6 +27,23 @@ import { runExecutiveReasoning, type ExecutiveReasoningResult } from './executiv
 import { validateExecutiveResponse, type ValidationResult } from './responseValidator'
 import { planActions, type ExecutiveActionPlan } from './actionPlanner'
 import { resolveExecutiveMode } from './executiveShadowMode'
+import {
+  deriveDialogueState,
+  assessIdea,
+  buildDialogueDirective,
+  type DialogueState,
+} from './donnaExecutiveDialogue'
+import {
+  reduceExecutiveSession,
+  buildSessionDirective,
+  type ExecutiveSession,
+} from './donnaExecutiveSession'
+import {
+  reduceWorkflowState,
+  buildExecutionDirective,
+  type WorkflowState,
+} from './donnaExecutiveActionLoop'
+import { reconcileSessionWithEvents } from './donnaExecutiveReconciler'
 import type { ResolverState, CompletionContractState } from './executiveTypes'
 
 export interface ExecutiveTurnResult {
@@ -42,6 +59,12 @@ export interface ExecutiveTurnResult {
   packetInspection: string
   /** Developer-only context-engine trace (sources, tokens, packet size, grounding). */
   contextTrace: ContextEngineTrace
+  /** Derived dialogue state for this turn (objective, decisions, stage, risks). */
+  dialogueState: DialogueState
+  /** Derived workday operating session (objectives, agenda, timeline, next step). */
+  session: ExecutiveSession
+  /** Live workflow state reduced from UI execution events (null when no events). */
+  workflowState: WorkflowState | null
 }
 
 export interface RunOptions {
@@ -101,8 +124,40 @@ export async function runExecutiveOperatingTurn(
   const completion = deriveCompletion(packet, opts.completionContract)
   packet = { ...packet, completionContract: completion }
 
+  // 4.5. Executive Dialogue (Mega Sprint 4051–4080) — derive sustained-dialogue state
+  // from the conversation so DONNA thinks WITH the Director: reference prior
+  // conclusions, track open decisions, advance the plan, and challenge weak ideas.
+  // Derived (not stored) from history already in the ResolverState. Feeds the prompt.
+  const dialogueState = deriveDialogueState(state.conversationHistory, state.message)
+  const ideaAssessment = assessIdea(state.message, dialogueState)
+  const dialogueDirective = buildDialogueDirective(dialogueState, ideaAssessment)
+
+  // 4.6. Executive Operating Session (Mega Sprint 4081–4110) — reduce the whole
+  // workday from the conversation: which objectives are active, paused, or done, the
+  // agenda, the timeline, and the next step. Derived (not stored). The session
+  // directive lets DONNA resume "continue / where were we" without re-asking.
+  const sessionHistory = [...state.conversationHistory, { role: 'user' as const, content: state.message }]
+  const session = reduceExecutiveSession(sessionHistory, {
+    currentRoute: state.route,
+    pendingApprovals: state.outstandingDecisions.length || null,
+  })
+  const sessionDirective = buildSessionDirective(session)
+
+  // 4.7. Executive Action Loop (Mega Sprint 4111–4140) — when the client has emitted
+  // UI execution events, reduce the live workflow state from them so DONNA confirms
+  // what actually happened (saved, approved, failed) instead of asking. Derived from
+  // passed-in events — no new route, store, or OpenAI call.
+  const uiEvents = state.uiEvents ?? null
+  const workflowArea = session.activeObjective?.area ?? null
+  const workflowState = uiEvents && uiEvents.length && workflowArea
+    ? reduceWorkflowState(workflowArea, uiEvents)
+    : null
+  const executionDirective = workflowState && workflowArea
+    ? `\n\n${buildExecutionDirective(workflowArea, uiEvents!)}`
+    : ''
+
   // 5. OpenAI reasoning over the packet (instrumented, fail-open).
-  const reasoning = await runExecutiveReasoning(packet, state.role)
+  const reasoning = await runExecutiveReasoning(packet, state.role, `${dialogueDirective}\n\n${sessionDirective}${executionDirective}`)
 
   // 6. Response validation — only validated text reaches the UI.
   const validation = validateExecutiveResponse(reasoning.text, packet, state)
@@ -125,5 +180,8 @@ export async function runExecutiveOperatingTurn(
     nextAction: completion.nextAction ?? 'Tell me what you’d like to tackle next.',
     packetInspection: inspectPacket(packet),
     contextTrace: assembled.trace,
+    dialogueState,
+    session,
+    workflowState,
   }
 }
