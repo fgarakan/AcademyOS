@@ -17,6 +17,7 @@ import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import { runExecutiveOperatingTurn, type ExecutiveTurnResult } from './executiveOperatingLayer'
 import { buildResolverStateFromLive, type LiveAcademyContext } from './liveResolverAdapter'
 import { applyExecutiveVoice } from '@/lib/donna/conversation/donnaConversationDNA'
+import type { MemoryRecord } from './executiveTypes'
 import {
   recordShadow,
   type ExecutiveMode,
@@ -122,10 +123,13 @@ export async function runExecutiveLive(
   mode: ExecutiveMode,
   // Mega Sprint 3841–3870 — already-loaded live academy context (optional, fail-safe).
   directorCtx?: DirectorDonnaContext | null,
+  // Mega Sprint 4231–4260 — durable learning (relevant + compressed) retrieved before
+  // this turn, folded into the packet's relevant_memory slot. Empty when none.
+  durableMemories?: MemoryRecord[],
 ): Promise<ExecutiveLiveResult> {
   let turn: ExecutiveTurnResult | null = null
   try {
-    const state = buildResolverStateFromLive(input, role, academy, legacy, directorCtx)
+    const state = buildResolverStateFromLive(input, role, academy, legacy, directorCtx, durableMemories)
     turn = await runExecutiveOperatingTurn(state)
   } catch (err) {
     // Fail-open — executive crashed; legacy will be returned.
@@ -178,6 +182,8 @@ export async function runExecutiveLive(
     workflowStep: turn?.workflowState?.currentStep?.label ?? null,
     workflowBlocker: turn?.workflowState?.blocker ?? null,
     workflowNextAction: turn?.workflowState?.nextAction ?? null,
+    // Durable learning reused into the packet this turn (Mega Sprint 4231–4260).
+    learningReused: durableMemories?.length ?? 0,
     // Unified Executive Context Engine developer trace (Mega Sprint 3991–4020).
     contextSourcesSkipped: turn?.contextTrace.sourcesSkipped.length ?? 0,
     packetSizeChars: turn?.contextTrace.packetSizeChars ?? 0,

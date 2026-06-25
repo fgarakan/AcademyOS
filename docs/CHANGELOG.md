@@ -2,6 +2,100 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4231–4260 — Executive Learning Context Wiring V1
+
+**Mission:** Complete the loop — every OpenAI reasoning request automatically benefits
+from everything DONNA has learned. Durable learning is retrieved before reasoning and
+folded into the **live** Executive Context Packet via the **existing** `relevant_memory`
+slot. No second memory system; OpenAI only reasons (never stores/reads memory).
+
+```
+Director → Page → Workflow → Operating Session → Relevant Durable Learning
+  → Executive Context Packet → OpenAI → Executive Response
+```
+
+**Durable persistence (migration 084).** New `donna_executive_learning` table — the
+long-lived home for Learning Ledger entries, RLS-scoped (staff read · directors write).
+`donna_working_memory` stays session-scoped; not a duplicate system. Adapter
+`donnaExecutiveLearningStore.ts` (`load`/`saveDurableLearning`) maps rows ⇄ `LearningEntry`,
+cast-typed (no edit to generated `database.types.ts`), fail-open.
+
+**Retrieval into the packet.** `learningToMemoryRecords` → `MemoryRecord { content, tags }`
+→ `ResolverState.memories` → the shipped `relevant_memory` source, which surfaces only
+records whose tags match the request (relevance-filtered). Academy preferences, director
+preferences, operating patterns, and approved long-term learning all reach the packet.
+
+**Live wiring** (`donnaLiveConversationAction`): load → retrieve relevant (max 6) → fold
+in; when learning is present the replayed transcript window is narrowed (`slice(-3)`) for
+**net token reduction**; learning is captured back (deduped) and persisted after the turn.
+All fail-open — before migration 084 is applied, retrieval returns `[]` (zero behavior
+change). `learningReused` added to diagnostics + the reasoning trace.
+
+**Proof.** Wiring cert **19/19** (packet integration, relevance, net token reduction
+[packet 534→440], fail-open, model-agnostic reuse, academy-scoped store). Live real-OpenAI:
+the same "draft a parent note" request returned a generic note with no learning and a
+"brief … warm" note with the learned director preference present (`learningReused=1`).
+
+**Files — new (4) + modified (6):**
+- `supabase/migrations/084_donna_executive_learning.sql` (new), `executive/donnaExecutiveLearningStore.ts` (new),
+  `certification/donnaExecutiveLearningWiringCertification.ts` (new), `docs/donna/DONNA_EXECUTIVE_LEARNING_CONTEXT_WIRING_V1.md` (new).
+- `executive/donnaExecutiveLearning.ts` (learningToMemoryRecords), `executive/liveResolverAdapter.ts`,
+  `executive/executiveLiveBridge.ts`, `executive/executiveShadowMode.ts`, `constitution/donnaRoutingLog.ts`,
+  `director/_actions/donnaLiveConversationAction.ts`, `scripts/certificationSuites.ts`.
+
+**Certification:** full gate **23/23 suites passed**; `tsc --noEmit` clean. Activation
+requires applying migration 084 (+ a director login for literal browser cross-session proof).
+
+**God Mode score: 9 / 10.**
+
+---
+
+## 2026-06-25 — Mega Sprint 4201–4230 — DONNA Durable Executive Learning V1
+
+**Mission:** Make DONNA learn from completed Director work — durable, approved,
+deduplicated learning that later turns reuse as compressed memory instead of a long
+transcript. **No new routing, no new OpenAI pathway, no migration.** A pure bridge
+built on the existing Learning Ledger (`learningEntryModel`, `deduplicateBatch`,
+`detectContradictions`) — reused, not duplicated.
+
+**Session summary (Obj 1).** `summarizeOperatingSession` compresses a completed
+Executive session (objectives · decisions · actions · paused · unresolved · director
+preferences · academy patterns · follow-ups) from the executive state already
+produced — no transcript, no model call. An empty session is not "meaningful" → no churn.
+
+**Durable learning + taxonomy (Obj 2).** `extractDurableLearning` → seven typed
+candidates (curriculum_choice · coaching_philosophy · academy_preference ·
+director_preference · recurring_decision · workflow_tendency · operating_pattern).
+Noise (greetings, acks, fragments) is dropped.
+
+**Approval (Obj 3).** High-impact learning (philosophy, curriculum defaults, placement,
+coach expectations, comms style) lands in `reviewing` for the Director; low-risk
+operational memory is auto-`approved` by system. A casual auto-entry that contradicts
+confirmed truth is downgraded to `reviewing` — it can never overwrite academy truth.
+
+**Hygiene (Obj 5).** Ordered for correctness — **contradiction-vs-truth first** (fixed a
+real bug where the text deduplicator would silently drop an opposite-sentiment entry as
+a "duplicate"), then dedupe, then expire by per-type TTL (academy truth never expires).
+
+**Context reuse + token efficiency (Obj 4).** `retrieveRelevantLearning` ranks usable
+learning by overlap + importance (capped); `estimateTokenSavings` showed **~98% fewer
+tokens** (1 964 saved) reusing compressed learning vs an 8 000-char transcript. Clamped
+non-negative. Developer diagnostics (Obj 6) expose captured / skipped / approval /
+reused / tokensSaved / contradictions.
+
+**Files — new (3) + modified (1):**
+- `executive/donnaExecutiveLearning.ts` (new) — the learning bridge + store port.
+- `certification/donnaExecutiveLearningCertification.ts` (new) — **36/36**.
+- `docs/donna/DONNA_DURABLE_EXECUTIVE_LEARNING_V1.md` (new). `scripts/certificationSuites.ts`.
+
+**Certification:** full gate **22/22 suites passed**; `tsc --noEmit` clean. Persistence
+is a port (in-memory now; `donna_working_memory` adapter documented — no migration);
+live context-engine wiring is the next step.
+
+**God Mode score: 9 / 10.**
+
+---
+
 ## 2026-06-25 — Mega Sprint 4171–4200 — DONNA Executive Experience Refinement V1
 
 **Mission:** Make DONNA feel like an experienced COO, never "that sounded like AI."

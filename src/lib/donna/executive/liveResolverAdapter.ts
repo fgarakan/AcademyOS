@@ -15,6 +15,7 @@ import type {
   ActionDescriptor,
   DecisionRef,
   CurriculumContext,
+  MemoryRecord,
 } from './executiveTypes'
 // Mega Sprint 3961–3990 / 3991–4020 — Live Page Intelligence → Unified Context Engine.
 // The Director's current screen is assembled centrally and injected into the single
@@ -128,6 +129,9 @@ export function buildResolverStateFromLive(
   // Mega Sprint 3841–3870 — already-loaded live academy truth. Optional + fail-safe:
   // when null/absent or not live, the state is exactly as before (no regression).
   directorCtx?: DirectorDonnaContext | null,
+  // Mega Sprint 4231–4260 — durable learning already retrieved for this turn (relevant,
+  // compressed) so the packet reuses it instead of re-sending context. Empty when none.
+  durableMemories?: MemoryRecord[],
 ): ResolverState {
   const execRole = mapRole(role)
 
@@ -183,7 +187,7 @@ export function buildResolverStateFromLive(
     outstandingDecisions,
     donnaAssumptions: [],
     navigationTarget: legacy?.navigateTo ?? null,
-    memories: [],
+    memories: durableMemories ?? [],
     lastEntityLabel,
     // Mega Sprint 4111–4140 — pass through UI execution events the client observed.
     uiEvents: input.uiEvents ?? null,

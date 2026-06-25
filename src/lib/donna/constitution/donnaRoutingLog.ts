@@ -92,6 +92,8 @@ export interface ReasoningTrace {
   workflowStep?: string | null
   /** Action Loop — current blocker, if any. */
   workflowBlocker?: string | null
+  /** Durable learning records reused into the packet's relevant_memory slot. */
+  learningReused?: number
 }
 
 /** Emit the full reasoning-pipeline trace for one turn (developer-only). */
@@ -110,6 +112,7 @@ export function logReasoningTrace(t: ReasoningTrace): void {
       (t.dialogueStage ? `dialogue=${t.dialogueStage} ` : '') +
       (t.sessionActiveObjective ? `session="${t.sessionActiveObjective}" ` : '') +
       (t.workflowStep ? `workflowStep="${t.workflowStep}"${t.workflowBlocker ? `(blocked:${t.workflowBlocker})` : ''} ` : '') +
+      (t.learningReused ? `learningReused=${t.learningReused} ` : '') +
       `openai=${t.openaiInvoked ? 'YES' : 'NO'} validator=${t.validatorDisposition} ` +
       (t.latencyMs !== undefined ? `latencyMs=${t.latencyMs} ` : '') +
       `mode=${t.executionMode} finalSource=${t.finalResponseSource}` +

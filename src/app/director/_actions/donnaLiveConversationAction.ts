@@ -25,6 +25,13 @@ import { loadDirectorDonnaContext, type DirectorDonnaContext } from '@/lib/donna
 // Mega Sprint 3691–3720 — Executive Operating Layer live wiring (flag-gated, fail-open)
 import { resolveExecutiveMode } from '@/lib/donna/executive/executiveShadowMode'
 import { runExecutiveLive } from '@/lib/donna/executive/executiveLiveBridge'
+// Mega Sprint 4231–4260 — Durable learning retrieved into the packet + captured back.
+import { loadDurableLearning, saveDurableLearning } from '@/lib/donna/executive/donnaExecutiveLearningStore'
+import {
+  retrieveRelevantLearning,
+  learningToMemoryRecords,
+  learnFromOperatingSession,
+} from '@/lib/donna/executive/donnaExecutiveLearning'
 // Mega Sprint 3901–3930 — DONNA Reasoning Constitution: classify + developer logging.
 import { classifyRequest } from '@/lib/donna/constitution/donnaRoutingConstitution'
 import { logReasoningTrace } from '@/lib/donna/constitution/donnaRoutingLog'
@@ -181,9 +188,22 @@ export async function donnaLiveConversationAction(
       })
       return legacyResult
     }
+    // ── Durable Executive Learning retrieval (Mega Sprint 4231–4260) ───────────
+    // Before reasoning, load this academy's durable learning and retrieve only the
+    // records relevant to the request, compressed, for the packet's relevant_memory
+    // slot. Fail-open: any issue → no learning, identical behavior to before. When
+    // learning is available we narrow the replayed transcript window — DONNA reuses
+    // what she has learned instead of re-sending a long history (token reduction).
+    const durableLearning = await loadDurableLearning(supabase, academyId)
+    const retrievedLearning = retrieveRelevantLearning({ request: msg, store: durableLearning, max: 6 })
+    const durableMemories = learningToMemoryRecords(retrievedLearning)
+    const execInput = durableMemories.length
+      ? { ...input, userMessage: msg, conversationHistory: (input.conversationHistory ?? []).slice(-3) }
+      : { ...input, userMessage: msg }
+
     try {
       const live = await runExecutiveLive(
-        { ...input, userMessage: msg },
+        execInput,
         membership.role,
         { academyId, name: (academy?.name as string) ?? null, modelLabel: dnaModelId },
         legacyResult,
@@ -191,7 +211,27 @@ export async function donnaLiveConversationAction(
         // Mega Sprint 3841–3870 — feed the already-loaded live academy truth into
         // the Executive Context Packet (real signals, not role+permissions alone).
         directorCtx,
+        // Mega Sprint 4231–4260 — relevant durable learning folded into relevant_memory.
+        durableMemories,
       )
+
+      // Capture durable learning from this turn's operating session and persist it
+      // (deduped against what is already known). Fail-open; never blocks the answer.
+      if (live.turn && execMode === 'primary') {
+        try {
+          const learned = learnFromOperatingSession({
+            session: live.turn.session,
+            dialogue: live.turn.dialogueState,
+            workflow: live.turn.workflowState,
+            ctx: { academyId, role: 'director', sessionId: input.route ?? 'live' },
+            existing: durableLearning,
+            now: Date.now(),
+          })
+          if (learned.hygiene.toStore.length) {
+            await saveDurableLearning(supabase, academyId, learned.hygiene.toStore)
+          }
+        } catch { /* capture is best-effort */ }
+      }
       logReasoningTrace({
         entryPoint: 'live_action',
         classification,
@@ -209,6 +249,7 @@ export async function donnaLiveConversationAction(
         sessionActiveObjective: live.diagnostics.sessionActiveObjective ?? null,
         workflowStep: live.diagnostics.workflowStep ?? null,
         workflowBlocker: live.diagnostics.workflowBlocker ?? null,
+        learningReused: live.diagnostics.learningReused ?? 0,
         pageDetected: pageTrace.pageDetected,
         uiContextCollected: pageTrace.uiContextCollected,
         contextSourcesSkipped: live.diagnostics.contextSourcesSkipped,

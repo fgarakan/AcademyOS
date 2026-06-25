@@ -78,6 +78,9 @@ export interface ExecutiveLiveDiagnostics {
   workflowBlocker?: string | null
   /** Action Loop — the next action derived from live execution state. */
   workflowNextAction?: string | null
+  // ── Mega Sprint 4231–4260 — durable learning reused into the packet ────────────
+  /** Count of durable-learning records folded into the packet's relevant_memory slot. */
+  learningReused?: number
   // ── Mega Sprint 3991–4020 — Unified Executive Context Engine developer trace ───
   /** Context sources skipped (excluded / not relevant / budget / redacted). */
   contextSourcesSkipped?: number
@@ -102,7 +105,8 @@ export function formatDiagnostics(d: ExecutiveLiveDiagnostics): string {
     (d.fallbackReason ? ` fallbackReason="${d.fallbackReason}"` : '') +
     (d.dialogueStage ? ` dialogue=${d.dialogueStage}` : '') +
     (d.sessionActiveObjective ? ` session="${d.sessionActiveObjective}"` : '') +
-    (d.workflowName ? ` workflow=${d.workflowName}/${d.workflowStep ?? 'n/a'}${d.workflowBlocker ? `(blocked:${d.workflowBlocker})` : ''}` : '')
+    (d.workflowName ? ` workflow=${d.workflowName}/${d.workflowStep ?? 'n/a'}${d.workflowBlocker ? `(blocked:${d.workflowBlocker})` : ''}` : '') +
+    (d.learningReused ? ` learningReused=${d.learningReused}` : '')
   )
 }
 
