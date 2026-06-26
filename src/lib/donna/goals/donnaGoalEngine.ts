@@ -339,13 +339,23 @@ function buildGoalClarification(
   const subjectPart = subject ? ` about **${subject}**` : ''
 
   if (topGoals.length === 0) {
-    return "Could you give me a bit more context about what you'd like to accomplish?"
+    return "Let's start with the most useful thing right now — tell me a player, a level, or what you're trying to get done and I'll take it from there."
   }
 
-  const options = topGoals
-    .slice(0, 3)
-    .map((g, i) => `${i + 1}. ${GOAL_LABELS[g.goal] ?? g.goal}`)
-    .join('\n')
+  // Mega Sprint 4321–4350 — Conversation Ownership: lead with the most likely
+  // goal as a recommendation instead of opening with a passive "I want to make
+  // sure I understand / would you like to / describe what you need" menu. DONNA
+  // owns the workflow: it proposes the top goal, names the alternatives in one
+  // line, and offers a one-word correction — it never asks the director to pick
+  // the workflow from a list.
+  const topLabel = GOAL_LABELS[topGoals[0].goal] ?? topGoals[0].goal
+  const alternatives = topGoals
+    .slice(1, 3)
+    .map(g => GOAL_LABELS[g.goal] ?? g.goal)
 
-  return `I want to make sure I understand correctly${subjectPart}. Would you like to:\n\n${options}\n\nOr describe what you need in your own words.`
+  const altClause = alternatives.length > 0
+    ? ` If you actually meant ${alternatives.join(' or ')}, just say so and I'll switch.`
+    : ` If that's not it, tell me what you're after and I'll adjust.`
+
+  return `Based on what you said${subjectPart}, I'd start with **${topLabel}** — I'll guide you through it.${altClause}`
 }

@@ -7,6 +7,9 @@ import type { DonnaDirectorIntent, DonnaSafetyClass, DirectorIntentResult } from
 import { classifyDirectorIntent } from './donnaIntentClassifier'
 import { getPageCapabilityMap } from './donnaPageContextEngine'
 import { getModuleDefinition } from './donnaSystemMap'
+// Mega Sprint 4321–4350 — Conversation Ownership: a vague-lead request on a
+// known page is led from the page, never met with a generic clarification menu.
+import { detectVagueLeadRequest, resolvePageOnlyLead } from '@/lib/donna/conversation/donnaPageLedConversation'
 
 // ── Response mode ─────────────────────────────────────────────────────────────
 
@@ -261,6 +264,29 @@ export function routeDonnaPrompt(
   const classified: DirectorIntentResult = classifyDirectorIntent(trimmed)
   const hasSafeDraft = SAFE_DRAFT_INTENTS.has(classified.intent)
   const mode = safetyClassToMode(classified.safetyClass, classified.intent, hasSafeDraft)
+
+  // Conversation Ownership: when the director is asking DONNA to lead
+  // ("what next", "guide me", "what should I do here", "continue") and the page
+  // is known, resolve a page-led recommendation instead of clarifying. This runs
+  // AFTER classification and only for non-blocked requests, so a safety-blocked
+  // utterance that happens to contain a lead phrase ("wipe the roster, what's
+  // next") still surfaces its block rather than a friendly page-led answer.
+  if (classified.safetyClass !== 'blocked' && detectVagueLeadRequest(trimmed)) {
+    const pageLed = resolvePageOnlyLead(trimmed, pathname)
+    if (pageLed) {
+      return {
+        intent: 'dashboard_priority',
+        confidence: 'high',
+        responseMode: 'use_page_context',
+        safetyClass: classified.safetyClass,
+        sourceContextUsed: sourceContextLabel('use_page_context', pathname),
+        missingContext: null,
+        recommendedNextStep: pageLed,
+        shouldAskClarification: false,
+        clarificationQuestion: null,
+      }
+    }
+  }
 
   const shouldClarify = mode === 'ask_clarification' ||
     (classified.confidence === 'low' && classified.safetyClass !== 'blocked')

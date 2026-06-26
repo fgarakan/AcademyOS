@@ -24,6 +24,9 @@ import {
   getOperatorForPhrase,
   getOperatorForRoute,
 } from './donnaUIGuidedOperators'
+// Mega Sprint 4321–4350 — Conversation Ownership: lead from the current page
+// instead of asking the director to describe what they need.
+import { resolvePageOnlyLead } from '@/lib/donna/conversation/donnaPageLedConversation'
 
 // ── Dispatch result types ─────────────────────────────────────────────────────
 
@@ -1083,11 +1086,34 @@ export function dispatchUIIntent(
     }
   }
 
-  // 9. Clarification needed
+  // 9. Clarification needed — but if this is a vague-lead request and we know the
+  // page, lead from the page instead of asking the director to describe what they
+  // need. Conversation Ownership: DONNA infers and guides forward.
+  const pageLed = resolvePageOnlyLead(text, currentRoute)
+  if (pageLed) {
+    return {
+      kind: 'clarification_needed',
+      actionId: 'page_led_guidance',
+      message: pageLed,
+      route: currentRoute,
+      operatorId: null,
+      stepNumber: null,
+      filterParams: null,
+      requiresApproval: false,
+      approvalRoute: null,
+      matrixPermission: null,
+      // 'partial' (not 'high') — the consumer (handleUIDispatch) only surfaces a
+      // clarification_needed result when confidence === 'partial'; 'high' would be
+      // discarded and the legacy fallback would run instead.
+      confidence: 'partial',
+      safetyClass: null,
+    }
+  }
+
   return {
     kind: 'clarification_needed',
     actionId: null,
-    message: "I want to help — can you tell me more? Are you looking to navigate somewhere, start a workflow, draft something for review, or understand what's on this page?",
+    message: "Tell me what you're after — a player, a page, or a task — and I'll take you there and guide it.",
     route: null,
     operatorId: null,
     stepNumber: null,

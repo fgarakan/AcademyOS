@@ -29,7 +29,7 @@ function route(text: string): DonnaRouterResult {
   return routeDonnaConversation({ text, directorCtx: CTX, route: '/director' })
 }
 
-const VALID_STAGES: DonnaRouterStage[] = ['safety_block','operating_session','daily_brief','exception','review','players','focus_today','proactive','assumption','guided_completion','clarify','defer_to_brain']
+const VALID_STAGES: DonnaRouterStage[] = ['safety_block','operating_session','daily_brief','exception','review','players','focus_today','proactive','assumption','page_led','guided_completion','clarify','defer_to_brain']
 
 // A pipeline-handled stage is anything other than a dead-end; defer/guided/clarify
 // are all "handled by ONE DONNA" (the brain or a focused question), not director search.
@@ -73,7 +73,7 @@ const DAY: DayStep[] = [
   { n: 5,  utterance: 'Take me there.',                accept: ['assumption','defer_to_brain'],      expectCompletion: false },
   { n: 6,  utterance: 'Walk me through it.',           accept: ['guided_completion'],                expectCompletion: true },
   { n: 7,  utterance: 'Done.',                         accept: ['guided_completion'],                expectCompletion: true },
-  { n: 8,  utterance: "What's next?",                  accept: ['assumption'],                       expectCompletion: true },
+  { n: 8,  utterance: "What's next?",                  accept: ['assumption','page_led'],            expectCompletion: true },
   { n: 9,  utterance: 'A coach called in sick.',       accept: ['exception'],                        expectCompletion: true },
   { n: 10, utterance: 'Two players are absent.',       accept: ['exception'],                        expectCompletion: true },
   { n: 11, utterance: 'A parent is upset.',            accept: ['exception'],                        expectCompletion: true },

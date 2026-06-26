@@ -27,6 +27,10 @@ import {
   CONFIDENCE_LOW_THRESHOLD,
 } from './confidenceScoring'
 import type { WeightedSignal, ScoredCandidate } from './confidenceScoring'
+// Mega Sprint 4321–4350 — Conversation Ownership: when the director is asking
+// DONNA to lead ("what next", "guide me", "what should I do here") and the page
+// is known, lead from the page instead of presenting a disambiguation menu.
+import { resolvePageOnlyLead } from '@/lib/donna/conversation/donnaPageLedConversation'
 
 // ── Intent types ──────────────────────────────────────────────────────────────
 
@@ -392,13 +396,19 @@ export function classifyIntent(
   const best = ranked[0]
 
   if (!best || best.confidence < CONFIDENCE_LOW_THRESHOLD) {
+    // Conversation Ownership: a vague-lead request on a known page is led from
+    // the page, not met with a generic "I didn't catch that" prompt.
+    const pageLed = resolvePageOnlyLead(text, pathname)
     return {
       intent: 'unknown',
       confidence: 0,
       possibleIntents: [],
       clarificationNeeded: true,
-      clarificationQuestion: "I didn't catch exactly what you need. Could you tell me a bit more? For example: which player, which level, or what you're trying to accomplish.",
-      reasoning: 'No signals matched above the low-confidence threshold.',
+      clarificationQuestion: pageLed
+        ?? "I didn't catch exactly what you need. Could you tell me a bit more? For example: which player, which level, or what you're trying to accomplish.",
+      reasoning: pageLed
+        ? 'No signals matched, but the page context resolved a led recommendation.'
+        : 'No signals matched above the low-confidence threshold.',
       extractedEntity: entity,
       hasNamedEntity: entity !== null,
     }
@@ -411,7 +421,7 @@ export function classifyIntent(
 
   const clarificationNeeded = isClarificationNeeded(best.confidence)
   const clarificationQuestion = clarificationNeeded
-    ? buildIntentClarificationQuestion(ranked, entity)
+    ? buildIntentClarificationQuestion(ranked, entity, text, pathname)
     : null
 
   const reasoning = buildReasoning(best.candidate, best.matched, best.confidence, entity)
@@ -433,13 +443,29 @@ export function classifyIntent(
 function buildIntentClarificationQuestion(
   ranked: ScoredCandidate<DirectorIntent>[],
   entity: string | null,
+  text?: string,
+  pathname?: string,
 ): string {
-  const top = ranked.slice(0, 3)
-  if (top.length === 0) return "Could you give me a bit more context? What are you trying to accomplish?"
+  // Conversation Ownership: a vague-lead request on a known page leads from the
+  // page rather than offering a "Did you mean… / Or describe what you need" menu.
+  if (text && pathname) {
+    const pageLed = resolvePageOnlyLead(text, pathname)
+    if (pageLed) return pageLed
+  }
 
-  const entityPart = entity ? ` about ${entity}` : ''
-  const options = top.map((r, i) => `${i + 1}. ${INTENT_LABELS[r.candidate] ?? r.candidate}`)
-  return `I think you want to work${entityPart}. Did you mean:\n\n${options.join('\n')}\n\nOr describe what you need and I'll figure it out.`
+  const top = ranked.slice(0, 3)
+  if (top.length === 0) return "Tell me a player, a level, or what you're trying to get done and I'll lead from there."
+
+  // Lead with the top candidate as a recommendation; name alternatives in one
+  // line with a one-word correction path — no passive menu, no "describe what
+  // you need" opener.
+  const entityPart = entity ? ` on ${entity}` : ''
+  const topLabel = INTENT_LABELS[top[0].candidate] ?? top[0].candidate
+  const alts = top.slice(1).map(r => INTENT_LABELS[r.candidate] ?? r.candidate)
+  const altClause = alts.length > 0
+    ? ` If you meant ${alts.join(' or ')} instead, just say so.`
+    : ''
+  return `Sounds like you want to ${topLabel.toLowerCase()}${entityPart} — I'll take you there and guide it.${altClause}`
 }
 
 const INTENT_LABELS: Record<DirectorIntent, string> = {

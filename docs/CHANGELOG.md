@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-06-25 — Mega Sprint 4321–4350 — DONNA Conversation Ownership V1
+
+**Mission:** Make DONNA carry the conversation and workflow like an elite COO — infer intent
+from the page + live state and lead with a recommendation, instead of asking generic
+clarification when the context already reveals what to do next. No new architecture, no new
+intelligence, no migrations — conversation ownership only.
+
+**Root cause.** The canonical router (`donnaCanonicalRouter`) accepted a `route` param but
+never used it. Vague-lead prompts ("who should we start with?", "what should I do here?",
+"guide me", "continue", "what next?") fell through to a page-agnostic executive assumption,
+and passive clarification ("I want to make sure I understand correctly", "Did you mean… / Or
+describe what you need") lived in leaf engines that fired when nothing upstream led.
+
+**Page Intent Resolver (new).** `src/lib/donna/conversation/donnaPageLedConversation.ts` —
+pure, deterministic, reality-grounded. `detectVagueLeadRequest` classifies the lead family;
+`resolvePageLedGuidance` builds a 5-beat led answer (**What I see · What I recommend · Why ·
+First action · What comes next**) from the page capability map + the deterministic
+next-action engine + live `DirectorDonnaContext`. Per-page builders for Today, Players,
+Review/Approvals, Curriculum, Templates, Onboarding, plus a generic page-led fallback. Returns
+`null` when neither page nor state can lead (genuine clarification still allowed).
+
+**Players page proof (Obj 5).** On `/director/players`, named placement decisions are
+prioritized *before* the bulk no-level backlog, the first player is named, and the next step
+(the level decision) is guided — e.g. "Start with the flagged players before the 49 with no
+curriculum level… I'd start with Alex Chen. Open Alex's profile and I'll guide the level
+decision."
+
+**Workflow carry (Obj 4).** "continue" resumes the active page thread (objective · next item ·
+follow-up) instead of restarting — derived from reality like `resumeExecutivePartnership`,
+no new lifecycle or persistence.
+
+**Diagnostics / developer trace (Obj 7).** `PageLedDiagnostics` + `formatPageLedDiagnostics`
+expose inferred intent · page used · state used · recommendation source · clarification
+avoided · active objective · next action · reality-grounded.
+
+**Wiring (converged + route-gated).** One step added to `donnaCanonicalRouter` before the
+page-agnostic assumption (`stage: 'page_led'`); with no route it is a no-op, so route-less
+callers (incl. existing certifications) are unchanged. Leaf clarifiers retrofitted to lead
+from the page when a route is known: `donnaUIActionDispatcher` (clarification_needed),
+`donnaConversationalRouter` (ambiguous_context), `donnaIntentEngine` (disambiguation menu),
+and `donnaGoalEngine` (the "I want to make sure I understand correctly" opener removed at
+source — now leads with the top goal).
+
+**Remaining gaps (documented, not destabilized).** `donnaUIGuidedOperators` (static
+`noDataFallback` strings), `donnaShortPhraseEngine`, and the raw `donnaIntentClassifier`
+fallbacks have no route in scope; they are shadowed by the router's page-led intercept and
+would require threading route through the brain/components — deferred. UI surfacing of the
+developer trace is engine + certification level only (no UI edits this sprint).
+
+**Certification.** New `donnaConversationOwnershipCertification` (66/66) covers Obj 1–7,
+Players prioritization, "continue" carry, cross-page proof, no-passive-phrasing (reusing
+Conversation DNA's `hasChatbotHedging`), router integration + backward compat, and the four
+leaf-clarifier overrides. `"What's next?"` expectations updated to `page_led` in three existing
+suites (it is the sprint's intended behavior; still ONE pipeline, reality-grounded, leads).
+Full gate: **27/27 suites**, Guardian GREEN, `tsc` clean.
+
+---
+
 ## 2026-06-25 — Mega Sprint 4291–4320 — Demo Academy God Mode Test Harness V1
 
 **Mission:** Prove DONNA's God Mode on a realistic, fully-deletable demo academy. No new

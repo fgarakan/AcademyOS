@@ -52,6 +52,13 @@ import {
   detectDirectMutationRequest,
   buildApprovalRequiredResponse,
 } from '@/lib/donna/brain/donnaOperatingDay'
+// Mega Sprint 4321–4350 — DONNA Conversation Ownership. A vague-lead request
+// ("who should we start with?", "what should I do here?", "guide me",
+// "continue", "what next?") on a known page is resolved into a page + state-led
+// COO recommendation — DONNA owns the workflow instead of falling through to a
+// page-agnostic assumption or a passive clarification. Route-gated: with no
+// route this is a no-op and the engines below are unchanged.
+import { resolvePageLedGuidance } from '@/lib/donna/conversation/donnaPageLedConversation'
 
 // ── Result contract ───────────────────────────────────────────────────────────
 
@@ -65,6 +72,7 @@ export type DonnaRouterStage =
   | 'focus_today'         // "what should I do today / what matters most"
   | 'proactive'           // "what's blocking / what are you noticing"
   | 'assumption'          // vague-but-safe → executive COO assumption
+  | 'page_led'            // vague-lead + known page → page+state-led COO recommendation
   | 'guided_completion'   // "take me to completion / walk me through" → brain runs the loop
   | 'executive_reasoning' // executive-flag on + strategic request → brain → Executive Operating Layer
   | 'clarify'             // one focused clarifying question (only when required)
@@ -256,6 +264,33 @@ export function routeDonnaConversation(params: {
   if (isProactiveIntent(t)) {
     const answer = buildProactiveNoticeAnswer(ctx)
     return { matched: true, stage: 'proactive', engineId: 'focusTodayAnswerEngine.proactive', answer, needsOpenAI: false, requiresApproval: false, realityGrounded: groundedFrom(answer, ctx) }
+  }
+
+  // ── Step 2.9 — Page-led conversation ownership (Mega Sprint 4321–4350) ─────────
+  // When the director asks DONNA to lead ("who should we start with?", "what
+  // should I do here?", "guide me", "continue", "what next?") AND the current
+  // page is known, resolve a page + live-state-led recommendation that owns the
+  // workflow — 5-beat (see · recommend · why · first action · what next). This
+  // intercepts exactly the prompts that previously fell through to the
+  // page-agnostic executive assumption below, upgrading them to page awareness.
+  // Route-gated: no route → skip → assumption/clarify behave exactly as before,
+  // so route-less callers (incl. existing certifications) are unaffected.
+  if (params.route) {
+    // resolvePageLedGuidance internally runs detectVagueLeadRequest and returns
+    // null for non-lead text, so a separate guard call here would just scan the
+    // regex set twice. Branch on the resolver result alone.
+    const guidance = resolvePageLedGuidance({ text, route: params.route, ctx })
+    if (guidance) {
+      return {
+        matched: true,
+        stage: 'page_led',
+        engineId: 'donnaPageLedConversation',
+        answer: guidance.answer,
+        needsOpenAI: false,
+        requiresApproval: false,
+        realityGrounded: guidance.diagnostics.realityGrounded,
+      }
+    }
   }
 
   // ── Step 3 — Executive assumption (Part 4): vague but safe → assume like a COO ─

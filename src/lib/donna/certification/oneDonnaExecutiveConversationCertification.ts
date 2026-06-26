@@ -29,7 +29,9 @@ const ENTRY_ROUTES = ['/director', '/director/players', '/director/curriculum', 
 
 const VALID_STAGES: DonnaRouterStage[] = [
   'safety_block', 'operating_session', 'daily_brief', 'exception', 'review', 'players', 'focus_today',
-  'proactive', 'assumption', 'guided_completion', 'clarify', 'defer_to_brain',
+  // 'page_led' added Mega Sprint 4321–4350 — vague-lead requests are now resolved
+  // by the page-led conversation-ownership engine inside the canonical router.
+  'proactive', 'assumption', 'page_led', 'guided_completion', 'clarify', 'defer_to_brain',
 ]
 
 let passed = 0
