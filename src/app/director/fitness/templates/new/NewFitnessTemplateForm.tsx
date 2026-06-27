@@ -203,8 +203,9 @@ export function NewFitnessTemplateForm({ hasDna, dnaDevelopmentPriorities }: Pro
         blocks:          blockInputs,
       })
 
-      if (!result.ok || !result.templateId) {
-        setError(result.error ?? 'Failed to save draft.')
+      // Guard: Server Action can resolve to undefined under build skew (stale bundle).
+      if (!result || !result.ok || !result.templateId) {
+        setError(result?.error ?? 'Failed to save draft.')
         return
       }
 

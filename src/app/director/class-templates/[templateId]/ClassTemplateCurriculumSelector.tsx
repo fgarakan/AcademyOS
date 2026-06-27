@@ -42,7 +42,11 @@ export function ClassTemplateCurriculumSelector({ templateId, currentLevelId, le
   function handleSave() {
     startTransition(async () => {
       const result = await setCurriculumLevelAction(templateId, selectedId)
-      if (result.error) {
+      // Guard: a Server Action call can resolve to undefined under client/server
+      // build skew (stale bundle). Treat that as a recoverable failure, not a crash.
+      if (!result) {
+        setError('Save failed — please retry.')
+      } else if (result.error) {
         setError(result.error)
       } else {
         setSaved(true)

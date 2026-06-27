@@ -48,6 +48,11 @@ export function TemplateMetaEditorCard({
         description: description || null,
         totalDurationMin: Number.isNaN(dur ?? NaN) ? null : dur,
       })
+      // Guard: Server Action can resolve to undefined under build skew (stale bundle).
+      if (!res) {
+        setSaveResult({ ok: false, msg: 'Save failed — please retry.' })
+        return
+      }
       setSaveResult({ ok: res.ok, msg: res.ok ? 'Template saved.' : (res.error ?? 'Save failed.') })
       if (res.ok) {
         setSaveOpen(false)
@@ -60,6 +65,11 @@ export function TemplateMetaEditorCard({
     setDupResult(null)
     startTransition(async () => {
       const res = await duplicateFitnessTemplateAction(templateId, dupName)
+      // Guard: Server Action can resolve to undefined under build skew (stale bundle).
+      if (!res) {
+        setDupResult({ ok: false, msg: 'Duplicate failed — please retry.' })
+        return
+      }
       if (res.ok && res.newTemplateId) {
         setDupResult({ ok: true, msg: 'Template duplicated.', newId: res.newTemplateId })
       } else {

@@ -2,13 +2,33 @@
 
 ---
 
+## 2026-06-27 — Sprint 4353 — Server Action Undefined-Result Guards V1
+
+**Mission:** Stop client-side crashes when a Server Action call resolves to `undefined`
+under client/server build skew (a stale browser bundle calling a changed action). Treat an
+undefined result as a recoverable "please retry" failure, never an uncaught read of
+`result.error` / `result.ok`. Standalone robustness milestone — independent of Sprint 4352,
+no overlap with the session-generation path.
+
+**Root cause.** Each affected client component awaited a Server Action and immediately read a
+field on the result (`result.error`, `res.ok`, `result.templateId`). When the action resolves
+to `undefined` — the symptom of a stale client bundle invoking a since-changed action — that
+read throws an uncaught `TypeError` and the panel dies instead of surfacing a retry path.
+
+**What shipped (defensive only, no behavior change on the happy or error paths):**
+- `ClassTemplateCurriculumSelector` — guards the `setCurriculumLevelAction` result.
+- `CurriculumLevelSelector` — guards the `setCurriculumLevelAction` result; also retires the
+  now-dead `notPersisted` (migration-045) messaging path. The `templates.curriculum_level_id`
+  column is present in the live schema (reflected in `database.types.ts`), so the action's
+  `notPersisted` branch is unreachable and its UI handling was removed.
+- `TemplateMetaEditorCard` — guards both the save and duplicate action results.
+- `NewFitnessTemplateForm` — guards the draft-save result.
+
+**Validation:** `npx tsc --noEmit` clean · certification gate 28/28 suites.
+
+---
+
 ## 2026-06-27 — Sprint 4352 — Template → Session Operational Path V1
-
-Shipped as **two commits** under one sprint number — a feature milestone and a
-defensive-hardening follow-up — kept separate so the operational milestone and the
-build-skew guards have independent, revertable history.
-
-### 1. Template → Session operational milestone (Sprint 4352)
 
 **Mission:** Close the operational gap where a session generated from a template opened
 for the coach with **no player roster** — leaving attendance and wrap-up unavailable — by
@@ -45,22 +65,11 @@ carry an explicit total.
   `SessionFromTemplateForm` distinguishes success-with-warning from hard error (surfaces the
   advisory but still navigates).
 
-### 2. Defensive server-action guard hardening (Sprint 4352B)
+**Validation:** `npx tsc --noEmit` clean · Guardian gate GREEN (0 new violations) ·
+certification gate 28/28 suites.
 
-**Mission:** Stop client-side crashes when a Server Action call resolves to `undefined`
-under client/server build skew (a stale browser bundle calling a changed action). Treat an
-undefined result as a recoverable "please retry" failure, never an uncaught read of
-`result.error`.
-
-**What shipped (defensive only, no behavior change on the happy path):**
-- `ClassTemplateCurriculumSelector` — guards `setCurriculumLevelAction` result.
-- `CurriculumLevelSelector` — guards `setCurriculumLevelAction` result; also retires the
-  dead `notPersisted` (migration-045) messaging path.
-- `TemplateMetaEditorCard` — guards the save and duplicate action results.
-- `NewFitnessTemplateForm` — guards the draft-save result.
-
-**Validation (both commits):** `npx tsc --noEmit` clean · Guardian gate GREEN (0 new
-violations) · certification gate 28/28 suites.
+> Note: the defensive server-action build-skew guards originally drafted under this entry
+> shipped separately as **Sprint 4353 — Server Action Undefined-Result Guards V1** (see above).
 
 ---
 
