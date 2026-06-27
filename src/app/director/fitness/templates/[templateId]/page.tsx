@@ -4,7 +4,7 @@ import { ArrowLeft, Clock, Activity } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
-import { GenerateSessionPanel, type CoachOption, type GateOption, type LessonPlanBlock } from './GenerateSessionPanel'
+import { GenerateSessionPanel, type CoachOption, type GateOption, type GroupOption, type LessonPlanBlock } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
 import { FitnessBuilderStepper } from './FitnessBuilderStepper'
@@ -248,6 +248,16 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     : { data: null }
   const fallbackCoachName = currentProfile?.display_name ?? 'You'
 
+  // Fetch active groups for the Generate Session roster selector. A generated session's
+  // roster is derived live from its group, so the director picks the group here.
+  const { data: groupRows } = await supabase
+    .from('groups')
+    .select('id, name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name')
+  const groups: GroupOption[] = (groupRows ?? []).map(g => ({ id: g.id, name: g.name }))
+
   // Map fitness blocks to lesson plan block shape for the preview panel
   const lessonPlanBlocks: LessonPlanBlock[] = fitnessBlocks.map(b => ({
     id: b.id,
@@ -283,6 +293,7 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
           curriculumDrills={curriculumDrills}
           focusGatesForSession={focusGatesForSession}
           coaches={coaches}
+          groups={groups}
           fallbackCoachId={fallbackCoachId}
           fallbackCoachName={fallbackCoachName}
           fitnessBlocks={fitnessBlocks}

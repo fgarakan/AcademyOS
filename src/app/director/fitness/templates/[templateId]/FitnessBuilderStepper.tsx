@@ -14,7 +14,7 @@ import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import { PopulateDrillNotesButton } from './PopulateDrillNotesButton'
 import { TemplateMetaEditorCard } from './TemplateMetaEditorCard'
 import { GenerateSessionPanel } from './GenerateSessionPanel'
-import type { CoachOption, GateOption, LessonPlanBlock } from './GenerateSessionPanel'
+import type { CoachOption, GateOption, GroupOption, LessonPlanBlock } from './GenerateSessionPanel'
 import { CurriculumDrillReferencePanel } from '@/components/templates/CurriculumDrillReferencePanel'
 import type { CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
 import {
@@ -768,6 +768,7 @@ function Step5ReviewSave({
   templateName,
   fitnessBlocks,
   coaches,
+  groups,
   fallbackCoachId,
   fallbackCoachName,
   focusGatesForSession,
@@ -778,6 +779,7 @@ function Step5ReviewSave({
   templateName: string
   fitnessBlocks: FitnessBlock[]
   coaches: CoachOption[]
+  groups: GroupOption[]
   fallbackCoachId: string
   fallbackCoachName: string
   focusGatesForSession: GateOption[]
@@ -890,6 +892,7 @@ function Step5ReviewSave({
             templateName={templateName}
             hasBlocks={fitnessBlocks.length > 0}
             coaches={coaches}
+            groups={groups}
             fallbackCoachId={fallbackCoachId}
             fallbackCoachName={fallbackCoachName}
             focusGates={focusGatesForSession}
@@ -918,6 +921,7 @@ export interface FitnessBuilderStepperProps {
   curriculumDrills: CurriculumDrillRow[]
   focusGatesForSession: GateOption[]
   coaches: CoachOption[]
+  groups: GroupOption[]
   fallbackCoachId: string
   fallbackCoachName: string
   fitnessBlocks: FitnessBlock[]
@@ -945,6 +949,7 @@ export function FitnessBuilderStepper({
   curriculumDrills,
   focusGatesForSession,
   coaches,
+  groups,
   fallbackCoachId,
   fallbackCoachName,
   fitnessBlocks,
@@ -1014,6 +1019,7 @@ export function FitnessBuilderStepper({
             templateName={templateName}
             fitnessBlocks={fitnessBlocks}
             coaches={coaches}
+            groups={groups}
             fallbackCoachId={fallbackCoachId}
             fallbackCoachName={fallbackCoachName}
             focusGatesForSession={focusGatesForSession}

@@ -59,6 +59,17 @@ export default async function NewSessionPage() {
     .filter(m => m.profiles)
     .map(m => ({ id: m.profiles!.id, display_name: m.profiles!.display_name }))
 
+  // Fetch active groups for the roster selector. A generated session's roster is derived
+  // live from its group, so the director assigns the group at generation time.
+  const { data: groupRows } = await rawDb
+    .from('groups')
+    .select('id, name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+  const groups: Array<{ id: string; name: string }> = ((groupRows ?? []) as Array<{ id: string; name: string }>)
+    .map(g => ({ id: g.id, name: g.name }))
+
   return (
     <div className="p-6 space-y-6 max-w-2xl">
       <div>
@@ -98,6 +109,7 @@ export default async function NewSessionPage() {
         <SessionFromTemplateForm
           templates={templates}
           coaches={coaches}
+          groups={groups}
           fallbackCoachId={user.id}
         />
       )}

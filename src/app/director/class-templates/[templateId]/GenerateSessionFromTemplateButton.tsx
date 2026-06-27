@@ -18,6 +18,11 @@ export interface GateOption {
   threshold: string
 }
 
+export interface GroupOption {
+  id: string
+  name: string
+}
+
 interface Props {
   templateId: string
   templateName: string
@@ -26,6 +31,8 @@ interface Props {
   fallbackCoachId: string
   fallbackCoachName: string
   focusGates?: GateOption[]
+  /** Groups the director can assign as the session roster. Empty = no group set up yet. */
+  groups?: GroupOption[]
 }
 
 function todayIso(): string {
@@ -40,6 +47,7 @@ export function GenerateSessionFromTemplateButton({
   fallbackCoachId,
   fallbackCoachName,
   focusGates = [],
+  groups = [],
 }: Props) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(templateName)
@@ -48,6 +56,7 @@ export function GenerateSessionFromTemplateButton({
   const [coachId, setCoachId] = useState(
     coaches.length > 0 ? coaches[0].id : fallbackCoachId
   )
+  const [groupId, setGroupId] = useState('')
   const [notes, setNotes] = useState('')
   const [selectedGateIds, setSelectedGateIds] = useState<string[]>([])
   const [formError, setFormError] = useState<string | null>(null)
@@ -60,6 +69,7 @@ export function GenerateSessionFromTemplateButton({
     setDate(todayIso())
     setTime('')
     setCoachId(coaches.length > 0 ? coaches[0].id : fallbackCoachId)
+    setGroupId('')
     setNotes('')
     setSelectedGateIds([])
     setFormError(null)
@@ -98,6 +108,7 @@ export function GenerateSessionFromTemplateButton({
         scheduledDate: date,
         scheduledTime: time.trim() || null,
         coachId,
+        groupId: groupId || null,
         sessionNotes: notes.trim() || null,
         focusGateIds: selectedGateIds,
       })
@@ -273,6 +284,35 @@ export function GenerateSessionFromTemplateButton({
                 No coaches found — session will be assigned to{' '}
                 <span className="text-text-secondary">{fallbackCoachName}</span> (you).
               </div>
+            )}
+          </div>
+
+          {/* Group / roster selection — drives the coach's player roster, attendance, wrap-up */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-widest text-text-muted block">
+              Group <span className="text-text-muted normal-case">(roster)</span>
+            </label>
+            {groups.length > 0 ? (
+              <select
+                value={groupId}
+                onChange={e => setGroupId(e.target.value)}
+                disabled={isPending}
+                className="w-full text-sm bg-surface border border-border rounded px-3 py-2 text-text-primary focus:outline-none focus:border-lime/40 disabled:opacity-50"
+              >
+                <option value="">No group — coach will have no roster</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="text-[10px] text-text-muted border border-border rounded px-3 py-2 bg-surface-raised">
+                No groups exist yet — the coach will have no player roster, and attendance and wrap-up will be unavailable for this session.
+              </div>
+            )}
+            {groups.length > 0 && !groupId && (
+              <p className="text-[10px] text-status-orange">
+                Without a group the coach cannot mark attendance or complete wrap-up.
+              </p>
             )}
           </div>
 

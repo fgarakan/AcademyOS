@@ -2,6 +2,68 @@
 
 ---
 
+## 2026-06-27 — Sprint 4352 — Template → Session Operational Path V1
+
+Shipped as **two commits** under one sprint number — a feature milestone and a
+defensive-hardening follow-up — kept separate so the operational milestone and the
+build-skew guards have independent, revertable history.
+
+### 1. Template → Session operational milestone (Sprint 4352)
+
+**Mission:** Close the operational gap where a session generated from a template opened
+for the coach with **no player roster** — leaving attendance and wrap-up unavailable — by
+making template → session generation carry the full operating payload (duration, group,
+roster) along one canonical path.
+
+**Root cause.** `generateSessionFromTemplateAction` created the `sessions` row from the
+template's blocks but never resolved a `group_id`, so the coach session view (which derives
+players **live** from `session.group_id → group_memberships` where `is_current = true`) had
+nothing to render. The session header duration was also left blank when the template did not
+carry an explicit total.
+
+**What shipped (canonical path, no new architecture):**
+- **Canonical generation** — `generate-session-actions.ts` remains the single generation
+  entry point. Session content (blocks/exercises) is **copied** from the template; the
+  original template is never mutated.
+- **`duration_min` carry-through** — the session header duration now resolves from the
+  template's planned total, falling back to the summed block durations so it is never blank
+  when blocks exist.
+- **`group_id` carry-through** — the session's group is resolved at generation time
+  (director selection first, template default second), validated active and in-academy, and
+  confirmed to have current members. An empty/absent roster returns an **advisory warning**
+  (the session is still valid) rather than a silent empty session; warnings are written to
+  the audit payload.
+- **Roster/player carry-through** — players are derived live from the resolved group, not
+  snapshotted, so the coach roster, attendance, and wrap-up all light up from one source.
+- **Class-template session generation** — `GenerateSessionFromTemplateButton` gains the
+  group/roster selector with an explicit "no group → no roster" warning state.
+- **Fitness-template session generation** — `GenerateSessionPanel` gains the same
+  selector and warning state.
+- **Page / stepper plumbing** — `ClassTemplateBuilderStepper`, `FitnessBuilderStepper`, and
+  the three pages (`class-templates/[templateId]`, `fitness/templates/[templateId]`,
+  `sessions/new`) fetch active groups and thread them to the generators;
+  `SessionFromTemplateForm` distinguishes success-with-warning from hard error (surfaces the
+  advisory but still navigates).
+
+### 2. Defensive server-action guard hardening (Sprint 4352B)
+
+**Mission:** Stop client-side crashes when a Server Action call resolves to `undefined`
+under client/server build skew (a stale browser bundle calling a changed action). Treat an
+undefined result as a recoverable "please retry" failure, never an uncaught read of
+`result.error`.
+
+**What shipped (defensive only, no behavior change on the happy path):**
+- `ClassTemplateCurriculumSelector` — guards `setCurriculumLevelAction` result.
+- `CurriculumLevelSelector` — guards `setCurriculumLevelAction` result; also retires the
+  dead `notPersisted` (migration-045) messaging path.
+- `TemplateMetaEditorCard` — guards the save and duplicate action results.
+- `NewFitnessTemplateForm` — guards the draft-save result.
+
+**Validation (both commits):** `npx tsc --noEmit` clean · Guardian gate GREEN (0 new
+violations) · certification gate 28/28 suites.
+
+---
+
 ## 2026-06-26 — Sprint 4351 — Existence-Form Attention Routing Fix
 
 **Mission:** Fix the audited live case where a Director on the Today page asking "Are there

@@ -16,7 +16,7 @@ import { TemplateSessionPreviewCard } from './TemplateSessionPreviewCard'
 import type { PreviewBlock } from './TemplateSessionPreviewCard'
 import { ClassTemplateSetupGuide } from '@/components/onboarding/ClassTemplateSetupGuide'
 import { GenerateSessionFromTemplateButton } from './GenerateSessionFromTemplateButton'
-import type { CoachOption, GateOption } from './GenerateSessionFromTemplateButton'
+import type { CoachOption, GateOption, GroupOption } from './GenerateSessionFromTemplateButton'
 import { CollapsibleBlockRow } from '@/components/builder'
 
 // ─── Prop types ───────────────────────────────────────────────────────────────
@@ -80,6 +80,7 @@ export interface ClassTemplateBuilderStepperProps {
   previewBlocks: PreviewBlock[]
   focusGates: GateOption[]
   coaches: CoachOption[]
+  groups: GroupOption[]
   sessionCount: number
   userId: string
   userDisplayName: string
@@ -787,6 +788,7 @@ function Step5ReviewApply({
   blocksWithContent,
   sessionCount,
   coaches,
+  groups,
   fallbackCoachId,
   fallbackCoachName,
   focusGates,
@@ -802,6 +804,7 @@ function Step5ReviewApply({
   blocksWithContent: BlockProp[]
   sessionCount: number
   coaches: CoachOption[]
+  groups: GroupOption[]
   fallbackCoachId: string
   fallbackCoachName: string
   focusGates: GateOption[]
@@ -882,6 +885,7 @@ function Step5ReviewApply({
           templateName={templateName}
           hasBlocks={blockList.length > 0}
           coaches={coaches}
+          groups={groups}
           fallbackCoachId={fallbackCoachId}
           fallbackCoachName={fallbackCoachName}
           focusGates={focusGates}
@@ -910,6 +914,7 @@ export function ClassTemplateBuilderStepper({
   previewBlocks,
   focusGates,
   coaches,
+  groups,
   sessionCount,
   userId,
   userDisplayName,
@@ -1011,6 +1016,7 @@ export function ClassTemplateBuilderStepper({
             blocksWithContent={blocksWithContent}
             sessionCount={sessionCount}
             coaches={coaches}
+            groups={groups}
             fallbackCoachId={userId}
             fallbackCoachName={userDisplayName}
             focusGates={focusGates}

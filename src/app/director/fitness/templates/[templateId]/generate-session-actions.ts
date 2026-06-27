@@ -19,6 +19,8 @@ export interface GenerateSessionInput {
   coachId: string
   sessionNotes?: string | null
   focusGateIds?: string[]
+  /** Optional group override. Defaults to the template's group_id when omitted. */
+  groupId?: string | null
 }
 
 export interface GenerateSessionResult {
@@ -176,6 +178,56 @@ export async function generateSessionFromTemplateAction(
   }
   const curriculumPrefix = [...curriculumLines, ...focusGateLines].join('\n')
   const finalSessionNotes = curriculumPrefix + (input.sessionNotes?.trim() ?? '')
+
+  // 7b. Resolve the session's GROUP — this is the roster source for the whole coach
+  //     workflow. The coach session view, attendance marking, and wrap-up all derive
+  //     players LIVE from session.group_id → group_memberships (is_current=true); no
+  //     player rows are snapshotted at generation time. A session with no group has no
+  //     roster, so the coach cannot mark attendance or complete wrap-up. We resolve the
+  //     group here (director selection first, template default second) and surface a
+  //     warning to the director when no usable roster results, rather than shipping a
+  //     silently empty session.
+  const requestedGroupId = input.groupId ?? template.group_id ?? null
+  let resolvedGroupId: string | null = null
+  let rosterWarning: string | null = null
+  if (requestedGroupId) {
+    const { data: groupRow } = await supabase
+      .from('groups')
+      .select('id, is_active')
+      .eq('id', requestedGroupId)
+      .eq('academy_id', academyId)
+      .single()
+    if (!groupRow) {
+      return { sessionId: null, error: 'Selected group was not found in this academy.' }
+    }
+    if (!groupRow.is_active) {
+      return { sessionId: null, error: 'Selected group is no longer active. Choose an active group.' }
+    }
+    resolvedGroupId = groupRow.id
+    // Confirm the group has current members — otherwise the roster is still empty.
+    const { count: memberCount } = await supabase
+      .from('group_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('group_id', resolvedGroupId)
+      .eq('is_current', true)
+      .eq('academy_id', academyId)
+    if (!memberCount || memberCount === 0) {
+      rosterWarning =
+        'Session created, but the selected group has no current players — the coach roster ' +
+        'will be empty until players are added to the group.'
+    }
+  } else {
+    rosterWarning =
+      'Session created without a group — the coach will have no player roster and cannot ' +
+      'mark attendance or complete wrap-up. Assign a group to enable the full coach workflow.'
+  }
+
+  // 7c. Resolve the session header duration. Prefer the template's planned total; fall
+  //     back to the sum of block durations so the header is never blank when blocks exist.
+  const summedBlockDuration = templateBlocks.reduce((sum, b) => sum + (b.duration_min ?? 0), 0)
+  const sessionDurationMin =
+    template.total_duration_min ?? (summedBlockDuration > 0 ? summedBlockDuration : null)
+
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
     .insert({
@@ -183,6 +235,10 @@ export async function generateSessionFromTemplateAction(
       coach_id: input.coachId,
       template_id: input.templateId,
       name: input.name.trim() || template.name,
+      // Carry the planned duration so the coach session header reflects it (7c).
+      duration_min: sessionDurationMin,
+      // Roster source for the coach workflow — resolved & validated in step 7b.
+      group_id: resolvedGroupId,
       scheduled_date: input.scheduledDate,
       scheduled_time: input.scheduledTime?.trim() || null,
       session_notes: finalSessionNotes.trim() || null,
@@ -277,12 +333,17 @@ export async function generateSessionFromTemplateAction(
     payload: {
       template_id: input.templateId,
       coach_id: input.coachId,
+      group_id: resolvedGroupId,
       scheduled_date: input.scheduledDate,
       block_count: templateBlocks.length,
       exercise_warning: exerciseWarning ?? null,
+      roster_warning: rosterWarning ?? null,
     },
     sourceType: 'ui',
   })
 
-  return { sessionId, error: exerciseWarning }
+  // Surface roster + exercise warnings together. The session is still valid; these are
+  // advisory so the director knows what to fix before the coach opens it.
+  const combinedWarning = [rosterWarning, exerciseWarning].filter(Boolean).join(' ') || null
+  return { sessionId, error: combinedWarning }
 }

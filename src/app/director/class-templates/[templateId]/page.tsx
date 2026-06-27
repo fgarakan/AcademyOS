@@ -5,7 +5,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import type { CurriculumLevelOption } from './ClassTemplateCurriculumSelector'
 import type { AvailableContentItem } from './BlockContentPickerCard'
 import type { PreviewBlock } from './TemplateSessionPreviewCard'
-import type { CoachOption, GateOption } from './GenerateSessionFromTemplateButton'
+import type { CoachOption, GateOption, GroupOption } from './GenerateSessionFromTemplateButton'
 import { ClassTemplateBuilderStepper } from './ClassTemplateBuilderStepper'
 import { TemplateArchiveDeletePanel } from './TemplateArchiveDeletePanel'
 import type { Tables } from '@/lib/supabase/database.types'
@@ -108,6 +108,17 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   }>)
     .filter(m => m.profiles)
     .map(m => ({ id: m.profiles!.id, display_name: m.profiles!.display_name }))
+
+  // Fetch active groups for the Generate Session roster selector. A generated session's
+  // roster is derived live from its group, so the director picks the group at generation.
+  const { data: groupRows } = await rawDb
+    .from('groups')
+    .select('id, name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name')
+  const groups: GroupOption[] = ((groupRows ?? []) as Array<{ id: string; name: string }>)
+    .map(g => ({ id: g.id, name: g.name }))
 
   // Count sessions already generated from this template — used to light up Step 4 in setup guide
   const { count: sessionCount } = await rawDb
@@ -392,6 +403,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
         previewBlocks={previewBlocks}
         focusGates={focusGates}
         coaches={coaches}
+        groups={groups}
         sessionCount={sessionCount ?? 0}
         userId={user?.id ?? ''}
         userDisplayName={userDisplayName}

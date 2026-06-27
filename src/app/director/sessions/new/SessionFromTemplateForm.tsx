@@ -17,9 +17,15 @@ interface Coach {
   display_name: string
 }
 
+interface Group {
+  id: string
+  name: string
+}
+
 interface Props {
   templates: Template[]
   coaches: Coach[]
+  groups: Group[]
   fallbackCoachId: string
 }
 
@@ -27,15 +33,17 @@ function todayIso() {
   return new Date().toISOString().split('T')[0]
 }
 
-export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }: Props) {
+export function SessionFromTemplateForm({ templates, coaches, groups, fallbackCoachId }: Props) {
   const router = useRouter()
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? '')
   const [sessionName, setSessionName] = useState(templates[0]?.name ?? '')
   const [date, setDate] = useState(todayIso())
   const [time, setTime] = useState('')
   const [coachId, setCoachId] = useState(coaches[0]?.id ?? fallbackCoachId)
+  const [groupId, setGroupId] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
   const [generatedId, setGeneratedId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -50,6 +58,7 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
     if (!date) { setError('Session date is required.'); return }
     if (!sessionName.trim()) { setError('Session name is required.'); return }
     setError(null)
+    setWarning(null)
     startTransition(async () => {
       const result = await generateSessionFromTemplateAction({
         templateId,
@@ -57,12 +66,17 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
         scheduledDate: date,
         scheduledTime: time.trim() || null,
         coachId: coachId || fallbackCoachId,
+        groupId: groupId || null,
         sessionNotes: notes.trim() || null,
       })
-      if (result.error) {
-        setError(result.error)
-      } else if (result.sessionId) {
+      // Check sessionId first: on success the action may still return an advisory
+      // warning (no roster / exercises skipped) in `error`. Surface it without
+      // blocking navigation; only treat it as a hard error when no session was created.
+      if (result.sessionId) {
+        if (result.error) setWarning(result.error)
         setGeneratedId(result.sessionId)
+      } else if (result.error) {
+        setError(result.error)
       }
     })
   }
@@ -78,6 +92,12 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
             <p className="text-text-primary font-semibold">Session created</p>
             <p className="text-text-muted text-sm mt-1">Your session is ready. Open it to review blocks and exercises.</p>
           </div>
+          {warning && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-status-orange/10 border border-status-orange/30 max-w-md">
+              <AlertCircle className="w-3.5 h-3.5 text-status-orange shrink-0 mt-0.5" />
+              <p className="text-[11px] text-status-orange">{warning}</p>
+            </div>
+          )}
           <div className="flex gap-3">
             <button
               onClick={() => router.push(`/director/sessions/${generatedId}`)}
@@ -161,6 +181,31 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
               <option key={c.id} value={c.id}>{c.display_name}</option>
             ))}
           </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="label-xs">Group (roster)</label>
+          {groups.length > 0 ? (
+            <select
+              value={groupId}
+              onChange={e => setGroupId(e.target.value)}
+              className="w-full bg-surface-raised border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-lime/50"
+            >
+              <option value="">No group — coach will have no roster</option>
+              {groups.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          ) : (
+            <div className="text-[10px] text-text-muted border border-border rounded-lg px-3 py-2 bg-surface-raised">
+              No groups exist yet — the coach will have no player roster, and attendance and wrap-up will be unavailable.
+            </div>
+          )}
+          {groups.length > 0 && !groupId && (
+            <p className="text-[10px] text-status-orange">
+              Without a group the coach cannot mark attendance or complete wrap-up.
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
