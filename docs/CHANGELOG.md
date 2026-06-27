@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-06-26 — Sprint 4351 — Existence-Form Attention Routing Fix
+
+**Mission:** Fix the audited live case where a Director on the Today page asking "Are there
+any players that I need to…" got the "Get general guidance" workflow picker instead of an
+answer from page state and executive attention.
+
+**Root cause.** Existence / enumeration-form attention questions ("Are there any players that
+I need to…", "Any players I should look at?", "Are there players who need attention?", "Do any
+players need review?") matched none of the roster-attention detectors. Both live routers
+funnel through phrase detectors keyed only on canonical interrogatives ("who needs attention",
+"which players need review"), so the question fell through every deterministic engine to the
+brain's `unknown → general_guidance` fallback (label: "Get general guidance"), even though the
+watched flag + no-level backlog were already loaded in `DirectorDonnaContext`.
+
+**Narrow fix (no new routing, no new detector, no architecture change).** Extended the two
+existing roster-attention detectors with existence-form patterns, anchored on "players" so
+non-roster existence questions ("are there any courts free?") never match:
+- `detectRosterAttentionQuestion` (`src/lib/donna/directorPlayersDonnaIntelligence.ts`) — used
+  by `routeDonnaConversation` (floating DONNA / Today). Now resolves to the `players` stage.
+- `roster_attention` signals in `classifyDirectorIntent`
+  (`src/lib/donna/donnaIntentClassifier.ts`) — used by `routeDonnaPrompt` (`/director/donna`
+  shell). Now classifies as `roster_attention → use_roster_intel`.
+
+**Regression coverage.** New suite
+`src/lib/donna/certification/donnaExistenceFormAttentionRoutingCertification.ts` (47 checks)
+proves both routers send the existence-form question to the roster-attention engine instead of
+`defer_to_brain` / `general_guidance`, with over-match guards. Registered in the certification
+gate (28/28 suites pass). `npx tsc --noEmit` clean.
+
+---
+
 ## 2026-06-25 — Mega Sprint 4321–4350 — DONNA Conversation Ownership V1
 
 **Mission:** Make DONNA carry the conversation and workflow like an elite COO — infer intent

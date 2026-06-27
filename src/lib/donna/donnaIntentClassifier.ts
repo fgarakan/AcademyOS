@@ -295,6 +295,15 @@ const DIRECTOR_SIGNAL_MAP: DirectorSignalEntry[] = [
       /advancement.ready players?/,
       /who is ready (to advance|for level)/,
       /players? (at risk|falling behind|missing curriculum)/,
+      // Sprint 4351 — existence / enumeration-form attention questions, mirroring
+      // detectRosterAttentionQuestion so routeDonnaPrompt classifies them as
+      // roster_attention (→ use_roster_intel) instead of unknown/ambiguous.
+      // Anchored on "players" so non-roster existence questions never match.
+      /\bplayers?\b\s*(that|who|whom|which)?\s*(i|we)\s+(need|needs|should|have|ought|gotta)\s+to\b/,
+      /\bplayers?\b.*\b(i|we)\s+(should|need to|have to|want to|ought to|gotta)\s+(look at|check|review|see|address|worry about|flag|prioritize|focus on|deal with|talk to)\b/,
+      /\bplayers?\s+(who|that|which)\s+(need|needs|require|requires)\s+(attention|review|help|assessment|checking|support)\b/,
+      /\b(are there|is there|do (i|we) have|have we got)\b.*\bplayers?\b.*\b(need|needs|require|requires|to (review|check|see|look at|address)|attention|at risk|flagged|struggling|review)\b/,
+      /\bdo (any |some )?players?\s+(need|needs|require|requires)\s+(review|attention|help|assessment|checking|a look)\b/,
     ],
     safetyClass: 'safe',
     recommendedAction: 'Use tryAnswerRosterAttentionQuestion from directorPlayersDonnaIntelligence.',

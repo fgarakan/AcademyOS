@@ -24,7 +24,18 @@ export function detectRosterAttentionQuestion(text: string): boolean {
     /advancement.ready players?/.test(t) ||
     /\bplayer roster\b/.test(t) ||
     /\broster (status|health|summary|overview)\b/.test(t) ||
-    /which players? should i (check|review|look at)/.test(t)
+    /which players? should i (check|review|look at)/.test(t) ||
+    // Sprint 4351 — existence / enumeration-form attention questions. These are
+    // the natural-language phrasings ("Are there any players that I need to…",
+    // "Any players I should look at?", "Are there players who need attention?",
+    // "Do any players need review?") that the canonical interrogatives above miss.
+    // Every pattern is anchored on "players" so non-roster existence questions
+    // ("are there any courts free?") never match.
+    /\bplayers?\b\s*(that|who|whom|which)?\s*(i|we)\s+(need|needs|should|have|ought|gotta)\s+to\b/.test(t) ||
+    /\bplayers?\b.*\b(i|we)\s+(should|need to|have to|want to|ought to|gotta)\s+(look at|check|review|see|address|worry about|flag|prioritize|focus on|deal with|talk to)\b/.test(t) ||
+    /\bplayers?\s+(who|that|which)\s+(need|needs|require|requires)\s+(attention|review|help|assessment|checking|support)\b/.test(t) ||
+    /\b(are there|is there|do (i|we) have|have we got)\b.*\bplayers?\b.*\b(need|needs|require|requires|to (review|check|see|look at|address)|attention|at risk|flagged|struggling|review)\b/.test(t) ||
+    /\bdo (any |some )?players?\s+(need|needs|require|requires)\s+(review|attention|help|assessment|checking|a look)\b/.test(t)
   )
 }
 
