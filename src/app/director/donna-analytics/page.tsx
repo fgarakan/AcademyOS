@@ -7,6 +7,7 @@
 // Purpose: product learning, UX simplification prioritization.
 // Access: director/head_coach only. Internal only — not public-facing.
 
+import { notFound } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 import Link from 'next/link'
@@ -22,6 +23,10 @@ interface EventRow {
 }
 
 export default async function DonnaAnalyticsPage() {
+  // Phase 0: internal product telemetry — kept out of the production director
+  // portal (event logging is unaffected). Reachable only in non-production builds.
+  if (process.env.NODE_ENV === 'production') notFound()
+
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 

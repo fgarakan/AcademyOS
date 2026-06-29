@@ -1,20 +1,15 @@
-import { notFound } from 'next/navigation'
-import { getSupabaseServer } from '@/lib/supabase/server'
-import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
-import { CurriculumImpactPreviewExperience } from '@/components/curriculum/builder/CurriculumImpactPreviewExperience'
+import { redirect } from 'next/navigation'
 
+// Phase 0 (Executive Interaction Constitution): the impact-preview experience
+// rendered hardcoded, level-agnostic sample data and a "Save as Draft" control
+// that persisted nothing while claiming it reached the Review Queue. It was a
+// trust leak on a real route, so the surface is removed until impact analysis is
+// backed by real data (deferred to the curriculum redesign phase). Until then this
+// route redirects to the real level builder; no fabricated impact is shown.
 interface Props {
   params: { levelId: string }
 }
 
-export default async function CurriculumLevelImpactPage({ params }: Props) {
-  const supabase = await getSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const explorerData = await getCurriculumExplorerData(supabase)
-  const level = explorerData.levels.find(l => l.id === params.levelId)
-  if (!level) notFound()
-
-  return <CurriculumImpactPreviewExperience levelName={level.display_name} backHref={`/director/curriculum/level/${level.id}`} />
+export default function CurriculumLevelImpactPage({ params }: Props) {
+  redirect(`/director/curriculum/level/${params.levelId}`)
 }

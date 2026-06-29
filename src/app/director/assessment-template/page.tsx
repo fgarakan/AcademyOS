@@ -173,7 +173,7 @@ export default async function AssessmentTemplatePage() {
             <Info className="w-8 h-8 text-text-muted mx-auto" />
             <p className="text-sm font-semibold text-text-primary">Assessment templates not yet set up</p>
             <p className="text-xs text-text-muted max-w-sm mx-auto">
-              Apply migrations 081 and 082 to enable the Assessment Template Editor.
+              Assessment templates aren&apos;t enabled for your academy yet.
             </p>
           </CardContent>
         </Card>
@@ -217,7 +217,7 @@ export default async function AssessmentTemplatePage() {
           <div className="px-4 py-6 rounded-xl bg-surface border border-border text-center space-y-2">
             <Database className="w-7 h-7 text-text-muted mx-auto" />
             <p className="text-xs font-semibold text-text-primary">No global templates found</p>
-            <p className="text-[11px] text-text-muted">Apply migration 082 to seed the Core Assessment Template.</p>
+            <p className="text-[11px] text-text-muted">The Core Assessment Template isn&apos;t available yet.</p>
           </div>
         ) : (
           <div className="space-y-2">

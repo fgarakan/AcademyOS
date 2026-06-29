@@ -959,11 +959,10 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         <div className="space-y-4" data-donna-focus-id="session-blocks">
           <SectionHeader title="SESSION BLOCKS" />
           {blockList.length > 0 && totalExercises === 0 && (
-            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-status-orange/10 border border-status-orange/30">
-              <AlertTriangle className="w-3.5 h-3.5 text-status-orange shrink-0 mt-0.5" />
-              <p className="text-[11px] text-status-orange leading-snug">
-                Blocks are loaded — exercises are not showing. This usually means migration 056 has not been applied to your Supabase instance yet. Open Supabase → SQL Editor, verify with:
-                <span className="font-mono"> SELECT policyname FROM pg_policies WHERE tablename = 'session_block_exercises';</span>
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-surface-raised border border-border">
+              <AlertTriangle className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
+              <p className="text-[11px] text-text-muted leading-snug">
+                Exercise details aren&apos;t available for this session yet.
               </p>
             </div>
           )}

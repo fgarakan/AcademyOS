@@ -6,6 +6,7 @@
 // Uses DEMO seed data only. Clearly labeled. No DB calls.
 
 import { useState } from 'react'
+import { notFound } from 'next/navigation'
 import { DonnaCommandBriefIntegration } from '@/components/assistant/DonnaCommandBriefIntegration'
 import { DonnaCOOWeeklyReport } from '@/components/assistant/DonnaCOOWeeklyReport'
 import { PlayerAttentionRiskDashboard } from '@/components/assistant/PlayerAttentionRiskDashboard'
@@ -104,6 +105,10 @@ function SectionNav({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DonnaCOODemoPage() {
+  // Phase 0: hardcoded demo-seed walkthrough — kept out of the production director
+  // portal (the labelled product demo lives at /director/demo). Non-production only.
+  if (process.env.NODE_ENV === 'production') notFound()
+
   const [activeSection, setActiveSection] = useState<DemoSection>('command_brief')
 
   return (

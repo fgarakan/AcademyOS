@@ -16,7 +16,7 @@ const DRAFT_TYPES = [
     label: 'Drill',
     description: 'Add a practice activity aligned to this level.',
     icon: Activity,
-    href: '/director/curriculum/builder/add-drill',
+    href: '/director/curriculum/builder',
   },
   {
     id: 'coach_language',

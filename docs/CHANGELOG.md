@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-06-29 — Phase 0 — Remove Director Trust Leaks & Fake Surfaces V1
+
+**Mission:** First execution phase of the Executive Interaction Constitution — remove fake,
+dead, leaking, or misleading Director surfaces so the UI shows less, but only what is real.
+No redesign, no new flows, no schema changes; every real operational path preserved.
+
+- **Removed (fake):** curriculum `add-drill`, `add-fitness`, and standalone `impact-preview`
+  builder routes — they rendered hardcoded drafts with "Save" controls that persisted nothing.
+- **Removed Preview Impact** (`curriculum/level/[levelId]/impact`): it was **fake and
+  non-operational** — it showed level-agnostic hardcoded sample data with disabled scope
+  controls and a "Save as Draft" button that persisted nothing while falsely claiming the draft
+  reached the Review Queue. The entry link is removed and the route now redirects to the real
+  level builder; real curriculum changes continue to flow through the change-queue → `proposed_actions`.
+- **Strip leaks:** session-detail "Open Supabase → SQL Editor" banner → calm empty state;
+  class-template `airtable_id:`/`import_batch:` provenance tags no longer shown; assessment-template
+  "Apply migrations 081/082" → plain-English copy.
+- **Gated (prod):** `donna-analytics` (internal telemetry) and `donna-coo-demo` (hardcoded seed)
+  return `notFound()` in production; reachable in dev. Event logging unaffected.
+- **Deleted dead code:** 7 components imported by nothing.
+- **Deferred (not Phase 0):** `curriculum/guided`, `/director/kpi` & `/director/setup` stubs, the
+  3 dashboard-wall components, and the `migration-verify`/`pilot-readiness`/`support-diagnostics`
+  pilot tools. Verified: `tsc` clean, `certify` 28/28, dev boot clean, no inbound links to removed routes.
+
+---
+
+## 2026-06-29 — Executive Interaction Constitution V1 (audit, no code change)
+
+**Mission:** Read-only Interaction Architecture Audit of the entire Director surface (78 routes,
+~186 DONNA components) via 11 parallel deep-read audits, reconciled against the locked laws.
+Produced `docs/ux/ACADEMYOS_EXECUTIVE_INTERACTION_CONSTITUTION_V1.md` — the permanent standard
+against which all future UI/workflow changes are evaluated. Findings: 4 systemic diseases
+(surface sprawl, whole-workflow duplication, DONNA fragmentation + 33 containment breaches,
+fake/decorative surfaces); target IA of 7 destinations; composite Executive Interaction Score
+38/100; Top 25 improvements + a 5-phase impact-ordered roadmap. No code or schema changes.
+
+---
+
 ## 2026-06-27 — Sprint 4353 — Server Action Undefined-Result Guards V1
 
 **Mission:** Stop client-side crashes when a Server Action call resolves to `undefined`

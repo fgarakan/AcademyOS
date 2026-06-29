@@ -229,8 +229,6 @@ function TemplateRow({
   curriculumItemCount: number
   curriculumLevelName: string | null
 }) {
-  const importBatchTag = template.tags?.find(t => t.startsWith('import_batch:'))
-  const airtableIdTag = template.tags?.find(t => t.startsWith('airtable_id:'))
   const isDraft = (template.tags ?? []).includes('status:draft')
 
   return (
@@ -251,12 +249,6 @@ function TemplateRow({
               <div className="flex flex-wrap gap-3 mt-1">
                 {template.track && (
                   <span className="label-xs">{template.track}</span>
-                )}
-                {airtableIdTag && (
-                  <span className="text-xs font-mono text-text-muted">{airtableIdTag}</span>
-                )}
-                {importBatchTag && (
-                  <span className="text-xs font-mono text-text-muted">{importBatchTag}</span>
                 )}
               </div>
             </div>

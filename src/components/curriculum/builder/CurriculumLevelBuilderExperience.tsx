@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Shield, Zap, ChevronRight, ChevronDown, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Shield, ChevronRight, ChevronDown, Sparkles } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelBuilderGrid, type ActivePanel } from './CurriculumLevelBuilderGrid'
 import { CurriculumLevelBuilderShell } from './CurriculumLevelBuilderShell'
@@ -169,14 +169,6 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
 
           {/* Top action buttons */}
           <div className="hidden sm:flex items-center gap-2 shrink-0">
-            <Link
-              href={`/director/curriculum/level/${level.id}/impact`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors"
-              style={{ border: '1px solid rgba(200,255,0,0.20)', color: '#C8FF00', background: 'rgba(200,255,0,0.05)' }}
-            >
-              <Zap className="w-3 h-3" />
-              Preview Impact
-            </Link>
             <Link
               href="/director/curriculum/guided"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-border text-text-muted hover:text-text-secondary transition-colors"
