@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-06-29 — Sprint 4354 — Page-Owned Workflow Boundary V1
+
+**Mission:** Kill the stale "CREATE CLASS TEMPLATE" card that kept rendering on unrelated
+routes (`/director/today`, `/director/players`). Root cause: DONNA was allowed to host a
+template editor/collector as a sidebar draft and an operating-session mission. That state
+leaked across routes via `sessionStorage` and `donna_working_memory`, so the collector
+re-surfaced everywhere. Template creation/editing is **page-owned** — DONNA may guide,
+explain, and navigate, but the template form lives on the builder page, never in the sidebar.
+
+**The rule (single source of truth):** a page-owned workflow may not render as a DONNA
+sidebar collector/editor and may not be tracked as an operating-session mission. One
+predicate list (`PAGE_OWNED_WORKFLOW_IDS`) backs every enforcement point.
+
+- `src/lib/donna/pageOwnedWorkflows.ts` (new) — the only list of page-owned workflow ids
+  (`class_template_creation`, `fitness_template_creation`). Exposes `isPageOwnedWorkflow()`,
+  `getPageOwnedGuidance()`, `inferTemplateBuilderGuidance()`. Compile-time check ties every
+  id to a real `DonnaWorkflowType`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — every "create/edit template" entry
+  now funnels through one chokepoint (`openTemplateBuilderGuidance`) that navigates to the
+  builder route + gives passive guidance, and tears down any legacy collector state. No path
+  originates a template collector anymore. Route-change effect cancels a page-owned mission
+  the moment the director leaves the builder and clears `donna_working_memory`.
+- `src/lib/donna/workflow/donnaWorkflowGuidanceEngine.ts` — `advanceOnRouteChange()` cancels
+  a page-owned mission off-builder (leaves it untouched on the builder route).
+- `src/components/assistant/DonnaWorkflowCards.tsx` — sidebar render guard: a page-owned
+  `activeDraft` never draws a draft/collector card on any route.
+- `src/components/assistant/donnaDraftPersistence.ts` — refuses to save or restore a
+  page-owned draft, and clears any legacy persisted entry on contact.
+
+**Defense in depth:** (1) no collector can be born — no `setTemplateDraft(newDraft)` path
+remains; (2) render guard skips page-owned drafts everywhere; (3) persistence won't save or
+restore them; (4) lifecycle cancels the mission off-builder and clears working memory.
+
+**Validation:** `npx tsc --noEmit` clean. `npm run certify` — 28/28 suites passed.
+
+---
+
 ## 2026-06-29 — Phase 0 — Remove Director Trust Leaks & Fake Surfaces V1
 
 **Mission:** First execution phase of the Executive Interaction Constitution — remove fake,

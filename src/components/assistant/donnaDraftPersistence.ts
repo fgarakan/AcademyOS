@@ -6,6 +6,7 @@
 // No DB. No API. No React. No side effects outside sessionStorage.
 
 import type { ConversationState } from './donnaConversationController'
+import { isPageOwnedWorkflow } from '@/lib/donna/pageOwnedWorkflows'
 
 const DRAFT_KEY = 'academyos:donna:draft:v1'
 
@@ -16,6 +17,14 @@ const DRAFT_KEY = 'academyos:donna:draft:v1'
 export function saveDraftToSession(state: ConversationState): void {
   if (typeof window === 'undefined') return
   if (!state.activeDraft) return
+  // Sprint 4354 — page-owned workflows (e.g. class_template_creation) are never
+  // hosted as a DONNA sidebar collector, so their state must never be persisted.
+  // Persisting it is exactly how the stale "CREATE CLASS TEMPLATE" card leaked
+  // across routes. Refuse to write it, and proactively clear any legacy entry.
+  if (isPageOwnedWorkflow(state.activeDraft.workflowId)) {
+    clearDraftSession()
+    return
+  }
   // Do not persist terminal phases
   if (state.phase === 'cancelled' || state.phase === 'approved') return
   try {
@@ -48,6 +57,13 @@ export function loadDraftFromSession(): ConversationState | null {
     const state = parsed as ConversationState
     // Only restore non-terminal phases with an actual draft
     if (!state.activeDraft) return null
+    // Sprint 4354 — a previously-persisted page-owned draft (from a legacy build)
+    // must never be restored as a sidebar collector. Drop it and clear the key so
+    // it cannot re-surface on Today/Players or anywhere else.
+    if (isPageOwnedWorkflow(state.activeDraft.workflowId)) {
+      clearDraftSession()
+      return null
+    }
     if (state.phase === 'cancelled' || state.phase === 'approved') return null
     return state
   } catch {

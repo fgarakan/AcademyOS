@@ -274,6 +274,10 @@ import { EMPTY_MEMORY_PACKET } from '@/lib/donna/memory/donnaMemoryContextTypes'
 import type { DonnaWorkflowState } from '@/lib/donna/workflow/donnaWorkflowState'
 import { startWorkflow } from '@/lib/donna/workflow/donnaWorkflowState'
 import {
+  isPageOwnedWorkflow,
+  inferTemplateBuilderGuidance,
+} from '@/lib/donna/pageOwnedWorkflows'
+import {
   detectWorkflowIntent,
   detectControlIntent,
   handleWorkflowIntent,
@@ -1398,7 +1402,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     const updated = advanceOnRouteChange(state, pathname)
     if (updated === state) return  // nothing changed
     workflowStateRef.current = updated
-    if (updated.status === 'completed') {
+    // Sprint 4354 — a page-owned template mission is dismissed (cancelled) by
+    // advanceOnRouteChange when the director leaves the builder. Clear it from
+    // donna_working_memory too, so the stale mission never reloads on the Today
+    // surface. Completed missions clear for the same reason.
+    if (updated.status === 'completed' || updated.status === 'cancelled') {
+      workflowStateRef.current = null
       void clearWorkflowStateAction().catch(() => {})
     } else {
       void saveWorkflowStateAction(updated).catch(() => {})
@@ -1671,6 +1680,28 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
   }, [pathname])
 
+  // Sprint 4354 — Single chokepoint for every "create/edit template" entry.
+  // Template creation/editing is PAGE-OWNED: DONNA navigates to the builder and
+  // gives passive guidance. It never opens a sidebar collector/editor and never
+  // starts an operating-session mission. All former `setTemplateDraft(...)` +
+  // `setActiveMode('create_template')` entries route through here.
+  function openTemplateBuilderGuidance(rawText: string) {
+    const guidance = inferTemplateBuilderGuidance(rawText)
+    // Tear down any template collector state that may exist from a legacy path.
+    setTemplateDraft(null)
+    setGenericDraft(null)
+    setActiveMode(null)
+    setConvState(prev =>
+      prev.activeDraft && isPageOwnedWorkflow(prev.activeDraft.workflowId)
+        ? createConversationState()
+        : prev,
+    )
+    setCommandResponse({ message: guidance.guidance, type: 'info', label: 'DONNA' })
+    speakDonna(guidance.guidance)
+    router.push(guidance.builderRoute)
+    closePanel()
+  }
+
   function handleModeClick(mode: AssistantMode) {
     if (mode === 'capture') {
       setCaptureOpen(true)
@@ -1678,17 +1709,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
     if (mode === 'create_template') {
-      setGenericDraft(null) // clear any active generic draft when switching to template mode
-      setActiveMode('create_template')
-      // If the type-instead area already has a template intent, auto-parse it
-      if (typedText && isTemplateCreationIntent(typedText)) {
-        const draft = parseTemplateDraft(typedText)
-        setTemplateDraft(draft)
-        setFromVoiceCapture(false)
-        const firstQ = draft.missingQuestions[0] ?? null
-        if (firstQ) speakDonna(firstQ.question)
-        else speakDonna('I have enough to draft this. Review it before saving.')
-      }
+      // Sprint 4354 — page-owned: guide + navigate, never open a sidebar editor.
+      openTemplateBuilderGuidance(typedText ?? '')
       return
     }
     setGenericDraft(null) // clear any active generic draft when switching modes
@@ -1767,6 +1789,14 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // Only starts if no active workflow is already running (one at a time).
       if (!workflowStateRef.current) {
         const wfType = detectWorkflowIntent(text, pathname)
+        // Sprint 4354 — page-owned template workflows are NEVER started as a DONNA
+        // mission. DONNA navigates to the page-owned builder and gives passive
+        // guidance instead of opening a sidebar collector. This is the source-of-
+        // truth fix: no template editor is ever born in the operating session.
+        if (wfType && isPageOwnedWorkflow(wfType)) {
+          openTemplateBuilderGuidance(text)
+          return
+        }
         if (wfType) {
           const newState = startWorkflow(wfType, {}, pathname)
           workflowStateRef.current = newState
@@ -1883,12 +1913,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // Handle UI actions from controller
       switch (turn.uiAction.type) {
         case 'start_template_draft': {
-          const draft = parseTemplateDraft(turn.uiAction.initialText)
-          setTemplateDraft(draft)
-          setFromVoiceCapture(true)
-          setActiveMode('create_template')
-          const firstQ = draft.missingQuestions[0] ?? null
-          if (firstQ) speakDonna(firstQ.question)
+          // Sprint 4354 — page-owned: navigate to builder + guidance, no collector.
+          openTemplateBuilderGuidance(turn.uiAction.initialText)
           break
         }
         case 'open_review_queue':
@@ -2023,16 +2049,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
     // 4. Class-template creation intent — always routes to wired TemplateDraftPanel
     if (isTemplateCreationIntent(text)) {
-      const draft = parseTemplateDraft(text)
-      setTemplateDraft(draft)
-      setFromVoiceCapture(true)
-      setActiveMode('create_template')
-      const firstQ = draft.missingQuestions[0] ?? null
-      if (firstQ) {
-        speakDonna(firstQ.question)
-      } else {
-        speakDonna('I have enough to draft this. Review it before saving.')
-      }
+      // Sprint 4354 — page-owned: navigate to builder + guidance, no sidebar collector.
+      openTemplateBuilderGuidance(text)
       return
     }
 
@@ -2144,16 +2162,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Clicking a suggestion — same routing priority as voice/typed
   function handleSuggestionClick(prompt: string) {
     if (isTemplateCreationIntent(prompt)) {
-      const draft = parseTemplateDraft(prompt)
-      setTemplateDraft(draft)
-      setFromVoiceCapture(false)
-      setActiveMode('create_template')
-      const firstQ = draft.missingQuestions[0] ?? null
-      if (firstQ) {
-        speakDonna(firstQ.question)
-      } else {
-        speakDonna('I have enough to draft this. Review it before saving.')
-      }
+      // Sprint 4354 — page-owned: navigate to builder + guidance, no sidebar collector.
+      openTemplateBuilderGuidance(prompt)
       return
     }
     // Generic task intent from suggestion — only when no draft is active
@@ -2173,13 +2183,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   function handleParseTemplate() {
     const text = templateCommandInput.trim()
     if (!text) return
-    const draft = parseTemplateDraft(text)
-    setTemplateDraft(draft)
-    setFromVoiceCapture(false)
     setTemplateCommandInput('')
-    const firstQ = draft.missingQuestions[0] ?? null
-    if (firstQ) speakDonna(firstQ.question)
-    else speakDonna('I have enough to draft this. Review it before saving.')
+    // Sprint 4354 — page-owned: navigate to builder + guidance, no sidebar collector.
+    openTemplateBuilderGuidance(text)
   }
 
   function handleCancelTemplate() {
@@ -2316,17 +2322,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         window.sessionStorage.setItem('academyos:donna:introCompleted:v1', 'true')
       }
 
-      // Template creation intent
+      // Template creation intent — Sprint 4354 page-owned: navigate + guidance.
       if (isTemplateCreationIntent(answer)) {
-        const draft = parseTemplateDraft(answer)
-        setTemplateDraft(draft)
-        setActiveMode('create_template')
-        setFromVoiceCapture(true)
-        const firstQ = draft.missingQuestions[0] ?? null
         lastSpokenTextRef.current = null
         lastSpokenKeyRef.current = null
-        if (firstQ) speakDonna(firstQ.question)
-        else speakDonna('I have enough to draft this. Review it before saving.')
+        openTemplateBuilderGuidance(answer)
         return
       }
 
@@ -2933,7 +2933,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         break
       case 'start_workflow':
         if (rec.action.workflowId === 'create_class_template') {
-          setActiveMode('create_template')
+          // Sprint 4354 — page-owned: navigate to builder + guidance, no collector.
+          openTemplateBuilderGuidance('class template')
         }
         break
       case 'none':
@@ -4299,12 +4300,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       }
       switch (turn.uiAction.type) {
         case 'start_template_draft': {
-          const draft = parseTemplateDraft(turn.uiAction.initialText)
-          setTemplateDraft(draft)
-          setFromVoiceCapture(false)
-          setActiveMode('create_template')
-          const firstQ = draft.missingQuestions[0] ?? null
-          if (firstQ) speakDonna(firstQ.question)
+          // Sprint 4354 — page-owned: navigate to builder + guidance, no collector.
+          openTemplateBuilderGuidance(turn.uiAction.initialText)
           break
         }
         case 'open_review_queue':
@@ -4379,15 +4376,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       }
     }
 
-    // Class-template creation intent — always routes to wired TemplateDraftPanel
+    // Class-template creation intent — Sprint 4354 page-owned: navigate + guidance.
     if (isTemplateCreationIntent(text)) {
-      const draft = parseTemplateDraft(text)
-      setTemplateDraft(draft)
-      setFromVoiceCapture(false)
-      setActiveMode('create_template')
-      const firstQ = draft.missingQuestions[0] ?? null
-      if (firstQ) speakDonna(firstQ.question)
-      else speakDonna('I have enough to draft this. Review it before saving.')
+      openTemplateBuilderGuidance(text)
       return
     }
 
@@ -5595,107 +5586,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           )}
 
           {/* ── Template creation mode (Sprints 262/263) — wired, saves to DB ── */}
-          {activeMode === 'create_template' && (
-            <>
-              {/* "Nothing saves until you approve" notice */}
-              <div
-                className="rounded-lg px-3 py-2.5"
-                style={{
-                  background: 'rgba(139,92,246,0.05)',
-                  border: '1px solid rgba(139,92,246,0.15)',
-                }}
-              >
-                <p className="text-[11px] text-text-secondary leading-snug">
-                  {DONNA_PUBLIC_NAME} can draft this template, but nothing is saved until you approve.
-                </p>
-              </div>
-
-              {/* Command input — shown when no draft exists yet */}
-              {!templateDraft && (
-                <div className="space-y-2.5">
-                  <div className="space-y-1.5">
-                    <textarea
-                      rows={3}
-                      placeholder='e.g. "Create a template for Orange 2 with warm-up, rally skills, point play, and matches."'
-                      value={templateCommandInput}
-                      onChange={e => setTemplateCommandInput(e.target.value)}
-                      className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
-                      style={{
-                        background: 'var(--bg-surface)',
-                        border: '1px solid var(--border)',
-                      }}
-                    />
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleParseTemplate}
-                        disabled={!templateCommandInput.trim()}
-                        className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
-                      >
-                        Start Draft
-                      </button>
-                      <button
-                        onClick={() => setActiveMode(null)}
-                        className="btn-ghost text-xs px-3 py-1.5"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Quick starts — deterministic examples, no AI */}
-                  <div
-                    className="rounded-xl px-3.5 py-3"
-                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-                  >
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
-                      Quick starts
-                    </p>
-                    <div className="space-y-0.5">
-                      {TEMPLATE_QUICK_STARTS.map((s, i) => (
-                        <button
-                          key={i}
-                          onClick={() => {
-                            const draft = parseTemplateDraft(s)
-                            setTemplateDraft(draft)
-                            setFromVoiceCapture(false)
-                            setTemplateCommandInput('')
-                            const firstQ = draft.missingQuestions[0] ?? null
-                            if (firstQ) speakDonna(firstQ.question)
-                            else speakDonna('I have enough to draft this. Review it before saving.')
-                          }}
-                          className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
-                            px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
-                        >
-                          &ldquo;{s}&rdquo;
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Live draft panel — shown once a draft exists */}
-              {templateDraft && (
-                <>
-                  <TemplateDraftPanel
-                    draft={templateDraft}
-                    onUpdateDraft={d => setTemplateDraft(d)}
-                    onCancel={handleCancelTemplate}
-                    fromVoice={fromVoiceCapture}
-                    onQuestionAnswered={(nextQ, updatedDraft) => {
-                      if (nextQ) {
-                        speakDonna(nextQ.question)
-                      } else if (isDraftReadyForReview(updatedDraft)) {
-                        speakDonna('I have enough to draft this. Review it before saving.')
-                      }
-                    }}
-                  />
-                  {/* Sprint 322: Template draft preview — read-only, nothing saves here */}
-                  <DonnaClassTemplateDraftPreview draft={templateDraft} />
-                </>
-              )}
-            </>
-          )}
+          {/*
+            Sprint 4354 — RENDER-LAYER CERTIFICATION (page-owned boundary).
+            Template creation/editing is PAGE-OWNED. The DONNA sidebar must never
+            render a template editor/collector card. The former legacy editor
+            (textarea collector + TemplateDraftPanel + DonnaClassTemplateDraftPreview)
+            has been removed from the sidebar entirely. Every "create/edit template"
+            entry now routes through openTemplateBuilderGuidance(), which navigates
+            to the page-owned builder and shows passive guidance. There is no code
+            path here that can draw a template collector. See certifyPageOwnedBoundary
+            in donnaWorkflowCertification.ts and pageOwnedWorkflows.ts (source of truth).
+          */}
 
           {/* ── Multi-step plan card — Sprint 286 ── */}
           {multiStepPlan && activeMode !== 'guided_task' && (

@@ -36,6 +36,7 @@ import type { TemplateDraft } from './templateDraftTypes'
 import type { GenericTaskDraft } from './donnaGenericDraftTypes'
 import type { LastCardActionRecord } from './donnaWorkflowCardActions'
 import { makeLastCardAction } from './donnaWorkflowCardActions'
+import { isPageOwnedWorkflow } from '@/lib/donna/pageOwnedWorkflows'
 
 interface CommandResponse {
   message: string
@@ -159,7 +160,12 @@ export function DonnaWorkflowCards({
   return (
     <>
       {/* Active conversation draft card */}
-      {convState.activeDraft !== null && !genericDraft && !templateDraft && (
+      {/* Sprint 4354 — page-owned guard: a template editor/collector (e.g.
+          class_template_creation) is NEVER rendered as a sidebar draft card.
+          Template creation/editing is page-owned. See pageOwnedWorkflows.ts. */}
+      {convState.activeDraft !== null &&
+        !isPageOwnedWorkflow(convState.activeDraft.workflowId) &&
+        !genericDraft && !templateDraft && (
         <>
           <DonnaDraftCard
             draft={convState.activeDraft}

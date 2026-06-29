@@ -21,6 +21,7 @@ import {
   type DonnaWorkflowState,
   type DonnaWorkflowStepDef,
 } from './donnaWorkflowState'
+import { isPageOwnedWorkflow, getPageOwnedGuidance } from '../pageOwnedWorkflows'
 
 // ── Intent keyword map ────────────────────────────────────────────────────────
 
@@ -206,6 +207,23 @@ export function advanceOnRouteChange(
   newRoute: string,
 ): DonnaWorkflowState {
   if (state.status !== 'active') return state
+
+  // Sprint 4354 — Page-owned template editors must never survive as a DONNA
+  // operating-session mission once the director leaves the builder. This is the
+  // lifecycle fix for the stale "CREATE CLASS TEMPLATE" card: when the route is
+  // not the workflow's own builder, the mission is dismissed (cancelled) so it
+  // cannot re-render on /director/today, /director/players, or anywhere else.
+  // On the builder route itself the state is left untouched (no advancement) —
+  // the page owns the form; the sidebar render layer never draws a collector.
+  if (isPageOwnedWorkflow(state.workflowType)) {
+    const guidance = getPageOwnedGuidance(state.workflowType)
+    const onBuilder =
+      guidance != null &&
+      (newRoute === guidance.builderRoute ||
+        newRoute.startsWith(guidance.builderRoute + '/'))
+    return onBuilder ? state : cancelWorkflow(state)
+  }
+
   if (state.workflowConfidence < 70) return state  // guard: no auto-advance below threshold
 
   const defs = WORKFLOW_STEP_DEFS[state.workflowType]
