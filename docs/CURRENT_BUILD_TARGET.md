@@ -1,15 +1,86 @@
 # Current Build Target
 
-**Last updated:** 2026-06-23
-**Current phase:** Director Pilot Readiness — Brian Dabul (Dabul Tennis Academy) Pilot
+**Last updated:** 2026-06-30
+**Current phase:** Executive Experience Refinement — post-infrastructure (Brian Dabul / Dabul Tennis Academy pilot)
 
 ---
 
-## Active target
+# Current Platform Status
 
-**In progress: Mega Sprint 3631–3660 — Templates Workspace V1 (2026-06-23)**
+AcademyOS has crossed from **infrastructure expansion** into **Executive Experience
+refinement**. The architectural spine is converged, governed, and certified end-to-end;
+what remains is security hardening of two known deviations, live behavioral validation,
+and reducing director cognitive load — **not new architecture**.
 
-Make the Templates **page** the permanent executive workspace for template creation. The page owns creation, editing, save, and completion; DONNA only prepares drafts; the sidebar only explains, previews, and navigates. Completes the remaining Template workflow migration, preserves all existing functionality, and improves the Guardian baseline if applicable. No new AI, no visual redesign, no new template types — the goal is a premium, low-cognitive-load, Director-first Templates experience.
+## Completed
+
+- **Sprint 4351 — Executive Conversation Ownership**
+- **Sprint 4352 — Template → Session Operational Path**
+- **Sprint 4353 — Server Action Undefined-Result Guards** (`4a775620`)
+- **Sprint 4354 — Page-Owned Workflow Boundary** (`ba963dd4`)
+- **Sprint 4355 — Tenant Isolation Certification V1 + Page-Owned Boundary Hardening** (`5e7f38e0`)
+
+## Current certification status
+
+- **30/30 certification suites passing.**
+- **First non-DONNA platform certification complete** — Tenant Isolation Static Certification V1 (422/422).
+- **Page-Owned Workflow Boundary certified** — 212/212, including resolved-workflow routing (Section J).
+- **Tenant Isolation certified (static)** — RLS + `academy_id`/approved isolation key + academy-scoped policy on every tenant-owned table; fail-closed classification of every parsed table.
+- **Executive Interaction Constitution committed** — Director audit standard (`b988d51a`).
+- **Architecture Constitution committed** — `docs/ARCHITECTURE.md`, the highest architectural authority (`091d07a3`).
+
+## Current architecture maturity
+
+The structural spine is complete across every layer:
+
+- **Executive routing** — one canonical router / brain / gateway across every entry point.
+- **Conversation ownership** — DONNA owns the conversation; one Conversation DNA.
+- **Workflow ownership** — page-owned vs DONNA-owned workflows are decided by one predicate list.
+- **Page ownership** — page-owned editors never render as sidebar collectors; each resolves to its own builder route.
+- **Template → Session operational** — the create-and-populate path is live end-to-end.
+- **Architecture governance** — the Architecture Constitution governs all work; changes update it first.
+- **Interaction governance** — the Executive Interaction Constitution sets the director audit standard.
+- **Platform governance** — the certification gate (30/30) now extends beyond DONNA to platform-wide tenant isolation.
+
+## Completion & readiness (architecture-based, not sprint-count)
+
+- **Architectural maturity: ~90%.** The spine — routing, conversation/workflow/page
+  ownership, the operational Template → Session path, and three governance layers — is
+  converged and certified. The remaining ~10% is two security deviations and one live
+  behavioral test, all scoped and tracked below.
+- **Pilot / Executive-experience readiness: ~75%.** Ship-ready for hands-on pilot; the
+  gap is real-academy validation and Executive Simplicity Phase 1 (cognitive-load
+  reduction), not missing capability.
+
+## Remaining critical deviations (highest priority)
+
+1. **`guardians` academy-scoped policies** — RLS on, no policy (deny-all). `ARCHITECTURE.md` §4.2. Tracked + ratcheted (does not leak; suite reds only if the deny-all set grows).
+2. **`player_guardians` academy-scoped policies + `academy_id` migration** — deny-all and no `academy_id` column. `ARCHITECTURE.md` §4.2.
+3. **Live 2-academy behavioral tenant-isolation CI** — seed two academies → assert 0 cross-tenant rows (needs Postgres in CI; today's tenant cert is static-only).
+4. **Browser validation against the Brian pilot** — real director / coach / parent walkthrough of the 10 atomic loops.
+5. **Executive Simplicity Phase 1 implementation** — reduce director cognitive load on the converged spine.
+
+## Next target
+
+**Shift from infrastructure expansion to Executive Experience refinement.** No new
+engines, routers, or pathways — refine the experience on the spine that already exists,
+harden the two security deviations, and validate with a real academy.
+
+### Guiding priorities
+
+1. **Protect architectural laws.**
+2. **Reduce cognitive load.**
+3. **Move more workflow ownership to DONNA.**
+4. **Eliminate remaining trust leaks.**
+5. **Validate with real academy workflows before expanding capability.**
+
+---
+
+## Historical context (pre-4000-series — retained for reference)
+
+The sections below predate the 4000-series work and do **not** describe the current
+target. Trust the **Current Platform Status** section above and `docs/CHANGELOG.md`.
+They are kept only as a record of how the converged spine was built.
 
 ### Recently completed (2026-06-23)
 
