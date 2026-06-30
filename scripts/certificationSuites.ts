@@ -38,4 +38,7 @@ export const CERTIFICATION_SUITES: readonly string[] = [
   'src/lib/donna/certification/donnaDemoAcademyOperatingCertification.ts',
   'src/lib/donna/certification/donnaConversationOwnershipCertification.ts',
   'src/lib/donna/certification/donnaExistenceFormAttentionRoutingCertification.ts',
+  'src/lib/donna/certification/pageOwnedWorkflowBoundaryCertification.ts',
+  // First non-DONNA system certification — tenant isolation / cross-academy leakage.
+  'src/lib/certification/tenantIsolationCertification.ts',
 ]

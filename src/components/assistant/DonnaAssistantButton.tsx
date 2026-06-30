@@ -276,6 +276,8 @@ import { startWorkflow } from '@/lib/donna/workflow/donnaWorkflowState'
 import {
   isPageOwnedWorkflow,
   inferTemplateBuilderGuidance,
+  getPageOwnedGuidance,
+  type PageOwnedGuidance,
 } from '@/lib/donna/pageOwnedWorkflows'
 import {
   detectWorkflowIntent,
@@ -1680,14 +1682,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
   }, [pathname])
 
-  // Sprint 4354 — Single chokepoint for every "create/edit template" entry.
-  // Template creation/editing is PAGE-OWNED: DONNA navigates to the builder and
-  // gives passive guidance. It never opens a sidebar collector/editor and never
-  // starts an operating-session mission. All former `setTemplateDraft(...)` +
-  // `setActiveMode('create_template')` entries route through here.
-  function openTemplateBuilderGuidance(rawText: string) {
-    const guidance = inferTemplateBuilderGuidance(rawText)
-    // Tear down any template collector state that may exist from a legacy path.
+  // Sprint 4354 — Page-owned navigation core. DONNA navigates to the page-owned
+  // builder and gives passive guidance. It never opens a sidebar collector/editor
+  // and never starts an operating-session mission. All former `setTemplateDraft(...)`
+  // + `setActiveMode('create_template')` entries route through here.
+  function navigateToPageOwnedBuilder(guidance: PageOwnedGuidance) {
+    // Tear down any collector state that may exist from a legacy path.
     setTemplateDraft(null)
     setGenericDraft(null)
     setActiveMode(null)
@@ -1700,6 +1700,23 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     speakDonna(guidance.guidance)
     router.push(guidance.builderRoute)
     closePanel()
+  }
+
+  // Free-text template flows ONLY (mode buttons, "make a template" with no resolved
+  // workflow id): infer class vs fitness from the raw text. Never use this for a
+  // workflow id already resolved by detectWorkflowIntent — that must route through
+  // its OWN builder via openPageOwnedWorkflowGuidance.
+  function openTemplateBuilderGuidance(rawText: string) {
+    navigateToPageOwnedBuilder(inferTemplateBuilderGuidance(rawText))
+  }
+
+  // Sprint 4355 — Resolved page-owned workflow → its OWN builder route. Every
+  // page-owned workflow (session_creation, player_assessment, the template ids, …)
+  // resolves through getPageOwnedGuidance(wfType), so a "create a session" intent
+  // lands on /director/sessions/new — not the class-template builder. The free-text
+  // template inference is only a last-resort fallback for an id with no guidance.
+  function openPageOwnedWorkflowGuidance(wfType: string, rawText: string) {
+    navigateToPageOwnedBuilder(getPageOwnedGuidance(wfType) ?? inferTemplateBuilderGuidance(rawText))
   }
 
   function handleModeClick(mode: AssistantMode) {
@@ -1789,12 +1806,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // Only starts if no active workflow is already running (one at a time).
       if (!workflowStateRef.current) {
         const wfType = detectWorkflowIntent(text, pathname)
-        // Sprint 4354 — page-owned template workflows are NEVER started as a DONNA
-        // mission. DONNA navigates to the page-owned builder and gives passive
-        // guidance instead of opening a sidebar collector. This is the source-of-
-        // truth fix: no template editor is ever born in the operating session.
+        // Sprint 4354/4355 — page-owned workflows are NEVER started as a DONNA
+        // mission. DONNA navigates to that workflow's OWN page-owned builder and
+        // gives passive guidance instead of opening a sidebar collector. The
+        // resolved wfType routes through getPageOwnedGuidance, so session/assessment
+        // intents land on their own page, not the template builder.
         if (wfType && isPageOwnedWorkflow(wfType)) {
-          openTemplateBuilderGuidance(text)
+          openPageOwnedWorkflowGuidance(wfType, text)
           return
         }
         if (wfType) {

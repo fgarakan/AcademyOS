@@ -34,6 +34,8 @@ import type { DonnaWorkflowType } from './workflow/donnaWorkflowState'
 export const PAGE_OWNED_WORKFLOW_IDS = [
   'class_template_creation',
   'fitness_template_creation',
+  'session_creation',
+  'player_assessment',
 ] as const
 
 export type PageOwnedWorkflowId = (typeof PAGE_OWNED_WORKFLOW_IDS)[number]
@@ -86,6 +88,24 @@ const GUIDANCE: Record<PageOwnedWorkflowId, PageOwnedGuidance> = {
       "Fitness templates are built on the Fitness Templates page — I've opened it for you. " +
       'Create or edit the template right there. I can guide you on exercises and structure ' +
       'while you build, but the template form itself lives on the page.',
+  },
+  session_creation: {
+    workflowId: 'session_creation',
+    builderRoute: '/director/sessions/new',
+    pageLabel: 'Sessions',
+    guidance:
+      "Sessions are built on the Sessions page — I've opened the session builder for you. " +
+      'Add the date, group, and blocks right there. I can suggest a template or flag conflicts ' +
+      'while you build, but the session form itself lives on the page.',
+  },
+  player_assessment: {
+    workflowId: 'player_assessment',
+    builderRoute: '/director/assessment-template',
+    pageLabel: 'Assessments',
+    guidance:
+      "Assessments are built on the Assessment page — I've opened it for you. " +
+      'Score the criteria right there. I can explain the rubric or what a level expects ' +
+      'while you assess, but the assessment form itself lives on the page.',
   },
 }
 

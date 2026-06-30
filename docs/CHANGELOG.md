@@ -2,6 +2,82 @@
 
 ---
 
+## 2026-06-30 — Sprint 4355 — Tenant Isolation Certification V1 + Page-Owned Boundary Hardening
+
+**Mission:** Stand up the **first non-DONNA system certification** (tenant isolation /
+cross-academy leakage) and harden the Page-Owned Workflow Boundary to cover two more
+editors. The certification work exposed an architectural routing blind spot in the
+boundary; the fix corrects the source of truth rather than reducing coverage.
+
+### 1. Tenant Isolation Static Certification V1 (first non-DONNA system cert)
+
+- `src/lib/certification/tenantIsolationCertification.ts` (new) — the structural guarantee
+  behind `docs/ARCHITECTURE.md` §4 (tenant isolation / RLS). Behavioral, not tautological:
+  every check parses real artifacts (`supabase/migrations/*.sql`, `scripts/demo/*`,
+  `src/app/api/**`, the source tree) and asserts a regression-catching fact.
+- **Table classification** — every parsed table is sorted into exactly one bucket:
+  tenant-direct, tenant-root (`academies`, isolated by `id = auth_academy_id()`),
+  parent-scoped (no `academy_id`; isolated by an RLS policy that joins up to a parent
+  carrying `academy_id`), reference/global (Master Development Spine taxonomies),
+  system (`database_changelog`, `platform_roles`), or known-deviation. **Fail-closed:**
+  any unclassified table defaults to tenant-direct and must have `academy_id` + RLS +
+  an academy-scoped policy, so a new un-isolated table turns the suite red.
+- **RLS / academy_id / isolation-key checks** — RLS enabled on every tenant-owned table;
+  `academy_id` (or an approved isolation key) on every tenant-direct table; an
+  academy-scoped policy present on every tenant-owned table; and the no-leak invariant
+  (RLS on + academy-scoped policy across all tenant tables).
+- **Allowlist handling** — tenant-root, parent-scoped, reference, system, service-role,
+  and auth-exempt API allowlists are the only escape hatches; each entry is documented
+  and self-validating (a stale allowlist entry with no matching table fails the suite).
+- **Static API route scope check** — every `src/app/api/**/route.ts` touching tenant data
+  must invoke an auth marker (`getUser`/`getSupabaseServer`/`requireAuth`/`auth.getUser`);
+  documented exemptions (e.g. sign-out) are listed explicitly.
+- Result: **422 passed, 0 failed** — 109 tenant-owned tables certified, 17 reference,
+  2 system, 2 tracked deviations.
+
+### 2. Page-Owned Workflow Boundary hardening
+
+- `src/lib/donna/pageOwnedWorkflows.ts` — `PAGE_OWNED_WORKFLOW_IDS` now includes
+  `session_creation` (→ `/director/sessions/new`) and `player_assessment`
+  (→ `/director/assessment-template`), each with its own builder route + passive guidance.
+- **Routing blind spot fixed** (`src/components/assistant/DonnaAssistantButton.tsx`):
+  the workflow-intent chokepoint previously sent *every* page-owned workflow through
+  `inferTemplateBuilderGuidance()`, which only ever returns a class/fitness *template*
+  route — so a resolved "create a session" / "assess the player" intent misrouted to the
+  class-template builder. The chokepoint now calls a new `openPageOwnedWorkflowGuidance(wfType, …)`
+  that routes via **`getPageOwnedGuidance(wfType)`**, so each resolved workflow lands on
+  its OWN builder route. `inferTemplateBuilderGuidance()` is reserved strictly for
+  free-text template flows (mode buttons, "make a template") with no resolved workflow id.
+  Shared navigation extracted to `navigateToPageOwnedBuilder()`; render-guard, persistence,
+  and route-change lifecycle were already predicate-driven and needed no change.
+- `src/lib/donna/certification/pageOwnedWorkflowBoundaryCertification.ts` — new Section J
+  models the exact runtime resolution `(getPageOwnedGuidance(wfType) ?? inferTemplateBuilderGuidance(text)).builderRoute`
+  and proves every page-owned workflow resolves to its own `builderRoute`, never a
+  template fallback — including direct regression locks (`create a session` →
+  `/director/sessions/new`, `assess the player` → `/director/assessment-template`).
+  Result: **212/212 checks passed**.
+
+### 3. Certification suite count
+
+- `scripts/certificationSuites.ts` registers both new suites. Gate now **30/30 suites
+  passing** (up from 28/28).
+
+### Scope honesty
+
+- The Tenant Isolation cert is **static-structural only**. It proves the no-leak invariant
+  from the schema (RLS + academy-scoped policy on every tenant table + no service-role in
+  request paths); it does **not** execute queries. A live 2-academy behavioral DB test
+  (seed two academies → assert 0 cross-tenant rows) remains a **future CI step**
+  (needs Postgres in CI — `docs/ARCHITECTURE.md` §9).
+- `guardians` and `player_guardians` remain RLS-on-but-no-policy (deny-all) deviations,
+  tracked against `ARCHITECTURE.md` §4.2. They do not leak (deny-all = no reads) and are
+  **intentionally ratcheted, not failing** — the suite goes red only if the deny-all set
+  *grows*; the real fix (academy-scoped policies) is a future migration, out of scope here.
+
+**Validation:** `npx tsc --noEmit` clean. `npm run certify` — 30/30 suites passed.
+
+---
+
 ## 2026-06-29 — Sprint 4354 — Page-Owned Workflow Boundary V1
 
 **Mission:** Kill the stale "CREATE CLASS TEMPLATE" card that kept rendering on unrelated
