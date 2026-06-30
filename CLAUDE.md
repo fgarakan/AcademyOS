@@ -9,6 +9,8 @@ Read it fully before doing anything else.
 
 Before writing any code or making any plan, read these files in order:
 
+0. `/docs/ARCHITECTURE.md` — the Architecture Constitution. **The highest architectural authority in the codebase.** It outranks every other document; all work must conform to it, and architectural changes update it first.
+
 1. `/docs/AI_BACKEND_RULES.md` — backend safety rules. Non-negotiable.
 2. `/docs/CURRENT_BUILD_TARGET.md` — what is being built right now and in what order.
 3. `/docs/LOCKED_MODULES.md` — what must not be touched, what is in progress, what does not exist yet.
