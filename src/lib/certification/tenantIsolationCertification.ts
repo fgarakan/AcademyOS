@@ -141,6 +141,8 @@ const SERVICE_ROLE_ALLOWLIST: Record<string, string> = {
   'scripts/demo/seed.ts': 'offline demo seeding',
   'scripts/demo/reset.ts': 'offline demo reset (two-column guarded)',
   'scripts/validate-portal-foundation.ts': 'offline validation script',
+  'scripts/certification/tenantIsolationBehavioralTest.ts':
+    'behavioral tenant-isolation harness: service role seeds/tears down fixtures only; every boundary assertion runs through authenticated non-privileged clients (see docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md)',
 }
 
 // API routes that are intentionally not gated on academy-scoped tenant data.

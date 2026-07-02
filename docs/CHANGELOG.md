@@ -2,6 +2,71 @@
 
 ---
 
+## 2026-07-02 — Sprint 4357 — Add tenant isolation behavioral harness
+
+**Mission:** Implement remaining deviation #3 in `docs/CURRENT_BUILD_TARGET.md` — a
+**behavioral** (runtime) tenant-isolation test to sit beside the **static** cert. The
+static cert (`tenantIsolationCertification.ts`, 426/426) parses migration text; it proves
+the schema *declares* isolation. This sprint proves the boundary *holds at runtime* — two
+academies seeded, re-queried as each user with RLS actually enforced, asserting no row
+crosses the tenant line. It is wired but does **not** join the CI gate: a green here must
+be earned against a live, migrated database, never assumed.
+
+### 1. Two independent behavioral implementations
+
+- `scripts/certification/tenantIsolationBehavioralTest.ts` (new) — Node + `supabase-js`.
+  Seeds via the **service role**, then re-queries through an **authenticated anon client**
+  per user so RLS evaluates `auth.uid()` as that user. Every seeded row is tagged
+  `tenant-iso-behavioral-4357` and torn down in a `finally` block (reverse dependency
+  order + auth users), precise even on partial failure.
+- `supabase/tests/tenant_isolation_behavioral.sql` (new) — dependency-free `psql`
+  companion. Impersonates each user via `request.jwt.claims` + `SET LOCAL ROLE
+  authenticated`, asserts with `plpgsql ASSERT`, and runs inside one `BEGIN … ROLLBACK`
+  so it leaves the DB exactly as it found it.
+
+### 2. Honesty contract (not a CI gate)
+
+- **Deliberately NOT registered in `scripts/certificationSuites.ts`.** The TS harness
+  reports an honest tri-state: `0` PASS/CERTIFIED, `1` FAIL (cross-tenant leak or error),
+  `2` **BLOCKED** (missing env / unreachable DB / migrations 001–086 not applied).
+  "Blocked" is not "passed" — a BLOCKED run prints why and emits no green line.
+
+### 3. Cases covered
+
+1. Director ↔ player cross-tenant boundary (each director sees only own academy's player).
+2. Parent scope (no cross-academy child; sees own `player_guardians` link only).
+3. Coach linkage visibility + guardian contact detail (informational: staff get full-row
+   SELECT on same-academy guardians — reported as a documented policy gap, not failed).
+4. Director guardian management confined to own academy (cross-tenant `UPDATE` → 0 rows).
+5. `player_guardians` trigger rejects cross-academy link `INSERT`/`UPDATE`; same-academy
+   link succeeds.
+
+### 4. Wiring + validation
+
+- `package.json` — added `test:tenant-isolation`
+  (`node --env-file=.env.local --import tsx scripts/certification/tenantIsolationBehavioralTest.ts`).
+- `docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md` (new) — how to run both implementations,
+  prerequisites, the tri-state contract, and the case matrix.
+- `src/lib/certification/tenantIsolationCertification.ts` — added the new harness to
+  `SERVICE_ROLE_ALLOWLIST` (service role seeds/tears down fixtures only; all boundary
+  assertions run through non-privileged clients). Static cert **426/426, 0 deviations**.
+- `npx tsc --noEmit` clean.
+- **Behavioral harness run result: BLOCKED (exit 2)** — the reachable Supabase DB does not
+  yet have migration 086 applied (`player_guardians.academy_id` absent), so no fixtures
+  were seeded. This is the honest tri-state working as designed, not a failure of the
+  harness. It will PASS once a DB with migrations 001–086 is provisioned.
+
+### Files
+
+- `scripts/certification/tenantIsolationBehavioralTest.ts` (new)
+- `supabase/tests/tenant_isolation_behavioral.sql` (new)
+- `docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md` (new)
+- `package.json` (modified)
+- `src/lib/certification/tenantIsolationCertification.ts` (modified)
+- `docs/CHANGELOG.md` (this entry)
+
+---
+
 ## 2026-07-01 — Sprint 4356 — Guardian Tenant Isolation (deny-all retirement)
 
 **Mission:** Retire the last two tracked tenant-isolation deviations in
