@@ -411,6 +411,12 @@ Estimated collapse: **607 files → ~15–25** load-bearing modules (Constitutio
 
 ## 17. Sprint 4359 plan — DONNA Knowledge Map for the 10 Atomic Loops
 
+> **Superseded (Sprint 4359, 2026-07-02):** the loop taxonomy below reflects the pre-reconciliation
+> cert names. The canonical 10 loops are now: 1 Academy Setup · 2 Curriculum Setup · 3 Class Template
+> Setup · 4 Session Creation · 5 Coach Assignment & Session Readiness · 6 Coach Session Execution ·
+> 7 Coach Wrap-Up · 8 Player Development & Evidence · 9 Director Review & Approval · 10 Parent &
+> Player-Safe Clarity. See `atomicLoopUsabilityCertification.ts` (re-run 60/60 · 10/10).
+
 **Canonical source of the 10 loops:** `src/lib/donna/certification/atomicLoopUsabilityCertification.ts`
 (the `LOOPS: LoopSpec[]` array is the enforced truth). A 16-row superset exists in
 `docs/donna/DONNA_ATOMIC_LOOP_COVERAGE_REPORT_V1.md`; the certification code's **10** is canonical.

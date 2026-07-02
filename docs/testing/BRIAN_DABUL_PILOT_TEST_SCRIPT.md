@@ -42,34 +42,39 @@ Hi Brian — this is a simple walkthrough to try AcademyOS the way you'd use it 
 - 👉 The coach should be saved and selectable.
 - Worked? ☐ Yes ☐ No — Notes: ______________________
 
-### 7. Do a coach wrap-up (as a coach)
+### 7. Run the session on court (as a coach)
+- Open the session as a coach and tap through each block as you go — warm-up, main, cool-down — marking each one as you start and finish it.
+- 👉 What you mark should be saved, so if you close and reopen the session it remembers where you were.
+- Worked? ☐ Yes ☐ No — Notes: ______________________
+
+### 8. Do a coach wrap-up (as a coach)
 - Open a session as a coach and tap **Start Wrap-Up**.
 - Answer the six quick questions (you can talk instead of typing). Tap **Submit for Review**.
 - 👉 You should see "submitted for review" — nothing is sent to anyone yet.
 - Worked? ☐ Yes ☐ No — Notes: ______________________
 
-### 8. Assess a player
-- Open a player's profile and do a quick assessment.
+### 9. Assess a player and log evidence
+- Open a player's profile and do a quick assessment; where prompted, log a piece of evidence.
 - 👉 It should save. No player should move levels automatically.
 - Worked? ☐ Yes ☐ No — Notes: ______________________
 
-### 9. Place a player
+### 10. Place a player
 - Go to **Placement**. For a new player: create a recommendation, approve it, then activate.
 - 👉 You should see a clear "this is final" message before activating.
 - Worked? ☐ Yes ☐ No — Notes: ______________________
 
-### 10. Parent view + a parent update
+### 11. Parent view + a parent update
 - Open a player profile and tap **Initiate Parent Update**.
 - 👉 It should create a draft for you to review — it does NOT send to the family.
 - Then open the **Parent** view to see what a parent sees, and tap **Ask DONNA**.
 - Worked? ☐ Yes ☐ No — Notes: ______________________
 
-### 11. Approve things
+### 12. Approve things
 - Go to **Approvals**. Open a pending item and **Approve** or **Reject**.
 - 👉 Only after you approve does anything actually happen.
 - Worked? ☐ Yes ☐ No — Notes: ______________________
 
-### 12. Talk to DONNA anywhere
+### 13. Talk to DONNA anywhere
 - On any screen, tap **DONNA** and try: **"What should I do here?"**, **"Walk me through this."**, **"Take me to completion."**, **"What's next?"**
 - 👉 DONNA should give a clear, specific answer and a next step — never ask you to figure it out yourself.
 - Worked? ☐ Yes ☐ No — Notes: ______________________

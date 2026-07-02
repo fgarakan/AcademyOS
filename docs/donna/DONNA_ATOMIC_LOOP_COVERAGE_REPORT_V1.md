@@ -1,33 +1,41 @@
 # DONNA Atomic Loop Coverage Report V1
 
-**Date:** 2026-06-18
+**Date:** 2026-06-18 · **Taxonomy reconciled: Sprint 4359 (2026-07-02)**
 **Sprint:** Mega Sprint 3121–3150 — DONNA Atomic Loop Coverage & Live State Expansion V1
-**Certification:** 380/380 assertions passing across 6 certification files
+**Certification:** 380/380 assertions passing across 6 certification files. Loop names reconciled to the canonical 10 in Sprint 4359 (see `atomicLoopUsabilityCertification.ts`, re-run **60/60 · 10/10** on 2026-07-02).
 
 ---
 
-## Atomic Loop Coverage Table
+## Canonical 10 Atomic Loop Coverage Table
 
-| # | Loop | Primary Route(s) | Page Intel | Live State | Task | Completion Path | Coach Coverage | Pre-Sprint Score | Post-Sprint Score |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | Academy Onboarding | `/director/onboarding` | ✅ | PARTIAL | ✅ | ✅ | N/A | 7/10 | 7/10 |
-| 2 | Curriculum Builder | `/director/curriculum` | ✅ | PARTIAL (signals exist; not yet wired from UI) | ✅ | ✅ | N/A | 7/10 | 7/10 |
-| 3 | Template Builder | `/director/class-templates/`, `/director/fitness/templates/` | ✅ | ❌ | PARTIAL (uses generic fallback) | ✅ | N/A | 7/10 | 7/10 |
-| 4 | Session Creation | `/director/sessions`, `/director/sessions/new` | PARTIAL | ❌ | PARTIAL | ✅ (new) | N/A | 5/10 | 6/10 |
-| 5 | Coach Assignment | `/director/coaches`, `/director/groups/[id]` | PARTIAL | ❌ | PARTIAL | PARTIAL | N/A | 6/10 | 6/10 |
-| 6 | Coach Wrap-Up | `/coach/sessions/[id]/wrap-up` | ✅ (new) | ❌ | ✅ (new) | ✅ (new) | ✅ | 3/10 | **8/10** |
-| 7 | Player Assessment | `/director/players/[id]`, `/coach/players/[id]` | PARTIAL | ❌ | ✅ | ✅ | PARTIAL | 7/10 | 7/10 |
-| 8 | Placement / Readiness | `/director/placement` | ✅ | PARTIAL | ✅ | ✅ | N/A | 7/10 | 7/10 |
-| 9 | Parent Portal | `/director/parents` | ✅ | PARTIAL (new fields; not wired) | ✅ | ✅ | N/A | 7/10 | 7/10 |
-| 10 | Director Approvals | `/director/review` | ✅ | ✅ (pendingReviewCount) + NEW (pendingParentApprovals, pendingCoachApprovals) | ✅ | ✅ | N/A | 9/10 | **9/10** |
-| 11 | Level-Up / Promotion | `/director/level-up` | ✅ | PARTIAL | ✅ | ✅ | N/A | 7/10 | 7/10 |
-| 12 | Player Profile | `/director/players/[id]` | ✅ | ❌ (per-player signals not in scope) | ✅ | ✅ | N/A | 8/10 | 8/10 |
-| 13 | Players List | `/director/players` | ✅ | NEW (playersNeedingAttention, playersWithoutAssessment) | ✅ | ✅ | N/A | 8/10 | 8/10 |
-| 14 | Groups | `/director/groups/[id]` | ✅ | ❌ | ✅ | ✅ | N/A | 4/10 | 4/10 |
-| 15 | Sessions | `/director/sessions` | ✅ | ❌ | ✅ | ✅ | N/A | 6/10 | 6/10 |
-| 16 | Academy Health / COO Brief | `/director`, `/director/kpi` | ✅ | PARTIAL | ✅ | ✅ | N/A | 9/10 | 9/10 |
+> Reconciled Sprint 4359. The former cert loops "Player Assessment" and "Placement / Readiness" now merge into canonical **8 Player Development & Evidence**; "Coach Session Execution" is added as canonical **6**. Coverage scores below are the pre-reconciliation V1 measurements carried forward per loop; live-state gaps are unchanged by the rename.
 
-**Coach Home** | `/coach/` | ✅ (new) | ❌ | ✅ (new) | ✅ (new) | ✅ | N/A → **8/10** |
+| # | Canonical Loop | Primary Route(s) | Page Intel | Live State | Task | Completion Path | Coach Coverage | Score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Academy Setup | `/director/onboarding` | ✅ | PARTIAL | ✅ | ✅ | N/A | 7/10 |
+| 2 | Curriculum Setup | `/director/curriculum` | ✅ | PARTIAL (signals exist; not yet wired from UI) | ✅ | ✅ | N/A | 7/10 |
+| 3 | Class Template Setup | `/director/class-templates/`, `/director/fitness/templates/` | ✅ | ❌ | PARTIAL (generic fallback) | ✅ | N/A | 7/10 |
+| 4 | Session Creation | `/director/sessions`, `/director/sessions/new` | PARTIAL | ❌ | PARTIAL | ✅ | N/A | 6/10 |
+| 5 | Coach Assignment & Session Readiness | `/director/coaches`, `/director/groups/[id]` | PARTIAL | ❌ | PARTIAL | PARTIAL | N/A | 6/10 |
+| 6 | Coach Session Execution | `/coach/sessions/[id]` | ✅ | ❌ (no per-session `wrapUpSubmitted`/`attendanceMarked` live state) | ✅ | ✅ | ✅ | 7/10 |
+| 7 | Coach Wrap-Up | `/coach/sessions/[id]/wrap-up` | ✅ | ❌ | ✅ | ✅ | ✅ | **8/10** |
+| 8 | Player Development & Evidence | `/director/players/[id]`, `/director/placement`, `/coach/players/[id]` | PARTIAL | PARTIAL | ✅ | ✅ | PARTIAL | 7/10 |
+| 9 | Director Review & Approval | `/director/review` | ✅ | ✅ (pendingReviewCount) + pendingParentApprovals, pendingCoachApprovals | ✅ | ✅ | N/A | **9/10** |
+| 10 | Parent & Player-Safe Clarity | `/parent`, `/player/ask-donna`, `/director/players/[id]` | PARTIAL (`/parent` portal route has no PageIntelligence entry) | PARTIAL (new fields; not wired) | ✅ | ✅ | N/A | 7/10 |
+
+## Supporting surfaces (NOT atomic loops)
+
+These are pages DONNA is page-aware of, but they are not end-to-end operating loops. Kept for coverage reference only.
+
+| Surface | Route | Page Intel | Score |
+|---|---|---|---|
+| Level-Up / Promotion | `/director/level-up` | ✅ | 7/10 |
+| Player Profile | `/director/players/[id]` | ✅ | 8/10 |
+| Players List | `/director/players` | ✅ | 8/10 |
+| Groups | `/director/groups/[id]` | ✅ | 4/10 |
+| Sessions list | `/director/sessions` | ✅ | 6/10 |
+| Academy Health / COO Brief | `/director`, `/director/kpi` | ✅ | 9/10 |
+| Coach Home | `/coach/` | ✅ | 8/10 |
 
 ---
 
@@ -84,13 +92,13 @@ New file: `donnaOperatingPhraseLibrary.ts`
 
 | # | Gap | Affected Loop | Fix Location | Fix Size |
 |---|---|---|---|---|
-| 1 | `curriculumSpineActive` / `playersMissingCurriculumLevel` not passed from DonnaAssistantButton call sites | Curriculum Builder | `DonnaAssistantButton.tsx` — 3 call sites | Small |
+| 1 | `curriculumSpineActive` / `playersMissingCurriculumLevel` not passed from DonnaAssistantButton call sites | Curriculum Setup | `DonnaAssistantButton.tsx` — 3 call sites | Small |
 | 2 | `placementQueueCount` / `levelUpQueueCount` not passed from call sites | Placement, Level-Up | `DonnaAssistantButton.tsx` — 3 call sites | Small |
 | 3 | No PageIntelligence for `/director/sessions/new` | Session Creation | `pageContextResolver.ts` STATIC_PAGE_DEFAULTS + COMPLETION_INTELLIGENCE | Medium |
 | 4 | No PageIntelligence for `/director/coaches` | Coach Assignment | `pageContextResolver.ts` STATIC_PAGE_DEFAULTS + COMPLETION_INTELLIGENCE | Medium |
 | 5 | `/director/groups/[id]` route does not exist as an app page | Groups | New page route: `src/app/director/groups/[id]/page.tsx` | Large |
 | 6 | `playersNeedingAttention` / `playersWithoutAssessment` not passed from call sites | Players List | `DonnaAssistantButton.tsx` — 3 call sites | Small |
-| 7 | No PageIntelligence for `/coach/players/[id]` | Player Assessment (coach) | `pageContextResolver.ts` DYNAMIC_PAGE_REGISTRY | Medium |
+| 7 | No PageIntelligence for `/coach/players/[id]` | Player Development & Evidence (coach) | `pageContextResolver.ts` DYNAMIC_PAGE_REGISTRY | Medium |
 | 8 | `onboardingProgress` step count (0–7) never derivable from UI without reading individual step flags | Onboarding | Director layout: read step completion data and pass to button | Medium |
-| 9 | `pendingParentApprovals` / `pendingCoachApprovals` not passed from call sites | Director Approvals | `DonnaAssistantButton.tsx` — would require breakdown query in layout | Large |
+| 9 | `pendingParentApprovals` / `pendingCoachApprovals` not passed from call sites | Director Review & Approval | `DonnaAssistantButton.tsx` — would require breakdown query in layout | Large |
 | 10 | No per-session live state (`wrapUpSubmitted`, `attendanceMarked`) reachable in coach session view | Coach Wrap-Up | New fields in LivePageState + coach session page wiring | Medium |
