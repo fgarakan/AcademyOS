@@ -19,13 +19,16 @@ and reducing director cognitive load — **not new architecture**.
 - **Sprint 4353 — Server Action Undefined-Result Guards** (`4a775620`)
 - **Sprint 4354 — Page-Owned Workflow Boundary** (`ba963dd4`)
 - **Sprint 4355 — Tenant Isolation Certification V1 + Page-Owned Boundary Hardening** (`5e7f38e0`)
+- **Sprint 4356 — Guardian Tenant Isolation (deny-all retirement)** (`a4922f21`)
+- **Sprint 4357 — Tenant Isolation Behavioral Harness** (`e7489036`) — harness landed; live DB PASS pending
 
 ## Current certification status
 
 - **30/30 certification suites passing.**
 - **First non-DONNA platform certification complete** — Tenant Isolation Static Certification V1 (422/422).
 - **Page-Owned Workflow Boundary certified** — 212/212, including resolved-workflow routing (Section J).
-- **Tenant Isolation certified (static)** — RLS + `academy_id`/approved isolation key + academy-scoped policy on every tenant-owned table; fail-closed classification of every parsed table.
+- **Tenant Isolation certified (static)** — RLS + `academy_id`/approved isolation key + academy-scoped policy on every tenant-owned table; fail-closed classification of every parsed table. Static cert green (426/426, 0 tracked deviations).
+- **Tenant Isolation behavioral harness landed (Sprint 4357)** — `npm run test:tenant-isolation` is wired (plus a `psql` companion, `supabase/tests/tenant_isolation_behavioral.sql`). The static cert is green, but the behavioral harness currently returns **BLOCKED** (honest tri-state, exit 2) because no reachable database has migrations 001–086 applied. This is **not** a live PASS — live behavioral tenant isolation is **not yet verified**. See `docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md`.
 - **Executive Interaction Constitution committed** — Director audit standard (`b988d51a`).
 - **Architecture Constitution committed** — `docs/ARCHITECTURE.md`, the highest architectural authority (`091d07a3`).
 
@@ -56,7 +59,7 @@ The structural spine is complete across every layer:
 
 1. **`guardians` academy-scoped policies** — RLS on, no policy (deny-all). `ARCHITECTURE.md` §4.2. Tracked + ratcheted (does not leak; suite reds only if the deny-all set grows).
 2. **`player_guardians` academy-scoped policies + `academy_id` migration** — deny-all and no `academy_id` column. `ARCHITECTURE.md` §4.2.
-3. **Live 2-academy behavioral tenant-isolation CI** — seed two academies → assert 0 cross-tenant rows (needs Postgres in CI; today's tenant cert is static-only).
+3. **Live 2-academy behavioral tenant-isolation — Harness landed; live DB PASS pending.** Sprint 4357 (`e7489036`) landed the behavioral harness (`scripts/certification/tenantIsolationBehavioralTest.ts` + SQL companion) and wired `npm run test:tenant-isolation`. This is no longer "no harness exists." It is **not** closed: the harness currently returns BLOCKED and will not be done until it earns a real PASS against a reachable database with migrations 001–086 applied. Do not claim live behavioral tenant isolation is verified until that PASS is achieved.
 4. **Browser validation against the Brian pilot** — real director / coach / parent walkthrough of the 10 atomic loops.
 5. **Executive Simplicity Phase 1 implementation** — reduce director cognitive load on the converged spine.
 
