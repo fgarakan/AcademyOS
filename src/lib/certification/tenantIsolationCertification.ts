@@ -120,14 +120,17 @@ const SYSTEM_TABLES: Record<string, string> = {
 }
 
 // KNOWN DEVIATIONS (baseline ratchet) — RLS enabled but NO policy (deny-all).
-// These do NOT leak (deny-all = no reads) but violate ARCHITECTURE.md §4.2
-// ("no deny-all tables"). Tracked there as 🔴 deviation / 🛠️ convergence. Baselined
-// so this cert can gate CI today; the suite FAILS if the set GROWS, and prompts
-// removal once a real academy-scoped policy is added (a migration, out of scope here).
-const KNOWN_DEVIATIONS: Record<string, string> = {
-  guardians: 'RLS on, no policy (deny-all). Fix: add academy-scoped policies. ARCHITECTURE.md §4.2',
-  player_guardians: 'RLS on, no policy (deny-all) + no academy_id. Fix: add academy-scoped policies. ARCHITECTURE.md §4.2',
-}
+// A deny-all table does NOT leak (no reads) but violates ARCHITECTURE.md §4.2
+// ("no deny-all tables"). Baselined entries let this cert gate CI while a deviation is
+// open; the suite FAILS if the set GROWS, and FAILS once a baselined table gains a
+// policy (prompting its removal from this list).
+//
+// EMPTY as of migration 086 — `guardians` and `player_guardians` were retired:
+// migration 086 added academy-scoped policies to both (and academy_id + a cross-tenant
+// integrity trigger to player_guardians). They are now ordinary tenant-direct tables,
+// checked by groups 1–3 like every other tenant-owned table. Re-add an entry here ONLY
+// to baseline a genuinely new, intentionally-tracked deny-all deviation.
+const KNOWN_DEVIATIONS: Record<string, string> = {}
 
 // Files permitted to use the service-role / RLS-bypassing client. Any OTHER file
 // importing it FAILS this cert (ARCHITECTURE.md §8.5).
@@ -180,6 +183,16 @@ function parseSchema(): Map<string, TableFacts> {
         tables.get(name)!.hasAcademyId = true
       }
     }
+  }
+
+  // A table may gain academy_id AFTER creation via a later migration's ALTER TABLE
+  // (e.g. migration 086 backfilling player_guardians). Sweep those too so the
+  // hasAcademyId fact reflects the FULL migration history, not just CREATE TABLE.
+  const reAddCol = /alter table\s+([a-z_][a-z0-9_]*)\s+add column(?:\s+if not exists)?\s+academy_id\b/gi
+  let a: RegExpExecArray | null
+  while ((a = reAddCol.exec(allSql)) !== null) {
+    const name = a[1].toLowerCase()
+    if (tables.has(name)) tables.get(name)!.hasAcademyId = true
   }
 
   const reRls = /alter table\s+([a-z_][a-z0-9_]*)\s+enable row level security/gi

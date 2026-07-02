@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-07-01 — Sprint 4356 — Guardian Tenant Isolation (deny-all retirement)
+
+**Mission:** Retire the last two tracked tenant-isolation deviations in
+`docs/ARCHITECTURE.md` §4.2 — `guardians` and `player_guardians`, both RLS-enabled but
+policy-less (deny-all). A deny-all table does not leak, but it violates §4.2 ("no
+deny-all tables") and forces parent reads through non-standard paths (§4.8). After this
+sprint both are first-class tenant-direct tables: `academy_id` + RLS + academy-scoped
+policy, exactly like every other tenant-owned table.
+
+### 1. Migration 086 — Guardian Tenant Isolation
+
+- `supabase/migrations/086_guardian_tenant_isolation.sql` (new) — retires both deny-all
+  tables:
+  - **`player_guardians.academy_id`** — added nullable → backfilled from the player's
+    academy → **fail-closed abort guard** (aborts the whole migration on any unresolved
+    or cross-tenant link rather than guessing which academy wins, §2.3) → `NOT NULL` +
+    FK to `academies` (CASCADE) + index.
+  - **Integrity trigger** `tr_player_guardians_academy` (`enforce_player_guardian_academy`)
+    — `BEFORE INSERT/UPDATE`: forbids cross-tenant player↔guardian links and derives
+    `academy_id` canonically from the player so it can never drift or be spoofed.
+  - **Academy-scoped RLS policies** on both `guardians` and `player_guardians` — hoisted
+    (`academy_id = (SELECT auth_academy_id())`, §4.1): staff read, director manage,
+    parent self-read.
+  - Idempotent (every statement guarded) + documented rollback (§8.4).
+
+### 2. Certification — deviations retired + parser generalized
+
+- `src/lib/certification/tenantIsolationCertification.ts` — `KNOWN_DEVIATIONS` emptied
+  (`{}`); both `guardians` and `player_guardians` now flow through the normal
+  tenant-direct path (groups 1–3) like every other tenant-owned table.
+- **Parser generalization (not a special-case):** `parseSchema` now sweeps
+  `ALTER TABLE … ADD COLUMN [IF NOT EXISTS] academy_id` across the full migration
+  history, so any table that gains `academy_id` *after* creation is detected — not just
+  columns present in the original `CREATE TABLE`. This is what lets the cert see
+  migration 086's backfill of `player_guardians`.
+- **Result:** tenant isolation cert **424/424**, tracked deviations **0** (was 2). The
+  fail-closed ratchet still reds on any genuinely new deny-all table.
+
+### Files
+
+- `supabase/migrations/086_guardian_tenant_isolation.sql` (new)
+- `src/lib/certification/tenantIsolationCertification.ts` (modified)
+- `docs/CHANGELOG.md` (this entry)
+
+---
+
 ## 2026-06-30 — Sprint 4355 — Tenant Isolation Certification V1 + Page-Owned Boundary Hardening
 
 **Mission:** Stand up the **first non-DONNA system certification** (tenant isolation /
