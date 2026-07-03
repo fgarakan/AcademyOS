@@ -107,6 +107,19 @@ const COMPLETION_INTELLIGENCE: Record<string, CompletionIntelligence> = {
     warnings: [],
   },
 
+  '/director/sessions/new': {
+    completionGoals: [
+      'Template selected',
+      'Coach assigned',
+      'Group confirmed',
+      'Session scheduled and published',
+    ],
+    recommendedNextAction: 'Pick the published template you are delivering next, then assign the coach and group before scheduling.',
+    warnings: [
+      'A session needs a published template for its level before it can be created',
+    ],
+  },
+
   '/director/parents': {
     completionGoals: [
       'No players with overdue parent updates',
@@ -915,6 +928,34 @@ const STATIC_PAGE_DEFAULTS: Record<string, StaticPageDefault> = {
       'Settings changes are director decisions — nothing is automatic',
     ],
     missingData: 'Settings may not be loaded yet. I can explain what each option controls while it loads.',
+  },
+
+  '/director/sessions/new': {
+    pageName: 'New Session',
+    pagePurpose: 'Create a live session by instantiating a published template for a group, coach, date, and time. The session is what a coach delivers and later wraps up.',
+    visibleData: [
+      'Available published templates',
+      'Assignable coaches',
+      'Player groups',
+      'Date and time picker',
+      'Publish status',
+    ],
+    keyMetrics: [
+      { id: 'template_selected', label: 'Template', description: 'Whether a published template is selected for this session.' },
+      { id: 'coach_assigned', label: 'Coach', description: 'Whether a coach is assigned to deliver the session.' },
+      { id: 'group_confirmed', label: 'Group', description: 'Whether the player group is confirmed.' },
+    ],
+    availableActions: [
+      'Select a published template',
+      'Assign a coach',
+      'Confirm the player group',
+      'Set the date and time',
+      'Create and publish the session',
+    ],
+    approvalActions: [
+      'Creating a session is a director-direct write recorded in the audit log',
+    ],
+    missingData: 'Session builder data may not be loaded yet. I can explain what each field does while it loads.',
   },
 
   // Mega Sprint 3181–3210
