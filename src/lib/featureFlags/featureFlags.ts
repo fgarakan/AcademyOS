@@ -39,6 +39,13 @@ export function isTtsEnabled(): boolean {
 // Beta / experimental feature flags
 // These are opt-in via env vars and default to OFF
 
+// DONNA model-assisted page guidance (Sprint 4361 adapter; runtime path lands Sprint 4362).
+// Double-gated and OFF by default: requires BOTH an explicit opt-in flag AND an OpenAI key.
+// In Sprint 4361 no provider is available even when true, so no model is ever called.
+export function isModelAssistEnabled(): boolean {
+  return isEnabled(process.env.FEATURE_DONNA_MODEL_ASSIST) && Boolean(process.env.OPENAI_API_KEY?.trim())
+}
+
 // Enable the player development summary AI generation
 export function isPlayerSummaryGenerationEnabled(): boolean {
   return isEnabled(process.env.FEATURE_PLAYER_SUMMARY_GENERATION)
