@@ -1,22 +1,22 @@
-// Sprint 4361 — DONNA Model Adapter + Context Firewall V1
-// Part 5 — OpenAI provider (SCAFFOLD ONLY — provably call-free in Sprint 4361).
+// Sprint 4362 — DONNA Model Adapter: OpenAI provider (real, governed).
 //
-// Defines the future OpenAI provider boundary so callers and the adapter compile
-// against a stable shape. It contains NO OpenAI SDK import, NO fetch, NO api.openai.com,
-// and NO network path of any kind in this sprint.
+// Implements the OpenAI provider behind the adapter boundary. It makes a network call
+// ONLY when invoked by modelAdapter, and only when model-assist is explicitly enabled
+// (FEATURE_DONNA_MODEL_ASSIST) AND an OPENAI_API_KEY is present. API-key presence alone
+// does NOT enable it — the feature flag is required.
 //
-//   - isAvailable() returns false (hardcoded) — the adapter therefore never calls
-//     generate/summarize/classify.
-//   - generate/summarize/classify throw "not implemented in Sprint 4361".
+// Guarantees:
+//   - No tools / function-calling. No actions. No mutations. Read-only text generation.
+//   - Only the firewall-approved payload (systemPrompt + serialized safe context) is sent.
+//   - Bounded: hard timeout (AbortController), low temperature, capped max output tokens.
+//   - Throws on any failure so the adapter falls back deterministically.
 //
-// Sprint 4362 will implement the real, governed OpenAI call here (timeout, budget,
-// retry, usage logging, kill switch) behind isModelAssistEnabled() + OPENAI_API_KEY.
-//
-// Design rules (enforced by modelSafetyCertification):
-//   - No `fetch(`, no `import ... openai`, no `api.openai.com`, no SDK, no network.
-//   - No DB, no service role, no mutation.
+// Design rules:
+//   - Server-side only. No SDK — plain fetch to the chat completions endpoint.
+//   - Reads OPENAI_API_KEY / DONNA_MODEL_ID at call time; never logs them.
 
 import type { ModelProvider } from '@/lib/donna/model/modelTypes'
+import { MODEL_CONFIG } from '@/lib/donna/model/modelTypes'
 import type {
   AIGenerateParams,
   AIGenerateResult,
@@ -24,30 +24,82 @@ import type {
   AIClassifyParams,
   AIClassifyResult,
 } from '@/lib/ai/aiReasoningProvider'
+import { isModelAssistEnabled } from '@/lib/featureFlags/featureFlags'
 
-const SCAFFOLD_ONLY =
-  'OpenAIProvider is scaffold-only in Sprint 4361 — no network path. Real call lands in Sprint 4362.'
+const OPENAI_CHAT_URL = 'https://api.openai.com/v1/chat/completions'
+const NOT_SUPPORTED = 'OpenAIProvider supports generate() only in Sprint 4362.'
 
 export class OpenAIProvider implements ModelProvider {
   readonly name = 'openai'
 
   /**
-   * Hardcoded false in Sprint 4361 so the adapter never calls this provider. Sprint
-   * 4362 will gate this on isModelAssistEnabled() + a present OPENAI_API_KEY.
+   * Available only when the feature flag is explicitly enabled AND a key is present.
+   * The adapter checks this before calling generate(); when false, no network happens.
    */
   isAvailable(): boolean {
-    return false
+    return isModelAssistEnabled()
   }
 
-  async generate(_params: AIGenerateParams): Promise<AIGenerateResult> {
-    throw new Error(SCAFFOLD_ONLY)
+  async generate(params: AIGenerateParams): Promise<AIGenerateResult> {
+    const apiKey = process.env.OPENAI_API_KEY?.trim()
+    if (!apiKey) throw new Error('OPENAI_API_KEY not configured')
+
+    const model = process.env.DONNA_MODEL_ID?.trim() || MODEL_CONFIG.defaultModelId
+    const start = Date.now()
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), MODEL_CONFIG.timeoutMs)
+
+    try {
+      const response = await fetch(OPENAI_CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: Math.min(params.maxTokens ?? MODEL_CONFIG.maxOutputTokens, MODEL_CONFIG.maxOutputTokens),
+          temperature: MODEL_CONFIG.temperature,
+          // No tools, no function-calling — plain text rephrasing only.
+          messages: [
+            { role: 'system', content: params.systemPrompt },
+            { role: 'user', content: params.userContent },
+          ],
+        }),
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI request failed: ${response.status}`)
+      }
+
+      const data = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>
+        usage?: { prompt_tokens?: number; completion_tokens?: number }
+      }
+      const text = data.choices?.[0]?.message?.content?.trim() ?? ''
+      if (!text) throw new Error('OpenAI returned an empty response')
+
+      return {
+        text,
+        inputTokens: data.usage?.prompt_tokens ?? 0,
+        outputTokens: data.usage?.completion_tokens ?? 0,
+        modelUsed: model,
+        latencyMs: Date.now() - start,
+      }
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
+  // This provider is text-rephrasing only in V1. summarize/classify are not used by
+  // the model-assist path and are intentionally unsupported.
   async summarize(_params: AISummarizeParams): Promise<string> {
-    throw new Error(SCAFFOLD_ONLY)
+    throw new Error(NOT_SUPPORTED)
   }
 
   async classify(_params: AIClassifyParams): Promise<AIClassifyResult> {
-    throw new Error(SCAFFOLD_ONLY)
+    throw new Error(NOT_SUPPORTED)
   }
 }

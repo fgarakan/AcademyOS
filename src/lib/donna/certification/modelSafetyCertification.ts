@@ -52,13 +52,23 @@ function stripComments(text: string): string {
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1')   // line comments (keep :// intact)
 }
 
-const MODEL_FILES = [
+// Sprint 4362: openAIProvider.ts is the ONE file permitted a governed network call.
+// Every OTHER model file must stay network-free.
+const NETWORK_FREE_FILES = [
   'src/lib/donna/model/modelTypes.ts',
   'src/lib/donna/model/contextFirewall.ts',
   'src/lib/donna/model/modelAdapter.ts',
+  'src/lib/donna/model/responseValidator.ts',
   'src/lib/donna/model/providers/nullProvider.ts',
+]
+
+// All model files — none may mutate records, regardless of network capability.
+const ALL_MODEL_FILES = [
+  ...NETWORK_FREE_FILES,
   'src/lib/donna/model/providers/openAIProvider.ts',
 ]
+
+const OPENAI_PROVIDER = 'src/lib/donna/model/providers/openAIProvider.ts'
 
 // Patterns that would indicate a live network / model call (must be ABSENT).
 const NETWORK_PATTERNS: Array<[string, RegExp]> = [
@@ -90,8 +100,8 @@ async function main(): Promise<void> {
   process.stdout.write('Sprint 4361\n')
   process.stdout.write('============================================================\n')
 
-  // 1. STATIC: the model module makes no network / model call (executable code only).
-  for (const file of MODEL_FILES) {
+  // 1. STATIC: non-provider model files make no network / model call (code only).
+  for (const file of NETWORK_FREE_FILES) {
     const raw = read(file)
     check(`${file}: file present`, raw.length > 0)
     const code = stripComments(raw)
@@ -100,12 +110,26 @@ async function main(): Promise<void> {
     }
   }
 
-  // 2. STATIC: the adapter/providers cannot mutate records (executable code only).
-  for (const file of MODEL_FILES) {
-    const code = stripComments(read(file))
+  // 2. STATIC: NO model file may mutate records (executable code only).
+  for (const file of ALL_MODEL_FILES) {
+    const raw = read(file)
+    check(`${file}: file present`, raw.length > 0)
+    const code = stripComments(raw)
     for (const [label, pattern] of MUTATION_PATTERNS) {
       check(`${file}: no mutation pattern "${label}"`, !pattern.test(code))
     }
+  }
+
+  // 2b. STATIC: the OpenAI provider's network call is GOVERNED and tool-free.
+  {
+    const code = stripComments(read(OPENAI_PROVIDER))
+    check('openAIProvider: has a request timeout (AbortController)', /AbortController/.test(code))
+    check('openAIProvider: aborts on timeout (setTimeout + abort)', /setTimeout\s*\(/.test(code) && /\.abort\s*\(/.test(code))
+    check('openAIProvider: checks OPENAI_API_KEY before calling', /OPENAI_API_KEY/.test(code))
+    check('openAIProvider: gated by isModelAssistEnabled', /isModelAssistEnabled/.test(code))
+    check('openAIProvider: NO tools / function-calling', !/\btools\s*:/.test(code) && !/function_call|"functions"|'functions'/.test(code))
+    check('openAIProvider: bounded max_tokens', /max_tokens/.test(code))
+    check('openAIProvider: low temperature', /temperature/.test(code))
   }
 
   // 3. All 10 loops produce a valid, allowlist-only ModelSafeContext.
