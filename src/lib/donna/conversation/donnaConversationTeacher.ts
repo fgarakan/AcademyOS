@@ -18,6 +18,9 @@
 //   - Rate limited: max 1 call per user turn, only when confidence < 0.50.
 
 import type { InterpreterRole } from './donnaIntentInterpreter'
+// Sprint 4363 — Model client convergence: the OpenAI network call routes through the
+// one governed provider (the single OpenAI boundary), not a direct fetch here.
+import { OpenAIProvider } from '@/lib/donna/model/providers/openAIProvider'
 import type { AcademyOSConcept } from './donnaMeaningExtractor'
 import { buildConversationDNAInstruction } from './donnaConversationDNA'
 
@@ -130,42 +133,17 @@ async function callOpenAI(
   userMessage: string,
   maxTokens: number,
 ): Promise<{ content: string; tokens: number }> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY not set')
-  }
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      max_tokens: maxTokens,
-      temperature: 0.3,
-    }),
+  // Sprint 4363 — converged onto the one governed model client. No direct fetch here;
+  // the OpenAI network call is the single boundary in OpenAIProvider. Behavior preserved:
+  // same model (gpt-4o-mini via the provider), temperature 0.3, maxTokens, key gating,
+  // and the fail-open fallback in askConversationTeacher's catch on any throw.
+  const result = await new OpenAIProvider().generate({
+    systemPrompt,
+    userContent: userMessage,
+    maxTokens,
+    temperature: 0.3,
   })
-
-  if (!response.ok) {
-    const body = await response.text()
-    throw new Error(`OpenAI API error ${response.status}: ${body}`)
-  }
-
-  const data = await response.json() as {
-    choices: Array<{ message: { content: string } }>
-    usage: { total_tokens: number }
-  }
-
-  return {
-    content: data.choices[0]?.message?.content ?? '',
-    tokens: data.usage?.total_tokens ?? 0,
-  }
+  return { content: result.text, tokens: result.inputTokens + result.outputTokens }
 }
 
 // ── Fallback results ──────────────────────────────────────────────────────────

@@ -60,7 +60,7 @@ export class OpenAIProvider implements ModelProvider {
         body: JSON.stringify({
           model,
           max_tokens: Math.min(params.maxTokens ?? MODEL_CONFIG.maxOutputTokens, MODEL_CONFIG.maxOutputTokens),
-          temperature: MODEL_CONFIG.temperature,
+          temperature: params.temperature ?? MODEL_CONFIG.temperature,
           // No tools, no function-calling — plain text rephrasing only.
           messages: [
             { role: 'system', content: params.systemPrompt },

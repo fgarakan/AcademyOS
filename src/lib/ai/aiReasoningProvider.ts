@@ -26,6 +26,8 @@ export interface AIGenerateParams {
   systemPrompt: string
   userContent:  string
   maxTokens?:   number
+  /** Optional per-call sampling temperature. Providers default to their own value. */
+  temperature?: number
 }
 
 export interface AIGenerateResult {
