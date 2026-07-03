@@ -22,7 +22,16 @@ Structured operating knowledge so DONNA can **explain, guide, and answer questio
 7. Does this require approval? → `approvalRequirements`
 8. Help me complete it → `completionCriteria` (+ the live `buildCompletionPath` at runtime)
 
-> **Runtime status (Sprint 4359):** this is a **static knowledge layer + pure resolver**. It is **not** wired into `processDonnaMessage` — runtime brain wiring is a separate, explicitly-approved step (Phase D). Nothing here changes DONNA's live behavior, calls a model, or touches a workflow. This doc is maintained by hand from the code objects; keep it in sync when `loopKnowledge.ts` changes.
+> **Runtime status (Sprint 4360 — wired):** the resolver is now consulted by
+> `processDonnaMessage` for **page guidance only**, deterministically and without any model:
+> - **Step 7.65** answers loop-guidance questions (why / after / who-sees / approval / what /
+>   next / missing) from loop knowledge when the route maps to a canonical loop.
+> - **Step 7.6** ("what should I do here?") is enriched with *why this matters* + *what happens after*.
+> - No loop resolved → existing behavior (fallback). **No writes, no navigation, no approvals, no
+>   model calls.** Parent/player output is safety-filtered as defense in depth.
+>
+> Certified by `loopGuidanceWiringCertification.ts` (behavioral, drives the brain). This doc is
+> maintained by hand from the code objects; keep it in sync when `loopKnowledge.ts` changes.
 
 ---
 

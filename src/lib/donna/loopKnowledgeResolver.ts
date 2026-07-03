@@ -22,7 +22,11 @@ import {
   type LoopKnowledge,
   type LoopId,
 } from '@/lib/donna/loopKnowledge'
-import type { DonnaResponseRole } from '@/lib/donna/brain/donnaRoleResponsePolicy'
+import {
+  applyRolePolicy,
+  isResponseSafeForRole,
+  type DonnaResponseRole,
+} from '@/lib/donna/brain/donnaRoleResponsePolicy'
 import {
   resolvePageIntelligence,
   type PageIntelligence,
@@ -160,4 +164,161 @@ export function resolveLoopAnswer(input: LoopAnswerInput): LoopAnswer | null {
 /** Convenience: canonical loop id/name pairs for docs and cross-checks. */
 export function loopIndex(): Array<{ id: LoopId; name: string }> {
   return ALL_LOOP_KNOWLEDGE.map(l => ({ id: l.id, name: l.name }))
+}
+
+// ── Loop question classification ─────────────────────────────────────────────────
+// Deterministic mapping of a user message to one of the 8 loop-guidance questions.
+// No model. Conservative — unrecognized phrasing returns null (caller falls back).
+
+export type LoopQuestionKind =
+  | 'what' // What is this?
+  | 'why' // Why do I need to do this?
+  | 'missing' // What is missing?
+  | 'next' // What should I do next?
+  | 'after' // What happens after this?
+  | 'who_sees' // Who can see this?
+  | 'approval' // Does this require approval?
+
+export function classifyLoopQuestion(message: string): LoopQuestionKind | null {
+  const lower = message.toLowerCase().trim()
+
+  // Order matters: check the more specific intents before the generic ones.
+  if (
+    lower.includes('who can see') ||
+    lower.includes('who sees') ||
+    lower.includes('who can view') ||
+    lower.includes('visible to parent') ||
+    lower.includes('can parents see') ||
+    lower.includes('can players see') ||
+    lower.includes('who is this visible to')
+  ) return 'who_sees'
+
+  if (
+    lower.includes('need approval') ||
+    lower.includes('needs approval') ||
+    lower.includes('require approval') ||
+    lower.includes('requires approval') ||
+    lower.includes('do i need to approve') ||
+    lower.includes('does this need approving') ||
+    lower.includes('is approval required')
+  ) return 'approval'
+
+  if (
+    lower.includes('what happens after') ||
+    lower.includes('what comes after') ||
+    lower.includes('what happens next after') ||
+    lower.includes('what happens when this is done') ||
+    lower.includes('after this what') ||
+    lower.includes('after i finish')
+  ) return 'after'
+
+  if (
+    lower.includes('why do i need') ||
+    lower.includes('why do i have to') ||
+    lower.includes('why does this matter') ||
+    lower.includes('why is this important') ||
+    lower.includes('why do this') ||
+    lower.includes('why bother')
+  ) return 'why'
+
+  if (
+    lower.includes("what's missing") ||
+    lower.includes('what is missing') ||
+    lower.includes("what's left") ||
+    lower.includes('what is left') ||
+    lower.includes('what am i missing') ||
+    lower.includes('anything missing')
+  ) return 'missing'
+
+  if (
+    lower.includes('what is this') ||
+    lower.includes("what's this") ||
+    lower.includes('what is this page') ||
+    lower.includes('what does this do') ||
+    lower.includes('what is this for')
+  ) return 'what'
+
+  if (
+    lower.includes('what do i do next') ||
+    lower.includes('what should i do next') ||
+    lower.includes('what next') ||
+    lower.includes("what's next")
+  ) return 'next'
+
+  return null
+}
+
+// ── Loop answer formatting ───────────────────────────────────────────────────────
+// Renders a grounded, role-scoped answer for a loop question. Pure — no model, no
+// writes, no side effects. Static loop knowledge is the source; page intelligence /
+// completion path are optional enrichment for 'next' / 'missing'.
+
+export interface FormattedLoopAnswer {
+  display: string
+  spoken: string
+}
+
+/** Neutral, always-safe fallback when a specific answer cannot be surfaced to a role. */
+const SAFE_GENERIC =
+  'This is part of your academy’s workflow. Your director and coaches manage the details.'
+
+function composeLoopAnswerBody(
+  loop: LoopKnowledge,
+  kind: LoopQuestionKind,
+  answer: LoopAnswer | null,
+): string {
+  switch (kind) {
+    case 'what':
+      return loop.purpose
+    case 'why':
+      return loop.whyItMatters
+    case 'after':
+      return loop.whatHappensAfter
+    case 'who_sees': {
+      const audience = loop.parentPlayerVisibilityRules.audience.join(', ')
+      return `${loop.parentPlayerVisibilityRules.note} (Audience: ${audience}.)`
+    }
+    case 'approval':
+      return loop.approvalRequirements.requiresApproval
+        ? `Yes — ${loop.approvalRequirements.framing}`
+        : `No — ${loop.approvalRequirements.framing}`
+    case 'next': {
+      const live = answer?.completionPath?.nextStep
+      return live ? live : (loop.safeNextActions[0] ?? loop.completionCriteria[0] ?? loop.purpose)
+    }
+    case 'missing': {
+      const items = loop.missingStateChecks.slice(0, 3).map(c => `• ${c.unmetMessage}`).join('\n')
+      return items
+        ? `Here is what may still be needed:\n${items}`
+        : (loop.completionCriteria[0] ?? loop.purpose)
+    }
+    default:
+      return loop.purpose
+  }
+}
+
+/**
+ * Build a grounded answer for a loop question. For parent/player roles the output
+ * is safety-filtered (never surfaces blocked content) and length-capped. This path
+ * is director/coach today, but scoping is applied unconditionally as defense in depth.
+ */
+export function formatLoopAnswer(
+  loop: LoopKnowledge,
+  kind: LoopQuestionKind,
+  role: DonnaResponseRole,
+  liveState?: LivePageState | null,
+): FormattedLoopAnswer {
+  const answer = resolveLoopAnswer({ id: loop.id, role, liveState: liveState ?? null })
+  const body = composeLoopAnswerBody(loop, kind, answer)
+
+  let display = `On **${loop.plainEnglishName}** — ${body}`
+
+  // Defense in depth: parent/player must never receive blocked content.
+  if ((role === 'parent' || role === 'player') && !isResponseSafeForRole(display, role)) {
+    display = `On **${loop.plainEnglishName}** — ${SAFE_GENERIC}`
+  }
+  display = applyRolePolicy(display, role)
+
+  const spoken = display.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim()
+  return { display, spoken }
 }

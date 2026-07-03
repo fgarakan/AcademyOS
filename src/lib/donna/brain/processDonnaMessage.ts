@@ -150,6 +150,12 @@ import {
 import type { PageIntelligence } from '@/lib/donna/operating/pageContextResolver'
 import { buildCompletionPath, formatCompletionPathForResponse } from '@/lib/donna/operating/pageCompletionEngine'
 import type { LivePageState } from '@/lib/donna/operating/livePageState'
+// Sprint 4360 — Loop Knowledge wiring into page guidance (Step 7.6 enrichment + Step 7.65)
+import {
+  getLoopKnowledgeForRoute,
+  classifyLoopQuestion,
+  formatLoopAnswer,
+} from '@/lib/donna/loopKnowledgeResolver'
 // Mega Sprint 3121–3150 — Universal operating phrase library
 import { detectOperatingIntent, getOperatingIntentPrompt } from '@/lib/donna/operating/donnaOperatingPhraseLibrary'
 // Mega Sprint 3151–3180 — Reality Synchronization Engine V1
@@ -652,7 +658,11 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     // Mega Sprint 3061–3090: yield to check_page_context (Step 7.6) when on a known page
     // and the message is a page-confusion phrase. "What should I focus on here?" must receive
     // a page-aware response, not launch a generic goal session.
-    if (!(pageIntelligence !== null && isPageConfusionPhrase(lower))) {
+    // Sprint 4360: also yield when the message is a loop-guidance question on a canonical-loop
+    // route, so Step 7.65 answers it from loop knowledge rather than launching a goal session.
+    const isLoopQuestionOnLoopRoute =
+      getLoopKnowledgeForRoute(route) !== null && classifyLoopQuestion(lower) !== null
+    if (!((pageIntelligence !== null && isPageConfusionPhrase(lower)) || isLoopQuestionOnLoopRoute)) {
       const goalWorkflow = detectGoalWorkflowIntent(userMessage)
       if (goalWorkflow) {
         finalizeLog(debugLog, 'check_goal_workflow_intent', 'start_goal_session')
@@ -854,7 +864,14 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
     const intentPrefix = operatingIntent
       ? getOperatingIntentPrompt(operatingIntent, pageIntelligence.pageName) + '\n\n'
       : ''
-    const fullResponse = `${intentPrefix}${confusionResponse}\n\n${completionFragment}`
+    // Sprint 4360: additive loop-knowledge enrichment when the route maps to a canonical
+    // atomic loop. Explanation-only (why + what-happens-after); no writes, no navigation,
+    // no approval side-effects. Existing page-confusion response stays the lead.
+    const enrichLoop = getLoopKnowledgeForRoute(route)
+    const loopEnrichment = enrichLoop
+      ? `\n\n**Why this matters:** ${enrichLoop.whyItMatters}\n**What happens after:** ${enrichLoop.whatHappensAfter}`
+      : ''
+    const fullResponse = `${intentPrefix}${confusionResponse}\n\n${completionFragment}${loopEnrichment}`
     const spokenSummary = `You are on ${pageIntelligence.pageName}. ${pageIntelligence.recommendedNextAction}`
 
     // Set navigator state to 'action' so acknowledgments continue the page guidance arc
@@ -883,6 +900,37 @@ export function processDonnaMessage(input: DonnaMessageInput): DonnaMessageResul
         extractedEntity:      pageIntelligence.pageName,
       },
     }, debugLog)
+  }
+
+  // ── Step 7.65: Loop-question intercept (Sprint 4360) ────────────────────────
+  // Answers the loop-guidance questions Step 7.6 doesn't catch (why / after /
+  // who-sees / approval / what) from structured loop knowledge, deterministically.
+  // Explanation-only: never writes, navigates, or sets requiresApproval. Falls
+  // through untouched when no canonical loop resolves or the message is not a loop
+  // question. Guards: no active goal session, no active page-guidance arc.
+  logStep(debugLog, 'check_loop_question')
+  {
+    const activeArc = input.conversationNavigatorState ?? null
+    const inPageGuidanceArc =
+      activeArc !== null &&
+      activeArc.stage !== 'completion' &&
+      activeArc.proposedActionType === 'page_guidance'
+    const loopKind = classifyLoopQuestion(lower)
+    const loop = getLoopKnowledgeForRoute(route)
+    if (activeGoalSession === null && !inPageGuidanceArc && loopKind !== null && loop !== null) {
+      const ans = formatLoopAnswer(loop, loopKind, role, effectiveLiveState)
+      finalizeLog(debugLog, 'check_loop_question', 'respond')
+      emitDebugLog(debugLog)
+      return makeResult('respond', {
+        response:         ans.display,
+        spokenResponse:   ans.spoken,
+        confidence:       0.9,
+        pageIntelligence,
+        realitySnapshot,
+        requiresApproval: false,
+        navigateTo:       null,
+      }, debugLog)
+    }
   }
 
   // ── Step 7.7: Active arc continuation intercept ─────────────────────────────

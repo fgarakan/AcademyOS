@@ -22,6 +22,7 @@ export type BrainRoutingStep =
   | 'check_academy_overview'
   | 'check_coo_intelligence'
   | 'check_page_context'
+  | 'check_loop_question'
   | 'check_arc_continuation'
   | 'check_disambiguation'
   | 'check_relationship_intelligence'

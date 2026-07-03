@@ -24,8 +24,11 @@ import {
   getLoopKnowledgeById,
   getLoopKnowledgeForRoute,
   resolveLoopAnswer,
+  classifyLoopQuestion,
+  formatLoopAnswer,
+  type LoopQuestionKind,
 } from '@/lib/donna/loopKnowledgeResolver'
-import { getRolePolicy } from '@/lib/donna/brain/donnaRoleResponsePolicy'
+import { getRolePolicy, isResponseSafeForRole } from '@/lib/donna/brain/donnaRoleResponsePolicy'
 
 const ROOT = process.cwd()
 
@@ -181,6 +184,51 @@ function main(): void {
     check(`${tag}: failureStates non-empty`, nonEmptyArr(loop.failureStates))
     check(`${tag}: browserTestCriteria non-empty`, nonEmptyArr(loop.browserTestCriteria))
     check(`${tag}: at least one live-backed missing check`, loop.missingStateChecks.some(c => c.liveSignal !== null))
+  }
+
+  // 10. Loop question classifier maps sample phrasings to the right kind.
+  const classifierCases: Array<[string, LoopQuestionKind | null]> = [
+    ['what is this?', 'what'],
+    ['why do I need to do this?', 'why'],
+    ["what's missing?", 'missing'],
+    ['what do I do next?', 'next'],
+    ['what happens after?', 'after'],
+    ['who can see this?', 'who_sees'],
+    ['does this need approval?', 'approval'],
+    ["show me Jake's stats", null],
+    ['', null],
+  ]
+  for (const [msg, expected] of classifierCases) {
+    check(`classifyLoopQuestion("${msg}") === ${expected}`, classifyLoopQuestion(msg) === expected)
+  }
+
+  // 11. formatLoopAnswer produces grounded, non-empty, mutation-free answers for every
+  //     loop × question kind, and stays parent/player-safe.
+  const kinds: LoopQuestionKind[] = ['what', 'why', 'missing', 'next', 'after', 'who_sees', 'approval']
+  const answerMutationVerbs = /\b(execute|delete|finalize the|write to the database|approve and apply)\b/i
+  for (const loop of ALL_LOOP_KNOWLEDGE) {
+    for (const kind of kinds) {
+      const ans = formatLoopAnswer(loop, kind, loop.primaryRole)
+      check(`formatLoopAnswer loop ${loop.id}/${kind}: non-empty display`, nonEmptyStr(ans.display))
+      check(`formatLoopAnswer loop ${loop.id}/${kind}: non-empty spoken`, nonEmptyStr(ans.spoken))
+      check(`formatLoopAnswer loop ${loop.id}/${kind}: no mutation instruction`, !answerMutationVerbs.test(ans.display))
+    }
+  }
+
+  // 12. Parent/player role scoping: for loops whose audience includes parent/player,
+  //     formatted answers are safe for that role (no blocked content leaks).
+  for (const loop of ALL_LOOP_KNOWLEDGE) {
+    for (const role of ['parent', 'player'] as const) {
+      if (loop.parentPlayerVisibilityRules.audience.includes(role)) {
+        for (const kind of kinds) {
+          const ans = formatLoopAnswer(loop, kind, role)
+          check(
+            `formatLoopAnswer loop ${loop.id}/${kind} safe for ${role}`,
+            isResponseSafeForRole(ans.display, role),
+          )
+        }
+      }
+    }
   }
 
   // ── Summary ──
