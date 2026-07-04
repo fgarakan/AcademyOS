@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-07-04 — Sprint 4365 — DONNA natural conversation and learning-through-use architecture
+
+**Mission:** Design AcademyOS to learn through use in every safe, valuable way — but DONNA
+must not automatically remember everything. Define the architecture, rules, boundaries, and
+certification for learning-through-use. **Docs + certification + one tiny pure constants
+file only.** No persistence, schema, model-routing, permission, or runtime-behaviour change
+— the sprint's own certification includes a negative check that enforces this.
+
+### 1. Learning-through-use architecture (new doc)
+
+- `docs/donna/ACADEMYOS_LEARNING_THROUGH_USE_ARCHITECTURE.md` — the five learning layers
+  (temporary conversation context → session summary → learning candidate →
+  director-approved academy memory → owner-approved global learning), each mapped to the
+  machinery that already exists; safe sources; what DONNA may **propose** as candidates;
+  what requires approval; forbidden sources; the 16 learning event types; the learning
+  pipeline (event → classification → candidate → human approval → memory → measured outcome
+  → confidence adjustment); a per-loop safe/forbidden-signal table for all 10 loops; and
+  the confidence-over-time model. **Honest scope note:** durable learning already partially
+  exists (`donna_executive_learning`, migration 084, unapplied → fail-open; the in-memory
+  ledger; the promotion pipeline) — this sprint defines and certifies the rulebook, it does
+  not build or activate capture.
+
+### 2. Taxonomy constants (new, tiny, pure)
+
+- `src/lib/donna/learning/learningEventTypes.ts` — `LEARNING_EVENT_TYPES` (16) and
+  `LEARNING_LAYERS` (5, with `durable` / `requiresApproval` / `approver` /
+  `requiresAnonymization`). Pure constants + derived types. No I/O, no DB, no fetch, no model
+  call, no wiring. Makes the doctrine testable rather than doc-only.
+
+### 3. Conversation + learning rules (updated docs)
+
+- `docs/donna/DONNA_CONVERSATION_STYLE_GUIDE.md` — adds §7 "How DONNA talks about learning":
+  the proposal language DONNA uses ("I noticed a pattern. Do you want me to remember this?")
+  and the claims she must never make ("I learned this automatically.") unless approved state
+  confirms it — alongside the existing voice standard, banned-jargon table, and 12 rules.
+- `docs/donna/DONNA_LEARNING_RULES_V1.md` — adds §6 mapping the five layers, the 16-event
+  vocabulary, and the approval matrix to the architecture and the constants.
+
+### 4. Certification (updated)
+
+- `src/lib/donna/certification/donnaConversationCertification.ts` — expanded, offline
+  (no DB, no network, no model). Adds the learning-through-use checks on top of the
+  conversation-standard checks: temporary vs durable layer separation; durable learning
+  requires approval; unsafe sources forbidden; cross-academy learning requires owner approval
+  + anonymization; DONNA cannot claim she learned unless approved memory exists; model output
+  cannot become memory directly; all 10 loops map a safe and a forbidden learning signal;
+  candidate examples concise/operational; conversation style aligns with the approval model;
+  and a **negative check** that the constants file introduces no I/O, persistence, or wiring.
+- `package.json` — `certify:conversation` script. Not registered in the 30-suite gate this
+  sprint (gate composition unchanged); runnable standalone.
+
+---
+
 ## 2026-07-04 — Sprint 4364 — Activate DONNA loop-guidance model-assist (flag-gated, off by default)
 
 **Mission:** Flip the firewalled, loop-specific model-assist from "built but paused"
