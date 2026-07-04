@@ -39,6 +39,8 @@ export const CERTIFICATION_SUITES: readonly string[] = [
   'src/lib/donna/certification/donnaConversationOwnershipCertification.ts',
   'src/lib/donna/certification/donnaExistenceFormAttentionRoutingCertification.ts',
   'src/lib/donna/certification/pageOwnedWorkflowBoundaryCertification.ts',
+  // Sprint 4365 — DONNA natural conversation + learning-through-use rules (docs + taxonomy).
+  'src/lib/donna/certification/donnaConversationCertification.ts',
   // First non-DONNA system certification — tenant isolation / cross-academy leakage.
   'src/lib/certification/tenantIsolationCertification.ts',
 ]

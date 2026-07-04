@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-07-04 — Sprint 4365 (follow-up) — Register DONNA conversation cert into the gate
+
+**Mission:** Promote `donnaConversationCertification.ts` from standalone into the
+merge-blocking certification gate now that it is green.
+
+- `scripts/certificationSuites.ts` — registered
+  `src/lib/donna/certification/donnaConversationCertification.ts`. **Gate 30/30 → 31/31.**
+- `docs/CURRENT_BUILD_TARGET.md` — updated the current gate count to 31/31.
+
+**Validation:** `npx tsc --noEmit` clean. `npm run certify` — **31/31 suites passed**. No
+code, schema, model-routing, or runtime change — registry + docs only.
+
+---
 ## 2026-07-04 — Sprint 4365 — DONNA natural conversation and learning-through-use architecture
 
 **Mission:** Design AcademyOS to learn through use in every safe, valuable way — but DONNA

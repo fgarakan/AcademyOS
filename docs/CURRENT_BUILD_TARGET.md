@@ -24,7 +24,7 @@ and reducing director cognitive load — **not new architecture**.
 
 ## Current certification status
 
-- **30/30 certification suites passing.**
+- **31/31 certification suites passing.**
 - **First non-DONNA platform certification complete** — Tenant Isolation Static Certification V1 (422/422).
 - **Page-Owned Workflow Boundary certified** — 212/212, including resolved-workflow routing (Section J).
 - **Tenant Isolation certified (static)** — RLS + `academy_id`/approved isolation key + academy-scoped policy on every tenant-owned table; fail-closed classification of every parsed table. Static cert green (426/426, 0 tracked deviations).
@@ -43,7 +43,7 @@ The structural spine is complete across every layer:
 - **Template → Session operational** — the create-and-populate path is live end-to-end.
 - **Architecture governance** — the Architecture Constitution governs all work; changes update it first.
 - **Interaction governance** — the Executive Interaction Constitution sets the director audit standard.
-- **Platform governance** — the certification gate (30/30) now extends beyond DONNA to platform-wide tenant isolation.
+- **Platform governance** — the certification gate (31/31) now extends beyond DONNA to platform-wide tenant isolation.
 
 ## Completion & readiness (architecture-based, not sprint-count)
 
