@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-07-04 — Sprint 4364 — Activate DONNA loop-guidance model-assist (flag-gated, off by default)
+
+**Mission:** Flip the firewalled, loop-specific model-assist from "built but paused"
+(Sprints 4361–4363) into **runtime-active**, behind `FEATURE_DONNA_MODEL_ASSIST` and
+**off by default**. The activation is a **SWAP, not an ADD**: for a loop-guidance question
+with the flag enabled, the live conversation action rephrases via the governed model
+adapter **instead of** the general executive refinement — so there is **no duplicate
+OpenAI call** (§5.1/G6). Flag off, or not a loop question → the helper returns `null` and
+the existing refinement path runs **unchanged** (zero behavior change).
+
+### 1. Activation helper (new)
+
+- `src/lib/donna/model/loopGuidanceAssist.ts` — the single, flag-gated seam.
+  - `isLoopGuidanceAssistApplicable()` — pure gate: applies only when
+    `isModelAssistEnabled()` **and** the message classifies as a loop-guidance question
+    **and** the route maps to a canonical loop. No model call, no DB.
+  - `maybeModelAssistLoopGuidance()` — routes **only** through `runModelAssist` (no DB,
+    no mutation, no direct provider call). **Prose-only swap:** replaces `response` /
+    `spokenResponse` with the firewalled rephrasing and copies every structured/safety
+    field (`action`, `requiresApproval`, navigation, `pageIntelligence`) from the
+    grounded result. Deterministic fallback is guaranteed by `runModelAssist`.
+
+### 2. Server-action wiring (swap, not add)
+
+- `src/app/director/_actions/donnaLiveConversationAction.ts` — after the brain result:
+  `const legacyResult = modelAssisted ?? await applyExecutiveRefinement(present, role)`.
+  `DonnaVoiceReadyShell` and `donnaStrategicConversationAction` are **untouched**
+  (strategic path is a documented follow-up).
+
+### 3. Certification
+
+- `modelAssistedGuidanceCertification.ts` — +5 runtime-activation cases (10–14), offline
+  via injected stub provider: disabled flag → `null` + `generate()` not called; enabled +
+  loop question → prose swapped, structured fields preserved; action request → `null`;
+  non-loop route → `null`; unsafe model output → deterministic response preserved.
+- `modelConvergenceCertification.ts` — +case 5b: static assertion that the helper routes
+  **only** through `runModelAssist` (no bare `fetch(`, no `api.openai.com`, no
+  `new OpenAIProvider`, gated by `isModelAssistEnabled`).
+
+### 4. Docs
+
+- `docs/donna/DONNA_MODEL_ASSISTED_EXPLANATION_PATH_V1.md` — "Runtime wiring" section
+  flipped from **PAUSED — needs a decision** to **ACTIVATED — Sprint 4364**, with the
+  swap-not-add contract and the "flag off ≠ no model" clarification.
+
+---
+
 ## 2026-07-02 — Sprint 4357 — Add tenant isolation behavioral harness
 
 **Mission:** Implement remaining deviation #3 in `docs/CURRENT_BUILD_TARGET.md` — a

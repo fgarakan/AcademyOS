@@ -16,6 +16,8 @@
 
 import { runModelAssist } from '@/lib/donna/model/modelAdapter'
 import { buildModelSafeContext } from '@/lib/donna/model/contextFirewall'
+import { maybeModelAssistLoopGuidance } from '@/lib/donna/model/loopGuidanceAssist'
+import type { DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
 import type { ModelProvider } from '@/lib/donna/model/modelTypes'
 import type {
   AIGenerateParams,
@@ -157,6 +159,61 @@ async function main(): Promise<void> {
     check('default: off by default → deterministic', r.source === 'deterministic')
     check('default: reason model_unavailable', r.blockedReason === 'model_unavailable')
   }
+
+  // ── Sprint 4364: runtime activation helper (maybeModelAssistLoopGuidance) ───────
+  // The action seam. Offline throughout — stub provider, no real key/network.
+  const mkResult = (response: string, requiresApproval = false): DonnaMessageResult =>
+    ({ action: 'respond', response, spokenResponse: response, requiresApproval } as unknown as DonnaMessageResult)
+  const LOOP_INPUT = { userMessage: 'why do I need to do this?', role: 'director' as const, route: '/director/sessions/new' }
+
+  // 10. Flag disabled (env unset) → null (caller keeps its existing path). No model.
+  {
+    delete process.env.FEATURE_DONNA_MODEL_ASSIST
+    delete process.env.OPENAI_API_KEY
+    const stub = new StubProvider({ available: true, text: 'should not run' })
+    const r = await maybeModelAssistLoopGuidance(LOOP_INPUT, mkResult('Deterministic.'), { provider: stub })
+    check('helper: disabled flag → null', r === null)
+    check('helper: disabled flag → generate() not called', stub.generateCalled === false)
+  }
+
+  // Enable the flag for the remaining helper cases (fake key is never used — stub injected).
+  process.env.FEATURE_DONNA_MODEL_ASSIST = 'true'
+  process.env.OPENAI_API_KEY = 'test-key-never-sent'
+
+  // 11. Enabled + loop question + valid stub → prose swapped, structured fields preserved.
+  {
+    const stub = new StubProvider({ available: true, text: 'Here is a natural explanation.' })
+    const r = await maybeModelAssistLoopGuidance(LOOP_INPUT, mkResult('Deterministic.', true), { provider: stub })
+    check('helper: enabled → rephrased response', r?.response === 'Here is a natural explanation.')
+    check('helper: enabled → spokenResponse rephrased', r?.spokenResponse === 'Here is a natural explanation.')
+    check('helper: enabled → requiresApproval preserved (true)', r?.requiresApproval === true)
+    check('helper: enabled → action preserved', r?.action === 'respond')
+  }
+
+  // 12. Enabled + action request → null (never model-assisted; classifier excludes it).
+  {
+    const stub = new StubProvider({ available: true, text: 'unused' })
+    const r = await maybeModelAssistLoopGuidance({ ...LOOP_INPUT, userMessage: 'approve this now' }, mkResult('Deterministic.'), { provider: stub })
+    check('helper: action request → null', r === null)
+    check('helper: action request → generate() not called', stub.generateCalled === false)
+  }
+
+  // 13. Enabled + non-loop route → null.
+  {
+    const stub = new StubProvider({ available: true, text: 'unused' })
+    const r = await maybeModelAssistLoopGuidance({ ...LOOP_INPUT, route: '/director/kpi' }, mkResult('Deterministic.'), { provider: stub })
+    check('helper: non-loop route → null', r === null)
+  }
+
+  // 14. Enabled + unsafe model output → deterministic response preserved (fallback).
+  {
+    const stub = new StubProvider({ available: true, text: 'email them at coach@example.com' })
+    const r = await maybeModelAssistLoopGuidance(LOOP_INPUT, mkResult('Deterministic.'), { provider: stub })
+    check('helper: unsafe output → deterministic response', r?.response === 'Deterministic.')
+  }
+
+  delete process.env.FEATURE_DONNA_MODEL_ASSIST
+  delete process.env.OPENAI_API_KEY
 
   const total = passed + failed
   const pct = total > 0 ? (passed / total) * 100 : 0

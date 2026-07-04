@@ -55,9 +55,12 @@ function filesMatching(pred: (content: string) => boolean): string[] {
   return out
 }
 
-// The single reasoning gateway + the two documented advisory exceptions (not part of
-// the director conversation reasoning pipeline; one is testing-only, one is uncalled).
-const GATEWAY_FILE = 'src/lib/donna/conversation/donnaConversationTeacher.ts'
+// The single low-level model gateway + the two documented advisory exceptions (not part
+// of the director conversation reasoning pipeline; one is testing-only, one is uncalled).
+// Sprint 4363 converged the chat/completions call OUT of donnaConversationTeacher onto
+// the model adapter's OpenAI provider — the provider is now the canonical gateway, and
+// donnaConversationTeacher delegates to it (no direct fetch of its own).
+const GATEWAY_FILE = 'src/lib/donna/model/providers/openAIProvider.ts'
 const ADVISORY_EXCEPTIONS = [
   'src/lib/donna/learning/donnaLearningAnalyzer.ts',
   'src/lib/donna/knowledgePromotion/donnaKnowledgeDraftGenerator.ts',

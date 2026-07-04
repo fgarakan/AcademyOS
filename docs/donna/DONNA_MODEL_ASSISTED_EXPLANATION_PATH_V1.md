@@ -57,21 +57,32 @@ deterministic input**. `blockedReason` records why a fallback happened.
 `blockedReason` on the result. **Never** logged: prompts, model response text, secrets, raw context,
 parent/player fields, guardian contact, coach notes, audit logs.
 
-## Runtime wiring (PAUSED — needs a decision)
+## Runtime wiring (ACTIVATED — Sprint 4364, flag-gated, off by default)
 
-The plan anticipated wiring the model-assist into **Step 7.65 of `processDonnaMessage`**. During
-implementation this proved **not viable in the brain**:
+The model-assist is **not** in `processDonnaMessage` (it is synchronous and called from client
+components — `DonnaVoiceReadyShell`, `DonnaAssistantButton` — so it cannot host an async server-side
+model call). The activation seam is the async `'use server'` action **`donnaLiveConversationAction.ts`**
+(director/head-coach), via the helper **`src/lib/donna/model/loopGuidanceAssist.ts`**.
 
-- `processDonnaMessage` is **synchronous** and is called from **client components**
-  (`DonnaVoiceReadyShell.tsx`, `DonnaAssistantButton.tsx`, both `'use client'`). Making it `async`
-  would break those client callers; and a client component cannot hold `OPENAI_API_KEY`.
-- The model call is **async and server-side**. The correct seam is therefore the async
-  `'use server'` action **`donnaLiveConversationAction.ts`** (director/head-coach live path), which
-  already wraps the brain — call `processDonnaMessage` (deterministic) then, for a loop-guidance
-  question with model-assist enabled, `await runModelAssist(...)` and swap in the rephrased message.
+**SWAP, not add.** After the brain result, for a **loop-guidance question with model-assist enabled**,
+the action calls `maybeModelAssistLoopGuidance(...)` and uses the firewalled model rephrasing
+**instead of** the general `applyExecutiveRefinement` — so there is **no duplicate OpenAI call**
+(§5.1/G6). When the flag is off (default) or the message is not a loop question, the helper returns
+`null` and the existing refinement path runs **unchanged** (zero behavior change).
 
-The deterministic Step 7.65 in the brain is **unchanged**. The model-assist capability is fully
-built and certified; flipping it into the server action is the remaining step, held for approval.
+```
+const modelAssisted = await maybeModelAssistLoopGuidance({ userMessage, role, route, livePageState }, present)
+const legacyResult  = modelAssisted ?? await applyExecutiveRefinement(present, role)
+```
+
+The model rephrases prose only; every structured/safety field (`requiresApproval`, `pageIntelligence`,
+`action`, navigation) is copied from the grounded result. Deterministic fallback is guaranteed by
+`runModelAssist`. `DonnaVoiceReadyShell` and `donnaStrategicConversationAction` are **untouched** this
+sprint (strategic is a documented follow-up).
+
+> **Clarification:** "flag off" does not mean "no model." The general executive refinement
+> (`applyExecutiveRefinement`) remains **key-gated** and independent. `FEATURE_DONNA_MODEL_ASSIST`
+> gates only the **loop-specific firewalled** path.
 
 ## Certification
 

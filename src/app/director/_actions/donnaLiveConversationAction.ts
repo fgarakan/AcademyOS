@@ -19,6 +19,8 @@ import { processLiveAIConversation } from '@/lib/donna/brain/donnaLiveAIConversa
 import type { DonnaMessageInput, DonnaMessageResult } from '@/lib/donna/brain/processDonnaMessage'
 import { createDebugLog } from '@/lib/donna/brain/donnaBrainDebugLog'
 import { applyExecutiveRefinement } from '@/lib/donna/brain/donnaExecutiveCommunicationLayer'
+// Sprint 4364 — flag-gated, off-by-default loop-guidance model-assist (swap, not add).
+import { maybeModelAssistLoopGuidance } from '@/lib/donna/model/loopGuidanceAssist'
 import { enforceCompletionContract } from '@/lib/donna/completion/donnaCompletionConvergence'
 import { enforceExecutivePresence } from '@/lib/donna/conversation/donnaExecutivePresenceContract'
 import { loadDirectorDonnaContext, type DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
@@ -160,7 +162,17 @@ export async function donnaLiveConversationAction(
     // Fail-open: returns the result unchanged if refinement is unavailable.
     // Never alters facts, recommendations, or permissions.
     const role = membership.role === 'head_coach' ? 'coach' : 'director'
-    const legacyResult = await applyExecutiveRefinement(present, role)
+    // Sprint 4364 — loop-guidance model-assist SWAP (never add). For a loop-guidance
+    // question with model-assist explicitly enabled (FEATURE_DONNA_MODEL_ASSIST + key),
+    // rephrase via the firewalled model adapter INSTEAD OF the general executive
+    // refinement — so there is no duplicate model call. Off by default → returns null →
+    // the existing refinement path runs unchanged. Deterministic fallback is guaranteed
+    // by runModelAssist (any failure → the grounded answer's text).
+    const modelAssisted = await maybeModelAssistLoopGuidance(
+      { userMessage: msg, role, route: input.route, livePageState: input.livePageState ?? null },
+      present,
+    )
+    const legacyResult = modelAssisted ?? await applyExecutiveRefinement(present, role)
 
     // ── Executive Operating Layer wiring (Mega Sprint 3691–3720) ──────────────
     // Flag-gated via the existing DONNA_EXECUTIVE_REASONING flag. The legacy

@@ -37,7 +37,9 @@ function stripComments(text: string): string {
 }
 
 // The DONNA text-reasoning files still holding a direct OpenAI chat fetch AFTER this
-// sprint — documented, deferred to Sprint 4364 (honest, not falsely green).
+// sprint — documented advisory exceptions. Sprint 4364 activates the loop-guidance
+// model-assist and does NOT converge these; their convergence is deferred beyond 4364
+// (not yet scheduled). Listed here to stay honest, not falsely green.
 const DEFERRED_DIRECT_OPENAI = [
   'src/lib/donna/learning/donnaLearningAnalyzer.ts',
   'src/lib/donna/knowledgePromotion/donnaKnowledgeDraftGenerator.ts',
@@ -89,10 +91,21 @@ async function main(): Promise<void> {
     check('high confidence → not_called', out.source === 'not_called')
   }
 
-  // 6. Honesty: deferred direct-OpenAI files still exist (Sprint 4364 targets).
+  // 5b. Sprint 4364: the runtime-activation helper routes ONLY through runModelAssist.
+  {
+    const helper = 'src/lib/donna/model/loopGuidanceAssist.ts'
+    const hcode = stripComments(fs.readFileSync(path.join(ROOT, helper), 'utf8'))
+    check('helper: routes through runModelAssist', /runModelAssist/.test(hcode))
+    check('helper: no direct api.openai.com', !/api\.openai\.com/.test(hcode))
+    check('helper: no bare fetch(', !/\bfetch\s*\(/.test(hcode))
+    check('helper: no direct OpenAIProvider instantiation', !/new\s+OpenAIProvider/.test(hcode))
+    check('helper: gated by isModelAssistEnabled', /isModelAssistEnabled/.test(hcode))
+  }
+
+  // 6. Honesty: deferred direct-OpenAI files still exist (convergence deferred beyond 4364).
   for (const f of DEFERRED_DIRECT_OPENAI) {
     const t = fs.readFileSync(path.join(ROOT, f), 'utf8')
-    check(`deferred (4364): ${path.basename(f)} still has a direct OpenAI call`, /api\.openai\.com/.test(t))
+    check(`deferred (beyond 4364): ${path.basename(f)} still has a direct OpenAI call`, /api\.openai\.com/.test(t))
   }
 
   const total = passed + failed
@@ -100,7 +113,7 @@ async function main(): Promise<void> {
   process.stdout.write('\n============================================================\n')
   process.stdout.write(`MODEL CONVERGENCE CERTIFICATION: ${passed}/${total} checks (${pct.toFixed(1)}%)\n`)
   process.stdout.write('============================================================\n')
-  process.stdout.write('\nDeferred to Sprint 4364 (still direct OpenAI, documented):\n')
+  process.stdout.write('\nDeferred beyond Sprint 4364 — convergence not yet scheduled (still direct OpenAI, documented):\n')
   DEFERRED_DIRECT_OPENAI.forEach(f => process.stdout.write(`  • ${f}\n`))
   if (failures.length) {
     process.stdout.write('\nFailing checks:\n')
