@@ -157,12 +157,12 @@ async function main(): Promise<void> {
     // Academies A and B.
     const { data: acA, error: acAErr } = await admin
       .from('academies')
-      .insert({ name: `${SEED_TAG}-A` })
+      .insert({ name: `${SEED_TAG}-A`, slug: `${SEED_TAG}-a` })
       .select('id')
       .single()
     const { data: acB, error: acBErr } = await admin
       .from('academies')
-      .insert({ name: `${SEED_TAG}-B` })
+      .insert({ name: `${SEED_TAG}-B`, slug: `${SEED_TAG}-b` })
       .select('id')
       .single()
     if (acAErr || acBErr || !acA || !acB) {
@@ -194,7 +194,7 @@ async function main(): Promise<void> {
       // profiles row may be auto-created by a trigger; upsert to be safe and to set academy_id.
       const { error: pErr } = await admin
         .from('profiles')
-        .upsert({ id, academy_id: academyId, email, full_name: `${SEED_TAG} ${tag}` })
+        .upsert({ id, academy_id: academyId, email, display_name: `${SEED_TAG} ${tag}` })
       if (pErr) throw new Error(`profile upsert ${tag} failed: ${pErr.message}`)
 
       if (role) {
@@ -217,7 +217,7 @@ async function main(): Promise<void> {
     const makePlayer = async (tag: string, academyId: string): Promise<string> => {
       const { data, error } = await admin
         .from('players')
-        .insert({ academy_id: academyId, first_name: SEED_TAG, last_name: tag })
+        .insert({ academy_id: academyId, first_name: SEED_TAG, last_name: tag, date_of_birth: '2014-06-15' })
         .select('id')
         .single()
       if (error || !data) throw new Error(`player ${tag} failed: ${error?.message}`)
