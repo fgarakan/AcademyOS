@@ -135,6 +135,13 @@ Promoted the canonical concept to the **Executive Partnership** layer. Every way
 
 **Status: SHIP-READY for hands-on pilot testing. The active work is real-world usability validation, not new architecture.**
 
+> **Pilot dataset (Sprint 4366):** the controlled Dabul pilot dataset is now specified in
+> `docs/pilot/DABUL_PILOT_DATASET_SPEC.md` (re-skin the existing God-Mode seed harness to
+> Dabul; do not build a new seed system). **Next blocker before any browser validation with
+> Dabul data: staging/migration alignment** — migrations `085` (required), `084`, and `086`
+> are unapplied on the reachable DB, so no live seed or browser test runs until they are
+> applied. Build step is Sprint 4367 (the seeder), gated on that alignment.
+
 ### Why the spine is done
 - ONE DONNA pipeline converged across every entry point — one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`), one `realitySnapshot`, layered memory.
 - Executive Communication refinement runs by default in Pilot Mode, fail-open and fact-preserving — worst case (no key / timeout / error / fact-altering rewrite) falls back to today's grounded answer.

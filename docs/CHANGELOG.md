@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-07-04 — Sprint 4366 — Define Dabul pilot dataset specification and staging audit
+
+**Mission:** Pre-build audit + specification for a controlled Brian / Dabul Tennis Academy
+pilot dataset. **Docs only** — no seed data, no code, no schema, no migrations, no browser
+automation.
+
+- `docs/pilot/DABUL_PILOT_DATASET_SPEC.md` (new) — the single authoritative pilot-dataset
+  spec, from the consolidated four-agent audit. Records the three competing datasets
+  (God-Mode / orphan Brian-narrative / mislabeled Monteiro SQL), the unapplied-migration
+  wall (085 required, 084/086 unapplied), why we do not seed or browser-test yet, the
+  decision to **re-skin the God-Mode harness to Dabul** (not invent a new seed system),
+  what to reuse vs retire, the exact fake Dabul dataset shape (all 10 loops + safe/unsafe
+  DONNA prompts + role boundaries), a "Do Not Build Yet" section, and the next sprint.
+- `docs/CURRENT_BUILD_TARGET.md` — pointer to the spec + next blocker (staging/migration
+  alignment before browser validation).
+
+**Next:** Sprint 4367 — Dabul Pilot Seeder (re-skin of the God-Mode harness), gated on
+migrations 085/084/086 being applied first.
+
+---
 ## 2026-07-04 — Sprint 4365 (follow-up) — Register DONNA conversation cert into the gate
 
 **Mission:** Promote `donnaConversationCertification.ts` from standalone into the
