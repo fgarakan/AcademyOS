@@ -223,7 +223,7 @@ BEGIN
    'A short check where the coach watches whether the player can call the score correctly during a real game.',
    1, true)
 
-  ON CONFLICT ON CONSTRAINT idx_curriculum_content_items_global_unique DO NOTHING;
+  ON CONFLICT (level_id, content_type, title, version) WHERE academy_id IS NULL DO NOTHING;
 
 
   -- ============================================================
@@ -418,7 +418,7 @@ BEGIN
    'A check where the player shows how many times they can get their serve into the right box.',
    1, true)
 
-  ON CONFLICT ON CONSTRAINT idx_curriculum_content_items_global_unique DO NOTHING;
+  ON CONFLICT (level_id, content_type, title, version) WHERE academy_id IS NULL DO NOTHING;
 
 
   -- ============================================================
@@ -614,6 +614,6 @@ BEGIN
    'A check where the coach observes whether the player can serve to the area they intend.',
    1, true)
 
-  ON CONFLICT ON CONSTRAINT idx_curriculum_content_items_global_unique DO NOTHING;
+  ON CONFLICT (level_id, content_type, title, version) WHERE academy_id IS NULL DO NOTHING;
 
 END $$;
