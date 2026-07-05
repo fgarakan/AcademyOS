@@ -12,6 +12,30 @@ It is the concrete implementation of remaining deviation #3 in
 
 ---
 
+## Status: LOCAL behavioral PASS earned (Sprint 4368)
+
+**Result:** `TENANT ISOLATION BEHAVIORAL TEST: 21 passed, 0 failed — CERTIFIED` (exit 0).
+
+**Where:** a **local Docker Postgres** (the `supabase start` stack, 127.0.0.1) with
+migrations **001–086** applied via a fresh `supabase db reset` — reached only after
+Sprint 4367A fixed the 046 `ON CONFLICT` arbiter that had been breaking fresh replay, and
+Sprint 4367B fixed the harness fixtures (added the required `academies.slug`; corrected
+`profiles.full_name` → `display_name`; added the required `players.date_of_birth`). The
+run used temporary shell env vars sourced from `supabase status -o env`, **not** `.env.local`.
+
+**Scope caveat — READ THIS BEFORE CITING THE PASS:** this is a **LOCAL Docker proof only.**
+It verifies that the migration / RLS / trigger tenant-isolation *logic* holds when actually
+executed. It does **NOT** verify a live staging or cloud database, and must not be described
+as staging/cloud validation. The remaining open work is to earn the same PASS against a live
+staging/cloud instance.
+
+**One informational (non-gating) finding:** current RLS grants all same-academy staff
+full-row SELECT on `guardians`, so a coach **can** read a same-academy guardian's
+email/phone. This is **not** a cross-tenant leak (the cross-academy boundary held on every
+case) — it is a same-academy column-level policy gap, flagged for a future sprint.
+
+---
+
 ## Two independent implementations
 
 Both prove the same boundaries; run either or both.
@@ -50,10 +74,12 @@ A BLOCKED run prints exactly why and does **not** print a green certified line.
 1. A reachable Supabase/Postgres instance with **migrations 001–086 applied** (086 is
    what gives `player_guardians` its `academy_id` — the harness probes for it and BLOCKS
    if it is absent).
-2. Three env vars in `.env.local`:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+2. Three env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`. The `npm run test:tenant-isolation` script reads them from
+   `.env.local`. For a **local Docker** run you can instead pass them as temporary shell
+   env vars sourced from `supabase status -o env` (the values for the running local stack)
+   and invoke the harness directly — this is how the Sprint 4368 local PASS was earned,
+   without touching `.env.local`.
 
 > The service role is used **only** to seed and tear down fixtures. All boundary
 > assertions run through authenticated non-privileged clients so RLS is genuinely in

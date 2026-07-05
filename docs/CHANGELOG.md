@@ -2,6 +2,63 @@
 
 ---
 
+## 2026-07-05 — Sprint 4368 — Tenant-Isolation Local Behavioral Certification + Deviation Update
+
+**Mission:** Record the proof trail now that AcademyOS has a **real local proof** that
+academy data separation works. **Docs only** — no code, schema, migrations, env, or seed.
+
+- `docs/CURRENT_BUILD_TARGET.md` — updated the certification-status bullet and remaining
+  deviation #3 from "harness BLOCKED / live PASS pending" to **LOCAL behavioral PASS
+  earned (21/21 — CERTIFIED)** against a local Docker DB with migrations 001–086 applied.
+  Both entries carry the explicit caveat that this is a **local Docker proof only** and does
+  **not** verify a live staging/cloud database; that run remains the open work.
+- `docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md` — new "Status: LOCAL behavioral PASS earned
+  (Sprint 4368)" section (result, where/how it was earned via 4367A + 4367B, the
+  local-only scope caveat, and the one informational same-academy guardian-contact finding);
+  clarified that a local run can use temporary shell env vars from `supabase status -o env`
+  instead of `.env.local`.
+
+**Honest scope:** LOCAL Docker only — proves the migration/RLS/trigger tenant-isolation
+*logic*, not a live staging/cloud tenant. Not overclaimed as staging validation.
+
+**Validation:** `npm run certify` — **31/31 suites passed**. No code/TS changed → `tsc` not
+required. No DB mutation; no schema, migration, env, runtime, or Dabul-seed change.
+
+---
+## 2026-07-05 — Sprint 4367B — Repair tenant-isolation harness fixture for first behavioral PASS
+
+**Mission:** Fix the tenant-isolation behavioral harness fixtures so it can earn a real PASS.
+**Test-fixture code only** (`scripts/certification/tenantIsolationBehavioralTest.ts`) — no
+schema, migrations, env, runtime app behavior, or Dabul data.
+
+- Added the required `academies.slug` (deterministic, unique, derived from `SEED_TAG`) to
+  both academy inserts; corrected `profiles.full_name` → `display_name` (the real NOT-NULL
+  column); added the required `players.date_of_birth`. All three were missing/invalid
+  NOT-NULL fixture columns of the same class, verified against the live local schema.
+
+**Validation (local Docker only, temp shell env vars — not `.env.local`):** harness
+**21/21 — CERTIFIED (exit 0)**; `npx tsc --noEmit` clean; `npm run certify` **31/31**. First
+earned behavioral tenant-isolation PASS (local). Commit `ac590095`.
+
+---
+## 2026-07-04 — Sprint 4367A — Repair 046 ON CONFLICT arbiter for fresh migration replay
+
+**Mission:** Reconcile the working tree and unblock fresh local migration replay before any
+Dabul pilot-dataset work. **One protected migration repaired** — no new schema, no new
+migration, no seed, no browser automation.
+
+- `supabase/migrations/046_orange_ball_content_pack.sql` — replaced three invalid
+  `ON CONFLICT ON CONSTRAINT idx_curriculum_content_items_global_unique` clauses with the
+  correct partial-index arbiter `ON CONFLICT (level_id, content_type, title, version)
+  WHERE academy_id IS NULL DO NOTHING`. The target is a **partial unique index** (045), which
+  is not a `pg_constraint` — so `ON CONFLICT ON CONSTRAINT` failed on every fresh replay and
+  had never applied anywhere (zero drift risk). Semantically identical, idempotent.
+
+**Validation (local Docker only):** fresh `supabase db reset` applied **001–086 cleanly**
+(084/085/086 object-verified); `npm run certify` **31/31**. No remote/prod DB touched;
+`.env.local` untouched. Commit `9b59013a`.
+
+---
 ## 2026-07-04 — Sprint 4366 — Define Dabul pilot dataset specification and staging audit
 
 **Mission:** Pre-build audit + specification for a controlled Brian / Dabul Tennis Academy

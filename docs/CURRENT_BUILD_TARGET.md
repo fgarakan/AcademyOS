@@ -1,6 +1,6 @@
 # Current Build Target
 
-**Last updated:** 2026-06-30
+**Last updated:** 2026-07-05
 **Current phase:** Executive Experience Refinement — post-infrastructure (Brian Dabul / Dabul Tennis Academy pilot)
 
 ---
@@ -28,7 +28,7 @@ and reducing director cognitive load — **not new architecture**.
 - **First non-DONNA platform certification complete** — Tenant Isolation Static Certification V1 (422/422).
 - **Page-Owned Workflow Boundary certified** — 212/212, including resolved-workflow routing (Section J).
 - **Tenant Isolation certified (static)** — RLS + `academy_id`/approved isolation key + academy-scoped policy on every tenant-owned table; fail-closed classification of every parsed table. Static cert green (426/426, 0 tracked deviations).
-- **Tenant Isolation behavioral harness landed (Sprint 4357)** — `npm run test:tenant-isolation` is wired (plus a `psql` companion, `supabase/tests/tenant_isolation_behavioral.sql`). The static cert is green, but the behavioral harness currently returns **BLOCKED** (honest tri-state, exit 2) because no reachable database has migrations 001–086 applied. This is **not** a live PASS — live behavioral tenant isolation is **not yet verified**. See `docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md`.
+- **Tenant Isolation behavioral harness — LOCAL PASS earned (Sprint 4368).** The harness (`scripts/certification/tenantIsolationBehavioralTest.ts`, wired as `npm run test:tenant-isolation`, plus the `psql` companion `supabase/tests/tenant_isolation_behavioral.sql`) now returns a real **PASS: 21/21 — CERTIFIED (exit 0)** against a **local Docker Postgres** with migrations 001–086 applied. It previously returned BLOCKED only because no such DB was reachable; a fresh local `supabase db reset` (Sprint 4367A) + fixture repair (Sprint 4367B) provisioned one. **Scope caveat — this is a LOCAL Docker proof only.** It verifies the migration / RLS / trigger tenant-isolation *logic* locally; it does **not** verify a live staging or cloud database. Live staging/cloud behavioral verification remains open. See `docs/TENANT_ISOLATION_BEHAVIORAL_TEST.md`.
 - **Executive Interaction Constitution committed** — Director audit standard (`b988d51a`).
 - **Architecture Constitution committed** — `docs/ARCHITECTURE.md`, the highest architectural authority (`091d07a3`).
 
@@ -59,7 +59,7 @@ The structural spine is complete across every layer:
 
 1. **`guardians` academy-scoped policies** — RLS on, no policy (deny-all). `ARCHITECTURE.md` §4.2. Tracked + ratcheted (does not leak; suite reds only if the deny-all set grows).
 2. **`player_guardians` academy-scoped policies + `academy_id` migration** — deny-all and no `academy_id` column. `ARCHITECTURE.md` §4.2.
-3. **Live 2-academy behavioral tenant-isolation — Harness landed; live DB PASS pending.** Sprint 4357 (`e7489036`) landed the behavioral harness (`scripts/certification/tenantIsolationBehavioralTest.ts` + SQL companion) and wired `npm run test:tenant-isolation`. This is no longer "no harness exists." It is **not** closed: the harness currently returns BLOCKED and will not be done until it earns a real PASS against a reachable database with migrations 001–086 applied. Do not claim live behavioral tenant isolation is verified until that PASS is achieved.
+3. **Behavioral tenant-isolation — LOCAL PASS earned; live staging/cloud PASS still pending.** Sprint 4357 (`e7489036`) landed the behavioral harness (`scripts/certification/tenantIsolationBehavioralTest.ts` + SQL companion). Sprint 4367A repaired fresh local migration replay (046 `ON CONFLICT` arbiter) and Sprint 4367B repaired the harness fixtures, so the harness now earns a real **PASS: 21/21 — CERTIFIED** against a **local Docker DB** with migrations 001–086 applied. **This closes the "no earned PASS" gap only for a local Docker database.** It does **not** prove a live staging/cloud tenant. Do **not** claim live staging/cloud behavioral tenant isolation is verified — that run is the remaining work here. The lone informational finding (staff can read same-academy guardian email/phone — not a cross-tenant leak) is flagged for a future policy sprint.
 4. **Browser validation against the Brian pilot** — real director / coach / parent walkthrough of the 10 atomic loops.
 5. **Executive Simplicity Phase 1 implementation** — reduce director cognitive load on the converged spine.
 
