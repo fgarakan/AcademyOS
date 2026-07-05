@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-07-05 — Sprint 4369A — Dedicated Staging/Pilot Supabase Project Setup Plan
+
+**Mission:** Document how a **separate, non-production** Supabase project will be stood up
+as the safe cloud home for the Brian/Dabul pilot, so migrations `084/085/086` and pilot
+testing never touch the live app backend. **Docs only** — no DB connection, no migration
+apply, no seed, no env change, no code.
+
+- `docs/pilot/STAGING_PILOT_PROJECT_SETUP_PLAN.md` — new plan covering: why a dedicated
+  pilot project is needed; confirmation that the only reachable remote DB
+  (`dbjjhhxdkpdreytsozlq`, the live app backend) is production-like and must not be used;
+  recommended name (`AcademyOS-Pilot` / `Dabul-Pilot-Staging`); what to create manually in
+  the dashboard; the one value to return (the new pilot project ref); the phase-by-phase
+  setup (link → `001→086` push → verify → tenant-isolation behavioral → pilot env →
+  seeder → browser validation); four hard approval gates; and an explicit warning — no
+  production DB, no `.env.local` change, no live app backend, disabled prod link stays
+  disabled.
+
+**Honest scope:** Planning only. No Supabase project was created, no remote/prod DB was
+connected, no migration applied, no data seeded, no env file modified. The production-like
+live backend `dbjjhhxdkpdreytsozlq` remains untouched.
+
+**Next action:** Human creates the pilot Supabase project manually and provides the new
+project ref; nothing proceeds until that ref satisfies Gate G1.
+
+**Validation:** Docs-only change → `tsc` not required. `git status --short` reviewed.
+
+---
+
 ## 2026-07-05 — Sprint 4368 — Tenant-Isolation Local Behavioral Certification + Deviation Update
 
 **Mission:** Record the proof trail now that AcademyOS has a **real local proof** that
