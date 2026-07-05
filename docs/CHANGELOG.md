@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-07-05 — Sprint 4369B — Phase-1 Pilot Project Verification Commands
+
+**Mission:** Preserve the exact safe, read-only Phase-1 verification sequence for the
+AcademyOS-Pilot Supabase project, so once the human provides the pilot project ref we can
+prove the target is safe / non-production and empty **before** any migration is applied.
+**Docs only** — no DB connection, no remote link, no migration apply, no seed, no env
+change, no code.
+
+- `docs/pilot/PILOT_PROJECT_PHASE_1_VERIFICATION_COMMANDS.md` — new reference covering:
+  Phase-1 purpose; what to provide vs never provide; the production ref that must never be
+  used (`dbjjhhxdkpdreytsozlq`); the `<PILOT_PROJECT_REF>` placeholder; the exact read-only
+  verification commands (guard → `projects list` → `link` → `project-ref` check →
+  `migration list`); the not-production checks; the empty/new checks; the migration-status
+  check; Gate G1 pass/fail criteria; the Gate G2 stop gate before migrations; the Phase-2
+  sequence proposed only after approval (with the `test:tenant-isolation` / `.env.local`
+  hazard flagged); and the standing safety rules.
+
+**Honest scope:** Documentation only. No Supabase project was created, no remote/prod DB
+was connected or linked, no migration applied, no data seeded, no env file modified. The
+production-like live backend `dbjjhhxdkpdreytsozlq` remains untouched; its disabled link
+stays disabled.
+
+**Next action:** Human provides the new pilot project ref; nothing proceeds until it
+satisfies Gate G1.
+
+**Validation:** Docs-only change → `tsc` not required. `git status --short` reviewed.
+
+---
+
 ## 2026-07-05 — Sprint 4369A — Dedicated Staging/Pilot Supabase Project Setup Plan
 
 **Mission:** Document how a **separate, non-production** Supabase project will be stood up
