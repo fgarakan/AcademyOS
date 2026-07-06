@@ -1,6 +1,6 @@
 # Current Build Target
 
-**Last updated:** 2026-07-05
+**Last updated:** 2026-07-06
 **Current phase:** Executive Experience Refinement — post-infrastructure (Brian Dabul / Dabul Tennis Academy pilot)
 
 ---
@@ -137,10 +137,26 @@ Promoted the canonical concept to the **Executive Partnership** layer. Every way
 
 > **Pilot dataset (Sprint 4366):** the controlled Dabul pilot dataset is now specified in
 > `docs/pilot/DABUL_PILOT_DATASET_SPEC.md` (re-skin the existing God-Mode seed harness to
-> Dabul; do not build a new seed system). **Next blocker before any browser validation with
-> Dabul data: staging/migration alignment** — migrations `085` (required), `084`, and `086`
-> are unapplied on the reachable DB, so no live seed or browser test runs until they are
-> applied. Build step is Sprint 4367 (the seeder), gated on that alignment.
+> Dabul; do not build a new seed system).
+>
+> **Pilot project verified (Sprint 4370, 2026-07-06).** A dedicated **non-production**
+> pilot project — **`AcademyOS-pilot`**, ref `cctqtapzpcwuffbmapmk`, region `us-east-2`
+> (prod `dbjjhhxdkpdreytsozlq` is `us-west-2`, untouched) — was stood up and passed the
+> Gate G1 identity checks. Read-only inspection found migrations **`001–086` already
+> applied** (130 tables, ~1,528 rows across 50 tables) from a prior Jul-5 `db push`. **All
+> populated data is migration-embedded seed** (1,085 curriculum `INSERT`s + the
+> `024_seed_data.sql` "Angles Tennis Academy" demo; live tenant counts match `024`
+> exactly) — no external/contaminating seed, no Dabul seeder run. **So the migration-
+> alignment blocker is closed for the pilot project: `084/085/086` are applied and there
+> are no pending migrations** (the earlier "unapplied on the reachable DB" note referred to
+> the production-like live backend, which stays untouched).
+>
+> **Two follow-ups remain before browser validation with Dabul data:** (1) the pilot
+> tenant-isolation **behavioral** run — its own step using **temporary pilot shell env
+> vars**, never the `.env.local`-bound `npm run test:tenant-isolation` alias (that alias
+> points at production); (2) the **Angles-vs-Dabul dataset decision** (coexist vs replace)
+> before/at the gated Dabul seeder step. Build step for the seeder is Sprint 4367, still
+> gated on that decision.
 
 ### Why the spine is done
 - ONE DONNA pipeline converged across every entry point — one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`), one `realitySnapshot`, layered memory.

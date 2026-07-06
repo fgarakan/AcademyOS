@@ -2,6 +2,60 @@
 
 ---
 
+## 2026-07-06 — Sprint 4370 — Pilot Project Phase-1 Verification Result (migrated + demo-seeded, verified)
+
+**Mission:** Record the honest, evidence-based result of running the Gate G1 / Phase-1
+read-only verification against the human-provided AcademyOS-Pilot project ref. **Docs
+only** — read-only DB inspection was performed (no writes); no migration applied, no data
+seeded, no env change, no commit gated by this entry, production untouched.
+
+**Pilot ref verified:** `cctqtapzpcwuffbmapmk` (org `mecxwoclnvxmxebaszgj`).
+
+- **Identity — PASS.** Step-0 guard confirmed the ref **≠** the live backend
+  `dbjjhhxdkpdreytsozlq`. `supabase projects list` resolves it to project name
+  **`AcademyOS-pilot`** (not the bare `AcademyOS` prod project), region **`us-east-2`**
+  (prod is `us-west-2` — recorded as a harmless setup difference), created
+  `2026-07-05T17:36:02Z`, status `ACTIVE_HEALTHY`. Active link
+  (`supabase/.temp/project-ref`) already `== cctqtapzpcwuffbmapmk` from a prior Jul-5
+  session; the disabled prod link (`supabase/.temp.disabled-local-validation/project-ref`)
+  still holds the prod ref and was **not** touched.
+- **Empty/new — deviation, benign.** The project is **not** empty. `supabase migration
+  list` shows **`001–086` applied on the remote** (full schema, 130 tables), and read-only
+  `supabase inspect db table-stats` reports **~1,528 rows across 50 tables**. A prior Jul-5
+  session already ran `supabase db push` of `001→086`.
+- **All populated data is migration-embedded seed — no external/contaminating seed.**
+  Local migration grep: **1,085** curriculum `INSERT`s (→ `curriculum_drill_tags 614`,
+  `curriculum_drills 152`, `curriculum_coach_language 120`, `curriculum_content_items 92`,
+  levels/stages/gates/requirements) and **`024_seed_data.sql`** ("DEMO ACADEMY") →
+  **"Angles Tennis Academy"** (slug `angles`, id `00…001`). Live tenant counts
+  (`academies 1`, `groups 4`, `players 4`, `group_memberships 3`, `templates 2`,
+  `audit_logs 2`) **match `024` exactly**, confirming no Dabul seeder ran (it does not exist
+  yet) and no external contamination. The DB state is the deterministic output of a clean
+  `db push` of `001→086`.
+
+**Gate outcome:**
+- **Phase 2 (`apply 001→086`) is effectively already done and correct** — there are **no
+  pending migrations**. The G2 approval phrase is **moot** (a `db push` would be a no-op).
+- The seeded academy is the generic **Angles** demo, **not Dabul**. A future gated step
+  must decide whether the Dabul dataset **coexists with** or **replaces** Angles before/at
+  seeding time.
+- **Remaining pilot step:** tenant-isolation **behavioral** run against the pilot — must
+  use **temporary pilot shell env vars**, never the `.env.local`-bound
+  `npm run test:tenant-isolation` alias (that alias points at production).
+
+**Honest scope:** Read-only inspection only. No migration applied (none pending), no data
+seeded, no `.env.local` read/written, no browser validation, no Dabul seeder, no commit
+triggered by this entry. Production `dbjjhhxdkpdreytsozlq` untouched; disabled prod link
+stays disabled.
+
+**Next action:** Human decides between (a) running the pilot tenant-isolation behavioral
+test as its own temporary-shell-env step, or (b) the Angles-vs-Dabul dataset decision
+before seeding. Held pending that choice.
+
+**Validation:** Docs-only change → `tsc` not required. `git status --short` reviewed.
+
+---
+
 ## 2026-07-05 — Sprint 4369B — Phase-1 Pilot Project Verification Commands
 
 **Mission:** Preserve the exact safe, read-only Phase-1 verification sequence for the
