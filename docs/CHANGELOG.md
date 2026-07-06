@@ -2,6 +2,83 @@
 
 ---
 
+## 2026-07-06 — Sprint 4375 — Gate 3: Tenant-Isolation Behavioral PASS Against Pilot Data
+
+**Mission:** Run the tenant-isolation behavioral harness against the live AcademyOS-Pilot
+project with the Dabul dataset present. **Verification-only sprint** — no code, no schema,
+no UI, no unrelated architecture.
+
+- **Result: PASS — 21/21, 0 failed, CERTIFIED (exit 0).** The first **cloud** behavioral
+  tenant-isolation PASS (previously earned only on local Docker, Sprint 4368).
+- **Pilot environment only.** Temporary pilot shell env (sourced `.env.pilot.local` +
+  anon key fetched silently via the authenticated CLI) → **direct invocation** of
+  `scripts/certification/tenantIsolationBehavioralTest.ts`. The `.env.local`-bound
+  `npm run test:tenant-isolation` alias was **not** used. Preflight confirmed the env
+  pointed at the pilot, not production. **No secrets printed** (values held in shell vars;
+  output passed through a key-redaction filter).
+- **Cross-tenant access checks passed:** directors, coach, and parents each blocked from the
+  other academy's players/guardians/links; cross-academy `player_guardians` INSERT and
+  UPDATE rejected by trigger; director cross-tenant UPDATE affected 0 rows; cross-tenant
+  reads failed safely (empty results, no error leakage).
+- **Role-scoped access checks passed:** director sees own academy only; coach sees
+  own-academy links only; parent sees only their own guardian link; same-academy link
+  INSERT succeeds; global curriculum spine readable and unmodified.
+- **Service-role behavior not exposed to client-facing paths:** harness used service-role
+  for setup/teardown only; every assertion ran through an authenticated anon client with
+  RLS enforced.
+- **Post-run integrity sweep:** zero harness residue; Dabul dataset byte-identical
+  (1 academy, 8 players, 8 guardians, 5 sessions, 2 approvals, spine unchanged).
+- **Informational (known, non-gating):** staff can read same-academy guardian email/phone
+  (full-row SELECT, no column-level restriction). Moot today (all seeded contact fields
+  NULL); policy decision deferred to the parent-identity sprint.
+
+**Required fix before Sprint 4376: none.**
+
+**Honest scope:** No browser validation performed. No DONNA testing performed. No unrelated
+architecture/UI work performed. No repo files changed except this changelog entry.
+
+---
+
+## 2026-07-06 — Sprint 4374 — Gate 2: Dabul Pilot Seed Executed & Verified
+
+**Mission:** Execute the certified Dabul seeder against the clean AcademyOS-Pilot database.
+**Data-only sprint** — no code, no schema, no migrations, no architecture, no UI.
+
+- **Gate 2 pre-seed guard passed** (all 10 checks): `.env.pilot.local` present at repo root
+  (gitignored, untracked, unstaged; var names verified, values never printed); URL contains
+  the pilot ref and not the production ref; active link `== cctqtapzpcwuffbmapmk`; pilot DB
+  clean (0 academies, 0 profiles); global curriculum spine intact (drills 152, content 92,
+  tags 614, levels 15, gates 57).
+- **Seed executed successfully (first attempt):**
+  `DEMO_DATASET=dabul_pilot_v1 node --env-file=.env.pilot.local --import tsx scripts/demo/seed.ts --confirm`
+  → "Dabul Tennis Academy" (`dab00000-0000-4000-8000-000000000001`, slug `dabul-pilot`,
+  tagged `is_demo_data=true` + `seed_batch_id='dabul_pilot_v1'`).
+- **Live post-seed verification (read-only `--linked`):** academies 1 (Angles 0) · profiles 3
+  (Brian director `brian.dabul@dabulpilot.test` + 2 coaches) · academy_memberships 3 ·
+  players 8 (1 pending_placement) · guardians 8 (**0 with email/phone**) · sessions 5 (1
+  completed, wrap-up overdue) · templates 2 · proposed_actions 2 (pending_review) ·
+  player_curriculum_states 7 · player_development_signals 3 · voice_commands 1. **0 profiles
+  off the `@dabulpilot.test` domain; 0 rows in any other tenant; spine counts unchanged.**
+- **Production guard / safe-target checks remained active** throughout: `assertSafeTarget`
+  passed pre-write; production `dbjjhhxdkpdreytsozlq` never contacted; `.env.local` never
+  used; no secrets printed.
+- **Certifications after seed:** Dabul pilot seeder cert **38/38**; gate **32/32**.
+
+**Known gap (recorded, deferred to Sprint 4376):** `player_guardians` links = **0** — the
+seeder inserts guardians without linking them to players, and creates no parent auth users.
+Loop 10 (Parent/Player-Safe Clarity) is partial until the parent-identity fix. Coach
+wrap-ups and formal assessments are intentionally not pre-seeded (createable paths for
+Loops 7–8).
+
+**Honest scope:** No browser validation performed. No DONNA testing performed. No
+architecture added. No repo files changed except this changelog entry.
+
+**Next gate:** Gate 3 — tenant-isolation behavioral verification against the pilot
+(Sprint 4375), via temporary pilot env / direct invocation — never the `.env.local`-bound
+npm alias.
+
+---
+
 ## 2026-07-06 — Sprint 4373 — Controlled Dabul Pilot Seeder Build / Gate 2 Prep
 
 **Mission:** Build the reusable, fake/safe Dabul pilot seeder by **re-skinning** the existing
