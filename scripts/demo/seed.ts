@@ -66,18 +66,23 @@ async function main() {
     return id
   }
   function hash(s: string): number { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h }
+  /** ASCII-safe email local part: strip diacritics (Andrés → andres), drop anything not [a-z0-9.]. */
+  function emailLocal(s: string): string { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9.]/g, '') }
 
   const directorId = await makeUser(DS.director.email, `${DS.director.firstName} ${DS.director.lastName}`)
   await db.from('academy_memberships').insert({ academy_id: DEMO_ACADEMY_ID, profile_id: directorId, role: 'academy_director', is_active: true })
 
   const coachIdByKey: Record<string, string> = {}
   for (const c of DS.coaches) {
-    const id = await makeUser(`${c.firstName.toLowerCase()}.${c.key}@${BUNDLE.emailDomain}`, `${c.firstName} ${c.lastName}`)
+    const id = await makeUser(`${emailLocal(c.firstName)}.${c.key}@${BUNDLE.emailDomain}`, `${c.firstName} ${c.lastName}`)
     coachIdByKey[c.key] = id
     await db.from('academy_memberships').insert({ academy_id: DEMO_ACADEMY_ID, profile_id: id, role: c.key === 'c3' ? 'head_coach' : 'coach', is_active: true })
   }
 
-  // 3. Players + guardians.
+  // 3. Players + parent identity (Sprint 4376): each guardian gets a real parent auth user
+  // (guardians.profile_id — the parent portal resolves by it) and a player_guardians link
+  // (the 086 trigger derives academy_id from the player). Guardian email/phone stay NULL —
+  // the parent's login email lives on profiles only, on the fake domain.
   const ages = [11, 12, 13, 13, 9, 12, 14, 10, 12, 8]
   for (let i = 0; i < DS.players.length; i++) {
     const p = DS.players[i]
@@ -89,7 +94,15 @@ async function main() {
     })
     if (error) throw new Error(`player ${p.firstName}: ${error.message}`)
     const par = DS.parents.find((x) => x.childPlayerId === p.id)!
-    await db.from('guardians').insert({ academy_id: DEMO_ACADEMY_ID, first_name: par.firstName, last_name: par.lastName, relationship: 'parent', is_primary: true })
+    // Parent auth user + profile (NO staff membership — parents are not academy staff).
+    const parentAuthId = await makeUser(`${emailLocal(par.firstName)}.${par.key}@${BUNDLE.emailDomain}`, `${par.firstName} ${par.lastName}`)
+    const { error: gErr } = await db.from('guardians').insert({
+      id: par.id, academy_id: DEMO_ACADEMY_ID, profile_id: parentAuthId,
+      first_name: par.firstName, last_name: par.lastName, relationship: 'parent', is_primary: true,
+    })
+    if (gErr) throw new Error(`guardian ${par.firstName}: ${gErr.message}`)
+    const { error: lErr } = await db.from('player_guardians').insert({ player_id: p.id, guardian_id: par.id })
+    if (lErr) throw new Error(`link ${par.firstName}→${p.firstName}: ${lErr.message}`)
   }
 
   // 4. Curriculum states (global curriculum_levels spine) + development signals.
@@ -139,7 +152,7 @@ async function main() {
     templateCount += 1
   }
 
-  console.log(`✓ Seeded "${DS.academy.name}" (${DEMO_ACADEMY_ID}) [${BUNDLE.key}]: 1 director, ${DS.coaches.length} coaches, ${DS.players.length} players, ${DS.parents.length} parents, ${DS.approvals.length} approvals, ${DS.sessions.length} sessions, ${templateCount} templates.`)
+  console.log(`✓ Seeded "${DS.academy.name}" (${DEMO_ACADEMY_ID}) [${BUNDLE.key}]: 1 director, ${DS.coaches.length} coaches, ${DS.players.length} players, ${DS.parents.length} parents (auth-linked guardians + player links), ${DS.approvals.length} approvals, ${DS.sessions.length} sessions, ${templateCount} templates.`)
   console.log(`  Director login: ${DS.director.email}`)
 }
 

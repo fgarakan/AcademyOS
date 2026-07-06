@@ -148,7 +148,7 @@ const LOOP_COVERAGE: LoopCoverage[] = [
   { loop: 7, name: 'Coach Wrap-Up', seededElement: 'a completed session with an overdue wrap-up + pending wrap-up approval', createablePath: 'file a wrap-up in-browser' },
   { loop: 8, name: 'Player Progress / Evidence', seededElement: 'player journeys, curriculum states, development signals, assessment recency', createablePath: 'record an assessment / evidence in-browser' },
   { loop: 9, name: 'Director Review / Approval', seededElement: '2 proposed_actions (parent reply + wrap-up) in the review queue', createablePath: 'approve/reject an item in-browser' },
-  { loop: 10, name: 'Parent/Player-Safe Clarity', seededElement: '8 guardians (no contact data) + parent-safe player views', createablePath: 'open the parent-safe view in-browser' },
+  { loop: 10, name: 'Parent/Player-Safe Clarity', seededElement: '8 guardians with parent auth logins (guardians.profile_id) + player_guardians links; no contact data on guardian rows', createablePath: 'log in as a parent and open the parent-safe view in-browser' },
 ]
 
 // ── Dataset (extends the God-Mode shape so seed.ts/reset.ts work unchanged) ───────
