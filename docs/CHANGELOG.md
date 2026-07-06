@@ -2,6 +2,68 @@
 
 ---
 
+## 2026-07-06 — Sprint 4377 — Curriculum-States Parent-Safety RLS Fix (migration 087)
+
+**Mission:** Fix the within-tenant parent-safety leak on `player_curriculum_states`
+surfaced during Sprint 4376. **Smallest well-scoped migration**, one table only.
+
+- **`supabase/migrations/087_curriculum_states_parent_safety.sql` created** and applied to
+  the pilot (tracked push; migration list 87/87).
+- **The leak:** migration 036's `"System manages player curriculum states" FOR ALL USING
+  (academy_id = auth_academy_id())` had no `auth_is_staff()` guard and no `WITH CHECK`, so
+  any authenticated academy member (a parent) matched it and could read/write **every**
+  player's curriculum state in the academy (cross-player, within tenant).
+- **The fix:** dropped that policy; added `"Staff manage player curriculum states"`
+  (`FOR ALL` guarded by `auth_is_staff()` + symmetric `WITH CHECK`); added
+  `"Parents see linked child curriculum state"` (`FOR SELECT`, scoped via
+  `player_guardians → guardians.profile_id = auth.uid()`, mirroring the certified players
+  "Parents see their children" policy). Player-self and staff SELECT policies unchanged.
+- **Parent/guardian access now limited to safe linked-player scope** (read-only, own child).
+- **Cross-player reads fail:** parent behavioral proof — before: 7 curriculum states (all
+  players); after: **1 (own child Mateo only)**; unlinked child (Lucía) → **0 rows**; parent
+  write to own child → **0 rows (denied)**.
+- **Cross-tenant reads fail:** full tenant-isolation behavioral harness re-run **21/21 —
+  CERTIFIED** (no regression).
+- **Coach/director behavior did not regress:** coach still reads the academy-wide 7
+  curriculum states; static gate `npm run certify` **32/32**; `tsc` clean.
+- **Service-role behavior was not used as proof of client-facing safety:** all parent/coach
+  assertions ran through authenticated ANON clients with RLS enforced; service-role only
+  used by the harness for its own setup/teardown.
+- **Loop 10 is now unblocked** (behavioral proof passed).
+
+**Honest scope:** No browser validation performed. No DONNA testing performed. No unrelated
+RLS/auth refactor performed.
+
+---
+
+## 2026-07-06 — Sprint 4376 — Wire Pilot Parent Identity
+
+**Mission:** Give the pilot's guardians real login identities and correct player links so a
+parent can resolve to their child. **Seeder code only** — no schema, no UI redesign.
+
+- **Pilot parent/guardian auth users seeded:** each guardian now gets a real auth user
+  (`guardians.profile_id`), on the non-routable `*.dabulpilot.test` domain, with **no staff
+  membership** (parents are not academy staff). Added `emailLocal()` to ASCII-normalize
+  accented names (fixed a live `andrés` → invalid-email seed error). 8 parent users created.
+- **`player_guardians` links verified:** 0 → **8** (each guardian linked to exactly their one
+  child; the 086 trigger derives `academy_id` from the player — no cross-academy links).
+- **Parent identity now resolves to linked player(s):** the parent portal resolver keys off
+  `guardians.profile_id`, which is now populated.
+- **Parent role tested** (authenticated ANON client, RLS enforced): sees exactly their own
+  guardian row (email/phone NULL), their one link, and their one child; cannot see other
+  families' children/guardians, the review queue, development signals, or voice commands;
+  cross writes fail safely (11/11 assertions).
+- **Parent access remains tenant-safe:** no cross-tenant or wrong-tenant rows.
+- **Loop 10 was still blocked** pending the `player_curriculum_states` parent-safety RLS fix
+  (a parent could read all 7 curriculum states in the academy — resolved in Sprint 4377).
+- Files: `scripts/demo/seed.ts`, `scripts/demo/dabulPilotV1.ts`. Re-seeded via guarded
+  tagged reset (Dabul batch only).
+
+**Honest scope:** No browser validation performed. No DONNA testing performed. No parent
+portal redesign performed. No unrelated auth/RLS refactor performed.
+
+---
+
 ## 2026-07-06 — Sprint 4375 — Gate 3: Tenant-Isolation Behavioral PASS Against Pilot Data
 
 **Mission:** Run the tenant-isolation behavioral harness against the live AcademyOS-Pilot
