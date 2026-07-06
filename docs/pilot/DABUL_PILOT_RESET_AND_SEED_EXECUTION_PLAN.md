@@ -255,6 +255,15 @@ This is a **re-skin**, not a new system: same seed/reset/client code, new datase
 
 ---
 
+> **Update (Sprint 4373 — seeder BUILT, Gate-2 ready):** the re-skinned seeder now exists and
+> is certified offline (38/38). New: `scripts/demo/dabulPilotV1.ts` (Dabul dataset,
+> `DABUL_PILOT_ACADEMY_ID = dab00000-…-001`, `seed_batch_id = dabul_pilot_v1`, pinned ref
+> `cctqtapzpcwuffbmapmk`, `*.dabulpilot.test`), `scripts/demo/datasets.ts` (registry +
+> `assertSafeTarget` prod guard), and `dabulPilotSeederCertification.ts`. `seed.ts`/`reset.ts`
+> are parameterized via `DEMO_DATASET`; run with **`npm run dabul:seed:pilot -- --confirm`**
+> under **temporary pilot shell env** (no `.env.local`). The teardown (Section 3) is already
+> DONE — the pilot is clean (0 academies). Remaining: execute the seed behind the Gate-2 phrase.
+
 ## 13. Files that will likely change in the later seeder EXECUTION sprint (not now)
 
 - **New:** `scripts/demo/dabulPilotV1.ts` (Dabul dataset + constants).

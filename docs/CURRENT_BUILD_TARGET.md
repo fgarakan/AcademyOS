@@ -151,12 +151,23 @@ Promoted the canonical concept to the **Executive Partnership** layer. Every way
 > are no pending migrations** (the earlier "unapplied on the reachable DB" note referred to
 > the production-like live backend, which stays untouched).
 >
-> **Two follow-ups remain before browser validation with Dabul data:** (1) the pilot
-> tenant-isolation **behavioral** run — its own step using **temporary pilot shell env
-> vars**, never the `.env.local`-bound `npm run test:tenant-isolation` alias (that alias
-> points at production); (2) the **Angles-vs-Dabul dataset decision** (coexist vs replace)
-> before/at the gated Dabul seeder step. Build step for the seeder is Sprint 4367, still
-> gated on that decision.
+> **Angles teardown DONE (Sprint 4372 execution, 2026-07-06):** the pilot is now clean —
+> **0 academies**, 182 Angles demo rows removed, global curriculum spine 100% preserved,
+> schema/migrations intact, certify 31/31. Production untouched.
+>
+> **Dabul seeder BUILT (Sprint 4373):** re-skinned from the God-Mode harness (no competing
+> system) — `scripts/demo/dabulPilotV1.ts` (`DABUL_PILOT_ACADEMY_ID = dab00000-…-001`,
+> `seed_batch_id = dabul_pilot_v1`, pinned to pilot ref `cctqtapzpcwuffbmapmk`,
+> `*.dabulpilot.test` fake domain), `scripts/demo/datasets.ts` (registry + `assertSafeTarget`
+> production guard), certified offline (38/38). Run via `npm run dabul:seed:pilot -- --confirm`
+> under **temporary pilot shell env** (never `.env.local`).
+>
+> **Two follow-ups remain before browser validation with Dabul data:** (1) **execute the
+> Dabul seed** (Gate 2 — supply temporary pilot shell env + the seed approval phrase); (2)
+> the pilot tenant-isolation **behavioral** run — its own step using **temporary pilot shell
+> env vars**, never the `.env.local`-bound `npm run test:tenant-isolation` alias (that alias
+> points at production). The Angles-vs-Dabul dataset decision is resolved: **replace** (clean
+> single-tenant Dabul).
 
 ### Why the spine is done
 - ONE DONNA pipeline converged across every entry point — one canonical router (`donnaCanonicalRouter`), one brain (`processDonnaMessage`), one OpenAI gateway (`donnaOpenAIGateway`), one `realitySnapshot`, layered memory.

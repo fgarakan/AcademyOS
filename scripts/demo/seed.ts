@@ -9,10 +9,19 @@
 // director/coach profile ids come from auth.admin.createUser. Levels reference the GLOBAL
 // curriculum_levels spine (already seeded). Run against staging first to validate.
 //
-// Run: node --env-file=.env.local --import tsx scripts/demo/seed.ts [--confirm]
+// Selects the dataset via DEMO_DATASET (default: God-Mode). For the Dabul pilot, run WITHOUT
+// .env.local — use temporary pilot shell env (see npm run dabul:seed:pilot):
+//   DEMO_DATASET=dabul_pilot_v1 node --import tsx scripts/demo/seed.ts --confirm
+// Legacy God-Mode: node --env-file=.env.local --import tsx scripts/demo/seed.ts [--confirm]
 
 import { getDemoServiceClient, STAGE_ENUM } from './demoClient'
-import { demoAcademyGodModeV1 as DS, DEMO_ACADEMY_ID, SEED_BATCH_ID, isDemoResettable } from './demoAcademyGodModeV1'
+import { resolveDataset, assertSafeTarget } from './datasets'
+
+const BUNDLE = resolveDataset()
+const DS = BUNDLE.dataset
+const DEMO_ACADEMY_ID = BUNDLE.academyId
+const SEED_BATCH_ID = BUNDLE.seedBatchId
+const isDemoResettable = BUNDLE.isResettable
 
 const DAY = 86400000
 function isoDate(offsetDays: number): string { return new Date(Date.now() + offsetDays * DAY).toISOString().slice(0, 10) }
@@ -31,10 +40,12 @@ async function safeResetExisting(db: ReturnType<typeof getDemoServiceClient>) {
 
 async function main() {
   if (!process.argv.includes('--confirm')) {
-    console.log('DRY RUN — pass --confirm to write the demo academy to the database.')
+    console.log(`DRY RUN — dataset "${BUNDLE.key}" — pass --confirm to write the academy to the database.`)
     console.log(`Would seed: 1 academy, 1 director, ${DS.coaches.length} coaches, ${DS.players.length} players, ${DS.parents.length} parents, ${DS.approvals.length} approvals, ${DS.sessions.length} sessions.`)
     return
   }
+  // Production guard: refuse the live backend, and require the pinned pilot ref if set.
+  assertSafeTarget(BUNDLE, process.env.NEXT_PUBLIC_SUPABASE_URL)
   const db = getDemoServiceClient()
   await safeResetExisting(db)
 
@@ -61,7 +72,7 @@ async function main() {
 
   const coachIdByKey: Record<string, string> = {}
   for (const c of DS.coaches) {
-    const id = await makeUser(`${c.firstName.toLowerCase()}.${c.key}@godmode.test`, `${c.firstName} ${c.lastName}`)
+    const id = await makeUser(`${c.firstName.toLowerCase()}.${c.key}@${BUNDLE.emailDomain}`, `${c.firstName} ${c.lastName}`)
     coachIdByKey[c.key] = id
     await db.from('academy_memberships').insert({ academy_id: DEMO_ACADEMY_ID, profile_id: id, role: c.key === 'c3' ? 'head_coach' : 'coach', is_active: true })
   }
@@ -116,7 +127,19 @@ async function main() {
     })
   }
 
-  console.log(`✓ Seeded "${DS.academy.name}" (${DEMO_ACADEMY_ID}): 1 director, ${DS.coaches.length} coaches, ${DS.players.length} players, ${DS.parents.length} parents, ${DS.approvals.length} approvals, ${DS.sessions.length} sessions.`)
+  // 7. Class templates (loop 3 — Template Setup). Only datasets that define templates.
+  const templates = (DS as { templates?: Array<{ id: string; name: string; description: string; totalDurationMin: number; tags: string[] }> }).templates
+  let templateCount = 0
+  for (const t of templates ?? []) {
+    const { error } = await db.from('templates').insert({
+      id: t.id, academy_id: DEMO_ACADEMY_ID, name: t.name, description: t.description,
+      total_duration_min: t.totalDurationMin, tags: t.tags, is_active: true, created_by: directorId,
+    })
+    if (error) throw new Error(`template ${t.name}: ${error.message}`)
+    templateCount += 1
+  }
+
+  console.log(`✓ Seeded "${DS.academy.name}" (${DEMO_ACADEMY_ID}) [${BUNDLE.key}]: 1 director, ${DS.coaches.length} coaches, ${DS.players.length} players, ${DS.parents.length} parents, ${DS.approvals.length} approvals, ${DS.sessions.length} sessions, ${templateCount} templates.`)
   console.log(`  Director login: ${DS.director.email}`)
 }
 

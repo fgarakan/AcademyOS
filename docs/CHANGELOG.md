@@ -2,6 +2,56 @@
 
 ---
 
+## 2026-07-06 — Sprint 4373 — Controlled Dabul Pilot Seeder Build / Gate 2 Prep
+
+**Mission:** Build the reusable, fake/safe Dabul pilot seeder by **re-skinning** the existing
+God-Mode harness (no competing seed system), guarded so it can only ever target the
+AcademyOS-Pilot project. **Code + docs; NO DB writes, NO seed executed, production untouched,
+no `.env.local`, no env files changed, no schema/migration change.**
+
+**New files**
+- `scripts/demo/dabulPilotV1.ts` — the Dabul dataset (re-skin of the God-Mode types):
+  `DABUL_PILOT_ACADEMY_ID = dab00000-0000-4000-8000-000000000001`, `seed_batch_id =
+  dabul_pilot_v1`, pinned project ref `cctqtapzpcwuffbmapmk`, fake domain `*.dabulpilot.test`.
+  Brian Dabul (director), 2 coaches, 8 fictional players (archetype-driven), 8 guardians
+  **with no email/phone**, curriculum baseline on the global spine, 2 class templates, 5
+  sessions (1 completed w/ overdue wrap-up), 2 review-queue approvals, DONNA safe + unsafe
+  prompt sets, and a 10-atomic-loop coverage map.
+- `scripts/demo/datasets.ts` — dataset registry + `resolveDataset(DEMO_DATASET)` seam +
+  `assertSafeTarget()` production guard (refuses the live backend `dbjjhhxdkpdreytsozlq`
+  always; requires the pinned pilot ref for Dabul).
+- `src/lib/donna/certification/dabulPilotSeederCertification.ts` — offline static cert (38
+  checks) proving: canonical UUID, `dabul_pilot_v1` batch, fake/safe data, no real
+  emails/phones, all 10 loops covered, never targets production, requires the explicit pilot
+  target, no `.env.local`, re-skin (superset of the God-Mode shape) not a competing system,
+  and execution gated by the approval phrase.
+
+**Modified**
+- `scripts/demo/seed.ts`, `scripts/demo/reset.ts` — parameterized via `resolveDataset()`;
+  call `assertSafeTarget()` before any write; coach emails use the bundle domain; seed also
+  inserts class templates (loop 3). Default behavior (God-Mode) preserved.
+- `package.json` — added `dabul:seed:pilot` / `dabul:reset:pilot` (set
+  `DEMO_DATASET=dabul_pilot_v1`; **no `--env-file=.env.local`** — operator supplies temporary
+  pilot shell env). The `.env.local`-bound `demo:seed`/`demo:reset` remain God-Mode only.
+- `scripts/certificationSuites.ts` — registered the new cert.
+- `docs/pilot/DABUL_PILOT_RESET_AND_SEED_EXECUTION_PLAN.md`, `docs/CURRENT_BUILD_TARGET.md` —
+  marked the seeder built and Gate-2-ready.
+
+**Validation:** `npx tsc --noEmit` clean; `npm run certify` **32/32** (Dabul cert 38/38);
+seeder **dry-run writes nothing** ("Would seed: 1 academy, 1 director, 2 coaches, 8 players,
+8 parents, 2 approvals, 5 sessions"); the production guard **hard-refuses** a `--confirm` run
+pointed at `dbjjhhxdkpdreytsozlq` ("REFUSING: target URL points at PRODUCTION").
+
+**Honest scope:** No DB writes, no seed executed, production untouched, `.env.local`
+unread/unchanged, no schema/migration change. Some loop elements (e.g. coach wrap-ups filed,
+formal assessments) are exercised **live in the browser** rather than pre-seeded; the seeder
+leaves a createable path per loop by design.
+
+**Next action:** Gate 2 — human supplies temporary pilot shell env and gives the seed
+approval phrase to execute the Dabul seed. Held pending that.
+
+---
+
 ## 2026-07-06 — Sprint 4372 — Clean Dabul Pilot Reset + Seeder Execution Plan (plan only)
 
 **Mission:** Draft the exact execution plan to (a) surgically remove the Angles demo tenant

@@ -43,4 +43,6 @@ export const CERTIFICATION_SUITES: readonly string[] = [
   'src/lib/donna/certification/donnaConversationCertification.ts',
   // First non-DONNA system certification — tenant isolation / cross-academy leakage.
   'src/lib/certification/tenantIsolationCertification.ts',
+  // Sprint 4373 — Dabul pilot seeder: canonical, fake/safe, loop-complete, prod-guarded, gated.
+  'src/lib/donna/certification/dabulPilotSeederCertification.ts',
 ]

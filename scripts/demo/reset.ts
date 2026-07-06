@@ -8,13 +8,23 @@
 //   4. Demo auth users (the director + coaches) are removed too, so nothing is orphaned.
 //   5. Dry-run by default — pass --confirm to actually delete.
 //
-// Run: node --env-file=.env.local --import tsx scripts/demo/reset.ts [--confirm]
+// Selects the dataset via DEMO_DATASET (default: God-Mode). For the Dabul pilot, run WITHOUT
+// .env.local — use temporary pilot shell env (see npm run dabul:reset:pilot):
+//   DEMO_DATASET=dabul_pilot_v1 node --import tsx scripts/demo/reset.ts --confirm
+// Legacy God-Mode: node --env-file=.env.local --import tsx scripts/demo/reset.ts [--confirm]
 
 import { getDemoServiceClient } from './demoClient'
-import { DEMO_ACADEMY_ID, SEED_BATCH_ID, isDemoResettable } from './demoAcademyGodModeV1'
+import { resolveDataset, assertSafeTarget } from './datasets'
+
+const BUNDLE = resolveDataset()
+const DEMO_ACADEMY_ID = BUNDLE.academyId
+const SEED_BATCH_ID = BUNDLE.seedBatchId
+const isDemoResettable = BUNDLE.isResettable
 
 async function main() {
   const confirm = process.argv.includes('--confirm')
+  // Production guard: refuse the live backend, and require the pinned pilot ref if set.
+  assertSafeTarget(BUNDLE, process.env.NEXT_PUBLIC_SUPABASE_URL)
   const db = getDemoServiceClient()
 
   const { data: academy, error } = await db
