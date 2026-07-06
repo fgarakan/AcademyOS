@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-07-06 — Sprint 4372 — Clean Dabul Pilot Reset + Seeder Execution Plan (plan only)
+
+**Mission:** Draft the exact execution plan to (a) surgically remove the Angles demo tenant
+from the pilot DB and (b) seed one clean, fake, tagged Dabul pilot academy by re-skinning
+the existing God-Mode harness — **so the later teardown/seed sprints run behind explicit
+approval phrases.** **Docs only** — no teardown, no reset, no scrub, no seed, no DB write, no
+production access, no `.env.local` use, no schema/migration change, no new seed system.
+
+**Decision recorded:** Option A — reset/rebuild clean (single-tenant Dabul), per Sprint 4371.
+
+- `docs/pilot/DABUL_PILOT_RESET_AND_SEED_EXECUTION_PLAN.md` — new execution plan covering:
+  current pilot state (migrations `001–086` applied, only tenant = untagged Angles
+  `00000000-…-001`); why Option A; **surgical A1 teardown** (remove Angles + cascade,
+  preserve schema + global curriculum spine) rejecting full `db reset` (024 re-seeds Angles);
+  a mandatory pre-teardown FK/scoping check; the pilot-only production-guard pre-flight;
+  the two exact approval phrases; the Dabul dataset shape (director Brian, fake coaches,
+  fake players, fake guardians, curriculum baseline, templates, sessions, assignments,
+  wrap-ups, assessments, approvals, parent-safe views, DONNA safe/unsafe prompts); the
+  10-atomic-loop coverage map; fake/safe confirmations (no real minors, no real
+  parent/guardian contacts, no production data); the God-Mode re-skin approach (new
+  `dabulPilotV1.ts` dataset module + parameterized `seed.ts`/`reset.ts`; **forbid** the
+  `.env.local`-bound `demo:seed`/`demo:reset` npm aliases); what must not be duplicated;
+  likely files for the execution sprint; post-teardown and post-seed validation; the
+  pilot-only tenant-isolation behavioral plan (never the `.env.local` npm alias); browser
+  readiness criteria; rollback/recovery; and four gates with STOP conditions.
+
+**Proposed constants:** Dabul academy UUID `dab00000-0000-4000-8000-000000000001` (distinct
+from Angles `00000000-…-001` and God-Mode `0d3a0000-…-001`); `seed_batch_id = dabul_pilot_v1`.
+
+**Gates:** G1 teardown approval → G2 seed approval → G3 pilot tenant-isolation behavioral →
+G4 browser validation. Teardown phrase: *"teardown Angles on cctqtapzpcwuffbmapmk, Dabul
+pilot reset approved."* Seed phrase: *"seed Dabul dabul_pilot_v1 on cctqtapzpcwuffbmapmk,
+seed approved."*
+
+**Honest scope:** Planning only. No DB write, no teardown, no seed, production
+`dbjjhhxdkpdreytsozlq` untouched, `.env.local` unread/unchanged, disabled prod link stays
+disabled. Pilot DB remains in its verified Sprint-4371 state.
+
+**Next action:** Human gives the Gate-1 teardown phrase to start the teardown execution
+sprint (after the pre-teardown scoping check is presented). Held pending that.
+
+**Validation:** Docs-only change → `tsc` not required. `git status --short` reviewed.
+
+---
+
 ## 2026-07-06 — Sprint 4370 — Pilot Project Phase-1 Verification Result (migrated + demo-seeded, verified)
 
 **Mission:** Record the honest, evidence-based result of running the Gate G1 / Phase-1
